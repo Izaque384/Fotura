@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "../../../lib/supabase-client";
 
+function tituloDeSlug(slug: string) {
+  const t = decodeURIComponent(slug).replace(/-/g, " ");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 export default function GaleriaClientePage() {
   const params = useParams();
   const slug = params.slug as string;
@@ -16,7 +21,7 @@ export default function GaleriaClientePage() {
   useEffect(() => {
     async function carregar() {
       const { data, error } = await supabase.storage.from("fotos").list(slug, {
-        limit: 200,
+        limit: 500,
         sortBy: { column: "created_at", order: "desc" },
       });
       if (error) {
@@ -50,53 +55,93 @@ export default function GaleriaClientePage() {
   }
 
   if (carregando) {
-    return <div className="fc-center">Carregando galeria...</div>;
+    return <div className="gc-center">Carregando galeria…</div>;
   }
 
+  const titulo = tituloDeSlug(slug);
+  const capa = fotos[0]?.url;
+
   return (
-    <div className="fc-page">
+    <div className="gc-page">
       <style>{`
-        .fc-page { min-height:100vh; background:linear-gradient(180deg,#0b0b1a 0%,#111126 100%); font-family:sans-serif; padding:48px 24px; }
-        .fc-center { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#0b0b1a 0%,#111126 100%); color:#7a7f9a; font-family:sans-serif; }
-        .fc-wrap { max-width:1040px; margin:0 auto; }
-        .fc-logo { font-size:28px; font-weight:700; letter-spacing:4px; color:#f0f0f5; text-align:center; margin-bottom:4px; }
-        .fc-sub { font-size:14px; color:#7a7f9a; text-align:center; margin-bottom:40px; }
-        .fc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
-        .fc-card { position:relative; aspect-ratio:1/1; border-radius:14px; overflow:hidden; background:#0f0f1a; border:1px solid #2a2d40; }
-        .fc-card img { width:100%; height:100%; object-fit:cover; display:block; cursor:zoom-in; transition:transform .4s ease; }
-        .fc-card:hover img { transform:scale(1.06); }
-        .fc-baixar { position:absolute; bottom:8px; right:8px; padding:6px 12px; font-size:12px; font-weight:600; color:#fff; background:rgba(74,108,247,.92); border:none; border-radius:8px; cursor:pointer; }
-        .fc-empty { font-size:14px; color:#7a7f9a; text-align:center; }
-        .fc-lightbox { position:fixed; inset:0; background:rgba(5,5,12,.9); display:flex; align-items:center; justify-content:center; padding:32px; z-index:50; cursor:zoom-out; }
-        .fc-lightbox img { max-width:90%; max-height:90%; border-radius:12px; }
+        .gc-page { min-height:100vh; background:#0b0b1a; }
+        .gc-center { min-height:100vh; display:flex; align-items:center; justify-content:center; background:#0b0b1a; color:#7a7f9a; }
+
+        /* Capa / hero */
+        .gc-hero { position:relative; height:46vh; min-height:320px; width:100%; overflow:hidden; display:flex; align-items:flex-end; }
+        .gc-hero-bg { position:absolute; inset:0; background-size:cover; background-position:center; transform:scale(1.03); }
+        .gc-hero-overlay { position:absolute; inset:0; background:linear-gradient(180deg, rgba(11,11,26,0.20) 0%, rgba(11,11,26,0.55) 55%, rgba(11,11,26,0.98) 100%); }
+        .gc-hero-inner { position:relative; z-index:2; width:100%; max-width:1100px; margin:0 auto; padding:0 24px 34px; }
+        .gc-eyebrow { font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#9fb0ff; margin:0 0 10px; font-weight:600; }
+        .gc-title { font-size:clamp(30px, 5vw, 52px); font-weight:700; color:#f8f9fc; margin:0; letter-spacing:-0.5px; line-height:1.1; }
+        .gc-count { font-size:14px; color:#c3c8dc; margin:12px 0 0; }
+
+        /* Grade */
+        .gc-body { max-width:1100px; margin:0 auto; padding:32px 24px 56px; }
+        .gc-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:14px; }
+        .gc-card { position:relative; aspect-ratio:1/1; border-radius:14px; overflow:hidden; background:#14141f; border:1px solid #1e2036; }
+        .gc-card img { width:100%; height:100%; object-fit:cover; display:block; cursor:zoom-in; transition:transform .5s ease; }
+        .gc-card:hover img { transform:scale(1.07); }
+        .gc-dl {
+          position:absolute; bottom:10px; right:10px; width:40px; height:40px;
+          display:flex; align-items:center; justify-content:center;
+          background:rgba(11,11,26,0.72); backdrop-filter:blur(6px);
+          border:1px solid rgba(255,255,255,0.16); border-radius:10px; cursor:pointer;
+          opacity:0.9; transition:opacity .2s ease, background .2s ease;
+        }
+        .gc-dl:hover { opacity:1; background:#4a6cf7; }
+        .gc-dl svg { width:18px; height:18px; }
+
+        /* Lightbox */
+        .gc-lb { position:fixed; inset:0; background:rgba(5,5,12,0.94); display:flex; align-items:center; justify-content:center; padding:32px; z-index:50; cursor:zoom-out; }
+        .gc-lb img { max-width:92%; max-height:92%; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.6); }
+
+        .gc-empty { color:#7a7f9a; text-align:center; padding:80px 24px; }
+        .gc-foot { text-align:center; color:#454a63; font-size:12px; padding:0 24px 32px; }
+        .gc-foot b { color:#6b7394; font-weight:600; }
+
+        @media (max-width:600px){ .gc-hero{ height:40vh; min-height:260px; } }
       `}</style>
 
-      <div className="fc-wrap">
-        <div className="fc-logo">FOTURA</div>
-        <p className="fc-sub">
-          {fotos.length > 0 ? `${fotos.length} foto${fotos.length > 1 ? "s" : ""} pra você` : "Sua galeria"}
-        </p>
-
-        {mensagem ? (
-          <p className="fc-empty">{mensagem}</p>
-        ) : fotos.length === 0 ? (
-          <p className="fc-empty">Esta galeria ainda não tem fotos.</p>
-        ) : (
-          <div className="fc-grid">
-            {fotos.map((foto) => (
-              <div key={foto.url} className="fc-card">
-                <img src={foto.url} alt="Foto" onClick={() => setAmpliada(foto.url)} />
-                <button className="fc-baixar" onClick={() => baixar(foto.url, foto.nome)}>
-                  Baixar
-                </button>
-              </div>
-            ))}
+      {mensagem ? (
+        <div className="gc-empty">{mensagem}</div>
+      ) : fotos.length === 0 ? (
+        <div className="gc-empty">Esta galeria ainda não tem fotos.</div>
+      ) : (
+        <>
+          <div className="gc-hero">
+            <div className="gc-hero-bg" style={{ backgroundImage: `url(${capa})` }} />
+            <div className="gc-hero-overlay" />
+            <div className="gc-hero-inner">
+              <p className="gc-eyebrow">Sua galeria</p>
+              <h1 className="gc-title">{titulo}</h1>
+              <p className="gc-count">{fotos.length} foto{fotos.length === 1 ? "" : "s"}</p>
+            </div>
           </div>
-        )}
-      </div>
+
+          <div className="gc-body">
+            <div className="gc-grid">
+              {fotos.map((foto) => (
+                <div key={foto.url} className="gc-card">
+                  <img src={foto.url} alt="Foto" onClick={() => setAmpliada(foto.url)} />
+                  <button className="gc-dl" onClick={() => baixar(foto.url, foto.nome)} aria-label="Baixar foto" title="Baixar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <footer className="gc-foot">Feito com <b>Fotura</b></footer>
+        </>
+      )}
 
       {ampliada && (
-        <div className="fc-lightbox" onClick={() => setAmpliada(null)}>
+        <div className="gc-lb" onClick={() => setAmpliada(null)}>
           <img src={ampliada} alt="Foto ampliada" />
         </div>
       )}
