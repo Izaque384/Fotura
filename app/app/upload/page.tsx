@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
+import MenuFotografo from "../MenuFotografo";
 
 function gerarSlug(texto: string) {
   return texto
@@ -100,81 +101,79 @@ function UploadContent() {
 
   if (carregando) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(180deg, #0b0b1a 0%, #111126 100%)", color: "#7a7f9a", fontFamily: "sans-serif" }}>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(180deg, #0b0b1a 0%, #111126 100%)", color: "#7a7f9a" }}>
         Carregando...
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(180deg, #0b0b1a 0%, #111126 100%)", fontFamily: "sans-serif", padding: 24 }}>
-      <div style={{ background: "#16162a", borderRadius: 16, padding: 40, width: "100%", maxWidth: 480, border: "1px solid #2a2d40" }}>
-        <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: 4, color: "#f0f0f5", textAlign: "center", marginBottom: 8 }}>
-          FOTURA
-        </div>
-        <p style={{ fontSize: 14, color: "#7a7f9a", textAlign: "center", marginBottom: 32 }}>
-          {nomeTravado ? "Enviar mais fotos" : "Enviar fotos"}
-        </p>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #0b0b1a 0%, #111126 100%)", display: "flex", flexDirection: "column" }}>
+      <MenuFotografo />
 
-        <label style={{ fontSize: 13, color: "#a0a4b8", display: "block", marginBottom: 6 }}>
-          Nome da galeria
-        </label>
-        <input
-          type="text"
-          value={nomeGaleria}
-          onChange={(e) => setNomeGaleria(e.target.value)}
-          placeholder="Ex: Casamento Ana e João"
-          disabled={nomeTravado}
-          style={{ width: "100%", padding: "12px 14px", fontSize: 14, border: "1.5px solid #2a2d40", borderRadius: 10, background: nomeTravado ? "#14141f" : "#0f0f1a", color: nomeTravado ? "#7a7f9a" : "#f0f0f5", outline: "none", marginBottom: 20, boxSizing: "border-box" }}
-        />
-
-        <label style={{ fontSize: 13, color: "#a0a4b8", display: "block", marginBottom: 6 }}>
-          Fotos
-        </label>
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={(e) => setArquivos(e.target.files)}
-          style={{ width: "100%", fontSize: 13, color: "#a0a4b8", marginBottom: 24 }}
-        />
-
-        <button
-          onClick={enviarFotos}
-          disabled={enviando}
-          style={{ width: "100%", padding: "13px", fontSize: 14, fontWeight: 600, color: "#fff", background: enviando ? "#3b5de0" : "#4a6cf7", border: "none", borderRadius: 10, cursor: enviando ? "default" : "pointer" }}
-        >
-          {enviando ? "Enviando..." : "Enviar fotos"}
-        </button>
-
-        {mensagem && (
-          <p style={{ fontSize: 13, textAlign: "center", marginTop: 16, color: erro ? "#ef4444" : "#22c55e" }}>
-            {mensagem}
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ background: "#16162a", borderRadius: 16, padding: 40, width: "100%", maxWidth: 480, border: "1px solid #2a2d40" }}>
+          <p style={{ fontSize: 18, fontWeight: 600, color: "#f0f0f5", textAlign: "center", marginBottom: 4 }}>
+            {nomeTravado ? "Enviar mais fotos" : "Nova galeria"}
           </p>
-        )}
+          <p style={{ fontSize: 13, color: "#7a7f9a", textAlign: "center", marginBottom: 28 }}>
+            {nomeTravado ? tituloDeSlug(galeriaFixa!) : "Dê um nome e escolha as fotos"}
+          </p>
 
-        {link && (
-          <div style={{ marginTop: 20, padding: 16, background: "#0f0f1a", border: "1px solid #2a2d40", borderRadius: 10 }}>
-            <p style={{ fontSize: 12, color: "#7a7f9a", marginBottom: 8 }}>
-              Link pra enviar ao cliente:
-            </p>
-            <p style={{ fontSize: 13, color: "#4a6cf7", wordBreak: "break-all", marginBottom: 12 }}>
-              {link}
-            </p>
-            <button
-              onClick={copiarLink}
-              style={{ width: "100%", padding: "10px", fontSize: 13, fontWeight: 600, color: "#4a6cf7", background: "transparent", border: "1px solid #4a6cf7", borderRadius: 8, cursor: "pointer" }}
-            >
-              Copiar link
-            </button>
-          </div>
-        )}
+          <label style={{ fontSize: 13, color: "#a0a4b8", display: "block", marginBottom: 6 }}>
+            Nome da galeria
+          </label>
+          <input
+            type="text"
+            value={nomeGaleria}
+            onChange={(e) => setNomeGaleria(e.target.value)}
+            placeholder="Ex: Casamento Ana e João"
+            disabled={nomeTravado}
+            style={{ width: "100%", padding: "12px 14px", fontSize: 14, border: "1.5px solid #2a2d40", borderRadius: 10, background: nomeTravado ? "#14141f" : "#0f0f1a", color: nomeTravado ? "#7a7f9a" : "#f0f0f5", outline: "none", marginBottom: 20, boxSizing: "border-box" }}
+          />
 
-        <p style={{ fontSize: 13, textAlign: "center", marginTop: 24 }}>
-          <a href="/dashboard" style={{ color: "#7a7f9a", textDecoration: "underline" }}>
-            ← Voltar pras galerias
-          </a>
-        </p>
+          <label style={{ fontSize: 13, color: "#a0a4b8", display: "block", marginBottom: 6 }}>
+            Fotos
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => setArquivos(e.target.files)}
+            style={{ width: "100%", fontSize: 13, color: "#a0a4b8", marginBottom: 24 }}
+          />
+
+          <button
+            onClick={enviarFotos}
+            disabled={enviando}
+            style={{ width: "100%", padding: "13px", fontSize: 14, fontWeight: 600, color: "#fff", background: enviando ? "#3b5de0" : "#4a6cf7", border: "none", borderRadius: 10, cursor: enviando ? "default" : "pointer" }}
+          >
+            {enviando ? "Enviando..." : "Enviar fotos"}
+          </button>
+
+          {mensagem && (
+            <p style={{ fontSize: 13, textAlign: "center", marginTop: 16, color: erro ? "#ef4444" : "#22c55e" }}>
+              {mensagem}
+            </p>
+          )}
+
+          {link && (
+            <div style={{ marginTop: 20, padding: 16, background: "#0f0f1a", border: "1px solid #2a2d40", borderRadius: 10 }}>
+              <p style={{ fontSize: 12, color: "#7a7f9a", marginBottom: 8 }}>
+                Link pra enviar ao cliente:
+              </p>
+              <p style={{ fontSize: 13, color: "#4a6cf7", wordBreak: "break-all", marginBottom: 12 }}>
+                {link}
+              </p>
+              <button
+                onClick={copiarLink}
+                style={{ width: "100%", padding: "10px", fontSize: 13, fontWeight: 600, color: "#4a6cf7", background: "transparent", border: "1px solid #4a6cf7", borderRadius: 8, cursor: "pointer" }}
+              >
+                Copiar link
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -184,7 +183,7 @@ export default function UploadPage() {
   return (
     <Suspense
       fallback={
-        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(180deg, #0b0b1a 0%, #111126 100%)", color: "#7a7f9a", fontFamily: "sans-serif" }}>
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(180deg, #0b0b1a 0%, #111126 100%)", color: "#7a7f9a" }}>
           Carregando...
         </div>
       }
