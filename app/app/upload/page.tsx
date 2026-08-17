@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
 
@@ -13,13 +13,12 @@ function gerarSlug(texto: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-// transforma "casamento-ana" em "Casamento ana" pra exibir bonito
 function tituloDeSlug(slug: string) {
   const t = slug.replace(/-/g, " ");
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-export default function UploadPage() {
+function UploadContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -32,7 +31,6 @@ export default function UploadPage() {
   const [nomeGaleria, setNomeGaleria] = useState("");
   const [link, setLink] = useState("");
 
-  // Se veio do "Enviar mais" (?galeria=slug), o nome vem travado
   const galeriaFixa = searchParams.get("galeria");
   const nomeTravado = Boolean(galeriaFixa);
 
@@ -56,7 +54,6 @@ export default function UploadPage() {
     setLink("");
     setMensagem("");
 
-    // Se veio travado, usa o slug exato da URL; senão, gera do que foi digitado
     const slug = nomeTravado ? galeriaFixa! : gerarSlug(nomeGaleria);
     if (!slug) {
       setErro(true);
@@ -180,5 +177,19 @@ export default function UploadPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function UploadPage() {
+  return (
+    <Suspense
+      fallback={
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(180deg, #0b0b1a 0%, #111126 100%)", color: "#7a7f9a", fontFamily: "sans-serif" }}>
+          Carregando...
+        </div>
+      }
+    >
+      <UploadContent />
+    </Suspense>
   );
 }
