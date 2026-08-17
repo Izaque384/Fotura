@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
 
 function gerarSlug(texto: string) {
@@ -13,9 +13,17 @@ function gerarSlug(texto: string) {
     .replace(/^-+|-+$/g, "");
 }
 
+// transforma "casamento-ana" em "Casamento ana" pra exibir bonito
+function tituloDeSlug(slug: string) {
+  const t = slug.replace(/-/g, " ");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 export default function UploadPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [mensagem, setMensagem] = useState("");
@@ -24,24 +32,32 @@ export default function UploadPage() {
   const [nomeGaleria, setNomeGaleria] = useState("");
   const [link, setLink] = useState("");
 
+  // Se veio do "Enviar mais" (?galeria=slug), o nome vem travado
+  const galeriaFixa = searchParams.get("galeria");
+  const nomeTravado = Boolean(galeriaFixa);
+
   useEffect(() => {
     async function verificarUsuario() {
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
         router.replace("/login");
       } else {
+        if (galeriaFixa) {
+          setNomeGaleria(tituloDeSlug(galeriaFixa));
+        }
         setCarregando(false);
       }
     }
     verificarUsuario();
-  }, [router, supabase]);
+  }, [router, supabase, galeriaFixa]);
 
   async function enviarFotos() {
     setErro(false);
     setLink("");
     setMensagem("");
 
-    const slug = gerarSlug(nomeGaleria);
+    // Se veio travado, usa o slug exato da URL; senão, gera do que foi digitado
+    const slug = nomeTravado ? galeriaFixa! : gerarSlug(nomeGaleria);
     if (!slug) {
       setErro(true);
       setMensagem("Dê um nome pra galeria (ex: Casamento Ana).");
@@ -100,7 +116,7 @@ export default function UploadPage() {
           FOTURA
         </div>
         <p style={{ fontSize: 14, color: "#7a7f9a", textAlign: "center", marginBottom: 32 }}>
-          Enviar fotos
+          {nomeTravado ? "Enviar mais fotos" : "Enviar fotos"}
         </p>
 
         <label style={{ fontSize: 13, color: "#a0a4b8", display: "block", marginBottom: 6 }}>
@@ -111,7 +127,8 @@ export default function UploadPage() {
           value={nomeGaleria}
           onChange={(e) => setNomeGaleria(e.target.value)}
           placeholder="Ex: Casamento Ana e João"
-          style={{ width: "100%", padding: "12px 14px", fontSize: 14, border: "1.5px solid #2a2d40", borderRadius: 10, background: "#0f0f1a", color: "#f0f0f5", outline: "none", marginBottom: 20, boxSizing: "border-box" }}
+          disabled={nomeTravado}
+          style={{ width: "100%", padding: "12px 14px", fontSize: 14, border: "1.5px solid #2a2d40", borderRadius: 10, background: nomeTravado ? "#14141f" : "#0f0f1a", color: nomeTravado ? "#7a7f9a" : "#f0f0f5", outline: "none", marginBottom: 20, boxSizing: "border-box" }}
         />
 
         <label style={{ fontSize: 13, color: "#a0a4b8", display: "block", marginBottom: 6 }}>
@@ -155,6 +172,12 @@ export default function UploadPage() {
             </button>
           </div>
         )}
+
+        <p style={{ fontSize: 13, textAlign: "center", marginTop: 24 }}>
+          <a href="/dashboard" style={{ color: "#7a7f9a", textDecoration: "underline" }}>
+            ← Voltar pras galerias
+          </a>
+        </p>
       </div>
     </div>
   );
