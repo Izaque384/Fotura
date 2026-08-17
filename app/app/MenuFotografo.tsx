@@ -32,7 +32,7 @@ export default function MenuFotografo() {
           font-size: 20px; font-weight: 700; letter-spacing: 3px;
           color: #f0f0f5;
         }
-        .mf-nav { display: flex; align-items: center; gap: 8px; }
+        .mf-nav { display: flex; align-items: center; gap: 6px; }
         .mf-link {
           padding: 8px 14px; font-size: 14px; font-weight: 500;
           color: #a0a4b8; background: none; border: none; border-radius: 8px;
@@ -70,6 +70,9 @@ export default function MenuFotografo() {
         </button>
         <button className="mf-link" onClick={() => router.push("/upload")}>
           Enviar
+        </button>
+        <button className="mf-link" onClick={() => router.push("/configuracoes")}>
+          Configurações
         </button>
         <button className="mf-sair" onClick={sair}>
           Sair
