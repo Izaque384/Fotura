@@ -9,17 +9,36 @@ function tituloDeSlug(slug: string) {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
+// Texto claro ou escuro conforme a cor de fundo, pra sempre ficar legível
+function corContraste(hex: string) {
+  const c = (hex || "").replace("#", "");
+  if (c.length !== 6) return "#ffffff";
+  const r = parseInt(c.slice(0, 2), 16);
+  const g = parseInt(c.slice(2, 4), 16);
+  const b = parseInt(c.slice(4, 6), 16);
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return lum > 0.6 ? "#111218" : "#ffffff";
+}
+
 export default function GaleriaClientePage() {
   const params = useParams();
   const slug = params.slug as string;
   const supabase = createClient();
   const [carregando, setCarregando] = useState(true);
   const [fotos, setFotos] = useState<{ url: string; nome: string }[]>([]);
+  const [estudio, setEstudio] = useState<{ nome: string | null; logo: string | null; cor: string | null }>({ nome: null, logo: null, cor: null });
   const [mensagem, setMensagem] = useState("");
   const [ampliada, setAmpliada] = useState<string | null>(null);
 
   useEffect(() => {
     async function carregar() {
+      const { data: perfil } = await supabase
+        .from("perfis")
+        .select("nome_estudio, logo_url, cor_hero")
+        .limit(1)
+        .maybeSingle();
+      if (perfil) setEstudio({ nome: perfil.nome_estudio ?? null, logo: perfil.logo_url ?? null, cor: perfil.cor_hero ?? null });
+
       const { data, error } = await supabase.storage.from("fotos").list(slug, {
         limit: 500,
         sortBy: { column: "created_at", order: "desc" },
@@ -59,7 +78,9 @@ export default function GaleriaClientePage() {
   }
 
   const titulo = tituloDeSlug(slug);
-  const capa = fotos[0]?.url;
+  const nomeMarca = estudio.nome || "Fotura";
+  const cor = estudio.cor || "#0b0b1a";
+  const txt = corContraste(cor);
 
   return (
     <div className="gc-page">
@@ -67,78 +88,106 @@ export default function GaleriaClientePage() {
         .gc-page { min-height:100vh; background:#0b0b1a; }
         .gc-center { min-height:100vh; display:flex; align-items:center; justify-content:center; background:#0b0b1a; color:#7a7f9a; }
 
-        /* Capa / hero */
-        .gc-hero { position:relative; height:46vh; min-height:320px; width:100%; overflow:hidden; display:flex; align-items:flex-end; }
-        .gc-hero-bg { position:absolute; inset:0; background-size:cover; background-position:center; transform:scale(1.03); }
-        .gc-hero-overlay { position:absolute; inset:0; background:linear-gradient(180deg, rgba(11,11,26,0.20) 0%, rgba(11,11,26,0.55) 55%, rgba(11,11,26,0.98) 100%); }
-        .gc-hero-inner { position:relative; z-index:2; width:100%; max-width:1100px; margin:0 auto; padding:0 24px 34px; }
-        .gc-eyebrow { font-size:12px; letter-spacing:2px; text-transform:uppercase; color:#9fb0ff; margin:0 0 10px; font-weight:600; }
-        .gc-title { font-size:clamp(30px, 5vw, 52px); font-weight:700; color:#f8f9fc; margin:0; letter-spacing:-0.5px; line-height:1.1; }
-        .gc-count { font-size:14px; color:#c3c8dc; margin:12px 0 0; }
+        /* HERO dividido: logo nítido à esquerda | info à direita */
+        .gc-hero { position:relative; overflow:hidden; }
+        .gc-hero::after { content:''; position:absolute; inset:0; background:linear-gradient(115deg, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0) 42%, rgba(0,0,0,0.20) 100%); pointer-events:none; }
+        .gc-hero-wrap { position:relative; z-index:2; max-width:1120px; margin:0 auto; width:100%; min-height:42vh; display:flex; align-items:center; gap:52px; padding:64px 32px; box-sizing:border-box; }
+        .gc-hero-logo { flex-shrink:0; display:flex; align-items:center; justify-content:center; min-width:0; }
+        .gc-hero-logo img { max-height:150px; max-width:260px; object-fit:contain; display:block; }
+        .gc-hero-logo .txtmark { font-size:clamp(30px, 4.4vw, 52px); font-weight:800; letter-spacing:-1px; line-height:1; }
+        .gc-hero-div { width:1px; align-self:stretch; min-height:96px; margin:12px 0; }
+        .gc-hero-info { flex:1; min-width:0; }
+        .gc-eyebrow { font-size:12px; letter-spacing:3px; text-transform:uppercase; font-weight:600; margin:0 0 14px; }
+        .gc-title { font-size:clamp(30px, 5vw, 58px); font-weight:700; margin:0; letter-spacing:-1px; line-height:1.06; }
+        .gc-count { font-size:14px; margin:18px 0 0; letter-spacing:0.5px; }
 
-        /* Grade */
-        .gc-body { max-width:1100px; margin:0 auto; padding:32px 24px 56px; }
-        .gc-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:14px; }
-        .gc-card { position:relative; aspect-ratio:1/1; border-radius:14px; overflow:hidden; background:#14141f; border:1px solid #1e2036; }
-        .gc-card img { width:100%; height:100%; object-fit:cover; display:block; cursor:zoom-in; transition:transform .5s ease; }
-        .gc-card:hover img { transform:scale(1.07); }
-        .gc-dl {
-          position:absolute; bottom:10px; right:10px; width:40px; height:40px;
-          display:flex; align-items:center; justify-content:center;
-          background:rgba(11,11,26,0.72); backdrop-filter:blur(6px);
-          border:1px solid rgba(255,255,255,0.16); border-radius:10px; cursor:pointer;
-          opacity:0.9; transition:opacity .2s ease, background .2s ease;
-        }
-        .gc-dl:hover { opacity:1; background:#4a6cf7; }
-        .gc-dl svg { width:18px; height:18px; }
+        /* Cabeçalho da grade */
+        .gc-body { max-width:1120px; margin:0 auto; padding:44px 32px 64px; }
+        .gc-bodyhead { display:flex; align-items:center; justify-content:space-between; padding-bottom:16px; margin-bottom:24px; border-bottom:1px solid #1c1e33; }
+        .gc-bodyhead h2 { font-size:14px; font-weight:600; color:#cdd2e4; margin:0; letter-spacing:2px; text-transform:uppercase; }
+        .gc-bodyhead span { font-size:13px; color:#6b7191; }
+
+        /* Grade premium */
+        .gc-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:16px; }
+        .gc-card { position:relative; aspect-ratio:1/1; border-radius:16px; overflow:hidden; background:#12131f; border:1px solid #1e2036; transition:border-color .25s ease, transform .25s ease; }
+        .gc-card:hover { border-color:#33375a; transform:translateY(-3px); }
+        .gc-card img { width:100%; height:100%; object-fit:cover; display:block; cursor:zoom-in; transition:transform .6s ease; }
+        .gc-card:hover img { transform:scale(1.08); }
+        .gc-card::before { content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(6,6,14,0.6) 0%, rgba(6,6,14,0) 42%); opacity:0; transition:opacity .28s ease; z-index:1; pointer-events:none; }
+        .gc-card:hover::before { opacity:1; }
+        .gc-dl { position:absolute; z-index:2; bottom:12px; right:12px; width:42px; height:42px; display:flex; align-items:center; justify-content:center; background:rgba(11,11,26,0.55); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.18); border-radius:11px; cursor:pointer; opacity:0.85; transition:opacity .2s ease, background .2s ease; }
+        .gc-dl:hover { opacity:1; background:#4a6cf7; border-color:#4a6cf7; }
+        .gc-dl svg { width:19px; height:19px; }
 
         /* Lightbox */
-        .gc-lb { position:fixed; inset:0; background:rgba(5,5,12,0.94); display:flex; align-items:center; justify-content:center; padding:32px; z-index:50; cursor:zoom-out; }
-        .gc-lb img { max-width:92%; max-height:92%; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.6); }
+        .gc-lb { position:fixed; inset:0; background:rgba(4,4,10,0.95); display:flex; align-items:center; justify-content:center; padding:32px; z-index:50; cursor:zoom-out; }
+        .gc-lb img { max-width:92%; max-height:92%; border-radius:12px; box-shadow:0 24px 70px rgba(0,0,0,0.7); }
 
-        .gc-empty { color:#7a7f9a; text-align:center; padding:80px 24px; }
-        .gc-foot { text-align:center; color:#454a63; font-size:12px; padding:0 24px 32px; }
-        .gc-foot b { color:#6b7394; font-weight:600; }
+        .gc-empty { color:#7a7f9a; text-align:center; padding:70px 24px; }
+        .gc-foot { text-align:center; color:#40455f; font-size:12px; padding:8px 24px 34px; letter-spacing:0.5px; }
+        .gc-foot b { color:#636a8c; font-weight:600; }
 
-        @media (max-width:600px){ .gc-hero{ height:40vh; min-height:260px; } }
+        @media (max-width:760px){
+          .gc-hero-wrap { flex-direction:column; text-align:center; gap:26px; min-height:auto; padding:48px 24px; }
+          .gc-hero-div { display:none; }
+          .gc-hero-logo img { max-height:104px; }
+          .gc-hero-info { display:flex; flex-direction:column; align-items:center; }
+        }
       `}</style>
+
+      {/* HERO com a marca (cor editável) */}
+      <header className="gc-hero" style={{ backgroundColor: cor }}>
+        <div className="gc-hero-wrap">
+          <div className="gc-hero-logo">
+            {estudio.logo ? (
+              <img src={estudio.logo} alt={nomeMarca} />
+            ) : (
+              <span className="txtmark" style={{ color: txt }}>{nomeMarca}</span>
+            )}
+          </div>
+
+          <div className="gc-hero-div" style={{ background: txt, opacity: 0.18 }} />
+
+          <div className="gc-hero-info">
+            {estudio.nome && (
+              <p className="gc-eyebrow" style={{ color: txt, opacity: 0.72 }}>{estudio.nome}</p>
+            )}
+            <h1 className="gc-title" style={{ color: txt }}>{titulo}</h1>
+            <p className="gc-count" style={{ color: txt, opacity: 0.66 }}>
+              {fotos.length} foto{fotos.length === 1 ? "" : "s"}
+            </p>
+          </div>
+        </div>
+      </header>
 
       {mensagem ? (
         <div className="gc-empty">{mensagem}</div>
       ) : fotos.length === 0 ? (
         <div className="gc-empty">Esta galeria ainda não tem fotos.</div>
       ) : (
-        <>
-          <div className="gc-hero">
-            <div className="gc-hero-bg" style={{ backgroundImage: `url(${capa})` }} />
-            <div className="gc-hero-overlay" />
-            <div className="gc-hero-inner">
-              <p className="gc-eyebrow">Sua galeria</p>
-              <h1 className="gc-title">{titulo}</h1>
-              <p className="gc-count">{fotos.length} foto{fotos.length === 1 ? "" : "s"}</p>
-            </div>
+        <div className="gc-body">
+          <div className="gc-bodyhead">
+            <h2>Todas as fotos</h2>
+            <span>{fotos.length} foto{fotos.length === 1 ? "" : "s"}</span>
           </div>
-
-          <div className="gc-body">
-            <div className="gc-grid">
-              {fotos.map((foto) => (
-                <div key={foto.url} className="gc-card">
-                  <img src={foto.url} alt="Foto" onClick={() => setAmpliada(foto.url)} />
-                  <button className="gc-dl" onClick={() => baixar(foto.url, foto.nome)} aria-label="Baixar foto" title="Baixar">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
+          <div className="gc-grid">
+            {fotos.map((foto) => (
+              <div key={foto.url} className="gc-card">
+                <img src={foto.url} alt="Foto" onClick={() => setAmpliada(foto.url)} />
+                <button className="gc-dl" onClick={() => baixar(foto.url, foto.nome)} aria-label="Baixar foto" title="Baixar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </button>
+              </div>
+            ))}
           </div>
-
-          <footer className="gc-foot">Feito com <b>Fotura</b></footer>
-        </>
+        </div>
       )}
+
+      <footer className="gc-foot">Feito com <b>Fotura</b></footer>
 
       {ampliada && (
         <div className="gc-lb" onClick={() => setAmpliada(null)}>
