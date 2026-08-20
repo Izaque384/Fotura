@@ -109,6 +109,20 @@ function UploadContent() {
 
   return (
     <div className="mf-shift" style={{ minHeight: "100vh", background: "linear-gradient(180deg, #0b0b1a 0%, #111126 100%)", display: "flex", flexDirection: "column" }}>
+      <style>{`
+        .up-enviar {
+          width: 100%; padding: 15px; font-size: 15px; font-weight: 700; color: #fff;
+          border: none; border-radius: 12px; cursor: pointer; font-family: inherit;
+          display: flex; align-items: center; justify-content: center; gap: 9px;
+          background: linear-gradient(90deg, #1196fc, #5d0dfa);
+          box-shadow: 0 10px 28px rgba(74,108,247,0.35);
+          transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+        }
+        .up-enviar:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(74,108,247,0.5); }
+        .up-enviar:active { transform: translateY(0); }
+        .up-enviar:disabled { cursor: default; filter: saturate(0.7) brightness(0.85); box-shadow: none; transform: none; }
+        .up-enviar svg { width: 18px; height: 18px; }
+      `}</style>
       <MenuFotografo />
 
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
@@ -143,12 +157,19 @@ function UploadContent() {
             style={{ width: "100%", fontSize: 13, color: "#a0a4b8", marginBottom: 24 }}
           />
 
-          <button
-            onClick={enviarFotos}
-            disabled={enviando}
-            style={{ width: "100%", padding: "13px", fontSize: 14, fontWeight: 600, color: "#fff", background: enviando ? "#3b5de0" : "#4a6cf7", border: "none", borderRadius: 10, cursor: enviando ? "default" : "pointer" }}
-          >
-            {enviando ? "Enviando..." : "Enviar fotos"}
+          <button className="up-enviar" onClick={enviarFotos} disabled={enviando}>
+            {enviando ? (
+              "Enviando..."
+            ) : (
+              <>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 15V5" />
+                  <path d="M8 9l4-4 4 4" />
+                  <path d="M5 19h14" />
+                </svg>
+                Enviar fotos
+              </>
+            )}
           </button>
 
           {mensagem && (
