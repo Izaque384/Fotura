@@ -29,6 +29,8 @@ export default function GaleriaClientePage() {
   const [estudio, setEstudio] = useState<{ nome: string | null; logo: string | null; cor: string | null }>({ nome: null, logo: null, cor: null });
   const [mensagem, setMensagem] = useState("");
   const [ampliada, setAmpliada] = useState<string | null>(null);
+  const [baixandoTudo, setBaixandoTudo] = useState(false);
+  const [progresso, setProgresso] = useState(0);
 
   useEffect(() => {
     async function carregar() {
@@ -69,8 +71,26 @@ export default function GaleriaClientePage() {
     const a = document.createElement("a");
     a.href = href;
     a.download = nome;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(href);
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 4000);
+  }
+
+  async function baixarTodas() {
+    if (baixandoTudo || fotos.length === 0) return;
+    setBaixandoTudo(true);
+    setProgresso(0);
+    for (let i = 0; i < fotos.length; i++) {
+      try {
+        await baixar(fotos[i].url, fotos[i].nome);
+      } catch {
+        // se uma foto falhar, segue para a próxima
+      }
+      setProgresso(i + 1);
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    setBaixandoTudo(false);
   }
 
   if (carregando) {
@@ -103,9 +123,14 @@ export default function GaleriaClientePage() {
 
         /* Cabeçalho da grade */
         .gc-body { max-width:1120px; margin:0 auto; padding:44px 32px 64px; }
-        .gc-bodyhead { display:flex; align-items:center; justify-content:space-between; padding-bottom:16px; margin-bottom:24px; border-bottom:1px solid #1c1e33; }
+        .gc-bodyhead { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; padding-bottom:16px; margin-bottom:24px; border-bottom:1px solid #1c1e33; }
         .gc-bodyhead h2 { font-size:14px; font-weight:600; color:#cdd2e4; margin:0; letter-spacing:2px; text-transform:uppercase; }
         .gc-bodyhead span { font-size:13px; color:#6b7191; }
+        .gc-head-right { display:flex; align-items:center; gap:16px; }
+        .gc-baixar-todas { display:inline-flex; align-items:center; gap:8px; padding:9px 16px; font-size:13px; font-weight:600; font-family:inherit; color:#eaf0ff; cursor:pointer; background:rgba(74,108,247,0.14); border:1px solid rgba(74,108,247,0.5); border-radius:10px; transition:background .18s ease, border-color .18s ease, transform .18s ease; }
+        .gc-baixar-todas:hover { background:#4a6cf7; border-color:#4a6cf7; color:#fff; transform:translateY(-1px); }
+        .gc-baixar-todas:disabled { cursor:default; opacity:0.85; transform:none; background:rgba(74,108,247,0.14); border-color:rgba(74,108,247,0.35); }
+        .gc-baixar-todas svg { width:16px; height:16px; }
 
         /* Grade premium */
         .gc-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:16px; }
@@ -168,7 +193,17 @@ export default function GaleriaClientePage() {
         <div className="gc-body">
           <div className="gc-bodyhead">
             <h2>Todas as fotos</h2>
-            <span>{fotos.length} foto{fotos.length === 1 ? "" : "s"}</span>
+            <div className="gc-head-right">
+              <span>{fotos.length} foto{fotos.length === 1 ? "" : "s"}</span>
+              <button className="gc-baixar-todas" onClick={baixarTodas} disabled={baixandoTudo}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                {baixandoTudo ? `Baixando ${progresso}/${fotos.length}` : "Baixar todas"}
+              </button>
+            </div>
           </div>
           <div className="gc-grid">
             {fotos.map((foto) => (
