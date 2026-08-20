@@ -116,7 +116,6 @@ export default function DashboardPage() {
         .dash-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #6f76a0; margin-bottom: 8px; }
         .dash-h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; color: #f5f6fb; margin: 0; }
         .dash-sub { font-size: 13px; color: #7a7f9a; margin-top: 6px; }
-        .dash-actions { display: flex; gap: 10px; flex-wrap: wrap; }
         .dash-btn {
           padding: 11px 18px; font-size: 14px; font-weight: 600; border-radius: 11px; cursor: pointer;
           color: #fff; border: none; font-family: inherit;
@@ -125,11 +124,6 @@ export default function DashboardPage() {
           transition: transform .15s ease, box-shadow .15s ease;
         }
         .dash-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(74,108,247,0.45); }
-        .dash-btn-ghost {
-          padding: 11px 18px; font-size: 14px; font-weight: 600; border-radius: 11px; cursor: pointer;
-          color: #cdd2e4; background: rgba(255,255,255,0.03); border: 1px solid #2a2d40; font-family: inherit;
-        }
-        .dash-btn-ghost:hover { border-color: #4a6cf7; color: #fff; }
 
         .dash-aviso {
           font-size: 13px; color: #8fe3b0; background: rgba(34,197,94,0.08);
@@ -224,14 +218,6 @@ export default function DashboardPage() {
             <div className="dash-eyebrow">Painel</div>
             <h1 className="dash-h1">Sua visão geral</h1>
             <div className="dash-sub">{email}</div>
-          </div>
-          <div className="dash-actions">
-            <button className="dash-btn-ghost" onClick={() => router.push("/configuracoes")}>
-              Configurações
-            </button>
-            <button className="dash-btn" onClick={() => router.push("/upload")}>
-              + Enviar fotos
-            </button>
           </div>
         </div>
 
@@ -334,7 +320,7 @@ export default function DashboardPage() {
                     <div className="gacoes">
                       <button className="gacao gacao-linha" onClick={() => copiarLink(g.slug)}>Copiar link</button>
                       <a className="gacao gacao-linha" href={`/g/${g.slug}`} target="_blank" rel="noreferrer">Ver</a>
-                      <a className="gacao gacao-azul" href={`/upload?galeria=${g.slug}`}>Enviar mais</a>
+                      <button className="gacao gacao-azul" onClick={() => router.push(`/upload?galeria=${g.slug}`)}>Enviar mais</button>
                     </div>
                   </div>
                 ))}
