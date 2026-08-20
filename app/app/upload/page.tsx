@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
 import MenuFotografo from "../MenuFotografo";
@@ -31,6 +31,8 @@ function UploadContent() {
   const [arquivos, setArquivos] = useState<FileList | null>(null);
   const [nomeGaleria, setNomeGaleria] = useState("");
   const [link, setLink] = useState("");
+
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const galeriaFixa = searchParams.get("galeria");
   const nomeTravado = Boolean(galeriaFixa);
@@ -122,6 +124,19 @@ function UploadContent() {
         .up-enviar:active { transform: translateY(0); }
         .up-enviar:disabled { cursor: default; filter: saturate(0.7) brightness(0.85); box-shadow: none; transform: none; }
         .up-enviar svg { width: 18px; height: 18px; }
+
+        .up-file {
+          width: 100%; display: flex; align-items: center; justify-content: center; gap: 9px;
+          padding: 13px; font-size: 14px; font-weight: 600; font-family: inherit;
+          color: #c3c7db; cursor: pointer;
+          background: rgba(74,108,247,0.06);
+          border: 1.5px dashed #34385a; border-radius: 12px;
+          transition: border-color .15s ease, background .15s ease, color .15s ease;
+        }
+        .up-file:hover { border-color: #4a6cf7; background: rgba(74,108,247,0.10); color: #fff; }
+        .up-file svg { width: 18px; height: 18px; color: #7ea2ff; }
+        .up-file-status { font-size: 12px; color: #7a7f9a; text-align: center; margin: 10px 0 24px; }
+        .up-file-status.tem { color: #8fe3b0; }
       `}</style>
       <MenuFotografo />
 
@@ -150,12 +165,26 @@ function UploadContent() {
             Fotos
           </label>
           <input
+            ref={inputRef}
             type="file"
             accept="image/*"
             multiple
             onChange={(e) => setArquivos(e.target.files)}
-            style={{ width: "100%", fontSize: 13, color: "#a0a4b8", marginBottom: 24 }}
+            style={{ display: "none" }}
           />
+          <button type="button" className="up-file" onClick={() => inputRef.current?.click()}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="16" rx="2.5" />
+              <circle cx="8.5" cy="10" r="1.7" />
+              <path d="M4 17l4.5-4.5 3.5 3 3-2.5L20 16.5" />
+            </svg>
+            Escolher fotos
+          </button>
+          <p className={"up-file-status" + (arquivos && arquivos.length > 0 ? " tem" : "")}>
+            {arquivos && arquivos.length > 0
+              ? `${arquivos.length} foto${arquivos.length === 1 ? "" : "s"} selecionada${arquivos.length === 1 ? "" : "s"}`
+              : "Nenhuma foto selecionada"}
+          </p>
 
           <button className="up-enviar" onClick={enviarFotos} disabled={enviando}>
             {enviando ? (
