@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "../../../lib/supabase-client";
 
@@ -28,7 +28,8 @@ export default function GaleriaClientePage() {
   const [fotos, setFotos] = useState<{ url: string; nome: string }[]>([]);
   const [estudio, setEstudio] = useState<{ nome: string | null; logo: string | null; cor: string | null }>({ nome: null, logo: null, cor: null });
   const [mensagem, setMensagem] = useState("");
-  const [ampliada, setAmpliada] = useState<string | null>(null);
+  const [aberta, setAberta] = useState<number | null>(null);
+  const toqueX = useRef<number | null>(null);
   const [baixandoTudo, setBaixandoTudo] = useState(false);
   const [progresso, setProgresso] = useState(0);
 
@@ -64,6 +65,17 @@ export default function GaleriaClientePage() {
     carregar();
   }, [slug, supabase]);
 
+  useEffect(() => {
+    if (aberta === null) return;
+    function aoTeclar(e: KeyboardEvent) {
+      if (e.key === "Escape") setAberta(null);
+      else if (e.key === "ArrowRight") setAberta((v) => (v === null ? null : (v + 1) % fotos.length));
+      else if (e.key === "ArrowLeft") setAberta((v) => (v === null ? null : (v - 1 + fotos.length) % fotos.length));
+    }
+    window.addEventListener("keydown", aoTeclar);
+    return () => window.removeEventListener("keydown", aoTeclar);
+  }, [aberta, fotos.length]);
+
   async function baixar(url: string, nome: string) {
     const resp = await fetch(url);
     const blob = await resp.blob();
@@ -91,6 +103,16 @@ export default function GaleriaClientePage() {
       await new Promise((r) => setTimeout(r, 400));
     }
     setBaixandoTudo(false);
+  }
+
+  function fecharLb() {
+    setAberta(null);
+  }
+  function proxima() {
+    setAberta((v) => (v === null ? null : (v + 1) % fotos.length));
+  }
+  function anterior() {
+    setAberta((v) => (v === null ? null : (v - 1 + fotos.length) % fotos.length));
   }
 
   if (carregando) {
@@ -146,7 +168,16 @@ export default function GaleriaClientePage() {
 
         /* Lightbox */
         .gc-lb { position:fixed; inset:0; background:rgba(4,4,10,0.95); display:flex; align-items:center; justify-content:center; padding:32px; z-index:50; cursor:zoom-out; }
-        .gc-lb img { max-width:92%; max-height:92%; border-radius:12px; box-shadow:0 24px 70px rgba(0,0,0,0.7); }
+        .gc-lb > img { max-width:88%; max-height:90%; border-radius:12px; box-shadow:0 24px 70px rgba(0,0,0,0.7); cursor:default; user-select:none; -webkit-user-select:none; }
+        .gc-lb-nav, .gc-lb-close { position:absolute; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; background:rgba(20,20,36,0.55); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.18); transition:background .18s ease, border-color .18s ease; }
+        .gc-lb-nav:hover, .gc-lb-close:hover { background:#4a6cf7; border-color:#4a6cf7; }
+        .gc-lb-nav { top:50%; transform:translateY(-50%); width:52px; height:52px; border-radius:50%; }
+        .gc-lb-nav svg { width:24px; height:24px; }
+        .gc-lb-prev { left:20px; }
+        .gc-lb-next { right:20px; }
+        .gc-lb-close { top:20px; right:20px; width:44px; height:44px; border-radius:12px; }
+        .gc-lb-close svg { width:20px; height:20px; }
+        .gc-lb-count { position:absolute; bottom:22px; left:50%; transform:translateX(-50%); font-size:13px; color:#dfe3f2; background:rgba(20,20,36,0.6); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px; letter-spacing:0.5px; cursor:default; }
 
         .gc-empty { color:#7a7f9a; text-align:center; padding:70px 24px; }
         .gc-foot { text-align:center; color:#40455f; font-size:12px; padding:8px 24px 34px; letter-spacing:0.5px; }
@@ -157,6 +188,11 @@ export default function GaleriaClientePage() {
           .gc-hero-div { display:none; }
           .gc-hero-logo img { max-height:104px; }
           .gc-hero-info { display:flex; flex-direction:column; align-items:center; }
+          .gc-lb-nav { width:44px; height:44px; }
+          .gc-lb-nav svg { width:20px; height:20px; }
+          .gc-lb-prev { left:8px; }
+          .gc-lb-next { right:8px; }
+          .gc-lb > img { max-width:94%; }
         }
       `}</style>
 
@@ -206,9 +242,9 @@ export default function GaleriaClientePage() {
             </div>
           </div>
           <div className="gc-grid">
-            {fotos.map((foto) => (
+            {fotos.map((foto, i) => (
               <div key={foto.url} className="gc-card">
-                <img src={foto.url} alt="Foto" onClick={() => setAmpliada(foto.url)} />
+                <img src={foto.url} alt="Foto" onClick={() => setAberta(i)} />
                 <button className="gc-dl" onClick={() => baixar(foto.url, foto.nome)} aria-label="Baixar foto" title="Baixar">
                   <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -224,9 +260,40 @@ export default function GaleriaClientePage() {
 
       <footer className="gc-foot">Feito com <b>Fotura</b></footer>
 
-      {ampliada && (
-        <div className="gc-lb" onClick={() => setAmpliada(null)}>
-          <img src={ampliada} alt="Foto ampliada" />
+      {aberta !== null && fotos[aberta] && (
+        <div className="gc-lb" onClick={fecharLb}>
+          <button className="gc-lb-close" onClick={(e) => { e.stopPropagation(); fecharLb(); }} aria-label="Fechar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
+          </button>
+
+          {fotos.length > 1 && (
+            <button className="gc-lb-nav gc-lb-prev" onClick={(e) => { e.stopPropagation(); anterior(); }} aria-label="Anterior">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+          )}
+
+          <img
+            src={fotos[aberta].url}
+            alt="Foto ampliada"
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => { toqueX.current = e.changedTouches[0].clientX; }}
+            onTouchEnd={(e) => {
+              if (toqueX.current === null) return;
+              const dx = e.changedTouches[0].clientX - toqueX.current;
+              toqueX.current = null;
+              if (Math.abs(dx) > 50) { if (dx < 0) proxima(); else anterior(); }
+            }}
+          />
+
+          {fotos.length > 1 && (
+            <button className="gc-lb-nav gc-lb-next" onClick={(e) => { e.stopPropagation(); proxima(); }} aria-label="Próxima">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
+          )}
+
+          {fotos.length > 1 && (
+            <div className="gc-lb-count" onClick={(e) => e.stopPropagation()}>{aberta + 1} / {fotos.length}</div>
+          )}
         </div>
       )}
     </div>
