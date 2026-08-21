@@ -19,7 +19,7 @@ export default function DashboardPage() {
   const [aviso, setAviso] = useState("");
   const [capas, setCapas] = useState<Record<string, string>>({});
   const [escolhendo, setEscolhendo] = useState<string | null>(null);
-  const [selecoes, setSelecoes] = useState<Record<string, { fotos: string[]; finalizada: boolean }>>({});
+  const [selecoes, setSelecoes] = useState<Record<string, { fotos: string[]; finalizada: boolean; comentarios: Record<string, string> }>>({});
   const [vendoSelecao, setVendoSelecao] = useState<string | null>(null);
   const [baixandoSel, setBaixandoSel] = useState(false);
   const [progSel, setProgSel] = useState(0);
@@ -90,10 +90,10 @@ export default function DashboardPage() {
       if (slugs.length > 0) {
         const { data: sels } = await supabase
           .from("selecoes")
-          .select("galeria, fotos, finalizada")
+          .select("galeria, fotos, finalizada, comentarios")
           .in("galeria", slugs);
         for (const s of sels ?? []) {
-          mapaSel[s.galeria] = { fotos: (s.fotos as string[]) ?? [], finalizada: Boolean(s.finalizada) };
+          mapaSel[s.galeria] = { fotos: (s.fotos as string[]) ?? [], finalizada: Boolean(s.finalizada), comentarios: (s.comentarios as Record<string, string>) ?? {} };
         }
       }
       setSelecoes(mapaSel);
@@ -150,6 +150,11 @@ export default function DashboardPage() {
 
   function qtdSel(slug: string): number {
     return selecoes[slug]?.fotos?.length ?? 0;
+  }
+
+  function qtdCom(slug: string): number {
+    const c = selecoes[slug]?.comentarios ?? {};
+    return Object.values(c).filter((t) => (t ?? "").trim() !== "").length;
   }
 
   async function baixarUma(url: string, nome: string) {
@@ -275,6 +280,7 @@ export default function DashboardPage() {
         .gqtd { font-size: 12px; color: #7a7f9a; margin-top: 2px; }
         .gsel-badge { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: rgba(74,108,247,0.15); color: #9fb0ff; vertical-align: middle; }
         .gsel-badge.fin { background: rgba(34,197,94,0.15); color: #8fe3b0; }
+        .gsel-badge.com { background: rgba(147,112,219,0.16); color: #c3aeff; }
         .gacoes { display: flex; gap: 8px; flex-wrap: wrap; }
         .gacao { padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 9px; cursor: pointer; text-decoration: none; display: inline-block; font-family: inherit; }
         .gacao-linha { background: transparent; color: #9fb0ff; border: 1px solid #34385a; }
@@ -305,6 +311,15 @@ export default function DashboardPage() {
         .cap-check { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; background: #4a6cf7; color: #fff; font-size: 13px; display: flex; align-items: center; justify-content: center; }
         .cap-foot { padding: 16px 22px; border-top: 1px solid #23233c; display: flex; justify-content: flex-end; }
         .sel-vazio { padding: 44px 22px; text-align: center; color: #7a7f9a; font-size: 14px; }
+        .sel-scroll { flex: 1; min-height: 0; overflow-y: auto; }
+        .sel-scroll .cap-grid { overflow: visible; }
+        .com-sec { padding: 8px 22px 22px; }
+        .com-sec-h { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #6f76a0; margin: 8px 0 12px; }
+        .com-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid #1e2036; }
+        .com-row img { width: 52px; height: 52px; border-radius: 9px; object-fit: cover; flex-shrink: 0; }
+        .com-body { min-width: 0; }
+        .com-txt { margin: 0; font-size: 14px; color: #e6e9f5; line-height: 1.45; }
+        .com-tag { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 600; color: #9fb0ff; background: rgba(74,108,247,0.14); padding: 2px 8px; border-radius: 999px; }
 
         .dash-vazio {
           text-align: center; padding: 48px 24px; border: 1px dashed #2a2d40; border-radius: 16px;
@@ -452,11 +467,14 @@ export default function DashboardPage() {
                               {qtdSel(g.slug)} selecionada{qtdSel(g.slug) === 1 ? "" : "s"}{selecoes[g.slug]?.finalizada ? " ✓" : ""}
                             </span>
                           )}
+                          {qtdCom(g.slug) > 0 && (
+                            <span className="gsel-badge com">{qtdCom(g.slug)} comentário{qtdCom(g.slug) === 1 ? "" : "s"}</span>
+                          )}
                         </div>
                       </div>
                     </div>
                     <div className="gacoes">
-                      {qtdSel(g.slug) > 0 && (
+                      {(qtdSel(g.slug) > 0 || qtdCom(g.slug) > 0) && (
                         <button className="gacao gacao-linha" onClick={() => setVendoSelecao(g.slug)}>Ver seleção</button>
                       )}
                       <button className="gacao gacao-linha" onClick={() => copiarLink(g.slug)}>Copiar link</button>
@@ -513,6 +531,7 @@ export default function DashboardPage() {
         const sel = selecoes[g.slug];
         const nomes = sel?.fotos ?? [];
         const fotosSel = g.fotos.filter((f) => nomes.includes(f.nome));
+        const coments = g.fotos.filter((f) => (sel?.comentarios?.[f.nome] ?? "").trim() !== "");
         return (
           <div className="cap-modal" onClick={() => setVendoSelecao(null)}>
             <div className="cap-panel" onClick={(e) => e.stopPropagation()}>
@@ -521,6 +540,7 @@ export default function DashboardPage() {
                   <div className="cap-title">Seleção do cliente</div>
                   <div className="cap-sub">
                     {titulo(g.slug)} · {fotosSel.length} foto{fotosSel.length === 1 ? "" : "s"}
+                    {coments.length > 0 ? ` · ${coments.length} comentário${coments.length === 1 ? "" : "s"}` : ""}
                     {sel?.finalizada ? " · finalizada" : " · em andamento"}
                   </div>
                 </div>
@@ -528,22 +548,42 @@ export default function DashboardPage() {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
                 </button>
               </div>
-              {fotosSel.length === 0 ? (
-                <div className="sel-vazio">O cliente ainda não escolheu nenhuma foto.</div>
+              {fotosSel.length === 0 && coments.length === 0 ? (
+                <div className="sel-vazio">O cliente ainda não escolheu nem comentou nenhuma foto.</div>
               ) : (
                 <>
-                  <div className="cap-grid">
-                    {fotosSel.map((f) => (
-                      <div className="cap-item" key={f.nome}>
-                        <img src={f.url} alt="Foto" loading="lazy" />
+                  <div className="sel-scroll">
+                    {fotosSel.length > 0 && (
+                      <div className="cap-grid">
+                        {fotosSel.map((f) => (
+                          <div className="cap-item" key={f.nome}>
+                            <img src={f.url} alt="Foto" loading="lazy" />
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
+                    {coments.length > 0 && (
+                      <div className="com-sec">
+                        <div className="com-sec-h">Comentários do cliente</div>
+                        {coments.map((f) => (
+                          <div className="com-row" key={f.nome}>
+                            <img src={f.url} alt="Foto" loading="lazy" />
+                            <div className="com-body">
+                              <p className="com-txt">{sel?.comentarios?.[f.nome]}</p>
+                              {nomes.includes(f.nome) && <span className="com-tag">selecionada</span>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="cap-foot">
-                    <button className="dash-btn" onClick={() => baixarSelecionadas(fotosSel)} disabled={baixandoSel}>
-                      {baixandoSel ? `Baixando ${progSel}/${fotosSel.length}` : `Baixar selecionadas (${fotosSel.length})`}
-                    </button>
-                  </div>
+                  {fotosSel.length > 0 && (
+                    <div className="cap-foot">
+                      <button className="dash-btn" onClick={() => baixarSelecionadas(fotosSel)} disabled={baixandoSel}>
+                        {baixandoSel ? `Baixando ${progSel}/${fotosSel.length}` : `Baixar selecionadas (${fotosSel.length})`}
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </div>

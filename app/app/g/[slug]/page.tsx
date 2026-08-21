@@ -34,6 +34,8 @@ export default function GaleriaClientePage() {
   const [progresso, setProgresso] = useState(0);
   const [selecionadas, setSelecionadas] = useState<string[]>([]);
   const [finalizada, setFinalizada] = useState(false);
+  const [comentarios, setComentarios] = useState<Record<string, string>>({});
+  const comentarioTimer = useRef<number | null>(null);
 
   useEffect(() => {
     async function carregar() {
@@ -65,12 +67,13 @@ export default function GaleriaClientePage() {
 
       const { data: sel } = await supabase
         .from("selecoes")
-        .select("fotos, finalizada")
+        .select("fotos, finalizada, comentarios")
         .eq("galeria", slug)
         .maybeSingle();
       if (sel) {
         setSelecionadas((sel.fotos as string[]) ?? []);
         setFinalizada(Boolean(sel.finalizada));
+        setComentarios((sel.comentarios as Record<string, string>) ?? {});
       }
 
       setCarregando(false);
@@ -81,6 +84,8 @@ export default function GaleriaClientePage() {
   useEffect(() => {
     if (aberta === null) return;
     function aoTeclar(e: KeyboardEvent) {
+      const alvo = e.target as HTMLElement | null;
+      if (alvo && (alvo.tagName === "TEXTAREA" || alvo.tagName === "INPUT")) return;
       if (e.key === "Escape") setAberta(null);
       else if (e.key === "ArrowRight") setAberta((v) => (v === null ? null : (v + 1) % fotos.length));
       else if (e.key === "ArrowLeft") setAberta((v) => (v === null ? null : (v - 1 + fotos.length) % fotos.length));
@@ -156,6 +161,19 @@ export default function GaleriaClientePage() {
     await salvarSelecao(selecionadas, true);
   }
 
+  function editarComentario(nome: string, texto: string) {
+    const novo = { ...comentarios, [nome]: texto };
+    setComentarios(novo);
+    if (comentarioTimer.current) clearTimeout(comentarioTimer.current);
+    comentarioTimer.current = window.setTimeout(() => {
+      supabase.from("selecoes").upsert({
+        galeria: slug,
+        comentarios: novo,
+        atualizado_em: new Date().toISOString(),
+      });
+    }, 700);
+  }
+
   if (carregando) {
     return <div className="gc-center">Carregando galeria…</div>;
   }
@@ -225,7 +243,14 @@ export default function GaleriaClientePage() {
         .gc-lb-next { right:20px; }
         .gc-lb-close { top:20px; right:20px; width:44px; height:44px; border-radius:12px; }
         .gc-lb-close svg { width:20px; height:20px; }
-        .gc-lb-count { position:absolute; bottom:22px; left:50%; transform:translateX(-50%); font-size:13px; color:#dfe3f2; background:rgba(20,20,36,0.6); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px; letter-spacing:0.5px; cursor:default; }
+        .gc-lb-count { position:absolute; top:20px; left:50%; transform:translateX(-50%); font-size:13px; color:#dfe3f2; background:rgba(20,20,36,0.6); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px; letter-spacing:0.5px; cursor:default; }
+        .gc-lb-coment { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:min(600px,92%); display:flex; background:rgba(20,20,36,0.72); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.14); border-radius:14px; padding:10px 14px; }
+        .gc-lb-input { flex:1; background:transparent; border:none; outline:none; color:#fff; font-family:inherit; font-size:14px; resize:none; line-height:1.45; max-height:90px; }
+        .gc-lb-input::placeholder { color:#9aa0c0; }
+        .gc-lb-comtxt { margin:0; color:#eaf0ff; font-size:14px; line-height:1.45; }
+        .gc-lb-comtxt.vazio { color:#8a90a8; font-style:italic; }
+        .gc-hascom { position:absolute; z-index:2; bottom:12px; left:12px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:rgba(74,108,247,0.9); border:1px solid rgba(255,255,255,0.25); }
+        .gc-hascom svg { width:15px; height:15px; }
 
         .gc-selhint { font-size:13px; color:#9aa0c0; margin:0 0 18px; padding:12px 16px; background:rgba(74,108,247,0.07); border:1px solid rgba(74,108,247,0.22); border-radius:12px; line-height:1.5; }
         .gc-selhint b { color:#cdd2e4; font-weight:600; }
@@ -332,6 +357,13 @@ export default function GaleriaClientePage() {
                       <line x1="12" y1="15" x2="12" y2="3" />
                     </svg>
                   </button>
+                  {(comentarios[foto.nome] ?? "").trim() !== "" && (
+                    <span className="gc-hascom" title="Você comentou nesta foto">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 20l1.4-4.2A8.5 8.5 0 1 1 21 11.5z" />
+                      </svg>
+                    </span>
+                  )}
                 </div>
               );
             })}
@@ -388,6 +420,25 @@ export default function GaleriaClientePage() {
           {fotos.length > 1 && (
             <div className="gc-lb-count" onClick={(e) => e.stopPropagation()}>{aberta + 1} / {fotos.length}</div>
           )}
+
+          <div className="gc-lb-coment" onClick={(e) => e.stopPropagation()}>
+            {finalizada ? (
+              (comentarios[fotos[aberta].nome] ?? "").trim() !== "" ? (
+                <p className="gc-lb-comtxt">{comentarios[fotos[aberta].nome]}</p>
+              ) : (
+                <p className="gc-lb-comtxt vazio">Sem comentário nesta foto.</p>
+              )
+            ) : (
+              <textarea
+                className="gc-lb-input"
+                rows={1}
+                placeholder="Escreva um comentário nesta foto…"
+                value={comentarios[fotos[aberta].nome] ?? ""}
+                onChange={(e) => editarComentario(fotos[aberta!].nome, e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+          </div>
         </div>
       )}
     </div>
