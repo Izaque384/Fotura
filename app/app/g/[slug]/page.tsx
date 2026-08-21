@@ -36,6 +36,7 @@ export default function GaleriaClientePage() {
   const [finalizada, setFinalizada] = useState(false);
   const [comentarios, setComentarios] = useState<Record<string, string>>({});
   const comentarioTimer = useRef<number | null>(null);
+  const [comSalvo, setComSalvo] = useState(false);
 
   useEffect(() => {
     async function carregar() {
@@ -127,17 +128,20 @@ export default function GaleriaClientePage() {
     setAberta(null);
   }
   function proxima() {
+    setComSalvo(false);
     setAberta((v) => (v === null ? null : (v + 1) % fotos.length));
   }
   function anterior() {
+    setComSalvo(false);
     setAberta((v) => (v === null ? null : (v - 1 + fotos.length) % fotos.length));
   }
 
-  async function salvarSelecao(nomes: string[], fin: boolean) {
+  async function salvarTudo(nomes: string[], fin: boolean, coments: Record<string, string>) {
     await supabase.from("selecoes").upsert({
       galeria: slug,
       fotos: nomes,
       finalizada: fin,
+      comentarios: coments,
       atualizado_em: new Date().toISOString(),
     });
   }
@@ -148,7 +152,7 @@ export default function GaleriaClientePage() {
       ? selecionadas.filter((n) => n !== nome)
       : [...selecionadas, nome];
     setSelecionadas(nomes);
-    salvarSelecao(nomes, false);
+    salvarTudo(nomes, false, comentarios);
   }
 
   async function finalizarSelecao() {
@@ -157,21 +161,26 @@ export default function GaleriaClientePage() {
       `Finalizar sua seleção de ${selecionadas.length} foto${selecionadas.length === 1 ? "" : "s"}? Depois não será possível alterar.`
     );
     if (!ok) return;
+    if (comentarioTimer.current) clearTimeout(comentarioTimer.current);
     setFinalizada(true);
-    await salvarSelecao(selecionadas, true);
+    await salvarTudo(selecionadas, true, comentarios);
   }
 
   function editarComentario(nome: string, texto: string) {
     const novo = { ...comentarios, [nome]: texto };
     setComentarios(novo);
+    setComSalvo(false);
     if (comentarioTimer.current) clearTimeout(comentarioTimer.current);
     comentarioTimer.current = window.setTimeout(() => {
-      supabase.from("selecoes").upsert({
-        galeria: slug,
-        comentarios: novo,
-        atualizado_em: new Date().toISOString(),
-      });
+      salvarTudo(selecionadas, finalizada, novo);
+      setComSalvo(true);
     }, 700);
+  }
+
+  function enviarComentario() {
+    if (comentarioTimer.current) clearTimeout(comentarioTimer.current);
+    salvarTudo(selecionadas, finalizada, comentarios);
+    setComSalvo(true);
   }
 
   if (carregando) {
@@ -244,9 +253,13 @@ export default function GaleriaClientePage() {
         .gc-lb-close { top:20px; right:20px; width:44px; height:44px; border-radius:12px; }
         .gc-lb-close svg { width:20px; height:20px; }
         .gc-lb-count { position:absolute; top:20px; left:50%; transform:translateX(-50%); font-size:13px; color:#dfe3f2; background:rgba(20,20,36,0.6); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px; letter-spacing:0.5px; cursor:default; }
-        .gc-lb-coment { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:min(600px,92%); display:flex; background:rgba(20,20,36,0.72); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.14); border-radius:14px; padding:10px 14px; }
+        .gc-lb-coment { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:min(600px,92%); display:flex; align-items:center; gap:8px; background:rgba(20,20,36,0.72); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.14); border-radius:14px; padding:8px 8px 8px 14px; }
         .gc-lb-input { flex:1; background:transparent; border:none; outline:none; color:#fff; font-family:inherit; font-size:14px; resize:none; line-height:1.45; max-height:90px; }
         .gc-lb-input::placeholder { color:#9aa0c0; }
+        .gc-lb-salvo { flex-shrink:0; font-size:12px; font-weight:600; color:#8fe3b0; white-space:nowrap; }
+        .gc-lb-send { flex-shrink:0; width:38px; height:38px; display:flex; align-items:center; justify-content:center; border:none; border-radius:10px; cursor:pointer; background:linear-gradient(90deg,#1196fc,#5d0dfa); transition:filter .15s ease; }
+        .gc-lb-send:hover { filter:brightness(1.1); }
+        .gc-lb-send svg { width:18px; height:18px; }
         .gc-lb-comtxt { margin:0; color:#eaf0ff; font-size:14px; line-height:1.45; }
         .gc-lb-comtxt.vazio { color:#8a90a8; font-style:italic; }
         .gc-hascom { position:absolute; z-index:2; bottom:12px; left:12px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:50%; background:rgba(74,108,247,0.9); border:1px solid rgba(255,255,255,0.25); }
@@ -429,14 +442,26 @@ export default function GaleriaClientePage() {
                 <p className="gc-lb-comtxt vazio">Sem comentário nesta foto.</p>
               )
             ) : (
-              <textarea
-                className="gc-lb-input"
-                rows={1}
-                placeholder="Escreva um comentário nesta foto…"
-                value={comentarios[fotos[aberta].nome] ?? ""}
-                onChange={(e) => editarComentario(fotos[aberta!].nome, e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-              />
+              <>
+                <textarea
+                  className="gc-lb-input"
+                  rows={1}
+                  placeholder="Comente nesta foto… (Enter envia, Shift+Enter quebra linha)"
+                  value={comentarios[fotos[aberta].nome] ?? ""}
+                  onChange={(e) => editarComentario(fotos[aberta!].nome, e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      enviarComentario();
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                {comSalvo && <span className="gc-lb-salvo">salvo ✓</span>}
+                <button className="gc-lb-send" onClick={enviarComentario} aria-label="Enviar comentário" title="Enviar comentário">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
+                </button>
+              </>
             )}
           </div>
         </div>
