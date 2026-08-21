@@ -32,6 +32,8 @@ export default function GaleriaClientePage() {
   const toqueX = useRef<number | null>(null);
   const [baixandoTudo, setBaixandoTudo] = useState(false);
   const [progresso, setProgresso] = useState(0);
+  const [selecionadas, setSelecionadas] = useState<string[]>([]);
+  const [finalizada, setFinalizada] = useState(false);
 
   useEffect(() => {
     async function carregar() {
@@ -60,6 +62,17 @@ export default function GaleriaClientePage() {
           return { url: urlData.publicUrl, nome: item.name };
         });
       setFotos(lista);
+
+      const { data: sel } = await supabase
+        .from("selecoes")
+        .select("fotos, finalizada")
+        .eq("galeria", slug)
+        .maybeSingle();
+      if (sel) {
+        setSelecionadas((sel.fotos as string[]) ?? []);
+        setFinalizada(Boolean(sel.finalizada));
+      }
+
       setCarregando(false);
     }
     carregar();
@@ -115,6 +128,34 @@ export default function GaleriaClientePage() {
     setAberta((v) => (v === null ? null : (v - 1 + fotos.length) % fotos.length));
   }
 
+  async function salvarSelecao(nomes: string[], fin: boolean) {
+    await supabase.from("selecoes").upsert({
+      galeria: slug,
+      fotos: nomes,
+      finalizada: fin,
+      atualizado_em: new Date().toISOString(),
+    });
+  }
+
+  function alternarSelecao(nome: string) {
+    if (finalizada) return;
+    const nomes = selecionadas.includes(nome)
+      ? selecionadas.filter((n) => n !== nome)
+      : [...selecionadas, nome];
+    setSelecionadas(nomes);
+    salvarSelecao(nomes, false);
+  }
+
+  async function finalizarSelecao() {
+    if (selecionadas.length === 0 || finalizada) return;
+    const ok = window.confirm(
+      `Finalizar sua seleção de ${selecionadas.length} foto${selecionadas.length === 1 ? "" : "s"}? Depois não será possível alterar.`
+    );
+    if (!ok) return;
+    setFinalizada(true);
+    await salvarSelecao(selecionadas, true);
+  }
+
   if (carregando) {
     return <div className="gc-center">Carregando galeria…</div>;
   }
@@ -144,7 +185,7 @@ export default function GaleriaClientePage() {
         .gc-count { font-size:14px; margin:18px 0 0; letter-spacing:0.5px; }
 
         /* Cabeçalho da grade */
-        .gc-body { max-width:1120px; margin:0 auto; padding:44px 32px 64px; }
+        .gc-body { max-width:1120px; margin:0 auto; padding:44px 32px 120px; }
         .gc-bodyhead { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; padding-bottom:16px; margin-bottom:24px; border-bottom:1px solid #1c1e33; }
         .gc-bodyhead h2 { font-size:14px; font-weight:600; color:#cdd2e4; margin:0; letter-spacing:2px; text-transform:uppercase; }
         .gc-bodyhead span { font-size:13px; color:#6b7191; }
@@ -166,6 +207,13 @@ export default function GaleriaClientePage() {
         .gc-dl:hover { opacity:1; background:#4a6cf7; border-color:#4a6cf7; }
         .gc-dl svg { width:19px; height:19px; }
 
+        .gc-sel { position:absolute; z-index:2; top:12px; left:12px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border-radius:50%; cursor:pointer; padding:0; background:rgba(11,11,26,0.5); backdrop-filter:blur(8px); border:1.5px solid rgba(255,255,255,0.55); opacity:0.92; transition:background .18s ease, border-color .18s ease, transform .18s ease; }
+        .gc-sel:hover { transform:scale(1.08); }
+        .gc-sel svg { width:18px; height:18px; }
+        .gc-sel.on { background:#4a6cf7; border-color:#4a6cf7; opacity:1; }
+        .gc-sel:disabled { cursor:default; }
+        .gc-card.sel { border-color:#4a6cf7; box-shadow:inset 0 0 0 2px #4a6cf7; }
+
         /* Lightbox */
         .gc-lb { position:fixed; inset:0; background:rgba(4,4,10,0.95); display:flex; align-items:center; justify-content:center; padding:32px; z-index:50; cursor:zoom-out; }
         .gc-lb > img { max-width:88%; max-height:90%; border-radius:12px; box-shadow:0 24px 70px rgba(0,0,0,0.7); cursor:default; user-select:none; -webkit-user-select:none; }
@@ -178,6 +226,16 @@ export default function GaleriaClientePage() {
         .gc-lb-close { top:20px; right:20px; width:44px; height:44px; border-radius:12px; }
         .gc-lb-close svg { width:20px; height:20px; }
         .gc-lb-count { position:absolute; bottom:22px; left:50%; transform:translateX(-50%); font-size:13px; color:#dfe3f2; background:rgba(20,20,36,0.6); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.14); padding:6px 14px; border-radius:999px; letter-spacing:0.5px; cursor:default; }
+
+        .gc-selhint { font-size:13px; color:#9aa0c0; margin:0 0 18px; padding:12px 16px; background:rgba(74,108,247,0.07); border:1px solid rgba(74,108,247,0.22); border-radius:12px; line-height:1.5; }
+        .gc-selhint b { color:#cdd2e4; font-weight:600; }
+        .gc-selbar { position:fixed; z-index:45; left:50%; bottom:22px; transform:translateX(-50%); max-width:92vw; display:flex; align-items:center; gap:14px; padding:10px 12px 10px 22px; background:rgba(16,16,34,0.92); backdrop-filter:blur(12px); border:1px solid #2a2d4a; border-radius:999px; box-shadow:0 16px 44px rgba(0,0,0,0.55); }
+        .gc-selbar-n { font-size:14px; font-weight:600; color:#f0f0f5; white-space:nowrap; }
+        .gc-selbar-btn { padding:10px 20px; font-size:14px; font-weight:700; color:#fff; border:none; border-radius:999px; cursor:pointer; font-family:inherit; background:linear-gradient(90deg,#1196fc,#5d0dfa); box-shadow:0 8px 22px rgba(74,108,247,0.4); transition:filter .15s ease; }
+        .gc-selbar-btn:hover { filter:brightness(1.08); }
+        .gc-selbar-done { padding:12px 22px; color:#8fe3b0; }
+        .gc-selbar-done svg { width:18px; height:18px; }
+        .gc-selbar-done span { font-size:14px; font-weight:600; color:#8fe3b0; white-space:nowrap; }
 
         .gc-empty { color:#7a7f9a; text-align:center; padding:70px 24px; }
         .gc-foot { text-align:center; color:#40455f; font-size:12px; padding:8px 24px 34px; letter-spacing:0.5px; }
@@ -241,20 +299,56 @@ export default function GaleriaClientePage() {
               </button>
             </div>
           </div>
+
+          {!finalizada && (
+            <p className="gc-selhint">
+              Toque no <b>círculo</b> das fotos que você quer e clique em <b>Finalizar seleção</b> quando terminar.
+            </p>
+          )}
+
           <div className="gc-grid">
-            {fotos.map((foto, i) => (
-              <div key={foto.url} className="gc-card">
-                <img src={foto.url} alt="Foto" onClick={() => setAberta(i)} />
-                <button className="gc-dl" onClick={() => baixar(foto.url, foto.nome)} aria-label="Baixar foto" title="Baixar">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                </button>
-              </div>
-            ))}
+            {fotos.map((foto, i) => {
+              const sel = selecionadas.includes(foto.nome);
+              return (
+                <div key={foto.url} className={"gc-card" + (sel ? " sel" : "")}>
+                  <img src={foto.url} alt="Foto" onClick={() => setAberta(i)} />
+                  <button
+                    className={"gc-sel" + (sel ? " on" : "")}
+                    onClick={() => alternarSelecao(foto.nome)}
+                    disabled={finalizada}
+                    aria-label={sel ? "Remover da seleção" : "Selecionar"}
+                    title={sel ? "Selecionada" : "Selecionar"}
+                  >
+                    {sel && (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="5 12 10 17 19 7" />
+                      </svg>
+                    )}
+                  </button>
+                  <button className="gc-dl" onClick={() => baixar(foto.url, foto.nome)} aria-label="Baixar foto" title="Baixar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                  </button>
+                </div>
+              );
+            })}
           </div>
+        </div>
+      )}
+
+      {fotos.length > 0 && !finalizada && selecionadas.length > 0 && (
+        <div className="gc-selbar">
+          <span className="gc-selbar-n">{selecionadas.length} selecionada{selecionadas.length === 1 ? "" : "s"}</span>
+          <button className="gc-selbar-btn" onClick={finalizarSelecao}>Finalizar seleção</button>
+        </div>
+      )}
+      {fotos.length > 0 && finalizada && (
+        <div className="gc-selbar gc-selbar-done">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="5 12 10 17 19 7" /></svg>
+          <span>Seleção enviada — {selecionadas.length} foto{selecionadas.length === 1 ? "" : "s"} escolhida{selecionadas.length === 1 ? "" : "s"}</span>
         </div>
       )}
 
