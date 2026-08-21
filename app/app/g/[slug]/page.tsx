@@ -35,8 +35,7 @@ export default function GaleriaClientePage() {
   const [selecionadas, setSelecionadas] = useState<string[]>([]);
   const [finalizada, setFinalizada] = useState(false);
   const [comentarios, setComentarios] = useState<Record<string, string>>({});
-  const comentarioTimer = useRef<number | null>(null);
-  const [comSalvo, setComSalvo] = useState(false);
+  const [rascunho, setRascunho] = useState("");
 
   useEffect(() => {
     async function carregar() {
@@ -127,12 +126,17 @@ export default function GaleriaClientePage() {
   function fecharLb() {
     setAberta(null);
   }
+  useEffect(() => {
+    if (aberta === null) return;
+    const f = fotos[aberta];
+    setRascunho(f ? (comentarios[f.nome] ?? "") : "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aberta]);
+
   function proxima() {
-    setComSalvo(false);
     setAberta((v) => (v === null ? null : (v + 1) % fotos.length));
   }
   function anterior() {
-    setComSalvo(false);
     setAberta((v) => (v === null ? null : (v - 1 + fotos.length) % fotos.length));
   }
 
@@ -161,26 +165,17 @@ export default function GaleriaClientePage() {
       `Finalizar sua seleção de ${selecionadas.length} foto${selecionadas.length === 1 ? "" : "s"}? Depois não será possível alterar.`
     );
     if (!ok) return;
-    if (comentarioTimer.current) clearTimeout(comentarioTimer.current);
     setFinalizada(true);
     await salvarTudo(selecionadas, true, comentarios);
   }
 
-  function editarComentario(nome: string, texto: string) {
-    const novo = { ...comentarios, [nome]: texto };
-    setComentarios(novo);
-    setComSalvo(false);
-    if (comentarioTimer.current) clearTimeout(comentarioTimer.current);
-    comentarioTimer.current = window.setTimeout(() => {
-      salvarTudo(selecionadas, finalizada, novo);
-      setComSalvo(true);
-    }, 700);
-  }
-
   function enviarComentario() {
-    if (comentarioTimer.current) clearTimeout(comentarioTimer.current);
-    salvarTudo(selecionadas, finalizada, comentarios);
-    setComSalvo(true);
+    if (aberta === null) return;
+    const nome = fotos[aberta].nome;
+    const novo = { ...comentarios, [nome]: rascunho.trim() };
+    setComentarios(novo);
+    salvarTudo(selecionadas, finalizada, novo);
+    setAberta(null);
   }
 
   if (carregando) {
@@ -447,8 +442,8 @@ export default function GaleriaClientePage() {
                   className="gc-lb-input"
                   rows={1}
                   placeholder="Comente nesta foto… (Enter envia, Shift+Enter quebra linha)"
-                  value={comentarios[fotos[aberta].nome] ?? ""}
-                  onChange={(e) => editarComentario(fotos[aberta!].nome, e.target.value)}
+                  value={rascunho}
+                  onChange={(e) => setRascunho(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -457,7 +452,6 @@ export default function GaleriaClientePage() {
                   }}
                   onClick={(e) => e.stopPropagation()}
                 />
-                {comSalvo && <span className="gc-lb-salvo">salvo ✓</span>}
                 <button className="gc-lb-send" onClick={enviarComentario} aria-label="Enviar comentário" title="Enviar comentário">
                   <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
                 </button>

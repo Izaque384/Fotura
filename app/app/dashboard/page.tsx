@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [escolhendo, setEscolhendo] = useState<string | null>(null);
   const [selecoes, setSelecoes] = useState<Record<string, { fotos: string[]; finalizada: boolean; comentarios: Record<string, string> }>>({});
   const [vendoSelecao, setVendoSelecao] = useState<string | null>(null);
+  const [menuAberto, setMenuAberto] = useState<string | null>(null);
   const [baixandoSel, setBaixandoSel] = useState(false);
   const [progSel, setProgSel] = useState(0);
 
@@ -186,6 +187,37 @@ export default function DashboardPage() {
     setBaixandoSel(false);
   }
 
+  async function excluirGaleria(g: Galeria) {
+    const ok = window.confirm(
+      `Excluir a galeria "${titulo(g.slug)}" e todas as suas ${g.qtd} foto${g.qtd === 1 ? "" : "s"}? Esta ação não pode ser desfeita.`
+    );
+    if (!ok) return;
+    const caminhos = g.fotos.map((f) => `${g.slug}/${f.nome}`);
+    if (caminhos.length > 0) {
+      const { error } = await supabase.storage.from("fotos").remove(caminhos);
+      if (error) {
+        setAviso("Erro ao excluir as fotos: " + error.message);
+        return;
+      }
+    }
+    await supabase.from("selecoes").delete().eq("galeria", g.slug);
+    if (capas[g.slug]) {
+      const novasCapas = { ...capas };
+      delete novasCapas[g.slug];
+      setCapas(novasCapas);
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user) {
+        await supabase.from("perfis").upsert({
+          id: userData.user.id,
+          capas: novasCapas,
+          atualizado_em: new Date().toISOString(),
+        });
+      }
+    }
+    setGalerias((prev) => prev.filter((x) => x.slug !== g.slug));
+    setAviso(`Galeria "${titulo(g.slug)}" excluída.`);
+  }
+
   const totalGalerias = galerias.length;
   const totalFotos = galerias.reduce((s, g) => s + g.qtd, 0);
   const media = totalGalerias > 0 ? Math.round(totalFotos / totalGalerias) : 0;
@@ -282,6 +314,17 @@ export default function DashboardPage() {
         .gsel-badge.fin { background: rgba(34,197,94,0.15); color: #8fe3b0; }
         .gsel-badge.com { background: rgba(147,112,219,0.16); color: #c3aeff; }
         .gacoes { display: flex; gap: 8px; flex-wrap: wrap; }
+        .gmenu-wrap { position: relative; }
+        .gmenu-btn { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 9px; background: rgba(255,255,255,0.03); border: 1px solid #2a2d40; color: #cdd2e4; cursor: pointer; }
+        .gmenu-btn:hover { border-color: #4a6cf7; color: #fff; }
+        .gmenu-btn svg { width: 20px; height: 20px; }
+        .gmenu-overlay { position: fixed; inset: 0; z-index: 40; }
+        .gmenu { position: absolute; z-index: 41; right: 0; top: 46px; min-width: 194px; background: #16162c; border: 1px solid #2a2d44; border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,0.5); padding: 6px; }
+        .gmenu button { display: block; width: 100%; text-align: left; padding: 10px 12px; font-size: 14px; color: #cdd2e4; background: none; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; }
+        .gmenu button:hover { background: #1e1e38; color: #fff; }
+        .gmenu button.perigo { color: #ff8f8f; }
+        .gmenu button.perigo:hover { background: rgba(239,68,68,0.12); }
+        .gmenu-sep { height: 1px; background: #23233c; margin: 6px 4px; }
         .gacao { padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 9px; cursor: pointer; text-decoration: none; display: inline-block; font-family: inherit; }
         .gacao-linha { background: transparent; color: #9fb0ff; border: 1px solid #34385a; }
         .gacao-linha:hover { border-color: #4a6cf7; color: #fff; }
@@ -474,12 +517,26 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <div className="gacoes">
-                      {(qtdSel(g.slug) > 0 || qtdCom(g.slug) > 0) && (
-                        <button className="gacao gacao-linha" onClick={() => setVendoSelecao(g.slug)}>Ver seleção</button>
-                      )}
-                      <button className="gacao gacao-linha" onClick={() => copiarLink(g.slug)}>Copiar link</button>
-                      <a className="gacao gacao-linha" href={`/g/${g.slug}`} target="_blank" rel="noreferrer">Ver</a>
-                      <button className="gacao gacao-azul" onClick={() => router.push(`/upload?galeria=${g.slug}`)}>Enviar mais</button>
+                      <div className="gmenu-wrap">
+                        <button className="gmenu-btn" onClick={() => setMenuAberto(menuAberto === g.slug ? null : g.slug)} aria-label="Opções da galeria" title="Opções">
+                          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
+                        </button>
+                        {menuAberto === g.slug && (
+                          <>
+                            <div className="gmenu-overlay" onClick={() => setMenuAberto(null)} />
+                            <div className="gmenu">
+                              {(qtdSel(g.slug) > 0 || qtdCom(g.slug) > 0) && (
+                                <button onClick={() => { setMenuAberto(null); setVendoSelecao(g.slug); }}>Ver seleção</button>
+                              )}
+                              <button onClick={() => { setMenuAberto(null); copiarLink(g.slug); }}>Copiar link</button>
+                              <button onClick={() => { setMenuAberto(null); window.open(`/g/${g.slug}`, "_blank"); }}>Abrir galeria</button>
+                              <button onClick={() => { setMenuAberto(null); router.push(`/upload?galeria=${g.slug}`); }}>Enviar mais fotos</button>
+                              <div className="gmenu-sep" />
+                              <button className="perigo" onClick={() => { setMenuAberto(null); excluirGaleria(g); }}>Excluir galeria</button>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
