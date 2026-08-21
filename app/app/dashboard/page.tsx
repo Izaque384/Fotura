@@ -86,7 +86,7 @@ export default function DashboardPage() {
       }
 
       const slugs = lista.map((g) => g.slug);
-      const mapaSel: Record<string, { fotos: string[]; finalizada: boolean }> = {};
+      const mapaSel: Record<string, { fotos: string[]; finalizada: boolean; comentarios: Record<string, string> }> = {};
       if (slugs.length > 0) {
         const { data: sels } = await supabase
           .from("selecoes")
