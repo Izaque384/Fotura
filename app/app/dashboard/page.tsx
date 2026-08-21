@@ -19,6 +19,10 @@ export default function DashboardPage() {
   const [aviso, setAviso] = useState("");
   const [capas, setCapas] = useState<Record<string, string>>({});
   const [escolhendo, setEscolhendo] = useState<string | null>(null);
+  const [selecoes, setSelecoes] = useState<Record<string, { fotos: string[]; finalizada: boolean }>>({});
+  const [vendoSelecao, setVendoSelecao] = useState<string | null>(null);
+  const [baixandoSel, setBaixandoSel] = useState(false);
+  const [progSel, setProgSel] = useState(0);
 
   useEffect(() => {
     async function carregar() {
@@ -81,6 +85,19 @@ export default function DashboardPage() {
         meses.push({ label: nome, qtd: contagemMes.get(chave) ?? 0 });
       }
 
+      const slugs = lista.map((g) => g.slug);
+      const mapaSel: Record<string, { fotos: string[]; finalizada: boolean }> = {};
+      if (slugs.length > 0) {
+        const { data: sels } = await supabase
+          .from("selecoes")
+          .select("galeria, fotos, finalizada")
+          .in("galeria", slugs);
+        for (const s of sels ?? []) {
+          mapaSel[s.galeria] = { fotos: (s.fotos as string[]) ?? [], finalizada: Boolean(s.finalizada) };
+        }
+      }
+      setSelecoes(mapaSel);
+
       setGalerias(lista);
       setPorMes(meses);
       setCarregando(false);
@@ -129,6 +146,39 @@ export default function DashboardPage() {
 
   if (carregando) {
     return <div className="dash-load">Carregando painel...</div>;
+  }
+
+  function qtdSel(slug: string): number {
+    return selecoes[slug]?.fotos?.length ?? 0;
+  }
+
+  async function baixarUma(url: string, nome: string) {
+    const resp = await fetch(url);
+    const blob = await resp.blob();
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = nome;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 4000);
+  }
+
+  async function baixarSelecionadas(fotosSel: Foto[]) {
+    if (baixandoSel || fotosSel.length === 0) return;
+    setBaixandoSel(true);
+    setProgSel(0);
+    for (let i = 0; i < fotosSel.length; i++) {
+      try {
+        await baixarUma(fotosSel[i].url, fotosSel[i].nome);
+      } catch {
+        // segue para a próxima
+      }
+      setProgSel(i + 1);
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    setBaixandoSel(false);
   }
 
   const totalGalerias = galerias.length;
@@ -223,6 +273,8 @@ export default function DashboardPage() {
         .grow:hover { border-color: #33364f; background: rgba(255,255,255,0.035); }
         .gname { font-size: 15px; font-weight: 600; color: #f0f0f5; }
         .gqtd { font-size: 12px; color: #7a7f9a; margin-top: 2px; }
+        .gsel-badge { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: rgba(74,108,247,0.15); color: #9fb0ff; vertical-align: middle; }
+        .gsel-badge.fin { background: rgba(34,197,94,0.15); color: #8fe3b0; }
         .gacoes { display: flex; gap: 8px; flex-wrap: wrap; }
         .gacao { padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 9px; cursor: pointer; text-decoration: none; display: inline-block; font-family: inherit; }
         .gacao-linha { background: transparent; color: #9fb0ff; border: 1px solid #34385a; }
@@ -251,6 +303,8 @@ export default function DashboardPage() {
         .cap-item:hover img { transform: scale(1.06); }
         .cap-item.ativa { border-color: #4a6cf7; }
         .cap-check { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; background: #4a6cf7; color: #fff; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+        .cap-foot { padding: 16px 22px; border-top: 1px solid #23233c; display: flex; justify-content: flex-end; }
+        .sel-vazio { padding: 44px 22px; text-align: center; color: #7a7f9a; font-size: 14px; }
 
         .dash-vazio {
           text-align: center; padding: 48px 24px; border: 1px dashed #2a2d40; border-radius: 16px;
@@ -391,10 +445,20 @@ export default function DashboardPage() {
                       </button>
                       <div>
                         <div className="gname">{titulo(g.slug)}</div>
-                        <div className="gqtd">{g.qtd} foto{g.qtd === 1 ? "" : "s"}</div>
+                        <div className="gqtd">
+                          {g.qtd} foto{g.qtd === 1 ? "" : "s"}
+                          {qtdSel(g.slug) > 0 && (
+                            <span className={"gsel-badge" + (selecoes[g.slug]?.finalizada ? " fin" : "")}>
+                              {qtdSel(g.slug)} selecionada{qtdSel(g.slug) === 1 ? "" : "s"}{selecoes[g.slug]?.finalizada ? " ✓" : ""}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="gacoes">
+                      {qtdSel(g.slug) > 0 && (
+                        <button className="gacao gacao-linha" onClick={() => setVendoSelecao(g.slug)}>Ver seleção</button>
+                      )}
                       <button className="gacao gacao-linha" onClick={() => copiarLink(g.slug)}>Copiar link</button>
                       <a className="gacao gacao-linha" href={`/g/${g.slug}`} target="_blank" rel="noreferrer">Ver</a>
                       <button className="gacao gacao-azul" onClick={() => router.push(`/upload?galeria=${g.slug}`)}>Enviar mais</button>
@@ -438,6 +502,50 @@ export default function DashboardPage() {
                   );
                 })}
               </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {vendoSelecao && (() => {
+        const g = galerias.find((x) => x.slug === vendoSelecao);
+        if (!g) return null;
+        const sel = selecoes[g.slug];
+        const nomes = sel?.fotos ?? [];
+        const fotosSel = g.fotos.filter((f) => nomes.includes(f.nome));
+        return (
+          <div className="cap-modal" onClick={() => setVendoSelecao(null)}>
+            <div className="cap-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="cap-head">
+                <div>
+                  <div className="cap-title">Seleção do cliente</div>
+                  <div className="cap-sub">
+                    {titulo(g.slug)} · {fotosSel.length} foto{fotosSel.length === 1 ? "" : "s"}
+                    {sel?.finalizada ? " · finalizada" : " · em andamento"}
+                  </div>
+                </div>
+                <button className="cap-x" onClick={() => setVendoSelecao(null)} aria-label="Fechar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
+                </button>
+              </div>
+              {fotosSel.length === 0 ? (
+                <div className="sel-vazio">O cliente ainda não escolheu nenhuma foto.</div>
+              ) : (
+                <>
+                  <div className="cap-grid">
+                    {fotosSel.map((f) => (
+                      <div className="cap-item" key={f.nome}>
+                        <img src={f.url} alt="Foto" loading="lazy" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="cap-foot">
+                    <button className="dash-btn" onClick={() => baixarSelecionadas(fotosSel)} disabled={baixandoSel}>
+                      {baixandoSel ? `Baixando ${progSel}/${fotosSel.length}` : `Baixar selecionadas (${fotosSel.length})`}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         );
