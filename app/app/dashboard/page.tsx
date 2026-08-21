@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
 import MenuFotografo from "../MenuFotografo";
 
-type Galeria = { slug: string; qtd: number };
+type Foto = { nome: string; url: string };
+type Galeria = { slug: string; qtd: number; fotos: Foto[] };
 type Mes = { label: string; qtd: number };
 
 export default function DashboardPage() {
@@ -16,6 +17,8 @@ export default function DashboardPage() {
   const [galerias, setGalerias] = useState<Galeria[]>([]);
   const [porMes, setPorMes] = useState<Mes[]>([]);
   const [aviso, setAviso] = useState("");
+  const [capas, setCapas] = useState<Record<string, string>>({});
+  const [escolhendo, setEscolhendo] = useState<string | null>(null);
 
   useEffect(() => {
     async function carregar() {
@@ -25,6 +28,13 @@ export default function DashboardPage() {
         return;
       }
       setEmail(userData.user.email ?? null);
+
+      const { data: perfil } = await supabase
+        .from("perfis")
+        .select("capas")
+        .eq("id", userData.user.id)
+        .maybeSingle();
+      setCapas((perfil?.capas as Record<string, string>) ?? {});
 
       const { data, error } = await supabase.storage.from("fotos").list("", {
         limit: 200,
@@ -47,7 +57,11 @@ export default function DashboardPage() {
           .from("fotos")
           .list(pasta.name, { limit: 200 });
         const arquivos = (fotos ?? []).filter((f) => f.id !== null);
-        lista.push({ slug: pasta.name, qtd: arquivos.length });
+        const fotosLista: Foto[] = arquivos.map((f) => ({
+          nome: f.name,
+          url: supabase.storage.from("fotos").getPublicUrl(`${pasta.name}/${f.name}`).data.publicUrl,
+        }));
+        lista.push({ slug: pasta.name, qtd: arquivos.length, fotos: fotosLista });
 
         for (const f of arquivos) {
           if (!f.created_at) continue;
@@ -87,6 +101,30 @@ export default function DashboardPage() {
   function titulo(slug: string) {
     const t = slug.replace(/-/g, " ");
     return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+
+  function capaDaGaleria(g: Galeria): string | null {
+    const nome = capas[g.slug];
+    if (nome) {
+      const achou = g.fotos.find((f) => f.nome === nome);
+      if (achou) return achou.url;
+    }
+    return g.fotos[0]?.url ?? null;
+  }
+
+  async function definirCapa(slug: string, nome: string) {
+    const novas = { ...capas, [slug]: nome };
+    setCapas(novas);
+    setEscolhendo(null);
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return;
+    const { error } = await supabase.from("perfis").upsert({
+      id: userData.user.id,
+      capas: novas,
+      atualizado_em: new Date().toISOString(),
+    });
+    if (error) setAviso("Não consegui salvar a capa: " + error.message);
+    else setAviso("Capa atualizada!");
   }
 
   if (carregando) {
@@ -190,6 +228,29 @@ export default function DashboardPage() {
         .gacao-linha { background: transparent; color: #9fb0ff; border: 1px solid #34385a; }
         .gacao-linha:hover { border-color: #4a6cf7; color: #fff; }
         .gacao-azul { background: linear-gradient(90deg, #1196fc, #5d0dfa); color: #fff; border: none; }
+
+        .ginfo { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .gcapa { position: relative; width: 60px; height: 60px; flex-shrink: 0; border-radius: 11px; overflow: hidden; border: 1px solid #2a2d40; background: #0f0f1a; cursor: pointer; padding: 0; }
+        .gcapa:disabled { cursor: default; }
+        .gcapa img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .gcapa-vazia { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 10px; color: #5a5f78; }
+        .gcapa-hover { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; background: rgba(11,11,26,0.55); opacity: 0; transition: opacity .15s ease; }
+        .gcapa:hover .gcapa-hover { opacity: 1; }
+
+        .cap-modal { position: fixed; inset: 0; z-index: 60; background: rgba(4,4,10,0.8); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 24px; }
+        .cap-panel { width: 100%; max-width: 720px; max-height: 82vh; display: flex; flex-direction: column; background: #12122a; border: 1px solid #262642; border-radius: 18px; overflow: hidden; }
+        .cap-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; border-bottom: 1px solid #23233c; }
+        .cap-title { font-size: 16px; font-weight: 700; color: #f5f6fb; }
+        .cap-sub { font-size: 13px; color: #7a7f9a; margin-top: 2px; }
+        .cap-x { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); border: 1px solid #2a2d40; color: #cdd2e4; cursor: pointer; flex-shrink: 0; }
+        .cap-x:hover { border-color: #4a6cf7; color: #fff; }
+        .cap-x svg { width: 18px; height: 18px; }
+        .cap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; padding: 20px 22px; overflow-y: auto; }
+        .cap-item { position: relative; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; border: 2px solid transparent; cursor: pointer; padding: 0; background: #0f0f1a; }
+        .cap-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s ease; }
+        .cap-item:hover img { transform: scale(1.06); }
+        .cap-item.ativa { border-color: #4a6cf7; }
+        .cap-check { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; background: #4a6cf7; color: #fff; font-size: 13px; display: flex; align-items: center; justify-content: center; }
 
         .dash-vazio {
           text-align: center; padding: 48px 24px; border: 1px dashed #2a2d40; border-radius: 16px;
@@ -313,9 +374,25 @@ export default function DashboardPage() {
               <div className="glist">
                 {galerias.map((g) => (
                   <div className="grow" key={g.slug}>
-                    <div>
-                      <div className="gname">{titulo(g.slug)}</div>
-                      <div className="gqtd">{g.qtd} foto{g.qtd === 1 ? "" : "s"}</div>
+                    <div className="ginfo">
+                      <button
+                        className="gcapa"
+                        onClick={() => g.qtd > 0 && setEscolhendo(g.slug)}
+                        disabled={g.qtd === 0}
+                        title={g.qtd > 0 ? "Trocar capa" : "Sem fotos"}
+                        aria-label="Trocar capa"
+                      >
+                        {capaDaGaleria(g) ? (
+                          <img src={capaDaGaleria(g) as string} alt="Capa" />
+                        ) : (
+                          <span className="gcapa-vazia">sem foto</span>
+                        )}
+                        {g.qtd > 0 && <span className="gcapa-hover">Trocar</span>}
+                      </button>
+                      <div>
+                        <div className="gname">{titulo(g.slug)}</div>
+                        <div className="gqtd">{g.qtd} foto{g.qtd === 1 ? "" : "s"}</div>
+                      </div>
                     </div>
                     <div className="gacoes">
                       <button className="gacao gacao-linha" onClick={() => copiarLink(g.slug)}>Copiar link</button>
@@ -329,6 +406,42 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+
+      {escolhendo && (() => {
+        const g = galerias.find((x) => x.slug === escolhendo);
+        if (!g) return null;
+        return (
+          <div className="cap-modal" onClick={() => setEscolhendo(null)}>
+            <div className="cap-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="cap-head">
+                <div>
+                  <div className="cap-title">Escolher capa</div>
+                  <div className="cap-sub">{titulo(g.slug)}</div>
+                </div>
+                <button className="cap-x" onClick={() => setEscolhendo(null)} aria-label="Fechar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
+                </button>
+              </div>
+              <div className="cap-grid">
+                {g.fotos.map((f) => {
+                  const ativa = capas[g.slug] === f.nome;
+                  return (
+                    <button
+                      key={f.nome}
+                      className={"cap-item" + (ativa ? " ativa" : "")}
+                      onClick={() => definirCapa(g.slug, f.nome)}
+                      title="Definir como capa"
+                    >
+                      <img src={f.url} alt="Foto" loading="lazy" />
+                      {ativa && <span className="cap-check">✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
