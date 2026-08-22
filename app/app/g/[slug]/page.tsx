@@ -36,6 +36,7 @@ export default function GaleriaClientePage() {
   const [finalizada, setFinalizada] = useState(false);
   const [comentarios, setComentarios] = useState<Record<string, string>>({});
   const [rascunho, setRascunho] = useState("");
+  const [prova, setProva] = useState(false);
 
   useEffect(() => {
     async function carregar() {
@@ -45,6 +46,14 @@ export default function GaleriaClientePage() {
         .limit(1)
         .maybeSingle();
       if (perfil) setEstudio({ nome: perfil.nome_estudio ?? null, logo: perfil.logo_url ?? null, cor: perfil.cor_hero ?? null });
+
+      const { data: cfgRow } = await supabase
+        .from("perfis")
+        .select("configs")
+        .limit(1)
+        .maybeSingle();
+      const cfg = ((cfgRow?.configs as Record<string, { prova?: boolean }> | null) ?? {});
+      setProva(Boolean(cfg[slug]?.prova));
 
       const { data, error } = await supabase.storage.from("fotos").list(slug, {
         limit: 500,
@@ -178,6 +187,13 @@ export default function GaleriaClientePage() {
     setAberta(null);
   }
 
+  function marcaCss(): string {
+    const t = (estudio.nome || "PROVA").toUpperCase();
+    const esc = t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='260' height='180'><text x='16' y='104' fill='rgba(255,255,255,0.30)' font-size='22' font-weight='700' font-family='Arial, Helvetica, sans-serif' transform='rotate(-28 130 92)'>${esc}</text></svg>`;
+    return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  }
+
   if (carregando) {
     return <div className="gc-center">Carregando galeria…</div>;
   }
@@ -238,7 +254,9 @@ export default function GaleriaClientePage() {
 
         /* Lightbox */
         .gc-lb { position:fixed; inset:0; background:rgba(4,4,10,0.95); display:flex; align-items:center; justify-content:center; padding:32px; z-index:50; cursor:zoom-out; }
-        .gc-lb > img { max-width:88%; max-height:90%; border-radius:12px; box-shadow:0 24px 70px rgba(0,0,0,0.7); cursor:default; user-select:none; -webkit-user-select:none; }
+        .gc-lb-imgwrap { position:relative; display:inline-block; line-height:0; max-width:90vw; max-height:88vh; }
+        .gc-lb-imgwrap img { display:block; max-width:90vw; max-height:88vh; width:auto; height:auto; border-radius:12px; box-shadow:0 24px 70px rgba(0,0,0,0.7); cursor:default; user-select:none; -webkit-user-select:none; }
+        .gc-wm { position:absolute; inset:0; background-repeat:repeat; pointer-events:none; border-radius:12px; }
         .gc-lb-nav, .gc-lb-close { position:absolute; display:flex; align-items:center; justify-content:center; color:#fff; cursor:pointer; background:rgba(20,20,36,0.55); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.18); transition:background .18s ease, border-color .18s ease; }
         .gc-lb-nav:hover, .gc-lb-close:hover { background:#4a6cf7; border-color:#4a6cf7; }
         .gc-lb-nav { top:50%; transform:translateY(-50%); width:52px; height:52px; border-radius:50%; }
@@ -283,7 +301,7 @@ export default function GaleriaClientePage() {
           .gc-lb-nav svg { width:20px; height:20px; }
           .gc-lb-prev { left:8px; }
           .gc-lb-next { right:8px; }
-          .gc-lb > img { max-width:94%; }
+          .gc-lb-imgwrap img { max-width:94vw; }
         }
       `}</style>
 
@@ -322,14 +340,16 @@ export default function GaleriaClientePage() {
             <h2>Todas as fotos</h2>
             <div className="gc-head-right">
               <span>{fotos.length} foto{fotos.length === 1 ? "" : "s"}</span>
-              <button className="gc-baixar-todas" onClick={baixarTodas} disabled={baixandoTudo}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                {baixandoTudo ? `Baixando ${progresso}/${fotos.length}` : "Baixar todas"}
-              </button>
+              {!prova && (
+                <button className="gc-baixar-todas" onClick={baixarTodas} disabled={baixandoTudo}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  {baixandoTudo ? `Baixando ${progresso}/${fotos.length}` : "Baixar todas"}
+                </button>
+              )}
             </div>
           </div>
 
@@ -345,6 +365,7 @@ export default function GaleriaClientePage() {
               return (
                 <div key={foto.url} className={"gc-card" + (sel ? " sel" : "")}>
                   <img src={foto.url} alt="Foto" onClick={() => setAberta(i)} />
+                  {prova && <div className="gc-wm" style={{ backgroundImage: marcaCss() }} />}
                   <button
                     className={"gc-sel" + (sel ? " on" : "")}
                     onClick={() => alternarSelecao(foto.nome)}
@@ -358,13 +379,15 @@ export default function GaleriaClientePage() {
                       </svg>
                     )}
                   </button>
-                  <button className="gc-dl" onClick={() => baixar(foto.url, foto.nome)} aria-label="Baixar foto" title="Baixar">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                  </button>
+                  {!prova && (
+                    <button className="gc-dl" onClick={() => baixar(foto.url, foto.nome)} aria-label="Baixar foto" title="Baixar">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                    </button>
+                  )}
                   {(comentarios[foto.nome] ?? "").trim() !== "" && (
                     <span className="gc-hascom" title="Você comentou nesta foto">
                       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -406,18 +429,20 @@ export default function GaleriaClientePage() {
             </button>
           )}
 
-          <img
-            src={fotos[aberta].url}
-            alt="Foto ampliada"
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={(e) => { toqueX.current = e.changedTouches[0].clientX; }}
-            onTouchEnd={(e) => {
-              if (toqueX.current === null) return;
-              const dx = e.changedTouches[0].clientX - toqueX.current;
-              toqueX.current = null;
-              if (Math.abs(dx) > 50) { if (dx < 0) proxima(); else anterior(); }
-            }}
-          />
+          <div className="gc-lb-imgwrap" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={fotos[aberta].url}
+              alt="Foto ampliada"
+              onTouchStart={(e) => { toqueX.current = e.changedTouches[0].clientX; }}
+              onTouchEnd={(e) => {
+                if (toqueX.current === null) return;
+                const dx = e.changedTouches[0].clientX - toqueX.current;
+                toqueX.current = null;
+                if (Math.abs(dx) > 50) { if (dx < 0) proxima(); else anterior(); }
+              }}
+            />
+            {prova && <div className="gc-wm" style={{ backgroundImage: marcaCss() }} />}
+          </div>
 
           {fotos.length > 1 && (
             <button className="gc-lb-nav gc-lb-next" onClick={(e) => { e.stopPropagation(); proxima(); }} aria-label="Próxima">

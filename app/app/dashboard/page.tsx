@@ -18,6 +18,7 @@ export default function DashboardPage() {
   const [porMes, setPorMes] = useState<Mes[]>([]);
   const [aviso, setAviso] = useState("");
   const [capas, setCapas] = useState<Record<string, string>>({});
+  const [configs, setConfigs] = useState<Record<string, { prova?: boolean }>>({});
   const [escolhendo, setEscolhendo] = useState<string | null>(null);
   const [selecoes, setSelecoes] = useState<Record<string, { fotos: string[]; finalizada: boolean; comentarios: Record<string, string> }>>({});
   const [vendoSelecao, setVendoSelecao] = useState<string | null>(null);
@@ -40,6 +41,13 @@ export default function DashboardPage() {
         .eq("id", userData.user.id)
         .maybeSingle();
       setCapas((perfil?.capas as Record<string, string>) ?? {});
+
+      const { data: cfgRow } = await supabase
+        .from("perfis")
+        .select("configs")
+        .eq("id", userData.user.id)
+        .maybeSingle();
+      setConfigs((cfgRow?.configs as Record<string, { prova?: boolean }>) ?? {});
 
       const { data, error } = await supabase.storage.from("fotos").list("", {
         limit: 200,
@@ -185,6 +193,21 @@ export default function DashboardPage() {
       await new Promise((r) => setTimeout(r, 400));
     }
     setBaixandoSel(false);
+  }
+
+  async function alternarMarca(slug: string) {
+    const atual = Boolean(configs[slug]?.prova);
+    const novos = { ...configs, [slug]: { ...(configs[slug] ?? {}), prova: !atual } };
+    setConfigs(novos);
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return;
+    const { error } = await supabase.from("perfis").upsert({
+      id: userData.user.id,
+      configs: novos,
+      atualizado_em: new Date().toISOString(),
+    });
+    if (error) setAviso("Não consegui alterar a marca-d'água: " + error.message);
+    else setAviso(!atual ? "Marca-d'água ligada nesta galeria." : "Marca-d'água desligada nesta galeria.");
   }
 
   async function excluirGaleria(g: Galeria) {
@@ -531,6 +554,9 @@ export default function DashboardPage() {
                               <button onClick={() => { setMenuAberto(null); copiarLink(g.slug); }}>Copiar link</button>
                               <button onClick={() => { setMenuAberto(null); window.open(`/g/${g.slug}`, "_blank"); }}>Abrir galeria</button>
                               <button onClick={() => { setMenuAberto(null); router.push(`/upload?galeria=${g.slug}`); }}>Enviar mais fotos</button>
+                              <button onClick={() => { setMenuAberto(null); alternarMarca(g.slug); }}>
+                                {configs[g.slug]?.prova ? "Marca-d'água: ligada ✓" : "Marca-d'água: desligada"}
+                              </button>
                               <div className="gmenu-sep" />
                               <button className="perigo" onClick={() => { setMenuAberto(null); excluirGaleria(g); }}>Excluir galeria</button>
                             </div>
