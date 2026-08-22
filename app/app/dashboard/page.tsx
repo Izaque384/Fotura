@@ -23,9 +23,11 @@ export default function DashboardPage() {
   const [fLimite, setFLimite] = useState("");
   const [fPrazo, setFPrazo] = useState("");
   const [escolhendo, setEscolhendo] = useState<string | null>(null);
-  const [selecoes, setSelecoes] = useState<Record<string, { fotos: string[]; finalizada: boolean; comentarios: Record<string, string> }>>({});
+  const [selecoes, setSelecoes] = useState<Record<string, { fotos: string[]; finalizada: boolean; comentarios: Record<string, string>; atualizadoEm?: string }>>({});
   const [vendoSelecao, setVendoSelecao] = useState<string | null>(null);
   const [menuAberto, setMenuAberto] = useState<string | null>(null);
+  const [notifVistoEm, setNotifVistoEm] = useState<string | null>(null);
+  const [sinoAberto, setSinoAberto] = useState(false);
   const [baixandoSel, setBaixandoSel] = useState(false);
   const [progSel, setProgSel] = useState(0);
 
@@ -51,6 +53,13 @@ export default function DashboardPage() {
         .eq("id", userData.user.id)
         .maybeSingle();
       setConfigs((cfgRow?.configs as Record<string, { prova?: boolean; limite?: number; prazo?: string | null }>) ?? {});
+
+      const { data: notifRow } = await supabase
+        .from("perfis")
+        .select("notif_visto_em")
+        .eq("id", userData.user.id)
+        .maybeSingle();
+      setNotifVistoEm((notifRow?.notif_visto_em as string | null) ?? null);
 
       const { data, error } = await supabase.storage.from("fotos").list("", {
         limit: 200,
@@ -98,14 +107,14 @@ export default function DashboardPage() {
       }
 
       const slugs = lista.map((g) => g.slug);
-      const mapaSel: Record<string, { fotos: string[]; finalizada: boolean; comentarios: Record<string, string> }> = {};
+      const mapaSel: Record<string, { fotos: string[]; finalizada: boolean; comentarios: Record<string, string>; atualizadoEm?: string }> = {};
       if (slugs.length > 0) {
         const { data: sels } = await supabase
           .from("selecoes")
-          .select("galeria, fotos, finalizada, comentarios")
+          .select("galeria, fotos, finalizada, comentarios, atualizado_em")
           .in("galeria", slugs);
         for (const s of sels ?? []) {
-          mapaSel[s.galeria] = { fotos: (s.fotos as string[]) ?? [], finalizada: Boolean(s.finalizada), comentarios: (s.comentarios as Record<string, string>) ?? {} };
+          mapaSel[s.galeria] = { fotos: (s.fotos as string[]) ?? [], finalizada: Boolean(s.finalizada), comentarios: (s.comentarios as Record<string, string>) ?? {}, atualizadoEm: (s.atualizado_em as string) ?? undefined };
         }
       }
       setSelecoes(mapaSel);
@@ -162,6 +171,34 @@ export default function DashboardPage() {
 
   function qtdSel(slug: string): number {
     return selecoes[slug]?.fotos?.length ?? 0;
+  }
+
+  function tempoRel(iso?: string) {
+    if (!iso) return "";
+    const diff = Date.now() - new Date(iso).getTime();
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return "agora";
+    if (min < 60) return `há ${min} min`;
+    const h = Math.floor(min / 60);
+    if (h < 24) return `há ${h}h`;
+    const d = Math.floor(h / 24);
+    if (d < 7) return `há ${d} dia${d === 1 ? "" : "s"}`;
+    return new Date(iso).toLocaleDateString("pt-BR");
+  }
+
+  async function abrirSino() {
+    const abrir = !sinoAberto;
+    setSinoAberto(abrir);
+    if (!abrir) return;
+    const temNova = galerias.some((g) => {
+      const s = selecoes[g.slug];
+      return s?.finalizada && (!notifVistoEm || (s.atualizadoEm && s.atualizadoEm > notifVistoEm));
+    });
+    if (!temNova) return;
+    const agora = new Date().toISOString();
+    setNotifVistoEm(agora);
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user) await supabase.from("perfis").upsert({ id: userData.user.id, notif_visto_em: agora });
   }
 
   function qtdCom(slug: string): number {
@@ -269,6 +306,11 @@ export default function DashboardPage() {
   }
 
   const totalGalerias = galerias.length;
+  const notificacoes = galerias
+    .filter((g) => selecoes[g.slug]?.finalizada)
+    .map((g) => ({ slug: g.slug, nome: titulo(g.slug), qtd: selecoes[g.slug].fotos.length, quando: selecoes[g.slug].atualizadoEm }))
+    .sort((a, b) => (b.quando ?? "").localeCompare(a.quando ?? ""));
+  const naoLidas = notificacoes.filter((n) => !notifVistoEm || (n.quando && n.quando > notifVistoEm)).length;
   const totalFotos = galerias.reduce((s, g) => s + g.qtd, 0);
   const media = totalGalerias > 0 ? Math.round(totalFotos / totalGalerias) : 0;
   const maior = galerias.reduce<Galeria | null>((m, g) => (!m || g.qtd > m.qtd ? g : m), null);
@@ -437,6 +479,21 @@ export default function DashboardPage() {
           text-align: center; padding: 48px 24px; border: 1px dashed #2a2d40; border-radius: 16px;
           background: rgba(255,255,255,0.02);
         }
+        .sino-wrap { position: relative; }
+        .sino-btn { position: relative; width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border: 1px solid #2a2d40; color: #cdd2e4; cursor: pointer; }
+        .sino-btn:hover { border-color: #4a6cf7; color: #fff; }
+        .sino-btn svg { width: 20px; height: 20px; }
+        .sino-badge { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+        .sino-overlay { position: fixed; inset: 0; z-index: 40; }
+        .sino-menu { position: absolute; z-index: 41; right: 0; top: 50px; width: 320px; max-width: 86vw; max-height: 60vh; overflow-y: auto; background: #16162c; border: 1px solid #2a2d44; border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,0.5); padding: 8px; }
+        .sino-h { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #6f76a0; padding: 6px 10px 10px; }
+        .sino-item { display: flex; gap: 10px; align-items: flex-start; width: 100%; text-align: left; padding: 10px; border: none; background: none; border-radius: 10px; cursor: pointer; font-family: inherit; }
+        .sino-item:hover { background: #1e1e38; }
+        .sino-dot { width: 8px; height: 8px; border-radius: 50%; background: #4a6cf7; margin-top: 6px; flex-shrink: 0; }
+        .sino-dot.lida { background: transparent; border: 1px solid #3a3f5a; }
+        .sino-item-t { display: block; font-size: 14px; color: #f0f0f5; font-weight: 600; }
+        .sino-item-d { display: block; font-size: 12px; color: #8a90a8; margin-top: 2px; }
+        .sino-vazio { padding: 20px 12px; text-align: center; color: #7a7f9a; font-size: 13px; }
         .dash-vazio-t { font-size: 16px; font-weight: 600; color: #f0f0f5; margin-bottom: 6px; }
         .dash-vazio-d { font-size: 13px; color: #7a7f9a; margin-bottom: 20px; }
 
@@ -460,6 +517,36 @@ export default function DashboardPage() {
             <div className="dash-eyebrow">Painel</div>
             <h1 className="dash-h1">Sua visão geral</h1>
             <div className="dash-sub">{email}</div>
+          </div>
+          <div className="sino-wrap">
+            <button className="sino-btn" onClick={abrirSino} aria-label="Notificações" title="Notificações">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
+              {naoLidas > 0 && <span className="sino-badge">{naoLidas}</span>}
+            </button>
+            {sinoAberto && (
+              <>
+                <div className="sino-overlay" onClick={() => setSinoAberto(false)} />
+                <div className="sino-menu">
+                  <div className="sino-h">Seleções finalizadas</div>
+                  {notificacoes.length === 0 ? (
+                    <div className="sino-vazio">Nenhuma seleção finalizada ainda.</div>
+                  ) : (
+                    notificacoes.map((n) => {
+                      const naoLida = !notifVistoEm || (n.quando && n.quando > notifVistoEm);
+                      return (
+                        <button key={n.slug} className="sino-item" onClick={() => { setSinoAberto(false); setVendoSelecao(n.slug); }}>
+                          <span className={"sino-dot" + (naoLida ? "" : " lida")} />
+                          <span>
+                            <span className="sino-item-t">{n.nome}</span>
+                            <span className="sino-item-d">{n.qtd} foto{n.qtd === 1 ? "" : "s"} selecionada{n.qtd === 1 ? "" : "s"} · {tempoRel(n.quando)}</span>
+                          </span>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
