@@ -196,7 +196,7 @@ function UploadContent() {
                   <path d="M8 9l4-4 4 4" />
                   <path d="M5 19h14" />
                 </svg>
-                Enviar fotos
+                {nomeTravado ? "Enviar fotos" : "Criar nova galeria"}
               </>
             )}
           </button>

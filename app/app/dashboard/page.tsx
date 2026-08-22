@@ -331,6 +331,8 @@ export default function DashboardPage() {
           transition: border-color .15s ease, background .15s ease;
         }
         .grow:hover { border-color: #33364f; background: rgba(255,255,255,0.035); }
+        .grow.prova { border-color: rgba(34,197,94,0.32); box-shadow: inset 3px 0 0 rgba(34,197,94,0.7); }
+        .grow.entrega { border-color: rgba(239,68,68,0.26); box-shadow: inset 3px 0 0 rgba(239,68,68,0.6); }
         .gname { font-size: 15px; font-weight: 600; color: #f0f0f5; }
         .gqtd { font-size: 12px; color: #7a7f9a; margin-top: 2px; }
         .gsel-badge { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: rgba(74,108,247,0.15); color: #9fb0ff; vertical-align: middle; }
@@ -342,11 +344,17 @@ export default function DashboardPage() {
         .gmenu-btn:hover { border-color: #4a6cf7; color: #fff; }
         .gmenu-btn svg { width: 20px; height: 20px; }
         .gmenu-overlay { position: fixed; inset: 0; z-index: 40; }
-        .gmenu { position: absolute; z-index: 41; right: 0; top: 46px; min-width: 194px; background: #16162c; border: 1px solid #2a2d44; border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,0.5); padding: 6px; }
+        .gmenu { position: absolute; z-index: 41; right: 0; top: 50%; transform: translateY(-50%); min-width: 200px; background: #16162c; border: 1px solid #2a2d44; border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,0.5); padding: 6px; }
         .gmenu button { display: block; width: 100%; text-align: left; padding: 10px 12px; font-size: 14px; color: #cdd2e4; background: none; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; }
         .gmenu button:hover { background: #1e1e38; color: #fff; }
         .gmenu button.perigo { color: #ff8f8f; }
         .gmenu button.perigo:hover { background: rgba(239,68,68,0.12); }
+        .gmenu button.grad { background: linear-gradient(90deg,#1196fc,#5d0dfa); color: #fff; }
+        .gmenu button.grad:hover { background: linear-gradient(90deg,#1196fc,#5d0dfa); filter: brightness(1.08); color: #fff; }
+        .gmenu button.on { background: rgba(34,197,94,0.14); color: #8fe3b0; }
+        .gmenu button.on:hover { background: rgba(34,197,94,0.2); color: #a7f0c3; }
+        .gmenu button.off { background: rgba(239,68,68,0.12); color: #ff9d9d; }
+        .gmenu button.off:hover { background: rgba(239,68,68,0.18); color: #ffb3b3; }
         .gmenu-sep { height: 1px; background: #23233c; margin: 6px 4px; }
         .gacao { padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 9px; cursor: pointer; text-decoration: none; display: inline-block; font-family: inherit; }
         .gacao-linha { background: transparent; color: #9fb0ff; border: 1px solid #34385a; }
@@ -454,7 +462,7 @@ export default function DashboardPage() {
           <div className="dash-vazio">
             <div className="dash-vazio-t">Seu painel está pronto pra começar</div>
             <div className="dash-vazio-d">Crie sua primeira galeria e os números aparecem aqui.</div>
-            <button className="dash-btn" onClick={() => router.push("/upload")}>+ Enviar fotos</button>
+            <button className="dash-btn" onClick={() => router.push("/upload")}>Criar nova galeria</button>
           </div>
         ) : (
           <>
@@ -508,7 +516,7 @@ export default function DashboardPage() {
               </div>
               <div className="glist">
                 {galerias.map((g) => (
-                  <div className="grow" key={g.slug}>
+                  <div className={"grow " + (configs[g.slug]?.prova ? "prova" : "entrega")} key={g.slug}>
                     <div className="ginfo">
                       <button
                         className="gcapa"
@@ -552,9 +560,9 @@ export default function DashboardPage() {
                                 <button onClick={() => { setMenuAberto(null); setVendoSelecao(g.slug); }}>Ver seleção</button>
                               )}
                               <button onClick={() => { setMenuAberto(null); copiarLink(g.slug); }}>Copiar link</button>
-                              <button onClick={() => { setMenuAberto(null); window.open(`/g/${g.slug}`, "_blank"); }}>Abrir galeria</button>
+                              <button className="grad" onClick={() => { setMenuAberto(null); window.open(`/g/${g.slug}`, "_blank"); }}>Ver galeria</button>
                               <button onClick={() => { setMenuAberto(null); router.push(`/upload?galeria=${g.slug}`); }}>Enviar mais fotos</button>
-                              <button onClick={() => { setMenuAberto(null); alternarMarca(g.slug); }}>
+                              <button className={configs[g.slug]?.prova ? "on" : "off"} onClick={() => { setMenuAberto(null); alternarMarca(g.slug); }}>
                                 {configs[g.slug]?.prova ? "Marca-d'água: ligada ✓" : "Marca-d'água: desligada"}
                               </button>
                               <div className="gmenu-sep" />
