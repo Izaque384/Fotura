@@ -326,13 +326,17 @@ export default function DashboardPage() {
         /* Lista de galerias */
         .glist { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
         .grow {
+          position: relative;
           display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
           background: rgba(255,255,255,0.02); border: 1px solid #23233c; border-radius: 13px; padding: 16px 18px;
           transition: border-color .15s ease, background .15s ease;
         }
         .grow:hover { border-color: #33364f; background: rgba(255,255,255,0.035); }
-        .grow.prova { border-color: rgba(34,197,94,0.32); box-shadow: inset 3px 0 0 rgba(34,197,94,0.7); }
-        .grow.entrega { border-color: rgba(239,68,68,0.26); box-shadow: inset 3px 0 0 rgba(239,68,68,0.6); }
+        .grow::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 13px 0 0 13px; }
+        .grow.prova::before { background: linear-gradient(180deg, #f6c445, #ee8b2b); }
+        .grow.entrega::before { background: linear-gradient(180deg, #1196fc, #5d0dfa); }
+        .grow.prova { border-color: rgba(240,160,50,0.30); }
+        .grow.entrega { border-color: rgba(74,108,247,0.30); }
         .gname { font-size: 15px; font-weight: 600; color: #f0f0f5; }
         .gqtd { font-size: 12px; color: #7a7f9a; margin-top: 2px; }
         .gsel-badge { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: rgba(74,108,247,0.15); color: #9fb0ff; vertical-align: middle; }
@@ -349,8 +353,7 @@ export default function DashboardPage() {
         .gmenu button:hover { background: #1e1e38; color: #fff; }
         .gmenu button.perigo { color: #ff8f8f; }
         .gmenu button.perigo:hover { background: rgba(239,68,68,0.12); }
-        .gmenu button.grad { background: linear-gradient(90deg,#1196fc,#5d0dfa); color: #fff; }
-        .gmenu button.grad:hover { background: linear-gradient(90deg,#1196fc,#5d0dfa); filter: brightness(1.08); color: #fff; }
+        .gmenu .grad-txt { background-image: linear-gradient(90deg,#1196fc,#5d0dfa); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; font-weight: 700; }
         .gmenu button.on { background: rgba(34,197,94,0.14); color: #8fe3b0; }
         .gmenu button.on:hover { background: rgba(34,197,94,0.2); color: #a7f0c3; }
         .gmenu button.off { background: rgba(239,68,68,0.12); color: #ff9d9d; }
@@ -560,7 +563,7 @@ export default function DashboardPage() {
                                 <button onClick={() => { setMenuAberto(null); setVendoSelecao(g.slug); }}>Ver seleção</button>
                               )}
                               <button onClick={() => { setMenuAberto(null); copiarLink(g.slug); }}>Copiar link</button>
-                              <button className="grad" onClick={() => { setMenuAberto(null); window.open(`/g/${g.slug}`, "_blank"); }}>Ver galeria</button>
+                              <button onClick={() => { setMenuAberto(null); window.open(`/g/${g.slug}`, "_blank"); }}><span className="grad-txt">Ver galeria</span></button>
                               <button onClick={() => { setMenuAberto(null); router.push(`/upload?galeria=${g.slug}`); }}>Enviar mais fotos</button>
                               <button className={configs[g.slug]?.prova ? "on" : "off"} onClick={() => { setMenuAberto(null); alternarMarca(g.slug); }}>
                                 {configs[g.slug]?.prova ? "Marca-d'água: ligada ✓" : "Marca-d'água: desligada"}
