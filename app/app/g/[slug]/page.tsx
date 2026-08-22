@@ -37,6 +37,10 @@ export default function GaleriaClientePage() {
   const [comentarios, setComentarios] = useState<Record<string, string>>({});
   const [rascunho, setRascunho] = useState("");
   const [prova, setProva] = useState(false);
+  const [limite, setLimite] = useState(0);
+  const [prazoTexto, setPrazoTexto] = useState<string | null>(null);
+  const [encerrada, setEncerrada] = useState(false);
+  const [limiteMsg, setLimiteMsg] = useState("");
 
   useEffect(() => {
     async function carregar() {
@@ -52,8 +56,13 @@ export default function GaleriaClientePage() {
         .select("configs")
         .limit(1)
         .maybeSingle();
-      const cfg = ((cfgRow?.configs as Record<string, { prova?: boolean }> | null) ?? {});
-      setProva(Boolean(cfg[slug]?.prova));
+      const cfg = ((cfgRow?.configs as Record<string, { prova?: boolean; limite?: number; prazo?: string | null }> | null) ?? {});
+      const c = cfg[slug] ?? {};
+      setProva(Boolean(c.prova));
+      setLimite(c.limite ?? 0);
+      const prz = c.prazo ?? null;
+      setPrazoTexto(prz);
+      setEncerrada(prz ? Date.now() > new Date(prz + "T23:59:59").getTime() : false);
 
       const { data, error } = await supabase.storage.from("fotos").list(slug, {
         limit: 500,
@@ -160,8 +169,14 @@ export default function GaleriaClientePage() {
   }
 
   function alternarSelecao(nome: string) {
-    if (finalizada) return;
-    const nomes = selecionadas.includes(nome)
+    if (finalizada || encerrada) return;
+    const jaTem = selecionadas.includes(nome);
+    if (!jaTem && limite > 0 && selecionadas.length >= limite) {
+      setLimiteMsg(`Você já escolheu o máximo de ${limite} foto${limite === 1 ? "" : "s"}.`);
+      window.setTimeout(() => setLimiteMsg(""), 2600);
+      return;
+    }
+    const nomes = jaTem
       ? selecionadas.filter((n) => n !== nome)
       : [...selecionadas, nome];
     setSelecionadas(nomes);
@@ -169,7 +184,7 @@ export default function GaleriaClientePage() {
   }
 
   async function finalizarSelecao() {
-    if (selecionadas.length === 0 || finalizada) return;
+    if (selecionadas.length === 0 || finalizada || encerrada) return;
     const ok = window.confirm(
       `Finalizar sua seleção de ${selecionadas.length} foto${selecionadas.length === 1 ? "" : "s"}? Depois não será possível alterar.`
     );
@@ -185,6 +200,10 @@ export default function GaleriaClientePage() {
     setComentarios(novo);
     salvarTudo(selecionadas, finalizada, novo);
     setAberta(null);
+  }
+
+  function fmtData(d: string) {
+    return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
   }
 
   function marcaMark() {
@@ -208,6 +227,7 @@ export default function GaleriaClientePage() {
   const cor = estudio.cor || "#0b0b1a";
   const txt = corContraste(cor);
   const wmMark = prova ? marcaMark() : null;
+  const bloqueado = finalizada || encerrada;
 
   return (
     <div className="gc-page">
@@ -286,6 +306,9 @@ export default function GaleriaClientePage() {
         .gc-hascom svg { width:15px; height:15px; }
 
         .gc-selhint { font-size:13px; color:#9aa0c0; margin:0 0 18px; padding:12px 16px; background:rgba(74,108,247,0.07); border:1px solid rgba(74,108,247,0.22); border-radius:12px; line-height:1.5; }
+        .gc-prazo { font-size:13px; color:#cdd2e4; margin:0 0 14px; padding:12px 16px; background:rgba(74,108,247,0.07); border:1px solid rgba(74,108,247,0.22); border-radius:12px; }
+        .gc-prazo.encerrada { color:#ffc2c2; background:rgba(239,68,68,0.09); border-color:rgba(239,68,68,0.3); }
+        .gc-toast { position:fixed; z-index:46; bottom:88px; left:50%; transform:translateX(-50%); background:rgba(239,68,68,0.94); color:#fff; padding:10px 18px; border-radius:999px; font-size:13px; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,0.45); max-width:92vw; text-align:center; }
         .gc-selhint b { color:#cdd2e4; font-weight:600; }
         .gc-selbar { position:fixed; z-index:45; left:50%; bottom:22px; transform:translateX(-50%); max-width:92vw; display:flex; align-items:center; gap:14px; padding:10px 12px 10px 22px; background:rgba(16,16,34,0.92); backdrop-filter:blur(12px); border:1px solid #2a2d4a; border-radius:999px; box-shadow:0 16px 44px rgba(0,0,0,0.55); }
         .gc-selbar-n { font-size:14px; font-weight:600; color:#f0f0f5; white-space:nowrap; }
@@ -360,9 +383,17 @@ export default function GaleriaClientePage() {
             </div>
           </div>
 
-          {!finalizada && (
+          {encerrada ? (
+            <p className="gc-prazo encerrada">
+              A seleção desta galeria foi encerrada{prazoTexto ? ` (prazo: ${fmtData(prazoTexto)})` : ""}.
+            </p>
+          ) : prazoTexto ? (
+            <p className="gc-prazo">Seleção aberta até <b>{fmtData(prazoTexto)}</b>.</p>
+          ) : null}
+
+          {!bloqueado && (
             <p className="gc-selhint">
-              Toque no <b>círculo</b> das fotos que você quer e clique em <b>Finalizar seleção</b> quando terminar.
+              Toque no <b>círculo</b> das fotos que você quer{limite > 0 ? <> (até <b>{limite}</b>)</> : null} e clique em <b>Finalizar seleção</b> quando terminar.
             </p>
           )}
 
@@ -376,7 +407,7 @@ export default function GaleriaClientePage() {
                   <button
                     className={"gc-sel" + (sel ? " on" : "")}
                     onClick={() => alternarSelecao(foto.nome)}
-                    disabled={finalizada}
+                    disabled={bloqueado}
                     aria-label={sel ? "Remover da seleção" : "Selecionar"}
                     title={sel ? "Selecionada" : "Selecionar"}
                   >
@@ -409,12 +440,13 @@ export default function GaleriaClientePage() {
         </div>
       )}
 
-      {fotos.length > 0 && !finalizada && selecionadas.length > 0 && (
+      {fotos.length > 0 && !bloqueado && selecionadas.length > 0 && (
         <div className="gc-selbar">
-          <span className="gc-selbar-n">{selecionadas.length} selecionada{selecionadas.length === 1 ? "" : "s"}</span>
+          <span className="gc-selbar-n">{selecionadas.length}{limite > 0 ? ` / ${limite}` : ""} selecionada{selecionadas.length === 1 ? "" : "s"}</span>
           <button className="gc-selbar-btn" onClick={finalizarSelecao}>Finalizar seleção</button>
         </div>
       )}
+      {limiteMsg && <div className="gc-toast">{limiteMsg}</div>}
       {fotos.length > 0 && finalizada && (
         <div className="gc-selbar gc-selbar-done">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="5 12 10 17 19 7" /></svg>
@@ -462,7 +494,7 @@ export default function GaleriaClientePage() {
           )}
 
           <div className="gc-lb-coment" onClick={(e) => e.stopPropagation()}>
-            {finalizada ? (
+            {bloqueado ? (
               (comentarios[fotos[aberta].nome] ?? "").trim() !== "" ? (
                 <p className="gc-lb-comtxt">{comentarios[fotos[aberta].nome]}</p>
               ) : (

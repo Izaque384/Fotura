@@ -18,7 +18,10 @@ export default function DashboardPage() {
   const [porMes, setPorMes] = useState<Mes[]>([]);
   const [aviso, setAviso] = useState("");
   const [capas, setCapas] = useState<Record<string, string>>({});
-  const [configs, setConfigs] = useState<Record<string, { prova?: boolean }>>({});
+  const [configs, setConfigs] = useState<Record<string, { prova?: boolean; limite?: number; prazo?: string | null }>>({});
+  const [configProva, setConfigProva] = useState<string | null>(null);
+  const [fLimite, setFLimite] = useState("");
+  const [fPrazo, setFPrazo] = useState("");
   const [escolhendo, setEscolhendo] = useState<string | null>(null);
   const [selecoes, setSelecoes] = useState<Record<string, { fotos: string[]; finalizada: boolean; comentarios: Record<string, string> }>>({});
   const [vendoSelecao, setVendoSelecao] = useState<string | null>(null);
@@ -47,7 +50,7 @@ export default function DashboardPage() {
         .select("configs")
         .eq("id", userData.user.id)
         .maybeSingle();
-      setConfigs((cfgRow?.configs as Record<string, { prova?: boolean }>) ?? {});
+      setConfigs((cfgRow?.configs as Record<string, { prova?: boolean; limite?: number; prazo?: string | null }>) ?? {});
 
       const { data, error } = await supabase.storage.from("fotos").list("", {
         limit: 200,
@@ -193,6 +196,30 @@ export default function DashboardPage() {
       await new Promise((r) => setTimeout(r, 400));
     }
     setBaixandoSel(false);
+  }
+
+  function abrirPrazoLimite(slug: string) {
+    const c = configs[slug] ?? {};
+    setFLimite(c.limite ? String(c.limite) : "");
+    setFPrazo(c.prazo ?? "");
+    setConfigProva(slug);
+  }
+
+  async function salvarPrazoLimite(slug: string) {
+    const lim = Math.max(0, parseInt(fLimite || "0", 10) || 0);
+    const prz = fPrazo || null;
+    const novos = { ...configs, [slug]: { ...(configs[slug] ?? {}), limite: lim, prazo: prz } };
+    setConfigs(novos);
+    setConfigProva(null);
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return;
+    const { error } = await supabase.from("perfis").upsert({
+      id: userData.user.id,
+      configs: novos,
+      atualizado_em: new Date().toISOString(),
+    });
+    if (error) setAviso("Erro ao salvar prazo/limite: " + error.message);
+    else setAviso("Prazo e limite salvos.");
   }
 
   async function alternarMarca(slug: string) {
@@ -359,6 +386,14 @@ export default function DashboardPage() {
         .gmenu button.off { background: rgba(239,68,68,0.12); color: #ff9d9d; }
         .gmenu button.off:hover { background: rgba(239,68,68,0.18); color: #ffb3b3; }
         .gmenu-sep { height: 1px; background: #23233c; margin: 6px 4px; }
+        .pl-panel { max-width: 460px; }
+        .pl-form { padding: 20px 22px 24px; }
+        .pl-label { display: block; font-size: 13px; color: #a0a4b8; margin: 6px 0 6px; }
+        .pl-input { width: 100%; padding: 11px 13px; font-size: 14px; border: 1.5px solid #2a2d40; border-radius: 10px; background: #0f0f1a; color: #f0f0f5; outline: none; box-sizing: border-box; margin-bottom: 6px; font-family: inherit; color-scheme: dark; }
+        .pl-input:focus { border-color: #4a6cf7; }
+        .pl-hint { font-size: 11px; color: #6f76a0; margin-bottom: 18px; }
+        .pl-save { width: 100%; padding: 12px; font-size: 14px; font-weight: 700; color: #fff; border: none; border-radius: 11px; cursor: pointer; font-family: inherit; background: linear-gradient(90deg,#1196fc,#5d0dfa); }
+        .pl-save:hover { filter: brightness(1.08); }
         .gacao { padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 9px; cursor: pointer; text-decoration: none; display: inline-block; font-family: inherit; }
         .gacao-linha { background: transparent; color: #9fb0ff; border: 1px solid #34385a; }
         .gacao-linha:hover { border-color: #4a6cf7; color: #fff; }
@@ -568,6 +603,7 @@ export default function DashboardPage() {
                               <button className={configs[g.slug]?.prova ? "on" : "off"} onClick={() => { setMenuAberto(null); alternarMarca(g.slug); }}>
                                 {configs[g.slug]?.prova ? "Marca-d'água: ligada ✓" : "Marca-d'água: desligada"}
                               </button>
+                              <button onClick={() => { setMenuAberto(null); abrirPrazoLimite(g.slug); }}>Prazo e limite…</button>
                               <div className="gmenu-sep" />
                               <button className="perigo" onClick={() => { setMenuAberto(null); excluirGaleria(g); }}>Excluir galeria</button>
                             </div>
@@ -680,6 +716,37 @@ export default function DashboardPage() {
                   )}
                 </>
               )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {configProva && (() => {
+        const g = galerias.find((x) => x.slug === configProva);
+        if (!g) return null;
+        return (
+          <div className="cap-modal" onClick={() => setConfigProva(null)}>
+            <div className="cap-panel pl-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="cap-head">
+                <div>
+                  <div className="cap-title">Prazo e limite</div>
+                  <div className="cap-sub">{titulo(g.slug)}</div>
+                </div>
+                <button className="cap-x" onClick={() => setConfigProva(null)} aria-label="Fechar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
+                </button>
+              </div>
+              <div className="pl-form">
+                <label className="pl-label">Limite de seleção</label>
+                <input type="number" min="0" className="pl-input" value={fLimite} onChange={(e) => setFLimite(e.target.value)} placeholder="0" />
+                <div className="pl-hint">Quantas fotos o cliente pode escolher. 0 ou vazio = sem limite.</div>
+
+                <label className="pl-label">Prazo da seleção</label>
+                <input type="date" className="pl-input" value={fPrazo} onChange={(e) => setFPrazo(e.target.value)} />
+                <div className="pl-hint">Depois dessa data a seleção fecha para o cliente. Em branco = sem prazo.</div>
+
+                <button className="pl-save" onClick={() => salvarPrazoLimite(g.slug)}>Salvar</button>
+              </div>
             </div>
           </div>
         );
