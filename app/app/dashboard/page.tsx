@@ -19,12 +19,12 @@ export default function DashboardPage() {
   const [aviso, setAviso] = useState("");
   const [capas, setCapas] = useState<Record<string, string>>({});
   const [configs, setConfigs] = useState<Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean; linkAte?: string | null }>>({});
-  const [senhaModal, setSenhaModal] = useState<string | null>(null);
-  const [fSenha, setFSenha] = useState("");
-  const [configProva, setConfigProva] = useState<string | null>(null);
+  const [configModal, setConfigModal] = useState<string | null>(null);
+  const [fProva, setFProva] = useState(false);
   const [fLimite, setFLimite] = useState("");
   const [fPrazo, setFPrazo] = useState("");
   const [fLink, setFLink] = useState("");
+  const [fSenha, setFSenha] = useState("");
   const [escolhendo, setEscolhendo] = useState<string | null>(null);
   const [selecoes, setSelecoes] = useState<Record<string, { fotos: string[]; finalizada: boolean; comentarios: Record<string, string>; atualizadoEm?: string }>>({});
   const [vendoSelecao, setVendoSelecao] = useState<string | null>(null);
@@ -243,72 +243,53 @@ export default function DashboardPage() {
     setBaixandoSel(false);
   }
 
-  async function salvarSenha(slug: string) {
-    const s = fSenha.trim();
-    if (!s) { setSenhaModal(null); return; }
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
-    const { error: e1 } = await supabase.from("senhas").upsert({ galeria: slug, senha: s, atualizado_em: new Date().toISOString() });
-    if (e1) { setAviso("Erro ao salvar senha: " + e1.message); return; }
-    const novos = { ...configs, [slug]: { ...(configs[slug] ?? {}), temSenha: true } };
-    setConfigs(novos);
-    await supabase.from("perfis").upsert({ id: userData.user.id, configs: novos, atualizado_em: new Date().toISOString() });
-    setSenhaModal(null);
+  function abrirConfig(slug: string) {
+    const c = configs[slug] ?? {};
+    setFProva(Boolean(c.prova));
+    setFLimite(c.limite ? String(c.limite) : "");
+    setFPrazo(c.prazo ?? "");
+    setFLink(c.linkAte ?? "");
     setFSenha("");
-    setAviso("Senha definida para a galeria.");
+    setConfigModal(slug);
   }
 
-  async function removerSenha(slug: string) {
+  async function salvarConfig(slug: string) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return;
+    let temSenha = Boolean(configs[slug]?.temSenha);
+    const s = fSenha.trim();
+    if (s) {
+      const { error: e1 } = await supabase.from("senhas").upsert({ galeria: slug, senha: s, atualizado_em: new Date().toISOString() });
+      if (e1) { setAviso("Erro ao salvar senha: " + e1.message); return; }
+      temSenha = true;
+    }
+    const novos = {
+      ...configs,
+      [slug]: {
+        ...(configs[slug] ?? {}),
+        prova: fProva,
+        limite: Math.max(0, parseInt(fLimite || "0", 10) || 0),
+        prazo: fPrazo || null,
+        linkAte: fLink || null,
+        temSenha,
+      },
+    };
+    setConfigs(novos);
+    setConfigModal(null);
+    const { error } = await supabase.from("perfis").upsert({ id: userData.user.id, configs: novos, atualizado_em: new Date().toISOString() });
+    if (error) setAviso("Erro ao salvar: " + error.message);
+    else setAviso("Configurações salvas.");
+  }
+
+  async function removerSenhaConfig(slug: string) {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
     await supabase.from("senhas").delete().eq("galeria", slug);
     const novos = { ...configs, [slug]: { ...(configs[slug] ?? {}), temSenha: false } };
     setConfigs(novos);
-    await supabase.from("perfis").upsert({ id: userData.user.id, configs: novos, atualizado_em: new Date().toISOString() });
-    setSenhaModal(null);
     setFSenha("");
+    await supabase.from("perfis").upsert({ id: userData.user.id, configs: novos, atualizado_em: new Date().toISOString() });
     setAviso("Senha removida.");
-  }
-
-  function abrirPrazoLimite(slug: string) {
-    const c = configs[slug] ?? {};
-    setFLimite(c.limite ? String(c.limite) : "");
-    setFPrazo(c.prazo ?? "");
-    setFLink(c.linkAte ?? "");
-    setConfigProva(slug);
-  }
-
-  async function salvarPrazoLimite(slug: string) {
-    const lim = Math.max(0, parseInt(fLimite || "0", 10) || 0);
-    const prz = fPrazo || null;
-    const lnk = fLink || null;
-    const novos = { ...configs, [slug]: { ...(configs[slug] ?? {}), limite: lim, prazo: prz, linkAte: lnk } };
-    setConfigs(novos);
-    setConfigProva(null);
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
-    const { error } = await supabase.from("perfis").upsert({
-      id: userData.user.id,
-      configs: novos,
-      atualizado_em: new Date().toISOString(),
-    });
-    if (error) setAviso("Erro ao salvar: " + error.message);
-    else setAviso("Prazo, limite e validade salvos.");
-  }
-
-  async function alternarMarca(slug: string) {
-    const atual = Boolean(configs[slug]?.prova);
-    const novos = { ...configs, [slug]: { ...(configs[slug] ?? {}), prova: !atual } };
-    setConfigs(novos);
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
-    const { error } = await supabase.from("perfis").upsert({
-      id: userData.user.id,
-      configs: novos,
-      atualizado_em: new Date().toISOString(),
-    });
-    if (error) setAviso("Não consegui alterar a marca-d'água: " + error.message);
-    else setAviso(!atual ? "Marca-d'água ligada nesta galeria." : "Marca-d'água desligada nesta galeria.");
   }
 
   async function excluirGaleria(g: Galeria) {
@@ -491,6 +472,14 @@ export default function DashboardPage() {
         .pl-save:hover { filter: brightness(1.08); }
         .pl-remover { width: 100%; margin-top: 10px; padding: 11px; font-size: 13px; font-weight: 600; color: #ff9d9d; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); border-radius: 11px; cursor: pointer; font-family: inherit; }
         .pl-remover:hover { background: rgba(239,68,68,0.16); }
+        .cfg-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 2px 0 16px; }
+        .cfg-txt { min-width: 0; }
+        .cfg-t { font-size: 14px; font-weight: 600; color: #f0f0f5; }
+        .cfg-d { font-size: 12px; color: #7a7f9a; margin-top: 2px; }
+        .cfg-switch { flex-shrink: 0; width: 46px; height: 26px; border-radius: 999px; border: none; background: #2a2d40; cursor: pointer; position: relative; transition: background .15s ease; }
+        .cfg-switch span { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left .15s ease; }
+        .cfg-switch.on { background: linear-gradient(90deg,#f6c445,#ee8b2b); }
+        .cfg-switch.on span { left: 23px; }
         .gacao { padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 9px; cursor: pointer; text-decoration: none; display: inline-block; font-family: inherit; }
         .gacao-linha { background: transparent; color: #9fb0ff; border: 1px solid #34385a; }
         .gacao-linha:hover { border-color: #4a6cf7; color: #fff; }
@@ -748,13 +737,7 @@ export default function DashboardPage() {
                               <button onClick={() => { setMenuAberto(null); copiarLink(g.slug); }}>Copiar link</button>
                               <button onClick={() => { setMenuAberto(null); window.open(`/g/${g.slug}`, "_blank"); }}><span className="grad-txt">Ver galeria</span></button>
                               <button onClick={() => { setMenuAberto(null); router.push(`/upload?galeria=${g.slug}`); }}>Enviar mais fotos</button>
-                              <button className={configs[g.slug]?.prova ? "on" : "off"} onClick={() => { setMenuAberto(null); alternarMarca(g.slug); }}>
-                                {configs[g.slug]?.prova ? "Marca-d'água: ligada ✓" : "Marca-d'água: desligada"}
-                              </button>
-                              <button onClick={() => { setMenuAberto(null); abrirPrazoLimite(g.slug); }}>Prazo, limite e validade…</button>
-                              <button className={configs[g.slug]?.temSenha ? "on" : ""} onClick={() => { setMenuAberto(null); setFSenha(""); setSenhaModal(g.slug); }}>
-                                {configs[g.slug]?.temSenha ? "Senha: definida ✓" : "Senha: nenhuma"}
-                              </button>
+                              <button onClick={() => { setMenuAberto(null); abrirConfig(g.slug); }}>Configurações…</button>
                               <div className="gmenu-sep" />
                               <button className="perigo" onClick={() => { setMenuAberto(null); excluirGaleria(g); }}>Excluir galeria</button>
                             </div>
@@ -872,22 +855,31 @@ export default function DashboardPage() {
         );
       })()}
 
-      {configProva && (() => {
-        const g = galerias.find((x) => x.slug === configProva);
+      {configModal && (() => {
+        const g = galerias.find((x) => x.slug === configModal);
         if (!g) return null;
+        const tem = Boolean(configs[g.slug]?.temSenha);
         return (
-          <div className="cap-modal" onClick={() => setConfigProva(null)}>
+          <div className="cap-modal" onClick={() => setConfigModal(null)}>
             <div className="cap-panel pl-panel" onClick={(e) => e.stopPropagation()}>
               <div className="cap-head">
                 <div>
-                  <div className="cap-title">Prazo, limite e validade</div>
+                  <div className="cap-title">Configurações da galeria</div>
                   <div className="cap-sub">{titulo(g.slug)}</div>
                 </div>
-                <button className="cap-x" onClick={() => setConfigProva(null)} aria-label="Fechar">
+                <button className="cap-x" onClick={() => setConfigModal(null)} aria-label="Fechar">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
                 </button>
               </div>
               <div className="pl-form">
+                <div className="cfg-row">
+                  <div className="cfg-txt">
+                    <div className="cfg-t">Marca-d'água (modo prova)</div>
+                    <div className="cfg-d">Protege as fotos e esconde o download do cliente.</div>
+                  </div>
+                  <button type="button" className={"cfg-switch" + (fProva ? " on" : "")} onClick={() => setFProva(!fProva)} aria-label="Alternar marca-d'água"><span /></button>
+                </div>
+
                 <label className="pl-label">Limite de seleção</label>
                 <input type="number" min="0" className="pl-input" value={fLimite} onChange={(e) => setFLimite(e.target.value)} placeholder="0" />
                 <div className="pl-hint">Quantas fotos o cliente pode escolher. 0 ou vazio = sem limite.</div>
@@ -898,42 +890,20 @@ export default function DashboardPage() {
 
                 <label className="pl-label">Validade do link</label>
                 <input type="date" className="pl-input" value={fLink} onChange={(e) => setFLink(e.target.value)} />
-                <div className="pl-hint">Depois dessa data o link para de abrir (galeria fica inacessível). Em branco = sem validade.</div>
+                <div className="pl-hint">Depois dessa data o link para de abrir. Em branco = sem validade.</div>
 
-                <button className="pl-save" onClick={() => salvarPrazoLimite(g.slug)}>Salvar</button>
+                <label className="pl-label">Senha da galeria</label>
+                <input type="text" className="pl-input" value={fSenha} onChange={(e) => setFSenha(e.target.value)} placeholder={tem ? "Digite para trocar" : "Sem senha"} />
+                <div className="pl-hint">{tem ? "Esta galeria já tem senha. Digite uma nova para trocá-la." : "O cliente precisa digitar essa senha para ver as fotos. Em branco = sem senha."}</div>
+                {tem && <button className="pl-remover" onClick={() => removerSenhaConfig(g.slug)}>Remover senha</button>}
+
+                <button className="pl-save" style={{ marginTop: 18 }} onClick={() => salvarConfig(g.slug)}>Salvar</button>
               </div>
             </div>
           </div>
         );
       })()}
 
-      {senhaModal && (() => {
-        const g = galerias.find((x) => x.slug === senhaModal);
-        if (!g) return null;
-        const tem = Boolean(configs[g.slug]?.temSenha);
-        return (
-          <div className="cap-modal" onClick={() => setSenhaModal(null)}>
-            <div className="cap-panel pl-panel" onClick={(e) => e.stopPropagation()}>
-              <div className="cap-head">
-                <div>
-                  <div className="cap-title">Senha da galeria</div>
-                  <div className="cap-sub">{titulo(g.slug)}</div>
-                </div>
-                <button className="cap-x" onClick={() => setSenhaModal(null)} aria-label="Fechar">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
-                </button>
-              </div>
-              <div className="pl-form">
-                <label className="pl-label">{tem ? "Nova senha" : "Senha"}</label>
-                <input type="text" className="pl-input" value={fSenha} onChange={(e) => setFSenha(e.target.value)} placeholder={tem ? "Digite para trocar" : "Ex: ana2025"} />
-                <div className="pl-hint">{tem ? "Esta galeria já tem senha. Digite uma nova para trocá-la, ou remova abaixo." : "O cliente vai precisar digitar essa senha para ver as fotos."}</div>
-                <button className="pl-save" onClick={() => salvarSenha(g.slug)}>Salvar senha</button>
-                {tem && <button className="pl-remover" onClick={() => removerSenha(g.slug)}>Remover senha</button>}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 }

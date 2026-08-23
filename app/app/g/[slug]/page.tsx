@@ -328,7 +328,11 @@ export default function GaleriaClientePage() {
 
         /* HERO dividido: logo nítido à esquerda | info à direita */
         .gc-hero { position:relative; overflow:hidden; }
-        .gc-hero-bg { position:absolute; inset:0; z-index:0; background-size:cover; background-position:center; filter:blur(38px) brightness(0.42); transform:scale(1.25); }
+        .gc-hero-bg { position:absolute; inset:0; z-index:0; background-size:cover; background-position:center; }
+        .gc-hero-bg::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(7,7,16,0.5) 0%, rgba(7,7,16,0.62) 55%, rgba(7,7,16,0.74) 100%); }
+        .gc-hero-wrap.com-capa .gc-title, .gc-hero-wrap.com-capa .gc-eyebrow, .gc-hero-wrap.com-capa .gc-count { text-shadow:0 2px 16px rgba(0,0,0,0.6); }
+        .gc-hero-wrap.com-capa .gc-hero-logo img { filter:drop-shadow(0 4px 18px rgba(0,0,0,0.55)); }
+        .gc-hero-wrap.com-capa .txtmark { text-shadow:0 2px 16px rgba(0,0,0,0.6); }
         .gc-hero::after { content:''; position:absolute; inset:0; background:linear-gradient(115deg, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0) 42%, rgba(0,0,0,0.20) 100%); pointer-events:none; z-index:1; }
         .gc-hero-wrap { position:relative; z-index:2; max-width:1120px; margin:0 auto; width:100%; min-height:42vh; display:flex; align-items:center; gap:52px; padding:64px 32px; box-sizing:border-box; }
         .gc-hero-logo { flex-shrink:0; display:flex; align-items:center; justify-content:center; min-width:0; }
@@ -430,7 +434,7 @@ export default function GaleriaClientePage() {
       {/* HERO com a marca (cor editável) */}
       <header className="gc-hero" style={{ backgroundColor: cor }}>
         {capaUrl && <div className="gc-hero-bg" style={{ backgroundImage: `url("${capaUrl}")` }} />}
-        <div className="gc-hero-wrap">
+        <div className={"gc-hero-wrap" + (capaUrl ? " com-capa" : "")}>
           <div className="gc-hero-logo">
             {estudio.logo ? (
               <img src={estudio.logo} alt={nomeMarca} />
