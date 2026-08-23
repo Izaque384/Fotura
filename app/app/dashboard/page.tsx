@@ -6,7 +6,7 @@ import { createClient } from "../../lib/supabase-client";
 import MenuFotografo from "../MenuFotografo";
 
 type Foto = { nome: string; url: string };
-type Galeria = { slug: string; qtd: number; fotos: Foto[] };
+type Galeria = { slug: string; qtd: number; fotos: Foto[]; criadoEm?: string };
 type Mes = { label: string; qtd: number };
 
 export default function DashboardPage() {
@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [menuAberto, setMenuAberto] = useState<string | null>(null);
   const [notifVistoEm, setNotifVistoEm] = useState<string | null>(null);
   const [sinoAberto, setSinoAberto] = useState(false);
+  const [ordem, setOrdem] = useState<"data" | "estado">("data");
   const [baixandoSel, setBaixandoSel] = useState(false);
   const [progSel, setProgSel] = useState(0);
 
@@ -86,7 +87,11 @@ export default function DashboardPage() {
           nome: f.name,
           url: supabase.storage.from("fotos").getPublicUrl(`${pasta.name}/${f.name}`).data.publicUrl,
         }));
-        lista.push({ slug: pasta.name, qtd: arquivos.length, fotos: fotosLista });
+        const criadoEm = arquivos.reduce<string | undefined>((m, f) => {
+          const c = (f as { created_at?: string | null }).created_at ?? undefined;
+          return c && (!m || c > m) ? c : m;
+        }, undefined);
+        lista.push({ slug: pasta.name, qtd: arquivos.length, fotos: fotosLista, criadoEm });
 
         for (const f of arquivos) {
           if (!f.created_at) continue;
@@ -306,11 +311,25 @@ export default function DashboardPage() {
   }
 
   const totalGalerias = galerias.length;
+  const agoraMs = Date.now();
   const notificacoes = galerias
     .filter((g) => selecoes[g.slug]?.finalizada)
     .map((g) => ({ slug: g.slug, nome: titulo(g.slug), qtd: selecoes[g.slug].fotos.length, quando: selecoes[g.slug].atualizadoEm }))
+    .filter((n) => {
+      const naoLida = !notifVistoEm || (n.quando && n.quando > notifVistoEm);
+      if (naoLida) return true;
+      return notifVistoEm ? agoraMs - new Date(notifVistoEm).getTime() < 86400000 : false;
+    })
     .sort((a, b) => (b.quando ?? "").localeCompare(a.quando ?? ""));
   const naoLidas = notificacoes.filter((n) => !notifVistoEm || (n.quando && n.quando > notifVistoEm)).length;
+  const galeriasOrdenadas = [...galerias].sort((a, b) => {
+    if (ordem === "estado") {
+      const pa = configs[a.slug]?.prova ? 1 : 0;
+      const pb = configs[b.slug]?.prova ? 1 : 0;
+      if (pa !== pb) return pa - pb;
+    }
+    return (b.criadoEm ?? "").localeCompare(a.criadoEm ?? "");
+  });
   const totalFotos = galerias.reduce((s, g) => s + g.qtd, 0);
   const media = totalGalerias > 0 ? Math.round(totalFotos / totalGalerias) : 0;
   const maior = galerias.reduce<Galeria | null>((m, g) => (!m || g.qtd > m.qtd ? g : m), null);
@@ -397,15 +416,17 @@ export default function DashboardPage() {
         .grow {
           position: relative;
           display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-          background: rgba(255,255,255,0.02); border: 1px solid #23233c; border-radius: 13px; padding: 16px 18px;
-          transition: border-color .15s ease, background .15s ease;
+          border: 1.5px solid transparent; border-radius: 13px; padding: 16px 18px;
+          background: linear-gradient(#141428, #141428) padding-box, var(--brd, linear-gradient(#23233c, #23233c)) border-box;
+          transition: background .15s ease;
         }
-        .grow:hover { border-color: #33364f; background: rgba(255,255,255,0.035); }
-        .grow::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 13px 0 0 13px; }
-        .grow.prova::before { background: linear-gradient(180deg, #f6c445, #ee8b2b); }
-        .grow.entrega::before { background: linear-gradient(180deg, #1196fc, #5d0dfa); }
-        .grow.prova { border-color: rgba(240,160,50,0.30); }
-        .grow.entrega { border-color: rgba(74,108,247,0.30); }
+        .grow:hover { background: linear-gradient(#191934, #191934) padding-box, var(--brd, linear-gradient(#33364f, #33364f)) border-box; }
+        .grow.prova { --brd: linear-gradient(135deg, #f6c445, #ee8b2b); }
+        .grow.entrega { --brd: linear-gradient(135deg, #1196fc, #5d0dfa); }
+        .ord-wrap { display: flex; align-items: center; gap: 12px; }
+        .ord { display: inline-flex; background: rgba(255,255,255,0.03); border: 1px solid #2a2d40; border-radius: 9px; padding: 2px; }
+        .ord-b { padding: 5px 12px; font-size: 12px; font-weight: 600; color: #8a90a8; background: none; border: none; border-radius: 7px; cursor: pointer; font-family: inherit; }
+        .ord-b.on { background: rgba(74,108,247,0.18); color: #cdd2e4; }
         .gname { font-size: 15px; font-weight: 600; color: #f0f0f5; }
         .gqtd { font-size: 12px; color: #7a7f9a; margin-top: 2px; }
         .gsel-badge { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: rgba(74,108,247,0.15); color: #9fb0ff; vertical-align: middle; }
@@ -480,10 +501,10 @@ export default function DashboardPage() {
           background: rgba(255,255,255,0.02);
         }
         .sino-wrap { position: relative; }
-        .sino-btn { position: relative; width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border: 1px solid #2a2d40; color: #cdd2e4; cursor: pointer; }
+        .sino-btn { position: relative; width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border: 1px solid #2a2d40; color: #cdd2e4; cursor: pointer; }
         .sino-btn:hover { border-color: #4a6cf7; color: #fff; }
-        .sino-btn svg { width: 20px; height: 20px; }
-        .sino-badge { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+        .sino-btn svg { width: 23px; height: 23px; }
+        .sino-badge { position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
         .sino-overlay { position: fixed; inset: 0; z-index: 40; }
         .sino-menu { position: absolute; z-index: 41; right: 0; top: 50px; width: 320px; max-width: 86vw; max-height: 60vh; overflow-y: auto; background: #16162c; border: 1px solid #2a2d44; border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,0.5); padding: 8px; }
         .sino-h { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #6f76a0; padding: 6px 10px 10px; }
@@ -637,10 +658,16 @@ export default function DashboardPage() {
             <section className="card">
               <div className="card-h">
                 <span className="card-t">Suas galerias</span>
-                <span className="card-tag">{totalGalerias} no total</span>
+                <div className="ord-wrap">
+                  <span className="card-tag">{totalGalerias} no total</span>
+                  <div className="ord">
+                    <button className={"ord-b" + (ordem === "data" ? " on" : "")} onClick={() => setOrdem("data")}>Data</button>
+                    <button className={"ord-b" + (ordem === "estado" ? " on" : "")} onClick={() => setOrdem("estado")}>Estado</button>
+                  </div>
+                </div>
               </div>
               <div className="glist">
-                {galerias.map((g) => (
+                {galeriasOrdenadas.map((g) => (
                   <div className={"grow " + (configs[g.slug]?.prova ? "prova" : "entrega")} key={g.slug}>
                     <div className="ginfo">
                       <button
