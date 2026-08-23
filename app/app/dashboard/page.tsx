@@ -463,7 +463,8 @@ export default function DashboardPage() {
         .gmenu button.off:hover { background: rgba(239,68,68,0.18); color: #ffb3b3; }
         .gmenu-sep { height: 1px; background: #23233c; margin: 6px 4px; }
         .pl-panel { max-width: 460px; }
-        .pl-form { padding: 20px 22px 24px; }
+        .pl-form { padding: 20px 22px 20px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+        .pl-foot { flex-shrink: 0; padding: 15px 22px; border-top: 1px solid #23233c; background: #12122a; }
         .pl-label { display: block; font-size: 13px; color: #a0a4b8; margin: 6px 0 6px; }
         .pl-input { width: 100%; padding: 11px 13px; font-size: 14px; border: 1.5px solid #2a2d40; border-radius: 10px; background: #0f0f1a; color: #f0f0f5; outline: none; box-sizing: border-box; margin-bottom: 6px; font-family: inherit; color-scheme: dark; }
         .pl-input:focus { border-color: #4a6cf7; }
@@ -896,8 +897,9 @@ export default function DashboardPage() {
                 <input type="text" className="pl-input" value={fSenha} onChange={(e) => setFSenha(e.target.value)} placeholder={tem ? "Digite para trocar" : "Sem senha"} />
                 <div className="pl-hint">{tem ? "Esta galeria já tem senha. Digite uma nova para trocá-la." : "O cliente precisa digitar essa senha para ver as fotos. Em branco = sem senha."}</div>
                 {tem && <button className="pl-remover" onClick={() => removerSenhaConfig(g.slug)}>Remover senha</button>}
-
-                <button className="pl-save" style={{ marginTop: 18 }} onClick={() => salvarConfig(g.slug)}>Salvar</button>
+              </div>
+              <div className="pl-foot">
+                <button className="pl-save" onClick={() => salvarConfig(g.slug)}>Salvar</button>
               </div>
             </div>
           </div>
