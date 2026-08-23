@@ -18,7 +18,9 @@ export default function DashboardPage() {
   const [porMes, setPorMes] = useState<Mes[]>([]);
   const [aviso, setAviso] = useState("");
   const [capas, setCapas] = useState<Record<string, string>>({});
-  const [configs, setConfigs] = useState<Record<string, { prova?: boolean; limite?: number; prazo?: string | null }>>({});
+  const [configs, setConfigs] = useState<Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean }>>({});
+  const [senhaModal, setSenhaModal] = useState<string | null>(null);
+  const [fSenha, setFSenha] = useState("");
   const [configProva, setConfigProva] = useState<string | null>(null);
   const [fLimite, setFLimite] = useState("");
   const [fPrazo, setFPrazo] = useState("");
@@ -53,7 +55,7 @@ export default function DashboardPage() {
         .select("configs")
         .eq("id", userData.user.id)
         .maybeSingle();
-      setConfigs((cfgRow?.configs as Record<string, { prova?: boolean; limite?: number; prazo?: string | null }>) ?? {});
+      setConfigs((cfgRow?.configs as Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean }>) ?? {});
 
       const { data: notifRow } = await supabase
         .from("perfis")
@@ -238,6 +240,33 @@ export default function DashboardPage() {
       await new Promise((r) => setTimeout(r, 400));
     }
     setBaixandoSel(false);
+  }
+
+  async function salvarSenha(slug: string) {
+    const s = fSenha.trim();
+    if (!s) { setSenhaModal(null); return; }
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return;
+    const { error: e1 } = await supabase.from("senhas").upsert({ galeria: slug, senha: s, atualizado_em: new Date().toISOString() });
+    if (e1) { setAviso("Erro ao salvar senha: " + e1.message); return; }
+    const novos = { ...configs, [slug]: { ...(configs[slug] ?? {}), temSenha: true } };
+    setConfigs(novos);
+    await supabase.from("perfis").upsert({ id: userData.user.id, configs: novos, atualizado_em: new Date().toISOString() });
+    setSenhaModal(null);
+    setFSenha("");
+    setAviso("Senha definida para a galeria.");
+  }
+
+  async function removerSenha(slug: string) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return;
+    await supabase.from("senhas").delete().eq("galeria", slug);
+    const novos = { ...configs, [slug]: { ...(configs[slug] ?? {}), temSenha: false } };
+    setConfigs(novos);
+    await supabase.from("perfis").upsert({ id: userData.user.id, configs: novos, atualizado_em: new Date().toISOString() });
+    setSenhaModal(null);
+    setFSenha("");
+    setAviso("Senha removida.");
   }
 
   function abrirPrazoLimite(slug: string) {
@@ -457,6 +486,8 @@ export default function DashboardPage() {
         .pl-hint { font-size: 11px; color: #6f76a0; margin-bottom: 18px; }
         .pl-save { width: 100%; padding: 12px; font-size: 14px; font-weight: 700; color: #fff; border: none; border-radius: 11px; cursor: pointer; font-family: inherit; background: linear-gradient(90deg,#1196fc,#5d0dfa); }
         .pl-save:hover { filter: brightness(1.08); }
+        .pl-remover { width: 100%; margin-top: 10px; padding: 11px; font-size: 13px; font-weight: 600; color: #ff9d9d; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); border-radius: 11px; cursor: pointer; font-family: inherit; }
+        .pl-remover:hover { background: rgba(239,68,68,0.16); }
         .gacao { padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 9px; cursor: pointer; text-decoration: none; display: inline-block; font-family: inherit; }
         .gacao-linha { background: transparent; color: #9fb0ff; border: 1px solid #34385a; }
         .gacao-linha:hover { border-color: #4a6cf7; color: #fff; }
@@ -718,6 +749,9 @@ export default function DashboardPage() {
                                 {configs[g.slug]?.prova ? "Marca-d'água: ligada ✓" : "Marca-d'água: desligada"}
                               </button>
                               <button onClick={() => { setMenuAberto(null); abrirPrazoLimite(g.slug); }}>Prazo e limite…</button>
+                              <button className={configs[g.slug]?.temSenha ? "on" : ""} onClick={() => { setMenuAberto(null); setFSenha(""); setSenhaModal(g.slug); }}>
+                                {configs[g.slug]?.temSenha ? "Senha: definida ✓" : "Senha: nenhuma"}
+                              </button>
                               <div className="gmenu-sep" />
                               <button className="perigo" onClick={() => { setMenuAberto(null); excluirGaleria(g); }}>Excluir galeria</button>
                             </div>
@@ -860,6 +894,34 @@ export default function DashboardPage() {
                 <div className="pl-hint">Depois dessa data a seleção fecha para o cliente. Em branco = sem prazo.</div>
 
                 <button className="pl-save" onClick={() => salvarPrazoLimite(g.slug)}>Salvar</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {senhaModal && (() => {
+        const g = galerias.find((x) => x.slug === senhaModal);
+        if (!g) return null;
+        const tem = Boolean(configs[g.slug]?.temSenha);
+        return (
+          <div className="cap-modal" onClick={() => setSenhaModal(null)}>
+            <div className="cap-panel pl-panel" onClick={(e) => e.stopPropagation()}>
+              <div className="cap-head">
+                <div>
+                  <div className="cap-title">Senha da galeria</div>
+                  <div className="cap-sub">{titulo(g.slug)}</div>
+                </div>
+                <button className="cap-x" onClick={() => setSenhaModal(null)} aria-label="Fechar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
+                </button>
+              </div>
+              <div className="pl-form">
+                <label className="pl-label">{tem ? "Nova senha" : "Senha"}</label>
+                <input type="text" className="pl-input" value={fSenha} onChange={(e) => setFSenha(e.target.value)} placeholder={tem ? "Digite para trocar" : "Ex: ana2025"} />
+                <div className="pl-hint">{tem ? "Esta galeria já tem senha. Digite uma nova para trocá-la, ou remova abaixo." : "O cliente vai precisar digitar essa senha para ver as fotos."}</div>
+                <button className="pl-save" onClick={() => salvarSenha(g.slug)}>Salvar senha</button>
+                {tem && <button className="pl-remover" onClick={() => removerSenha(g.slug)}>Remover senha</button>}
               </div>
             </div>
           </div>

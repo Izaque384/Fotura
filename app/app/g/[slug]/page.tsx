@@ -41,6 +41,10 @@ export default function GaleriaClientePage() {
   const [prazoTexto, setPrazoTexto] = useState<string | null>(null);
   const [encerrada, setEncerrada] = useState(false);
   const [limiteMsg, setLimiteMsg] = useState("");
+  const [temSenha, setTemSenha] = useState(false);
+  const [desbloqueado, setDesbloqueado] = useState(false);
+  const [senhaInput, setSenhaInput] = useState("");
+  const [senhaErro, setSenhaErro] = useState(false);
 
   useEffect(() => {
     async function carregar() {
@@ -56,13 +60,18 @@ export default function GaleriaClientePage() {
         .select("configs")
         .limit(1)
         .maybeSingle();
-      const cfg = ((cfgRow?.configs as Record<string, { prova?: boolean; limite?: number; prazo?: string | null }> | null) ?? {});
+      const cfg = ((cfgRow?.configs as Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean }> | null) ?? {});
       const c = cfg[slug] ?? {};
       setProva(Boolean(c.prova));
       setLimite(c.limite ?? 0);
       const prz = c.prazo ?? null;
       setPrazoTexto(prz);
       setEncerrada(prz ? Date.now() > new Date(prz + "T23:59:59").getTime() : false);
+      const tem = Boolean(c.temSenha);
+      setTemSenha(tem);
+      if (tem) {
+        try { if (sessionStorage.getItem(`fotura_ok_${slug}`) === "1") setDesbloqueado(true); } catch {}
+      }
 
       const { data, error } = await supabase.storage.from("fotos").list(slug, {
         limit: 500,
@@ -218,8 +227,58 @@ export default function GaleriaClientePage() {
     return null;
   }
 
+  async function verificarSenha() {
+    const { data, error } = await supabase.rpc("checar_senha", { p_slug: slug, p_senha: senhaInput });
+    if (!error && data === true) {
+      setDesbloqueado(true);
+      try { sessionStorage.setItem(`fotura_ok_${slug}`, "1"); } catch {}
+    } else {
+      setSenhaErro(true);
+    }
+  }
+
   if (carregando) {
     return <div className="gc-center">Carregando galeria…</div>;
+  }
+
+  if (temSenha && !desbloqueado) {
+    return (
+      <div className="gc-gate">
+        <style>{`
+          .gc-gate { min-height:100vh; background:#0b0b1a; display:flex; align-items:center; justify-content:center; padding:24px; }
+          .gc-gate-card { width:100%; max-width:380px; background:linear-gradient(180deg,#14142b,#101023); border:1px solid #23233c; border-radius:18px; padding:36px 28px; text-align:center; }
+          .gc-gate-ic { width:56px; height:56px; margin:0 auto 18px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:rgba(74,108,247,0.12); color:#7ea2ff; }
+          .gc-gate-ic svg { width:26px; height:26px; }
+          .gc-gate-t { font-size:20px; font-weight:700; color:#f5f6fb; margin:0 0 6px; }
+          .gc-gate-d { font-size:14px; color:#8a90a8; margin:0 0 22px; }
+          .gc-gate-input { width:100%; padding:13px 14px; font-size:15px; border:1.5px solid #2a2d40; border-radius:11px; background:#0f0f1a; color:#f0f0f5; outline:none; box-sizing:border-box; text-align:center; }
+          .gc-gate-input:focus { border-color:#4a6cf7; }
+          .gc-gate-erro { font-size:13px; color:#ff9d9d; margin:12px 0 0; }
+          .gc-gate-btn { width:100%; margin-top:16px; padding:13px; font-size:15px; font-weight:700; color:#fff; border:none; border-radius:11px; cursor:pointer; font-family:inherit; background:linear-gradient(90deg,#1196fc,#5d0dfa); }
+          .gc-gate-btn:hover { filter:brightness(1.08); }
+          .gc-gate-foot { margin-top:22px; font-size:12px; color:#5a5f78; }
+        `}</style>
+        <div className="gc-gate-card">
+          <div className="gc-gate-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+          </div>
+          <h1 className="gc-gate-t">Galeria protegida</h1>
+          <p className="gc-gate-d">Digite a senha para ver as fotos.</p>
+          <input
+            className="gc-gate-input"
+            type="password"
+            value={senhaInput}
+            onChange={(e) => { setSenhaInput(e.target.value); setSenhaErro(false); }}
+            onKeyDown={(e) => { if (e.key === "Enter") verificarSenha(); }}
+            placeholder="Senha"
+            autoFocus
+          />
+          {senhaErro && <p className="gc-gate-erro">Senha incorreta. Tente novamente.</p>}
+          <button className="gc-gate-btn" onClick={verificarSenha}>Entrar</button>
+          <div className="gc-gate-foot">Feito com <b>Fotura</b></div>
+        </div>
+      </div>
+    );
   }
 
   const titulo = tituloDeSlug(slug);
