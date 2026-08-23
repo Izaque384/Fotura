@@ -18,12 +18,13 @@ export default function DashboardPage() {
   const [porMes, setPorMes] = useState<Mes[]>([]);
   const [aviso, setAviso] = useState("");
   const [capas, setCapas] = useState<Record<string, string>>({});
-  const [configs, setConfigs] = useState<Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean }>>({});
+  const [configs, setConfigs] = useState<Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean; linkAte?: string | null }>>({});
   const [senhaModal, setSenhaModal] = useState<string | null>(null);
   const [fSenha, setFSenha] = useState("");
   const [configProva, setConfigProva] = useState<string | null>(null);
   const [fLimite, setFLimite] = useState("");
   const [fPrazo, setFPrazo] = useState("");
+  const [fLink, setFLink] = useState("");
   const [escolhendo, setEscolhendo] = useState<string | null>(null);
   const [selecoes, setSelecoes] = useState<Record<string, { fotos: string[]; finalizada: boolean; comentarios: Record<string, string>; atualizadoEm?: string }>>({});
   const [vendoSelecao, setVendoSelecao] = useState<string | null>(null);
@@ -55,7 +56,7 @@ export default function DashboardPage() {
         .select("configs")
         .eq("id", userData.user.id)
         .maybeSingle();
-      setConfigs((cfgRow?.configs as Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean }>) ?? {});
+      setConfigs((cfgRow?.configs as Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean; linkAte?: string | null }>) ?? {});
 
       const { data: notifRow } = await supabase
         .from("perfis")
@@ -273,13 +274,15 @@ export default function DashboardPage() {
     const c = configs[slug] ?? {};
     setFLimite(c.limite ? String(c.limite) : "");
     setFPrazo(c.prazo ?? "");
+    setFLink(c.linkAte ?? "");
     setConfigProva(slug);
   }
 
   async function salvarPrazoLimite(slug: string) {
     const lim = Math.max(0, parseInt(fLimite || "0", 10) || 0);
     const prz = fPrazo || null;
-    const novos = { ...configs, [slug]: { ...(configs[slug] ?? {}), limite: lim, prazo: prz } };
+    const lnk = fLink || null;
+    const novos = { ...configs, [slug]: { ...(configs[slug] ?? {}), limite: lim, prazo: prz, linkAte: lnk } };
     setConfigs(novos);
     setConfigProva(null);
     const { data: userData } = await supabase.auth.getUser();
@@ -289,8 +292,8 @@ export default function DashboardPage() {
       configs: novos,
       atualizado_em: new Date().toISOString(),
     });
-    if (error) setAviso("Erro ao salvar prazo/limite: " + error.message);
-    else setAviso("Prazo e limite salvos.");
+    if (error) setAviso("Erro ao salvar: " + error.message);
+    else setAviso("Prazo, limite e validade salvos.");
   }
 
   async function alternarMarca(slug: string) {
@@ -748,7 +751,7 @@ export default function DashboardPage() {
                               <button className={configs[g.slug]?.prova ? "on" : "off"} onClick={() => { setMenuAberto(null); alternarMarca(g.slug); }}>
                                 {configs[g.slug]?.prova ? "Marca-d'água: ligada ✓" : "Marca-d'água: desligada"}
                               </button>
-                              <button onClick={() => { setMenuAberto(null); abrirPrazoLimite(g.slug); }}>Prazo e limite…</button>
+                              <button onClick={() => { setMenuAberto(null); abrirPrazoLimite(g.slug); }}>Prazo, limite e validade…</button>
                               <button className={configs[g.slug]?.temSenha ? "on" : ""} onClick={() => { setMenuAberto(null); setFSenha(""); setSenhaModal(g.slug); }}>
                                 {configs[g.slug]?.temSenha ? "Senha: definida ✓" : "Senha: nenhuma"}
                               </button>
@@ -877,7 +880,7 @@ export default function DashboardPage() {
             <div className="cap-panel pl-panel" onClick={(e) => e.stopPropagation()}>
               <div className="cap-head">
                 <div>
-                  <div className="cap-title">Prazo e limite</div>
+                  <div className="cap-title">Prazo, limite e validade</div>
                   <div className="cap-sub">{titulo(g.slug)}</div>
                 </div>
                 <button className="cap-x" onClick={() => setConfigProva(null)} aria-label="Fechar">
@@ -892,6 +895,10 @@ export default function DashboardPage() {
                 <label className="pl-label">Prazo da seleção</label>
                 <input type="date" className="pl-input" value={fPrazo} onChange={(e) => setFPrazo(e.target.value)} />
                 <div className="pl-hint">Depois dessa data a seleção fecha para o cliente. Em branco = sem prazo.</div>
+
+                <label className="pl-label">Validade do link</label>
+                <input type="date" className="pl-input" value={fLink} onChange={(e) => setFLink(e.target.value)} />
+                <div className="pl-hint">Depois dessa data o link para de abrir (galeria fica inacessível). Em branco = sem validade.</div>
 
                 <button className="pl-save" onClick={() => salvarPrazoLimite(g.slug)}>Salvar</button>
               </div>

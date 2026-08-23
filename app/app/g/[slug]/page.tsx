@@ -45,6 +45,8 @@ export default function GaleriaClientePage() {
   const [desbloqueado, setDesbloqueado] = useState(false);
   const [senhaInput, setSenhaInput] = useState("");
   const [senhaErro, setSenhaErro] = useState(false);
+  const [capaUrl, setCapaUrl] = useState<string | null>(null);
+  const [linkExpirado, setLinkExpirado] = useState(false);
 
   useEffect(() => {
     async function carregar() {
@@ -57,21 +59,26 @@ export default function GaleriaClientePage() {
 
       const { data: cfgRow } = await supabase
         .from("perfis")
-        .select("configs")
+        .select("configs, capas")
         .limit(1)
         .maybeSingle();
-      const cfg = ((cfgRow?.configs as Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean }> | null) ?? {});
+      const cfg = ((cfgRow?.configs as Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean; linkAte?: string | null }> | null) ?? {});
       const c = cfg[slug] ?? {};
       setProva(Boolean(c.prova));
       setLimite(c.limite ?? 0);
       const prz = c.prazo ?? null;
       setPrazoTexto(prz);
       setEncerrada(prz ? Date.now() > new Date(prz + "T23:59:59").getTime() : false);
+      const la = c.linkAte ?? null;
+      setLinkExpirado(la ? Date.now() > new Date(la + "T23:59:59").getTime() : false);
       const tem = Boolean(c.temSenha);
       setTemSenha(tem);
       if (tem) {
         try { if (sessionStorage.getItem(`fotura_ok_${slug}`) === "1") setDesbloqueado(true); } catch {}
       }
+      const capas = (cfgRow?.capas as Record<string, string> | null) ?? {};
+      const capaFile = capas[slug];
+      if (capaFile) setCapaUrl(supabase.storage.from("fotos").getPublicUrl(`${slug}/${capaFile}`).data.publicUrl);
 
       const { data, error } = await supabase.storage.from("fotos").list(slug, {
         limit: 500,
@@ -241,6 +248,30 @@ export default function GaleriaClientePage() {
     return <div className="gc-center">Carregando galeria…</div>;
   }
 
+  if (linkExpirado) {
+    return (
+      <div className="gc-gate">
+        <style>{`
+          .gc-gate { min-height:100vh; background:#0b0b1a; display:flex; align-items:center; justify-content:center; padding:24px; }
+          .gc-gate-card { width:100%; max-width:380px; background:linear-gradient(180deg,#14142b,#101023); border:1px solid #23233c; border-radius:18px; padding:36px 28px; text-align:center; }
+          .gc-gate-ic { width:56px; height:56px; margin:0 auto 18px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:rgba(239,68,68,0.12); color:#ff9d9d; }
+          .gc-gate-ic svg { width:26px; height:26px; }
+          .gc-gate-t { font-size:20px; font-weight:700; color:#f5f6fb; margin:0 0 6px; }
+          .gc-gate-d { font-size:14px; color:#8a90a8; margin:0 0 4px; line-height:1.5; }
+          .gc-gate-foot { margin-top:22px; font-size:12px; color:#5a5f78; }
+        `}</style>
+        <div className="gc-gate-card">
+          <div className="gc-gate-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+          </div>
+          <h1 className="gc-gate-t">Este link expirou</h1>
+          <p className="gc-gate-d">O prazo de acesso a esta galeria terminou. Entre em contato com o fotógrafo para reabri-la.</p>
+          <div className="gc-gate-foot">Feito com <b>Fotura</b></div>
+        </div>
+      </div>
+    );
+  }
+
   if (temSenha && !desbloqueado) {
     return (
       <div className="gc-gate">
@@ -285,6 +316,7 @@ export default function GaleriaClientePage() {
   const nomeMarca = estudio.nome || "Fotura";
   const cor = estudio.cor || "#0b0b1a";
   const txt = corContraste(cor);
+  const heroTxt = capaUrl ? "#ffffff" : txt;
   const wmMark = prova ? marcaMark() : null;
   const bloqueado = finalizada || encerrada;
 
@@ -296,10 +328,11 @@ export default function GaleriaClientePage() {
 
         /* HERO dividido: logo nítido à esquerda | info à direita */
         .gc-hero { position:relative; overflow:hidden; }
-        .gc-hero::after { content:''; position:absolute; inset:0; background:linear-gradient(115deg, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0) 42%, rgba(0,0,0,0.20) 100%); pointer-events:none; }
+        .gc-hero-bg { position:absolute; inset:0; z-index:0; background-size:cover; background-position:center; filter:blur(38px) brightness(0.42); transform:scale(1.25); }
+        .gc-hero::after { content:''; position:absolute; inset:0; background:linear-gradient(115deg, rgba(0,0,0,0.16) 0%, rgba(0,0,0,0) 42%, rgba(0,0,0,0.20) 100%); pointer-events:none; z-index:1; }
         .gc-hero-wrap { position:relative; z-index:2; max-width:1120px; margin:0 auto; width:100%; min-height:42vh; display:flex; align-items:center; gap:52px; padding:64px 32px; box-sizing:border-box; }
         .gc-hero-logo { flex-shrink:0; display:flex; align-items:center; justify-content:center; min-width:0; }
-        .gc-hero-logo img { max-height:150px; max-width:260px; object-fit:contain; display:block; }
+        .gc-hero-logo img { max-height:172px; max-width:300px; object-fit:contain; display:block; }
         .gc-hero-logo .txtmark { font-size:clamp(30px, 4.4vw, 52px); font-weight:800; letter-spacing:-1px; line-height:1; }
         .gc-hero-div { width:1px; align-self:stretch; min-height:96px; margin:12px 0; }
         .gc-hero-info { flex:1; min-width:0; }
@@ -384,7 +417,7 @@ export default function GaleriaClientePage() {
         @media (max-width:760px){
           .gc-hero-wrap { flex-direction:column; text-align:center; gap:26px; min-height:auto; padding:48px 24px; }
           .gc-hero-div { display:none; }
-          .gc-hero-logo img { max-height:104px; }
+          .gc-hero-logo img { max-height:120px; }
           .gc-hero-info { display:flex; flex-direction:column; align-items:center; }
           .gc-lb-nav { width:44px; height:44px; }
           .gc-lb-nav svg { width:20px; height:20px; }
@@ -396,23 +429,24 @@ export default function GaleriaClientePage() {
 
       {/* HERO com a marca (cor editável) */}
       <header className="gc-hero" style={{ backgroundColor: cor }}>
+        {capaUrl && <div className="gc-hero-bg" style={{ backgroundImage: `url("${capaUrl}")` }} />}
         <div className="gc-hero-wrap">
           <div className="gc-hero-logo">
             {estudio.logo ? (
               <img src={estudio.logo} alt={nomeMarca} />
             ) : (
-              <span className="txtmark" style={{ color: txt }}>{nomeMarca}</span>
+              <span className="txtmark" style={{ color: heroTxt }}>{nomeMarca}</span>
             )}
           </div>
 
-          <div className="gc-hero-div" style={{ background: txt, opacity: 0.18 }} />
+          <div className="gc-hero-div" style={{ background: heroTxt, opacity: 0.18 }} />
 
           <div className="gc-hero-info">
             {estudio.nome && (
-              <p className="gc-eyebrow" style={{ color: txt, opacity: 0.72 }}>{estudio.nome}</p>
+              <p className="gc-eyebrow" style={{ color: heroTxt, opacity: 0.72 }}>{estudio.nome}</p>
             )}
-            <h1 className="gc-title" style={{ color: txt }}>{titulo}</h1>
-            <p className="gc-count" style={{ color: txt, opacity: 0.66 }}>
+            <h1 className="gc-title" style={{ color: heroTxt }}>{titulo}</h1>
+            <p className="gc-count" style={{ color: heroTxt, opacity: 0.66 }}>
               {fotos.length} foto{fotos.length === 1 ? "" : "s"}
             </p>
           </div>
@@ -564,7 +598,7 @@ export default function GaleriaClientePage() {
                 <textarea
                   className="gc-lb-input"
                   rows={1}
-                  placeholder="Comente nesta foto… (Enter envia, Shift+Enter quebra linha)"
+                  placeholder="Comente nesta foto…"
                   value={rascunho}
                   onChange={(e) => setRascunho(e.target.value)}
                   onKeyDown={(e) => {
