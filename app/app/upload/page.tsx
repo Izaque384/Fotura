@@ -14,11 +14,6 @@ function gerarSlug(texto: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-function tituloDeSlug(slug: string) {
-  const t = slug.replace(/-/g, " ");
-  return t.charAt(0).toUpperCase() + t.slice(1);
-}
-
 function UploadContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -30,6 +25,7 @@ function UploadContent() {
   const [erro, setErro] = useState(false);
   const [arquivos, setArquivos] = useState<FileList | null>(null);
   const [nomeGaleria, setNomeGaleria] = useState("");
+  const [tituloTravado, setTituloTravado] = useState("");
   const [link, setLink] = useState("");
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -42,12 +38,13 @@ function UploadContent() {
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
         router.replace("/login");
-      } else {
-        if (galeriaFixa) {
-          setNomeGaleria(tituloDeSlug(galeriaFixa));
-        }
-        setCarregando(false);
+        return;
       }
+      if (galeriaFixa) {
+        const { data: g } = await supabase.from("galerias").select("titulo").eq("id", galeriaFixa).maybeSingle();
+        setTituloTravado(g?.titulo || "Galeria");
+      }
+      setCarregando(false);
     }
     verificarUsuario();
   }, [router, supabase, galeriaFixa]);
@@ -57,24 +54,49 @@ function UploadContent() {
     setLink("");
     setMensagem("");
 
-    const slug = nomeTravado ? galeriaFixa! : gerarSlug(nomeGaleria);
-    if (!slug) {
-      setErro(true);
-      setMensagem("Dê um nome pra galeria (ex: Casamento Ana).");
-      return;
-    }
     if (!arquivos || arquivos.length === 0) {
       setErro(true);
       setMensagem("Escolha pelo menos uma foto.");
       return;
     }
 
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) {
+      router.replace("/login");
+      return;
+    }
+    const uid = userData.user.id;
+
+    let galeriaId = galeriaFixa;
+    if (!galeriaId) {
+      const t = nomeGaleria.trim();
+      if (!t) {
+        setErro(true);
+        setMensagem("Dê um nome pra galeria (ex: Casamento Ana).");
+        return;
+      }
+      const slug = gerarSlug(t);
+      const { data: nova, error: e1 } = await supabase
+        .from("galerias")
+        .insert({ user_id: uid, slug, titulo: t })
+        .select("id")
+        .single();
+      if (e1 || !nova) {
+        setErro(true);
+        setMensagem("Erro ao criar a galeria: " + (e1?.message ?? ""));
+        return;
+      }
+      galeriaId = nova.id as string;
+    }
+
     setEnviando(true);
 
     let enviadas = 0;
-    for (const arquivo of Array.from(arquivos)) {
-      const nomeLimpo = arquivo.name.replace(/\s+/g, "-");
-      const caminho = `${slug}/${Date.now()}-${nomeLimpo}`;
+    const lista = Array.from(arquivos);
+    for (let i = 0; i < lista.length; i++) {
+      const arquivo = lista[i];
+      const nomeLimpo = arquivo.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const caminho = `${uid}/${galeriaId}/${Date.now()}-${i}-${nomeLimpo}`;
       const { error } = await supabase.storage.from("fotos").upload(caminho, arquivo);
       if (error) {
         setErro(true);
@@ -86,7 +108,7 @@ function UploadContent() {
     }
 
     setMensagem(`${enviadas} foto(s) enviada(s) com sucesso!`);
-    setLink(`${window.location.origin}/g/${slug}`);
+    setLink(`${window.location.origin}/g/${galeriaId}`);
     setEnviando(false);
   }
 
@@ -146,7 +168,7 @@ function UploadContent() {
             {nomeTravado ? "Enviar mais fotos" : "Nova galeria"}
           </p>
           <p style={{ fontSize: 13, color: "#7a7f9a", textAlign: "center", marginBottom: 28 }}>
-            {nomeTravado ? tituloDeSlug(galeriaFixa!) : "Dê um nome e escolha as fotos"}
+            {nomeTravado ? tituloTravado : "Dê um nome e escolha as fotos"}
           </p>
 
           <label style={{ fontSize: 13, color: "#a0a4b8", display: "block", marginBottom: 6 }}>
@@ -154,7 +176,7 @@ function UploadContent() {
           </label>
           <input
             type="text"
-            value={nomeGaleria}
+            value={nomeTravado ? tituloTravado : nomeGaleria}
             onChange={(e) => setNomeGaleria(e.target.value)}
             placeholder="Ex: Casamento Ana e João"
             disabled={nomeTravado}
