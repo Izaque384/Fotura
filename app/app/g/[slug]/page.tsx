@@ -461,7 +461,7 @@ export default function GaleriaClientePage() {
               const sel = selecionadas.includes(foto.nome);
               return (
                 <div key={foto.url} className={"gc-card" + (sel ? " sel" : "")}>
-                  <img src={foto.url} alt="Foto" onClick={() => setAberta(i)} />
+                  <img src={foto.url} alt="Foto" loading="lazy" decoding="async" onClick={() => setAberta(i)} />
                   {prova && <div className="gc-wm">{wmMark && <div className="gc-wm-mark" style={wmMark} />}</div>}
                   <button
                     className={"gc-sel" + (sel ? " on" : "")}
