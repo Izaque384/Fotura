@@ -4,11 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "../../../lib/supabase-client";
 
-function tituloDeSlug(slug: string) {
-  const t = decodeURIComponent(slug).replace(/-/g, " ");
-  return t.charAt(0).toUpperCase() + t.slice(1);
-}
-
 // Texto claro ou escuro conforme a cor de fundo, pra sempre ficar legível
 function corContraste(hex: string) {
   const c = (hex || "").replace("#", "");
@@ -47,40 +42,49 @@ export default function GaleriaClientePage() {
   const [senhaErro, setSenhaErro] = useState(false);
   const [capaUrl, setCapaUrl] = useState<string | null>(null);
   const [linkExpirado, setLinkExpirado] = useState(false);
+  const [tituloGaleria, setTituloGaleria] = useState("Galeria");
+  const [naoAchou, setNaoAchou] = useState(false);
 
   useEffect(() => {
     async function carregar() {
-      const { data: perfil } = await supabase
-        .from("perfis")
-        .select("nome_estudio, logo_url, cor_hero")
-        .limit(1)
+      const { data: g } = await supabase
+        .from("galerias")
+        .select("user_id, titulo, capa, prova, limite, prazo, link_ate, tem_senha")
+        .eq("id", slug)
         .maybeSingle();
-      if (perfil) setEstudio({ nome: perfil.nome_estudio ?? null, logo: perfil.logo_url ?? null, cor: perfil.cor_hero ?? null });
 
-      const { data: cfgRow } = await supabase
-        .from("perfis")
-        .select("configs, capas")
-        .limit(1)
-        .maybeSingle();
-      const cfg = ((cfgRow?.configs as Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean; linkAte?: string | null }> | null) ?? {});
-      const c = cfg[slug] ?? {};
-      setProva(Boolean(c.prova));
-      setLimite(c.limite ?? 0);
-      const prz = c.prazo ?? null;
+      if (!g) {
+        setNaoAchou(true);
+        setCarregando(false);
+        return;
+      }
+
+      const dono = g.user_id as string;
+      setTituloGaleria((g.titulo as string) || "Galeria");
+      setProva(Boolean(g.prova));
+      setLimite((g.limite as number) ?? 0);
+      const prz = (g.prazo as string | null) ?? null;
       setPrazoTexto(prz);
       setEncerrada(prz ? Date.now() > new Date(prz + "T23:59:59").getTime() : false);
-      const la = c.linkAte ?? null;
+      const la = (g.link_ate as string | null) ?? null;
       setLinkExpirado(la ? Date.now() > new Date(la + "T23:59:59").getTime() : false);
-      const tem = Boolean(c.temSenha);
+      const tem = Boolean(g.tem_senha);
       setTemSenha(tem);
       if (tem) {
         try { if (sessionStorage.getItem(`fotura_ok_${slug}`) === "1") setDesbloqueado(true); } catch {}
       }
-      const capas = (cfgRow?.capas as Record<string, string> | null) ?? {};
-      const capaFile = capas[slug];
-      if (capaFile) setCapaUrl(supabase.storage.from("fotos").getPublicUrl(`${slug}/${capaFile}`).data.publicUrl);
 
-      const { data, error } = await supabase.storage.from("fotos").list(slug, {
+      const { data: perfil } = await supabase
+        .from("perfis")
+        .select("nome_estudio, logo_url, cor_hero")
+        .eq("id", dono)
+        .maybeSingle();
+      if (perfil) setEstudio({ nome: perfil.nome_estudio ?? null, logo: perfil.logo_url ?? null, cor: perfil.cor_hero ?? null });
+
+      const capaFile = (g.capa as string | null) ?? null;
+      if (capaFile) setCapaUrl(supabase.storage.from("fotos").getPublicUrl(`${dono}/${slug}/${capaFile}`).data.publicUrl);
+
+      const { data, error } = await supabase.storage.from("fotos").list(`${dono}/${slug}`, {
         limit: 500,
         sortBy: { column: "created_at", order: "desc" },
       });
@@ -94,7 +98,7 @@ export default function GaleriaClientePage() {
         .map((item) => {
           const { data: urlData } = supabase.storage
             .from("fotos")
-            .getPublicUrl(`${slug}/${item.name}`);
+            .getPublicUrl(`${dono}/${slug}/${item.name}`);
           return { url: urlData.publicUrl, nome: item.name };
         });
       setFotos(lista);
@@ -248,6 +252,10 @@ export default function GaleriaClientePage() {
     return <div className="gc-center">Carregando galeria…</div>;
   }
 
+  if (naoAchou) {
+    return <div className="gc-center">Galeria não encontrada.</div>;
+  }
+
   if (linkExpirado) {
     return (
       <div className="gc-gate">
@@ -312,7 +320,7 @@ export default function GaleriaClientePage() {
     );
   }
 
-  const titulo = tituloDeSlug(slug);
+  const titulo = tituloGaleria;
   const nomeMarca = estudio.nome || "Fotura";
   const cor = estudio.cor || "#0b0b1a";
   const txt = corContraste(cor);
