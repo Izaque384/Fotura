@@ -20,7 +20,7 @@ export default function GaleriaClientePage() {
   const slug = params.slug as string;
   const supabase = createClient();
   const [carregando, setCarregando] = useState(true);
-  const [fotos, setFotos] = useState<{ url: string; nome: string }[]>([]);
+  const [fotos, setFotos] = useState<{ url: string; thumb: string; nome: string }[]>([]);
   const [estudio, setEstudio] = useState<{ nome: string | null; logo: string | null; cor: string | null }>({ nome: null, logo: null, cor: null });
   const [mensagem, setMensagem] = useState("");
   const [aberta, setAberta] = useState<number | null>(null);
@@ -96,10 +96,9 @@ export default function GaleriaClientePage() {
       const lista = (data ?? [])
         .filter((item) => item.id !== null)
         .map((item) => {
-          const { data: urlData } = supabase.storage
-            .from("fotos")
-            .getPublicUrl(`${dono}/${slug}/${item.name}`);
-          return { url: urlData.publicUrl, nome: item.name };
+          const url = supabase.storage.from("fotos").getPublicUrl(`${dono}/${slug}/${item.name}`).data.publicUrl;
+          const thumb = supabase.storage.from("fotos").getPublicUrl(`${dono}/${slug}/thumbs/${item.name}`).data.publicUrl;
+          return { url, thumb, nome: item.name };
         });
       setFotos(lista);
 
@@ -507,7 +506,7 @@ export default function GaleriaClientePage() {
               const sel = selecionadas.includes(foto.nome);
               return (
                 <div key={foto.url} className={"gc-card" + (sel ? " sel" : "")}>
-                  <img src={foto.url} alt="Foto" loading="lazy" decoding="async" onClick={() => setAberta(i)} />
+                  <img src={foto.thumb} alt="Foto" loading="lazy" decoding="async" onClick={() => setAberta(i)} onError={(e) => { const el = e.currentTarget; if (el.src !== foto.url) el.src = foto.url; }} />
                   {prova && <div className="gc-wm">{wmMark && <div className="gc-wm-mark" style={wmMark} />}</div>}
                   <button
                     className={"gc-sel" + (sel ? " on" : "")}

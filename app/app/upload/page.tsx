@@ -14,6 +14,36 @@ function gerarSlug(texto: string) {
     .replace(/^-+|-+$/g, "");
 }
 
+function gerarMiniatura(arquivo: File, maxLado = 600, qualidade = 0.7): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(arquivo);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let largura = img.naturalWidth;
+      let altura = img.naturalHeight;
+      const escala = Math.min(1, maxLado / Math.max(largura, altura));
+      largura = Math.max(1, Math.round(largura * escala));
+      altura = Math.max(1, Math.round(altura * escala));
+      const canvas = document.createElement("canvas");
+      canvas.width = largura;
+      canvas.height = altura;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, largura, altura);
+      canvas.toBlob((blob) => resolve(blob), "image/jpeg", qualidade);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
+
 function UploadContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -96,13 +126,18 @@ function UploadContent() {
     for (let i = 0; i < lista.length; i++) {
       const arquivo = lista[i];
       const nomeLimpo = arquivo.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const caminho = `${uid}/${galeriaId}/${Date.now()}-${i}-${nomeLimpo}`;
+      const nomeArquivo = `${Date.now()}-${i}-${nomeLimpo}`;
+      const caminho = `${uid}/${galeriaId}/${nomeArquivo}`;
       const { error } = await supabase.storage.from("fotos").upload(caminho, arquivo);
       if (error) {
         setErro(true);
         setMensagem("Erro ao enviar " + arquivo.name + ": " + error.message);
         setEnviando(false);
         return;
+      }
+      const miniatura = await gerarMiniatura(arquivo);
+      if (miniatura) {
+        await supabase.storage.from("fotos").upload(`${uid}/${galeriaId}/thumbs/${nomeArquivo}`, miniatura, { contentType: "image/jpeg" });
       }
       enviadas++;
     }

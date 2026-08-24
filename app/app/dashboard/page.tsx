@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
 import MenuFotografo from "../MenuFotografo";
 
-type Foto = { nome: string; url: string };
+type Foto = { nome: string; url: string; thumb: string };
 type Galeria = { id: string; slug: string; titulo: string; qtd: number; fotos: Foto[]; criadoEm?: string };
 type Mes = { label: string; qtd: number };
 
@@ -80,6 +80,7 @@ export default function DashboardPage() {
         const fotosLista: Foto[] = arquivos.map((f) => ({
           nome: f.name,
           url: supabase.storage.from("fotos").getPublicUrl(`${meuId}/${gid}/${f.name}`).data.publicUrl,
+          thumb: supabase.storage.from("fotos").getPublicUrl(`${meuId}/${gid}/thumbs/${f.name}`).data.publicUrl,
         }));
         const criadoEm = arquivos.reduce<string | undefined>((m, f) => {
           const c = (f as { created_at?: string | null }).created_at ?? undefined;
@@ -751,7 +752,7 @@ export default function DashboardPage() {
                       onClick={() => definirCapa(g.id, f.nome)}
                       title="Definir como capa"
                     >
-                      <img src={f.url} alt="Foto" loading="lazy" />
+                      <img src={f.thumb} alt="Foto" loading="lazy" onError={(e) => { const el = e.currentTarget; if (el.src !== f.url) el.src = f.url; }} />
                       {ativa && <span className="cap-check">✓</span>}
                     </button>
                   );
@@ -794,7 +795,7 @@ export default function DashboardPage() {
                       <div className="cap-grid">
                         {fotosSel.map((f) => (
                           <div className="cap-item" key={f.nome}>
-                            <img src={f.url} alt="Foto" loading="lazy" />
+                            <img src={f.thumb} alt="Foto" loading="lazy" onError={(e) => { const el = e.currentTarget; if (el.src !== f.url) el.src = f.url; }} />
                           </div>
                         ))}
                       </div>
@@ -804,7 +805,7 @@ export default function DashboardPage() {
                         <div className="com-sec-h">Comentários do cliente</div>
                         {coments.map((f) => (
                           <div className="com-row" key={f.nome}>
-                            <img src={f.url} alt="Foto" loading="lazy" />
+                            <img src={f.thumb} alt="Foto" loading="lazy" onError={(e) => { const el = e.currentTarget; if (el.src !== f.url) el.src = f.url; }} />
                             <div className="com-body">
                               <p className="com-txt">{sel?.comentarios?.[f.nome]}</p>
                               {nomes.includes(f.nome) && <span className="com-tag">selecionada</span>}
