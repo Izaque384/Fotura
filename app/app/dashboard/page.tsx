@@ -6,13 +6,14 @@ import { createClient } from "../../lib/supabase-client";
 import MenuFotografo from "../MenuFotografo";
 
 type Foto = { nome: string; url: string };
-type Galeria = { slug: string; qtd: number; fotos: Foto[]; criadoEm?: string };
+type Galeria = { id: string; slug: string; titulo: string; qtd: number; fotos: Foto[]; criadoEm?: string };
 type Mes = { label: string; qtd: number };
 
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClient();
   const [carregando, setCarregando] = useState(true);
+  const [uid, setUid] = useState("");
   const [email, setEmail] = useState<string | null>(null);
   const [galerias, setGalerias] = useState<Galeria[]>([]);
   const [porMes, setPorMes] = useState<Mes[]>([]);
@@ -42,33 +43,22 @@ export default function DashboardPage() {
         router.replace("/login");
         return;
       }
+      const meuId = userData.user.id;
+      setUid(meuId);
       setEmail(userData.user.email ?? null);
-
-      const { data: perfil } = await supabase
-        .from("perfis")
-        .select("capas")
-        .eq("id", userData.user.id)
-        .maybeSingle();
-      setCapas((perfil?.capas as Record<string, string>) ?? {});
-
-      const { data: cfgRow } = await supabase
-        .from("perfis")
-        .select("configs")
-        .eq("id", userData.user.id)
-        .maybeSingle();
-      setConfigs((cfgRow?.configs as Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean; linkAte?: string | null }>) ?? {});
 
       const { data: notifRow } = await supabase
         .from("perfis")
         .select("notif_visto_em")
-        .eq("id", userData.user.id)
+        .eq("id", meuId)
         .maybeSingle();
       setNotifVistoEm((notifRow?.notif_visto_em as string | null) ?? null);
 
-      const { data, error } = await supabase.storage.from("fotos").list("", {
-        limit: 200,
-        sortBy: { column: "name", order: "asc" },
-      });
+      const { data: rows, error } = await supabase
+        .from("galerias")
+        .select("*")
+        .eq("user_id", meuId)
+        .order("criado_em", { ascending: false });
 
       if (error) {
         setAviso("Não foi possível carregar as galerias.");
@@ -76,35 +66,44 @@ export default function DashboardPage() {
         return;
       }
 
-      const pastas = (data ?? []).filter((item) => item.id === null);
-
       const lista: Galeria[] = [];
+      const mapaCfg: Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean; linkAte?: string | null }> = {};
+      const mapaCapa: Record<string, string> = {};
       const contagemMes = new Map<string, number>();
 
-      for (const pasta of pastas) {
+      for (const row of rows ?? []) {
+        const gid = row.id as string;
         const { data: fotos } = await supabase.storage
           .from("fotos")
-          .list(pasta.name, { limit: 200 });
+          .list(`${meuId}/${gid}`, { limit: 500 });
         const arquivos = (fotos ?? []).filter((f) => f.id !== null);
         const fotosLista: Foto[] = arquivos.map((f) => ({
           nome: f.name,
-          url: supabase.storage.from("fotos").getPublicUrl(`${pasta.name}/${f.name}`).data.publicUrl,
+          url: supabase.storage.from("fotos").getPublicUrl(`${meuId}/${gid}/${f.name}`).data.publicUrl,
         }));
         const criadoEm = arquivos.reduce<string | undefined>((m, f) => {
           const c = (f as { created_at?: string | null }).created_at ?? undefined;
           return c && (!m || c > m) ? c : m;
-        }, undefined);
-        lista.push({ slug: pasta.name, qtd: arquivos.length, fotos: fotosLista, criadoEm });
+        }, undefined) ?? (row.criado_em as string | undefined);
+        lista.push({ id: gid, slug: (row.slug as string) ?? "", titulo: (row.titulo as string) || "Galeria", qtd: arquivos.length, fotos: fotosLista, criadoEm });
+        mapaCfg[gid] = {
+          prova: Boolean(row.prova),
+          limite: (row.limite as number) ?? 0,
+          prazo: (row.prazo as string | null) ?? null,
+          linkAte: (row.link_ate as string | null) ?? null,
+          temSenha: Boolean(row.tem_senha),
+        };
+        if (row.capa) mapaCapa[gid] = row.capa as string;
 
         for (const f of arquivos) {
-          if (!f.created_at) continue;
-          const d = new Date(f.created_at);
+          const c = (f as { created_at?: string | null }).created_at;
+          if (!c) continue;
+          const d = new Date(c);
           const chave = `${d.getFullYear()}-${d.getMonth()}`;
           contagemMes.set(chave, (contagemMes.get(chave) ?? 0) + 1);
         }
       }
 
-      // últimos 6 meses (inclui o atual), mesmo que zerados
       const agora = new Date();
       const meses: Mes[] = [];
       for (let i = 5; i >= 0; i--) {
@@ -114,19 +113,21 @@ export default function DashboardPage() {
         meses.push({ label: nome, qtd: contagemMes.get(chave) ?? 0 });
       }
 
-      const slugs = lista.map((g) => g.slug);
+      const ids = lista.map((g) => g.id);
       const mapaSel: Record<string, { fotos: string[]; finalizada: boolean; comentarios: Record<string, string>; atualizadoEm?: string }> = {};
-      if (slugs.length > 0) {
+      if (ids.length > 0) {
         const { data: sels } = await supabase
           .from("selecoes")
           .select("galeria, fotos, finalizada, comentarios, atualizado_em")
-          .in("galeria", slugs);
+          .in("galeria", ids);
         for (const s of sels ?? []) {
           mapaSel[s.galeria] = { fotos: (s.fotos as string[]) ?? [], finalizada: Boolean(s.finalizada), comentarios: (s.comentarios as Record<string, string>) ?? {}, atualizadoEm: (s.atualizado_em as string) ?? undefined };
         }
       }
       setSelecoes(mapaSel);
 
+      setConfigs(mapaCfg);
+      setCapas(mapaCapa);
       setGalerias(lista);
       setPorMes(meses);
       setCarregando(false);
@@ -134,8 +135,8 @@ export default function DashboardPage() {
     carregar();
   }, [router, supabase]);
 
-  async function copiarLink(slug: string) {
-    const link = `${window.location.origin}/g/${slug}`;
+  async function copiarLink(id: string) {
+    const link = `${window.location.origin}/g/${id}`;
     try {
       await navigator.clipboard.writeText(link);
       setAviso("Link copiado: " + link);
@@ -144,13 +145,8 @@ export default function DashboardPage() {
     }
   }
 
-  function titulo(slug: string) {
-    const t = slug.replace(/-/g, " ");
-    return t.charAt(0).toUpperCase() + t.slice(1);
-  }
-
   function capaDaGaleria(g: Galeria): string | null {
-    const nome = capas[g.slug];
+    const nome = capas[g.id];
     if (nome) {
       const achou = g.fotos.find((f) => f.nome === nome);
       if (achou) return achou.url;
@@ -158,17 +154,11 @@ export default function DashboardPage() {
     return g.fotos[0]?.url ?? null;
   }
 
-  async function definirCapa(slug: string, nome: string) {
-    const novas = { ...capas, [slug]: nome };
+  async function definirCapa(id: string, nome: string) {
+    const novas = { ...capas, [id]: nome };
     setCapas(novas);
     setEscolhendo(null);
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
-    const { error } = await supabase.from("perfis").upsert({
-      id: userData.user.id,
-      capas: novas,
-      atualizado_em: new Date().toISOString(),
-    });
+    const { error } = await supabase.from("galerias").update({ capa: nome }).eq("id", id);
     if (error) setAviso("Não consegui salvar a capa: " + error.message);
     else setAviso("Capa atualizada!");
   }
@@ -177,8 +167,8 @@ export default function DashboardPage() {
     return <div className="dash-load">Carregando painel...</div>;
   }
 
-  function qtdSel(slug: string): number {
-    return selecoes[slug]?.fotos?.length ?? 0;
+  function qtdSel(id: string): number {
+    return selecoes[id]?.fotos?.length ?? 0;
   }
 
   function tempoRel(iso?: string) {
@@ -199,7 +189,7 @@ export default function DashboardPage() {
     setSinoAberto(abrir);
     if (!abrir) return;
     const temNova = galerias.some((g) => {
-      const s = selecoes[g.slug];
+      const s = selecoes[g.id];
       return s?.finalizada && (!notifVistoEm || (s.atualizadoEm && s.atualizadoEm > notifVistoEm));
     });
     if (!temNova) return;
@@ -209,8 +199,8 @@ export default function DashboardPage() {
     if (userData.user) await supabase.from("perfis").upsert({ id: userData.user.id, notif_visto_em: agora });
   }
 
-  function qtdCom(slug: string): number {
-    const c = selecoes[slug]?.comentarios ?? {};
+  function qtdCom(id: string): number {
+    const c = selecoes[id]?.comentarios ?? {};
     return Object.values(c).filter((t) => (t ?? "").trim() !== "").length;
   }
 
@@ -243,61 +233,54 @@ export default function DashboardPage() {
     setBaixandoSel(false);
   }
 
-  function abrirConfig(slug: string) {
-    const c = configs[slug] ?? {};
+  function abrirConfig(id: string) {
+    const c = configs[id] ?? {};
     setFProva(Boolean(c.prova));
     setFLimite(c.limite ? String(c.limite) : "");
     setFPrazo(c.prazo ?? "");
     setFLink(c.linkAte ?? "");
     setFSenha("");
-    setConfigModal(slug);
+    setConfigModal(id);
   }
 
-  async function salvarConfig(slug: string) {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
-    let temSenha = Boolean(configs[slug]?.temSenha);
+  async function salvarConfig(id: string) {
+    let temSenha = Boolean(configs[id]?.temSenha);
     const s = fSenha.trim();
     if (s) {
-      const { error: e1 } = await supabase.from("senhas").upsert({ galeria: slug, senha: s, atualizado_em: new Date().toISOString() });
+      const { error: e1 } = await supabase.from("senhas").upsert({ galeria: id, senha: s, atualizado_em: new Date().toISOString() });
       if (e1) { setAviso("Erro ao salvar senha: " + e1.message); return; }
       temSenha = true;
     }
-    const novos = {
-      ...configs,
-      [slug]: {
-        ...(configs[slug] ?? {}),
-        prova: fProva,
-        limite: Math.max(0, parseInt(fLimite || "0", 10) || 0),
-        prazo: fPrazo || null,
-        linkAte: fLink || null,
-        temSenha,
-      },
-    };
-    setConfigs(novos);
+    const limiteN = Math.max(0, parseInt(fLimite || "0", 10) || 0);
+    const prazoV = fPrazo || null;
+    const linkV = fLink || null;
+    const { error } = await supabase.from("galerias").update({
+      prova: fProva,
+      limite: limiteN,
+      prazo: prazoV,
+      link_ate: linkV,
+      tem_senha: temSenha,
+    }).eq("id", id);
+    setConfigs({ ...configs, [id]: { ...(configs[id] ?? {}), prova: fProva, limite: limiteN, prazo: prazoV, linkAte: linkV, temSenha } });
     setConfigModal(null);
-    const { error } = await supabase.from("perfis").upsert({ id: userData.user.id, configs: novos, atualizado_em: new Date().toISOString() });
     if (error) setAviso("Erro ao salvar: " + error.message);
     else setAviso("Configurações salvas.");
   }
 
-  async function removerSenhaConfig(slug: string) {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
-    await supabase.from("senhas").delete().eq("galeria", slug);
-    const novos = { ...configs, [slug]: { ...(configs[slug] ?? {}), temSenha: false } };
-    setConfigs(novos);
+  async function removerSenhaConfig(id: string) {
+    await supabase.from("senhas").delete().eq("galeria", id);
+    await supabase.from("galerias").update({ tem_senha: false }).eq("id", id);
+    setConfigs({ ...configs, [id]: { ...(configs[id] ?? {}), temSenha: false } });
     setFSenha("");
-    await supabase.from("perfis").upsert({ id: userData.user.id, configs: novos, atualizado_em: new Date().toISOString() });
     setAviso("Senha removida.");
   }
 
   async function excluirGaleria(g: Galeria) {
     const ok = window.confirm(
-      `Excluir a galeria "${titulo(g.slug)}" e todas as suas ${g.qtd} foto${g.qtd === 1 ? "" : "s"}? Esta ação não pode ser desfeita.`
+      `Excluir a galeria "${g.titulo}" e todas as suas ${g.qtd} foto${g.qtd === 1 ? "" : "s"}? Esta ação não pode ser desfeita.`
     );
     if (!ok) return;
-    const caminhos = g.fotos.map((f) => `${g.slug}/${f.nome}`);
+    const caminhos = g.fotos.map((f) => `${uid}/${g.id}/${f.nome}`);
     if (caminhos.length > 0) {
       const { error } = await supabase.storage.from("fotos").remove(caminhos);
       if (error) {
@@ -305,29 +288,18 @@ export default function DashboardPage() {
         return;
       }
     }
-    await supabase.from("selecoes").delete().eq("galeria", g.slug);
-    if (capas[g.slug]) {
-      const novasCapas = { ...capas };
-      delete novasCapas[g.slug];
-      setCapas(novasCapas);
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData.user) {
-        await supabase.from("perfis").upsert({
-          id: userData.user.id,
-          capas: novasCapas,
-          atualizado_em: new Date().toISOString(),
-        });
-      }
-    }
-    setGalerias((prev) => prev.filter((x) => x.slug !== g.slug));
-    setAviso(`Galeria "${titulo(g.slug)}" excluída.`);
+    await supabase.from("selecoes").delete().eq("galeria", g.id);
+    await supabase.from("senhas").delete().eq("galeria", g.id);
+    await supabase.from("galerias").delete().eq("id", g.id);
+    setGalerias((prev) => prev.filter((x) => x.id !== g.id));
+    setAviso(`Galeria "${g.titulo}" excluída.`);
   }
 
   const totalGalerias = galerias.length;
   const agoraMs = Date.now();
   const notificacoes = galerias
-    .filter((g) => selecoes[g.slug]?.finalizada)
-    .map((g) => ({ slug: g.slug, nome: titulo(g.slug), qtd: selecoes[g.slug].fotos.length, quando: selecoes[g.slug].atualizadoEm }))
+    .filter((g) => selecoes[g.id]?.finalizada)
+    .map((g) => ({ id: g.id, nome: g.titulo, qtd: selecoes[g.id].fotos.length, quando: selecoes[g.id].atualizadoEm }))
     .filter((n) => {
       const naoLida = !notifVistoEm || (n.quando && n.quando > notifVistoEm);
       if (naoLida) return true;
@@ -337,8 +309,8 @@ export default function DashboardPage() {
   const naoLidas = notificacoes.filter((n) => !notifVistoEm || (n.quando && n.quando > notifVistoEm)).length;
   const galeriasOrdenadas = [...galerias].sort((a, b) => {
     if (ordem === "estado") {
-      const pa = configs[a.slug]?.prova ? 1 : 0;
-      const pb = configs[b.slug]?.prova ? 1 : 0;
+      const pa = configs[a.id]?.prova ? 1 : 0;
+      const pb = configs[b.id]?.prova ? 1 : 0;
       if (pa !== pb) return pa - pb;
     }
     return (b.criadoEm ?? "").localeCompare(a.criadoEm ?? "");
@@ -579,7 +551,7 @@ export default function DashboardPage() {
                     notificacoes.map((n) => {
                       const naoLida = !notifVistoEm || (n.quando && n.quando > notifVistoEm);
                       return (
-                        <button key={n.slug} className="sino-item" onClick={() => { setSinoAberto(false); setVendoSelecao(n.slug); }}>
+                        <button key={n.id} className="sino-item" onClick={() => { setSinoAberto(false); setVendoSelecao(n.id); }}>
                           <span className={"sino-dot" + (naoLida ? "" : " lida")} />
                           <span>
                             <span className="sino-item-t">{n.nome}</span>
@@ -624,7 +596,7 @@ export default function DashboardPage() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9 6.8 19.8l1-5.8L3.6 9.9l5.8-.8z"/></svg>
             </div>
             <div className="kpi-val">{maior ? maior.qtd : 0}</div>
-            <div className="kpi-lab">{maior ? "Maior: " + titulo(maior.slug) : "Maior galeria"}</div>
+            <div className="kpi-lab">{maior ? "Maior: " + maior.titulo : "Maior galeria"}</div>
           </div>
         </section>
 
@@ -644,8 +616,8 @@ export default function DashboardPage() {
                 </div>
                 <div className="hbars">
                   {topGal.map((g) => (
-                    <div className="hbar" key={g.slug}>
-                      <div className="hbar-name" title={titulo(g.slug)}>{titulo(g.slug)}</div>
+                    <div className="hbar" key={g.id}>
+                      <div className="hbar-name" title={g.titulo}>{g.titulo}</div>
                       <div className="hbar-track">
                         <div className="hbar-fill" style={{ width: `${Math.max(6, (g.qtd / maxGal) * 100)}%` }} />
                       </div>
@@ -692,11 +664,11 @@ export default function DashboardPage() {
               </div>
               <div className="glist">
                 {galeriasOrdenadas.map((g) => (
-                  <div className={"grow " + (configs[g.slug]?.prova ? "prova" : "entrega")} key={g.slug}>
+                  <div className={"grow " + (configs[g.id]?.prova ? "prova" : "entrega")} key={g.id}>
                     <div className="ginfo">
                       <button
                         className="gcapa"
-                        onClick={() => g.qtd > 0 && setEscolhendo(g.slug)}
+                        onClick={() => g.qtd > 0 && setEscolhendo(g.id)}
                         disabled={g.qtd === 0}
                         title={g.qtd > 0 ? "Trocar capa" : "Sem fotos"}
                         aria-label="Trocar capa"
@@ -709,36 +681,36 @@ export default function DashboardPage() {
                         {g.qtd > 0 && <span className="gcapa-hover">Trocar</span>}
                       </button>
                       <div>
-                        <div className="gname">{titulo(g.slug)}</div>
+                        <div className="gname">{g.titulo}</div>
                         <div className="gqtd">
                           {g.qtd} foto{g.qtd === 1 ? "" : "s"}
-                          {qtdSel(g.slug) > 0 && (
-                            <span className={"gsel-badge" + (selecoes[g.slug]?.finalizada ? " fin" : "")}>
-                              {qtdSel(g.slug)} selecionada{qtdSel(g.slug) === 1 ? "" : "s"}{selecoes[g.slug]?.finalizada ? " ✓" : ""}
+                          {qtdSel(g.id) > 0 && (
+                            <span className={"gsel-badge" + (selecoes[g.id]?.finalizada ? " fin" : "")}>
+                              {qtdSel(g.id)} selecionada{qtdSel(g.id) === 1 ? "" : "s"}{selecoes[g.id]?.finalizada ? " ✓" : ""}
                             </span>
                           )}
-                          {qtdCom(g.slug) > 0 && (
-                            <span className="gsel-badge com">{qtdCom(g.slug)} comentário{qtdCom(g.slug) === 1 ? "" : "s"}</span>
+                          {qtdCom(g.id) > 0 && (
+                            <span className="gsel-badge com">{qtdCom(g.id)} comentário{qtdCom(g.id) === 1 ? "" : "s"}</span>
                           )}
                         </div>
                       </div>
                     </div>
                     <div className="gacoes">
                       <div className="gmenu-wrap">
-                        <button className="gmenu-btn" onClick={() => setMenuAberto(menuAberto === g.slug ? null : g.slug)} aria-label="Opções da galeria" title="Opções">
+                        <button className="gmenu-btn" onClick={() => setMenuAberto(menuAberto === g.id ? null : g.id)} aria-label="Opções da galeria" title="Opções">
                           <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
                         </button>
-                        {menuAberto === g.slug && (
+                        {menuAberto === g.id && (
                           <>
                             <div className="gmenu-overlay" onClick={() => setMenuAberto(null)} />
                             <div className="gmenu">
-                              {(qtdSel(g.slug) > 0 || qtdCom(g.slug) > 0) && (
-                                <button onClick={() => { setMenuAberto(null); setVendoSelecao(g.slug); }}>Ver seleção</button>
+                              {(qtdSel(g.id) > 0 || qtdCom(g.id) > 0) && (
+                                <button onClick={() => { setMenuAberto(null); setVendoSelecao(g.id); }}>Ver seleção</button>
                               )}
-                              <button onClick={() => { setMenuAberto(null); copiarLink(g.slug); }}>Copiar link</button>
-                              <button onClick={() => { setMenuAberto(null); window.open(`/g/${g.slug}`, "_blank"); }}><span className="grad-txt">Ver galeria</span></button>
-                              <button onClick={() => { setMenuAberto(null); router.push(`/upload?galeria=${g.slug}`); }}>Enviar mais fotos</button>
-                              <button onClick={() => { setMenuAberto(null); abrirConfig(g.slug); }}>Configurações…</button>
+                              <button onClick={() => { setMenuAberto(null); copiarLink(g.id); }}>Copiar link</button>
+                              <button onClick={() => { setMenuAberto(null); window.open(`/g/${g.id}`, "_blank"); }}><span className="grad-txt">Ver galeria</span></button>
+                              <button onClick={() => { setMenuAberto(null); router.push(`/upload?galeria=${g.id}`); }}>Enviar mais fotos</button>
+                              <button onClick={() => { setMenuAberto(null); abrirConfig(g.id); }}>Configurações…</button>
                               <div className="gmenu-sep" />
                               <button className="perigo" onClick={() => { setMenuAberto(null); excluirGaleria(g); }}>Excluir galeria</button>
                             </div>
@@ -755,7 +727,7 @@ export default function DashboardPage() {
       </div>
 
       {escolhendo && (() => {
-        const g = galerias.find((x) => x.slug === escolhendo);
+        const g = galerias.find((x) => x.id === escolhendo);
         if (!g) return null;
         return (
           <div className="cap-modal" onClick={() => setEscolhendo(null)}>
@@ -763,7 +735,7 @@ export default function DashboardPage() {
               <div className="cap-head">
                 <div>
                   <div className="cap-title">Escolher capa</div>
-                  <div className="cap-sub">{titulo(g.slug)}</div>
+                  <div className="cap-sub">{g.titulo}</div>
                 </div>
                 <button className="cap-x" onClick={() => setEscolhendo(null)} aria-label="Fechar">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
@@ -771,12 +743,12 @@ export default function DashboardPage() {
               </div>
               <div className="cap-grid">
                 {g.fotos.map((f) => {
-                  const ativa = capas[g.slug] === f.nome;
+                  const ativa = capas[g.id] === f.nome;
                   return (
                     <button
                       key={f.nome}
                       className={"cap-item" + (ativa ? " ativa" : "")}
-                      onClick={() => definirCapa(g.slug, f.nome)}
+                      onClick={() => definirCapa(g.id, f.nome)}
                       title="Definir como capa"
                     >
                       <img src={f.url} alt="Foto" loading="lazy" />
@@ -791,9 +763,9 @@ export default function DashboardPage() {
       })()}
 
       {vendoSelecao && (() => {
-        const g = galerias.find((x) => x.slug === vendoSelecao);
+        const g = galerias.find((x) => x.id === vendoSelecao);
         if (!g) return null;
-        const sel = selecoes[g.slug];
+        const sel = selecoes[g.id];
         const nomes = sel?.fotos ?? [];
         const fotosSel = g.fotos.filter((f) => nomes.includes(f.nome));
         const coments = g.fotos.filter((f) => (sel?.comentarios?.[f.nome] ?? "").trim() !== "");
@@ -804,7 +776,7 @@ export default function DashboardPage() {
                 <div>
                   <div className="cap-title">Seleção do cliente</div>
                   <div className="cap-sub">
-                    {titulo(g.slug)} · {fotosSel.length} foto{fotosSel.length === 1 ? "" : "s"}
+                    {g.titulo} · {fotosSel.length} foto{fotosSel.length === 1 ? "" : "s"}
                     {coments.length > 0 ? ` · ${coments.length} comentário${coments.length === 1 ? "" : "s"}` : ""}
                     {sel?.finalizada ? " · finalizada" : " · em andamento"}
                   </div>
@@ -857,16 +829,16 @@ export default function DashboardPage() {
       })()}
 
       {configModal && (() => {
-        const g = galerias.find((x) => x.slug === configModal);
+        const g = galerias.find((x) => x.id === configModal);
         if (!g) return null;
-        const tem = Boolean(configs[g.slug]?.temSenha);
+        const tem = Boolean(configs[g.id]?.temSenha);
         return (
           <div className="cap-modal" onClick={() => setConfigModal(null)}>
             <div className="cap-panel pl-panel" onClick={(e) => e.stopPropagation()}>
               <div className="cap-head">
                 <div>
                   <div className="cap-title">Configurações da galeria</div>
-                  <div className="cap-sub">{titulo(g.slug)}</div>
+                  <div className="cap-sub">{g.titulo}</div>
                 </div>
                 <button className="cap-x" onClick={() => setConfigModal(null)} aria-label="Fechar">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
@@ -896,10 +868,10 @@ export default function DashboardPage() {
                 <label className="pl-label">Senha da galeria</label>
                 <input type="text" className="pl-input" value={fSenha} onChange={(e) => setFSenha(e.target.value)} placeholder={tem ? "Digite para trocar" : "Sem senha"} />
                 <div className="pl-hint">{tem ? "Esta galeria já tem senha. Digite uma nova para trocá-la." : "O cliente precisa digitar essa senha para ver as fotos. Em branco = sem senha."}</div>
-                {tem && <button className="pl-remover" onClick={() => removerSenhaConfig(g.slug)}>Remover senha</button>}
+                {tem && <button className="pl-remover" onClick={() => removerSenhaConfig(g.id)}>Remover senha</button>}
               </div>
               <div className="pl-foot">
-                <button className="pl-save" onClick={() => salvarConfig(g.slug)}>Salvar</button>
+                <button className="pl-save" onClick={() => salvarConfig(g.id)}>Salvar</button>
               </div>
             </div>
           </div>
