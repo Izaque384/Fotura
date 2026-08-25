@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
+import { inscreverPush } from "../../lib/push-client";
 import MenuFotografo from "../MenuFotografo";
 
 type Foto = { nome: string; url: string; thumb: string };
@@ -46,6 +47,9 @@ export default function DashboardPage() {
       const meuId = userData.user.id;
       setUid(meuId);
       setEmail(userData.user.email ?? null);
+
+      /* Inscreve push notifications (pede permissão se ainda não deu) */
+      inscreverPush(meuId);
 
       const { data: notifRow } = await supabase
         .from("perfis")

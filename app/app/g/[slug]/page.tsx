@@ -210,6 +210,13 @@ export default function GaleriaClientePage() {
     if (!ok) return;
     setFinalizada(true);
     await salvarTudo(selecionadas, true, comentarios);
+
+    /* Notifica o fotógrafo via push */
+    fetch("/api/push/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ galeria: slug, qtd: selecionadas.length }),
+    }).catch(() => {});
   }
 
   function enviarComentario() {
