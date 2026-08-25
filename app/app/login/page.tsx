@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "../../lib/supabase-client";
 
 export default function LoginPage() {
@@ -103,6 +104,7 @@ export default function LoginPage() {
           type="password"
           value={senha}
           onChange={(e) => setSenha(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           placeholder="••••••••"
           style={{
             width: "100%",
@@ -113,9 +115,23 @@ export default function LoginPage() {
             background: "#0f0f1a",
             color: "#f0f0f5",
             outline: "none",
-            marginBottom: 24,
+            marginBottom: 12,
           }}
         />
+
+        {modo === "login" && (
+          <div style={{ textAlign: "right", marginBottom: 24 }}>
+            <Link href="/esqueci-senha" style={{
+              fontSize: 12,
+              color: "#4a6cf7",
+              textDecoration: "none",
+            }}>
+              Esqueci minha senha
+            </Link>
+          </div>
+        )}
+
+        {modo === "cadastro" && <div style={{ marginBottom: 24 }} />}
 
         <button
           onClick={handleSubmit}
@@ -150,7 +166,7 @@ export default function LoginPage() {
           {modo === "login" ? "Não tem conta?" : "Já tem conta?"}{" "}
           <button
             type="button"
-            onClick={() => setModo(modo === "login" ? "cadastro" : "login")}
+            onClick={() => { setModo(modo === "login" ? "cadastro" : "login"); setMensagem(""); }}
             style={{
               background: "none",
               border: "none",
