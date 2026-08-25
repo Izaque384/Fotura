@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [modo, setModo] = useState<"login" | "cadastro">("login");
   const [mensagem, setMensagem] = useState("");
   const [carregando, setCarregando] = useState(false);
+  const [aceitouTermos, setAceitouTermos] = useState(false);
 
   const supabase = createClient();
 
@@ -20,7 +21,16 @@ export default function LoginPage() {
     setMensagem("");
 
     if (modo === "cadastro") {
-      const { error } = await supabase.auth.signUp({ email, password: senha });
+      if (!aceitouTermos) {
+        setMensagem("Erro: Você precisa aceitar os Termos de Uso e a Política de Privacidade.");
+        setCarregando(false);
+        return;
+      }
+      const { error } = await supabase.auth.signUp({
+        email,
+        password: senha,
+        options: { data: { aceitou_termos_em: new Date().toISOString() } },
+      });
       if (error) {
         setMensagem("Erro: " + error.message);
       } else {
@@ -131,7 +141,32 @@ export default function LoginPage() {
           </div>
         )}
 
-        {modo === "cadastro" && <div style={{ marginBottom: 24 }} />}
+        {modo === "cadastro" && (
+          <label style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
+            marginBottom: 24,
+            cursor: "pointer",
+          }}>
+            <input
+              type="checkbox"
+              checked={aceitouTermos}
+              onChange={(e) => setAceitouTermos(e.target.checked)}
+              style={{ marginTop: 2, accentColor: "#4a6cf7" }}
+            />
+            <span style={{ fontSize: 12, color: "#a0a4b8", lineHeight: 1.6 }}>
+              Li e aceito os{" "}
+              <Link href="/termos" target="_blank" style={{ color: "#4a6cf7", textDecoration: "underline" }}>
+                Termos de Uso
+              </Link>{" "}
+              e a{" "}
+              <Link href="/privacidade" target="_blank" style={{ color: "#4a6cf7", textDecoration: "underline" }}>
+                Política de Privacidade
+              </Link>.
+            </span>
+          </label>
+        )}
 
         <button
           onClick={handleSubmit}
