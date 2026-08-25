@@ -64,11 +64,11 @@ export async function GET(req: NextRequest) {
     if (s.signedUrl && s.path) mapa[s.path] = s.signedUrl;
   }
 
-  const fotos = lista.map((f) => ({
-    nome: f.name,
-    url: mapa[`${dono}/${galeria}/${f.name}`] ?? "",
-    thumb: mapa[`${dono}/${galeria}/thumbs/${f.name}`] ?? "",
-  }));
+  const fotos = lista.map((f) => {
+    const url = mapa[`${dono}/${galeria}/${f.name}`] ?? "";
+    const thumb = mapa[`${dono}/${galeria}/thumbs/${f.name}`] || url;
+    return { nome: f.name, url, thumb };
+  });
 
   const capaUrl = capaFile ? (mapa[`${dono}/${galeria}/${capaFile}`] ?? null) : null;
 
