@@ -31,16 +31,16 @@ export default function GaleriaPage() {
         return;
       }
 
-      const urls = (data ?? [])
-        .filter((item) => item.id !== null)
-        .map((item) => {
-          const { data: urlData } = supabase.storage
-            .from("fotos")
-            .getPublicUrl(item.name);
-          return urlData.publicUrl;
-        });
-
-      setFotos(urls);
+      const itens = (data ?? []).filter((item) => item.id !== null);
+      if (itens.length > 0) {
+        const caminhos = itens.map((item) => item.name);
+        const { data: signedData } = await supabase.storage
+          .from("fotos")
+          .createSignedUrls(caminhos, 3600);
+        setFotos((signedData ?? []).map((s) => s.signedUrl).filter((u): u is string => Boolean(u)));
+      } else {
+        setFotos([]);
+      }
       setCarregando(false);
     }
     carregar();

@@ -81,10 +81,21 @@ export default function DashboardPage() {
           .from("fotos")
           .list(`${meuId}/${gid}`, { limit: 500 });
         const arquivos = (fotos ?? []).filter((f) => f.id !== null);
+        const caminhos = arquivos.flatMap((f) => [
+          `${meuId}/${gid}/${f.name}`,
+          `${meuId}/${gid}/thumbs/${f.name}`,
+        ]);
+        const { data: signedData } = caminhos.length > 0
+          ? await supabase.storage.from("fotos").createSignedUrls(caminhos, 3600)
+          : { data: [] };
+        const mapaUrls: Record<string, string> = {};
+        for (const s of signedData ?? []) {
+          if (s.signedUrl && s.path) mapaUrls[s.path] = s.signedUrl;
+        }
         const fotosLista: Foto[] = arquivos.map((f) => ({
           nome: f.name,
-          url: supabase.storage.from("fotos").getPublicUrl(`${meuId}/${gid}/${f.name}`).data.publicUrl,
-          thumb: supabase.storage.from("fotos").getPublicUrl(`${meuId}/${gid}/thumbs/${f.name}`).data.publicUrl,
+          url: mapaUrls[`${meuId}/${gid}/${f.name}`] ?? "",
+          thumb: mapaUrls[`${meuId}/${gid}/thumbs/${f.name}`] ?? "",
         }));
         const criadoEm = arquivos.reduce<string | undefined>((m, f) => {
           const c = (f as { created_at?: string | null }).created_at ?? undefined;

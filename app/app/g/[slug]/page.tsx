@@ -81,26 +81,16 @@ export default function GaleriaClientePage() {
         .maybeSingle();
       if (perfil) setEstudio({ nome: perfil.nome_estudio ?? null, logo: perfil.logo_url ?? null, cor: perfil.cor_hero ?? null });
 
-      const capaFile = (g.capa as string | null) ?? null;
-      if (capaFile) setCapaUrl(supabase.storage.from("fotos").getPublicUrl(`${dono}/${slug}/${capaFile}`).data.publicUrl);
-
-      const { data, error } = await supabase.storage.from("fotos").list(`${dono}/${slug}`, {
-        limit: 500,
-        sortBy: { column: "created_at", order: "desc" },
-      });
-      if (error) {
+      /* Busca fotos via API (links assinados temporários) */
+      const resApi = await fetch(`/api/fotos/signed?galeria=${slug}`);
+      if (!resApi.ok) {
         setMensagem("Não foi possível carregar a galeria.");
         setCarregando(false);
         return;
       }
-      const lista = (data ?? [])
-        .filter((item) => item.id !== null)
-        .map((item) => {
-          const url = supabase.storage.from("fotos").getPublicUrl(`${dono}/${slug}/${item.name}`).data.publicUrl;
-          const thumb = supabase.storage.from("fotos").getPublicUrl(`${dono}/${slug}/thumbs/${item.name}`).data.publicUrl;
-          return { url, thumb, nome: item.name };
-        });
-      setFotos(lista);
+      const dadosApi = await resApi.json() as { fotos: { nome: string; url: string; thumb: string }[]; capaUrl: string | null };
+      setFotos(dadosApi.fotos);
+      if (dadosApi.capaUrl) setCapaUrl(dadosApi.capaUrl);
 
       const { data: sel } = await supabase
         .from("selecoes")
