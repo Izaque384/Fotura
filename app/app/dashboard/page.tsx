@@ -17,7 +17,6 @@ export default function DashboardPage() {
   const [uid, setUid] = useState("");
   const [email, setEmail] = useState<string | null>(null);
   const [galerias, setGalerias] = useState<Galeria[]>([]);
-  const [porMes, setPorMes] = useState<Mes[]>([]);
   const [aviso, setAviso] = useState("");
   const [capas, setCapas] = useState<Record<string, string>>({});
   const [configs, setConfigs] = useState<Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean; linkAte?: string | null }>>({});
@@ -73,7 +72,6 @@ export default function DashboardPage() {
       const lista: Galeria[] = [];
       const mapaCfg: Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean; linkAte?: string | null }> = {};
       const mapaCapa: Record<string, string> = {};
-      const contagemMes = new Map<string, number>();
 
       for (const row of rows ?? []) {
         const gid = row.id as string;
@@ -110,23 +108,6 @@ export default function DashboardPage() {
           temSenha: Boolean(row.tem_senha),
         };
         if (row.capa) mapaCapa[gid] = row.capa as string;
-
-        for (const f of arquivos) {
-          const c = (f as { created_at?: string | null }).created_at;
-          if (!c) continue;
-          const d = new Date(c);
-          const chave = `${d.getFullYear()}-${d.getMonth()}`;
-          contagemMes.set(chave, (contagemMes.get(chave) ?? 0) + 1);
-        }
-      }
-
-      const agora = new Date();
-      const meses: Mes[] = [];
-      for (let i = 5; i >= 0; i--) {
-        const dt = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
-        const chave = `${dt.getFullYear()}-${dt.getMonth()}`;
-        const nome = dt.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
-        meses.push({ label: nome, qtd: contagemMes.get(chave) ?? 0 });
       }
 
       const ids = lista.map((g) => g.id);
@@ -145,7 +126,6 @@ export default function DashboardPage() {
       setConfigs(mapaCfg);
       setCapas(mapaCapa);
       setGalerias(lista);
-      setPorMes(meses);
       setCarregando(false);
     }
     carregar();
@@ -313,6 +293,23 @@ export default function DashboardPage() {
 
   const totalGalerias = galerias.length;
   const agoraMs = Date.now();
+
+  /* Seleções pendentes (cliente não finalizou) e finalizadas */
+  const pendentes = galerias.filter((g) => {
+    const s = selecoes[g.id];
+    return s && s.fotos.length > 0 && !s.finalizada;
+  }).length;
+  const finalizadas = galerias.filter((g) => selecoes[g.id]?.finalizada).length;
+
+  /* Galerias com link expirando em até 7 dias */
+  const em7dias = agoraMs + 7 * 86400000;
+  const expirandoBreve = galerias.filter((g) => {
+    const linkAte = configs[g.id]?.linkAte;
+    if (!linkAte) return false;
+    const exp = new Date(linkAte + "T23:59:59").getTime();
+    return exp > agoraMs && exp <= em7dias;
+  }).length;
+
   const notificacoes = galerias
     .filter((g) => selecoes[g.id]?.finalizada)
     .map((g) => ({ id: g.id, nome: g.titulo, qtd: selecoes[g.id].fotos.length, quando: selecoes[g.id].atualizadoEm }))
@@ -332,12 +329,26 @@ export default function DashboardPage() {
     return (b.criadoEm ?? "").localeCompare(a.criadoEm ?? "");
   });
   const totalFotos = galerias.reduce((s, g) => s + g.qtd, 0);
-  const media = totalGalerias > 0 ? Math.round(totalFotos / totalGalerias) : 0;
-  const maior = galerias.reduce<Galeria | null>((m, g) => (!m || g.qtd > m.qtd ? g : m), null);
 
   const topGal = [...galerias].sort((a, b) => b.qtd - a.qtd).slice(0, 6);
   const maxGal = Math.max(1, ...topGal.map((g) => g.qtd));
-  const maxMes = Math.max(1, ...porMes.map((m) => m.qtd));
+
+  /* Galerias criadas por mês (últimos 6 meses) */
+  const agora = new Date();
+  const galPorMes: Mes[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const dt = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
+    const ano = dt.getFullYear();
+    const mes = dt.getMonth();
+    const qtd = galerias.filter((g) => {
+      if (!g.criadoEm) return false;
+      const d = new Date(g.criadoEm);
+      return d.getFullYear() === ano && d.getMonth() === mes;
+    }).length;
+    const nome = dt.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+    galPorMes.push({ label: nome, qtd });
+  }
+  const maxMes = Math.max(1, ...galPorMes.map((m) => m.qtd));
 
   return (
     <div className="dash mf-shift">
@@ -591,28 +602,28 @@ export default function DashboardPage() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
             </div>
             <div className="kpi-val">{totalGalerias}</div>
-            <div className="kpi-lab">Galerias</div>
+            <div className="kpi-lab">Galerias · {totalFotos} foto{totalFotos === 1 ? "" : "s"}</div>
           </div>
           <div className="kpi">
-            <div className="kpi-ic">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="15" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M4 17l4.5-4.5 3.5 3 3-2.5L21 17"/></svg>
+            <div className="kpi-ic" style={{ background: pendentes > 0 ? "rgba(246,196,69,0.14)" : undefined, color: pendentes > 0 ? "#f6c445" : undefined }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
             </div>
-            <div className="kpi-val">{totalFotos}</div>
-            <div className="kpi-lab">Fotos no total</div>
+            <div className="kpi-val">{pendentes}</div>
+            <div className="kpi-lab">Aguardando seleção</div>
           </div>
           <div className="kpi">
-            <div className="kpi-ic">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16l3.5-4 3 2.5L20 8"/></svg>
+            <div className="kpi-ic" style={{ background: finalizadas > 0 ? "rgba(34,197,94,0.12)" : undefined, color: finalizadas > 0 ? "#4ade80" : undefined }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
             </div>
-            <div className="kpi-val">{media}</div>
-            <div className="kpi-lab">Média por galeria</div>
+            <div className="kpi-val">{finalizadas}</div>
+            <div className="kpi-lab">Seleções finalizadas</div>
           </div>
           <div className="kpi">
-            <div className="kpi-ic">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9 6.8 19.8l1-5.8L3.6 9.9l5.8-.8z"/></svg>
+            <div className="kpi-ic" style={{ background: expirandoBreve > 0 ? "rgba(239,68,68,0.12)" : undefined, color: expirandoBreve > 0 ? "#f87171" : undefined }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </div>
-            <div className="kpi-val">{maior ? maior.qtd : 0}</div>
-            <div className="kpi-lab">{maior ? "Maior: " + maior.titulo : "Maior galeria"}</div>
+            <div className="kpi-val">{expirandoBreve}</div>
+            <div className="kpi-lab">Expiram em 7 dias</div>
           </div>
         </section>
 
@@ -645,14 +656,14 @@ export default function DashboardPage() {
 
               <div className="card">
                 <div className="card-h">
-                  <span className="card-t">Envios por mês</span>
+                  <span className="card-t">Galerias por mês</span>
                   <span className="card-tag">6 meses</span>
                 </div>
-                {porMes.every((m) => m.qtd === 0) ? (
-                  <div className="chart-vazio">Ainda sem envios nos últimos meses.</div>
+                {galPorMes.every((m) => m.qtd === 0) ? (
+                  <div className="chart-vazio">Ainda sem galerias nos últimos meses.</div>
                 ) : (
                   <div className="vbars">
-                    {porMes.map((m, i) => (
+                    {galPorMes.map((m, i) => (
                       <div className="vbar" key={i}>
                         <div className="vbar-area">
                           <div className="vbar-fill" style={{ height: `${m.qtd === 0 ? 0 : Math.max(6, (m.qtd / maxMes) * 130)}px` }}>
