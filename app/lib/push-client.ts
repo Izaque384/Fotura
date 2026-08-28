@@ -1,9 +1,15 @@
+import { createClient } from "./supabase-client";
+
 /** Registra o Service Worker e inscreve o navegador em push notifications.
- *  Retorna true se inscreveu (ou já estava inscrito), false se negou/falhou. */
+ * Retorna true se inscreveu (ou já estava inscrito), false se negou/falhou. */
 export async function inscreverPush(userId: string): Promise<boolean> {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
 
   try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token || session.user.id !== userId) return false;
+
     const reg = await navigator.serviceWorker.register("/sw.js");
     await navigator.serviceWorker.ready;
 
@@ -21,20 +27,19 @@ export async function inscreverPush(userId: string): Promise<boolean> {
       });
     }
 
-    const keys = sub.toJSON().keys!;
+    const keys = sub.toJSON().keys;
+    if (!keys?.p256dh || !keys.auth) return false;
 
-    await fetch("/api/push/subscribe", {
+    const res = await fetch("/api/push/subscribe", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        user_id: userId,
-        endpoint: sub.endpoint,
-        p256dh: keys.p256dh,
-        auth: keys.auth,
-      }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ endpoint: sub.endpoint, p256dh: keys.p256dh, auth: keys.auth }),
     });
 
-    return true;
+    return res.ok;
   } catch {
     return false;
   }
