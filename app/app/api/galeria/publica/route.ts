@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { temAcessoGaleria } from "../../../../lib/gallery-access";
 
+export const dynamic = "force-dynamic";
+
+function json(data: unknown, status = 200) {
+  return NextResponse.json(data, { status, headers: { "Cache-Control": "no-store, private" } });
+}
+
 export async function GET(req: NextRequest) {
   const galeria = req.nextUrl.searchParams.get("galeria");
-  if (!galeria) return NextResponse.json({ error: "galeria obrigatória." }, { status: 400 });
+  if (!galeria) return json({ error: "galeria obrigatória." }, 400);
 
   const supabase = createServiceClient();
   const { data: g } = await supabase
@@ -13,7 +19,7 @@ export async function GET(req: NextRequest) {
     .eq("id", galeria)
     .maybeSingle();
 
-  if (!g) return NextResponse.json({ error: "Galeria não encontrada." }, { status: 404 });
+  if (!g) return json({ error: "Galeria não encontrada." }, 404);
 
   const linkAte = (g.link_ate as string | null) ?? null;
   const linkExpirado = Boolean(linkAte && Date.now() > new Date(`${linkAte}T23:59:59`).getTime());
@@ -40,7 +46,7 @@ export async function GET(req: NextRequest) {
     };
   }
 
-  return NextResponse.json({
+  return json({
     galeria: {
       titulo: (g.titulo as string) || "Galeria",
       capa: (g.capa as string | null) ?? null,
