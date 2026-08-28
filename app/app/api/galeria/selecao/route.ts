@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { temAcessoGaleria } from "../../../../lib/gallery-access";
+import { consumirRateLimit } from "../../../../lib/rate-limit";
 
 webpush.setVapidDetails(
   process.env.VAPID_EMAIL || "mailto:contato@fotura.com.br",
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
   let body: Body;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Requisição inválida." }, { status: 400 }); }
   const galeria = body.galeria?.trim();
-  if (!galeria) return NextResponse.json({ error: "galeria obrigatória." }, { status: 400 });
+  if (!galeria || galeria.length > 100) return NextResponse.json({ error: "galeria inválida." }, { status: 400 });
   if (!Array.isArray(body.fotos) || body.fotos.length > 500 || !body.fotos.every((x) => typeof x === "string" && x.length <= 300)) {
     return NextResponse.json({ error: "Seleção inválida." }, { status: 400 });
   }
@@ -53,6 +54,15 @@ export async function POST(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g } = await supabase.from("galerias").select("user_id,titulo,prova,limite,prazo,link_ate,tem_senha").eq("id", galeria).maybeSingle();
   if (!g) return NextResponse.json({ error: "Galeria não encontrada." }, { status: 404 });
+
+  const permitido = await consumirRateLimit(req, "gallery_selection_write", galeria, 10 * 60, 180);
+  if (!permitido) {
+    return NextResponse.json(
+      { error: "Muitas alterações em pouco tempo. Aguarde alguns minutos." },
+      { status: 429, headers: { "Retry-After": "600" } }
+    );
+  }
+
   const linkAte = (g.link_ate as string | null) ?? null;
   if (linkAte && Date.now() > new Date(`${linkAte}T23:59:59`).getTime()) return NextResponse.json({ error: "Link expirado." }, { status: 403 });
   if (g.tem_senha && !temAcessoGaleria(req, galeria)) return NextResponse.json({ error: "Acesso à galeria necessário." }, { status: 401 });
