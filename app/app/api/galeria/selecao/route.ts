@@ -12,15 +12,50 @@ webpush.setVapidDetails(
 
 type Body = { galeria?: string; fotos?: unknown; finalizada?: unknown; comentarios?: unknown };
 
+function nomeArquivoValido(valor: unknown): valor is string {
+  return typeof valor === "string"
+    && valor.length > 0
+    && valor.length <= 300
+    && !valor.includes("/")
+    && !valor.includes("\\")
+    && !/[\u0000-\u001f\u007f]/.test(valor);
+}
+
 function comentariosValidos(valor: unknown) {
   if (!valor || typeof valor !== "object" || Array.isArray(valor)) return null;
   const saida: Record<string, string> = {};
   for (const [chave, texto] of Object.entries(valor as Record<string, unknown>)) {
-    if (typeof chave !== "string" || chave.length > 300 || typeof texto !== "string" || texto.length > 2000) return null;
+    if (!nomeArquivoValido(chave) || typeof texto !== "string" || texto.length > 2000) return null;
     saida[chave] = texto;
     if (Object.keys(saida).length > 500) return null;
   }
   return saida;
+}
+
+async function nomesOriginaisGaleria(
+  supabase: ReturnType<typeof createServiceClient>,
+  userId: string,
+  galeria: string
+) {
+  const nomes = new Set<string>();
+  const pageSize = 1000;
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await supabase.storage
+      .from("fotos")
+      .list(`${userId}/${galeria}`, { limit: pageSize, offset, sortBy: { column: "name", order: "asc" } });
+
+    if (error) return { nomes: null, error };
+    for (const item of data ?? []) {
+      if (item.name !== "thumbs") nomes.add(item.name);
+    }
+
+    if (!data || data.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  return { nomes, error: null };
 }
 
 async function notificar(supabase: ReturnType<typeof createServiceClient>, userId: string, titulo: string, qtd: number) {
@@ -43,7 +78,7 @@ export async function POST(req: NextRequest) {
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Requisição inválida." }, { status: 400 }); }
   const galeria = body.galeria?.trim();
   if (!galeria || galeria.length > 100) return NextResponse.json({ error: "galeria inválida." }, { status: 400 });
-  if (!Array.isArray(body.fotos) || body.fotos.length > 500 || !body.fotos.every((x) => typeof x === "string" && x.length <= 300)) {
+  if (!Array.isArray(body.fotos) || body.fotos.length > 500 || !body.fotos.every(nomeArquivoValido)) {
     return NextResponse.json({ error: "Seleção inválida." }, { status: 400 });
   }
   const fotos = Array.from(new Set(body.fotos as string[]));
@@ -75,6 +110,20 @@ export async function POST(req: NextRequest) {
 
   const { data: anterior } = await supabase.from("selecoes").select("finalizada").eq("galeria", galeria).maybeSingle();
   if (anterior?.finalizada) return NextResponse.json({ error: "A seleção já foi finalizada." }, { status: 409 });
+
+  // No fechamento, confirme no Storage que todos os nomes enviados pertencem realmente à galeria.
+  // A validação é feita aqui (e não a cada clique) para evitar uma listagem completa do Storage em cada alteração de rascunho.
+  if (finalizada) {
+    const { nomes, error: storageError } = await nomesOriginaisGaleria(supabase, g.user_id as string, galeria);
+    if (storageError || !nomes) {
+      return NextResponse.json({ error: "Não foi possível validar as fotos da seleção." }, { status: 500 });
+    }
+
+    const referencias = new Set([...fotos, ...Object.keys(comentarios)]);
+    if ([...referencias].some((nome) => !nomes.has(nome))) {
+      return NextResponse.json({ error: "A seleção contém uma foto que não está mais disponível nesta galeria." }, { status: 400 });
+    }
+  }
 
   const { error } = await supabase.from("selecoes").upsert({ galeria, fotos, finalizada, comentarios, atualizado_em: new Date().toISOString() });
   if (error) return NextResponse.json({ error: "Não foi possível salvar a seleção." }, { status: 500 });
