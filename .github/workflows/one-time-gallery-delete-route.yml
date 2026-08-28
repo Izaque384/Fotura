@@ -1,0 +1,37 @@
+name: One-time gallery deletion route wiring
+
+on:
+  push:
+    paths:
+      - '.github/workflows/one-time-gallery-delete-route.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Replace browser-side gallery deletion
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('app/app/dashboard/galerias/page.tsx')
+          text = path.read_text()
+          old = ''' async function excluir(g:Galeria){if(!confirm(`Excluir a galeria “${g.titulo}” e todas as fotos?`))return;const caminhos=g.arquivos.flatMap(n=>[`${uid}/${g.id}/${n}`,`${uid}/${g.id}/thumbs/${n}`]);if(caminhos.length){const{error}=await supabase.storage.from("fotos").remove(caminhos);if(error){setAviso("Não foi possível excluir todos os arquivos.");return}}await supabase.from("selecoes").delete().eq("galeria",g.id);await supabase.from("senhas").delete().eq("galeria",g.id);const{error}=await supabase.from("galerias").delete().eq("id",g.id).eq("user_id",uid);if(!error){setGalerias(p=>p.filter(x=>x.id!==g.id));setAviso("Galeria excluída.")}}'''
+          new = ''' async function excluir(g:Galeria){if(!confirm(`Excluir a galeria “${g.titulo}” e todas as fotos?`))return;setAviso("Excluindo galeria…");const{data:{session}}=await supabase.auth.getSession();if(!session?.access_token){setAviso("Sua sessão expirou. Entre novamente para excluir a galeria.");return}const r=await fetch("/api/galeria/excluir",{method:"DELETE",headers:{"Content-Type":"application/json",Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({galeria:g.id})});if(!r.ok){const d=await r.json().catch(()=>({error:"Não foi possível excluir a galeria."}));setAviso(d.error||"Não foi possível excluir a galeria.");return}setGalerias(p=>p.filter(x=>x.id!==g.id));setSelecoes(p=>{const n={...p};delete n[g.id];return n});setAviso("Galeria excluída.")}'''
+          if old not in text:
+              raise SystemExit('Deletion function not found; refusing to edit')
+          path.write_text(text.replace(old, new, 1))
+      - name: Commit change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/app/dashboard/galerias/page.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: delete galleries through authenticated API"
+          git push origin main
