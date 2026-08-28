@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createClient } from "../../lib/supabase-client";
 
 function senhaValida(senha: string) {
-  return senha.length >= 10 && senha.length <= 128 && /[A-Za-zÀ-ÿ]/.test(senha) && /\d/.test(senha);
+  return senha.length >= 5 && senha.length <= 128;
 }
 
 export default function RedefinirSenhaPage() {
@@ -47,7 +47,7 @@ export default function RedefinirSenhaPage() {
     setMensagem("");
 
     if (!senhaValida(novaSenha)) {
-      setErro("Use pelo menos 10 caracteres, incluindo letras e números.");
+      setErro("Use pelo menos 5 caracteres.");
       return;
     }
     if (novaSenha !== confirmar) {
@@ -63,7 +63,6 @@ export default function RedefinirSenhaPage() {
       return;
     }
 
-    // Após trocar a senha, invalida outras sessões da conta e preserva apenas a sessão atual.
     await supabase.auth.signOut({ scope: "others" });
     setMensagem("Senha redefinida com sucesso!");
     setCarregando(false);
@@ -89,7 +88,7 @@ export default function RedefinirSenhaPage() {
           <>
             <label style={{fontSize:13,color:"#a0a4b8",display:"block",marginBottom:6}}>Nova senha</label>
             <input type="password" autoComplete="new-password" maxLength={128} value={novaSenha} onChange={(e)=>setNovaSenha(e.target.value)} placeholder="••••••••" style={inputStyle} />
-            <p style={{fontSize:11,color:"#6f76a0",margin:"-10px 0 18px"}}>Mínimo de 10 caracteres, com letras e números.</p>
+            <p style={{fontSize:11,color:"#6f76a0",margin:"-10px 0 18px"}}>Mínimo de 5 caracteres.</p>
             <label style={{fontSize:13,color:"#a0a4b8",display:"block",marginBottom:6}}>Confirmar nova senha</label>
             <input type="password" autoComplete="new-password" maxLength={128} value={confirmar} onChange={(e)=>setConfirmar(e.target.value)} onKeyDown={(e)=>e.key === "Enter" && handleRedefinir()} placeholder="••••••••" style={{...inputStyle,marginBottom:24}} />
             <button onClick={handleRedefinir} disabled={carregando} style={{width:"100%",padding:"13px",fontSize:14,fontWeight:600,color:"#fff",background:carregando?"#3b5de0":"#4a6cf7",border:"none",borderRadius:10,cursor:carregando?"default":"pointer"}}>{carregando?"Salvando...":"Redefinir senha"}</button>
