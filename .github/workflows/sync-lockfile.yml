@@ -1,4 +1,4 @@
-name: Sync package lockfile
+name: Audit dependencies
 
 on:
   push:
@@ -7,10 +7,10 @@ on:
       - '.github/workflows/sync-lockfile.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  sync-lockfile:
+  audit:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -23,18 +23,20 @@ jobs:
           cache: npm
           cache-dependency-path: app/package-lock.json
 
-      - name: Regenerate lockfile without install scripts
+      - name: Install dependency tree without scripts
         working-directory: app
-        run: npm install --package-lock-only --ignore-scripts
+        run: npm ci --ignore-scripts
 
-      - name: Commit lockfile if changed
+      - name: Audit production dependencies
+        working-directory: app
+        shell: bash
         run: |
-          if git diff --quiet -- app/package-lock.json; then
-            echo "Lockfile already synchronized."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app/package-lock.json
-          git commit -m "chore: sync package lockfile"
-          git push
+          npm audit --omit=dev --json > audit-prod.json || true
+          node -e 'const fs=require("fs"); const a=JSON.parse(fs.readFileSync("audit-prod.json","utf8")); console.log("PROD_AUDIT_COUNTS="+JSON.stringify(a.metadata?.vulnerabilities||{})); for (const [name,v] of Object.entries(a.vulnerabilities||{})) console.log(`PROD_VULN ${name} severity=${v.severity} direct=${v.isDirect} range=${v.range}`);'
+
+      - name: Audit all dependencies
+        working-directory: app
+        shell: bash
+        run: |
+          npm audit --json > audit-all.json || true
+          node -e 'const fs=require("fs"); const a=JSON.parse(fs.readFileSync("audit-all.json","utf8")); console.log("ALL_AUDIT_COUNTS="+JSON.stringify(a.metadata?.vulnerabilities||{})); for (const [name,v] of Object.entries(a.vulnerabilities||{})) console.log(`ALL_VULN ${name} severity=${v.severity} direct=${v.isDirect} range=${v.range}`);'
