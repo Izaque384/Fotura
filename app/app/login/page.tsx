@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createClient } from "../../lib/supabase-client";
 
 function senhaCadastroValida(senha: string) {
-  return senha.length >= 5 && senha.length <= 128;
+  return senha.length >= 8 && senha.length <= 128 && /[a-z]/.test(senha) && /[A-Z]/.test(senha) && /\d/.test(senha) && /[!@#$%^&*()_+\-=\[\]{};'\\:\"|<>?,./`~]/.test(senha);
 }
 
 export default function LoginPage() {
@@ -37,7 +37,7 @@ export default function LoginPage() {
         return;
       }
       if (!senhaCadastroValida(senha)) {
-        setMensagem("Erro: Use uma senha com pelo menos 5 caracteres.");
+        setMensagem("Erro: Use pelo menos 8 caracteres, com letra minúscula, maiúscula, número e símbolo.");
         setCarregando(false);
         return;
       }
@@ -76,7 +76,7 @@ export default function LoginPage() {
 
         <label style={{ fontSize:13,color:"#a0a4b8",display:"block",marginBottom:6 }}>Senha</label>
         <input type="password" autoComplete={modo === "login" ? "current-password" : "new-password"} value={senha} onChange={(e)=>setSenha(e.target.value)} onKeyDown={(e)=>e.key === "Enter" && handleSubmit()} placeholder="••••••••" maxLength={128} style={{ width:"100%",padding:"12px 14px",fontSize:14,border:"1.5px solid #2a2d40",borderRadius:10,background:"#0f0f1a",color:"#f0f0f5",outline:"none",marginBottom:12,boxSizing:"border-box" }} />
-        {modo === "cadastro" && <p style={{fontSize:11,color:"#6f76a0",margin:"0 0 18px"}}>Mínimo de 5 caracteres.</p>}
+        {modo === "cadastro" && <p style={{fontSize:11,color:"#6f76a0",margin:"0 0 18px"}}>Mínimo de 8 caracteres, com maiúscula, minúscula, número e símbolo.</p>}
 
         {modo === "login" && <div style={{textAlign:"right",marginBottom:24}}><Link href="/esqueci-senha" style={{fontSize:12,color:"#4a6cf7",textDecoration:"none"}}>Esqueci minha senha</Link></div>}
 
