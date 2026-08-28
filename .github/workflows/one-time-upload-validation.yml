@@ -1,0 +1,76 @@
+name: One-time upload validation
+
+on:
+  push:
+    paths:
+      - '.github/workflows/one-time-upload-validation.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Add upload validation
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('app/app/upload/page.tsx')
+          text = path.read_text()
+
+          old_type = '''type Cliente = { id:string; nome:string; email:string|null; telefone:string|null };\n'''
+          new_type = '''type Cliente = { id:string; nome:string; email:string|null; telefone:string|null };\ntype ArquivoRejeitado = { nome:string; motivo:string };\n\nconst MAX_ARQUIVOS_POR_LOTE = 500;\nconst MAX_TAMANHO_ARQUIVO = 50 * 1024 * 1024;\nconst MIME_POR_EXTENSAO: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };\nconst ACCEPT_FOTOS = ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp";\n\nfunction validarArquivo(arquivo:File):string|null{const nome=arquivo.name.trim();if(!nome)return "arquivo sem nome";if(nome.length>180)return "nome do arquivo muito longo";if(/[\\/\\\\\\u0000-\\u001f\\u007f]/.test(nome))return "nome do arquivo inválido";const ponto=nome.lastIndexOf(".");if(ponto<=0||ponto===nome.length-1)return "extensão ausente ou inválida";const extensao=nome.slice(ponto+1).toLowerCase(),mimeEsperado=MIME_POR_EXTENSAO[extensao];if(!mimeEsperado)return "formato não aceito (use JPG, PNG ou WebP)";if(arquivo.type.toLowerCase()!==mimeEsperado)return "tipo do arquivo não corresponde à extensão";if(arquivo.size===0)return "arquivo vazio";if(arquivo.size>MAX_TAMANHO_ARQUIVO)return "arquivo maior que 50 MB";return null}\n'''
+          if old_type not in text:
+              raise SystemExit('Cliente type marker not found')
+          text = text.replace(old_type, new_type, 1)
+
+          old_state = '''const[carregando,setCarregando]=useState(true),[enviando,setEnviando]=useState(false),[mensagem,setMensagem]=useState(""),[erro,setErro]=useState(false),[arquivos,setArquivos]=useState<FileList|null>(null),[nomeGaleria,setNomeGaleria]=useState(""),[tituloTravado,setTituloTravado]=useState(""),[link,setLink]=useState("");'''
+          new_state = '''const[carregando,setCarregando]=useState(true),[enviando,setEnviando]=useState(false),[mensagem,setMensagem]=useState(""),[erro,setErro]=useState(false),[arquivos,setArquivos]=useState<File[]>([]),[arquivosRejeitados,setArquivosRejeitados]=useState<ArquivoRejeitado[]>([]),[nomeGaleria,setNomeGaleria]=useState(""),[tituloTravado,setTituloTravado]=useState(""),[link,setLink]=useState("");'''
+          if old_state not in text:
+              raise SystemExit('Upload state marker not found')
+          text = text.replace(old_state, new_state, 1)
+
+          old_send = ''' async function enviarFotos(){setErro(false);setLink("");setMensagem("");if(!arquivos?.length){setErro(true);setMensagem("Escolha pelo menos uma foto.");return}const{data:u}=await supabase.auth.getUser();if(!u.user){router.replace("/login");return}const uid=u.user.id;let galeriaId=galeriaFixa,galeriaCriadaAgora=false,clienteCriadoAgora:string|null=null;\n'''
+          new_send = ''' function selecionarArquivos(lista:FileList|null){const selecionados=Array.from(lista??[]),validos:File[]=[],rejeitados:ArquivoRejeitado[]=[];selecionados.forEach((arquivo,i)=>{if(i>=MAX_ARQUIVOS_POR_LOTE){rejeitados.push({nome:arquivo.name,motivo:`limite de ${MAX_ARQUIVOS_POR_LOTE} fotos por lote`});return}const motivo=validarArquivo(arquivo);if(motivo)rejeitados.push({nome:arquivo.name,motivo});else validos.push(arquivo)});setArquivos(validos);setArquivosRejeitados(rejeitados);setMensagem("");setErro(false)}\n async function enviarFotos(){setErro(false);setLink("");setMensagem("");if(!arquivos.length){setErro(true);setMensagem("Escolha pelo menos uma foto válida.");return}const{data:u}=await supabase.auth.getUser();if(!u.user){router.replace("/login");return}const uid=u.user.id;const revalidacao=arquivos.map(a=>({arquivo:a,motivo:validarArquivo(a)})),invalidos=revalidacao.filter(x=>x.motivo);if(invalidos.length){setArquivos(revalidacao.filter(x=>!x.motivo).map(x=>x.arquivo));setArquivosRejeitados(prev=>[...prev,...invalidos.map(x=>({nome:x.arquivo.name,motivo:x.motivo!}))]);setErro(true);setMensagem("Algumas fotos deixaram de ser válidas. Revise a seleção antes de enviar.");return}let galeriaId=galeriaFixa,galeriaCriadaAgora=false,clienteCriadoAgora:string|null=null;\n'''
+          if old_send not in text:
+              raise SystemExit('Upload send marker not found')
+          text = text.replace(old_send, new_send, 1)
+
+          text = text.replace('''const falhas:string[]=[],lista=Array.from(arquivos);''', '''const falhas:string[]=[],lista=arquivos;''', 1)
+
+          old_css = '''.up-file-status{font-size:12px;color:#7a7f9a;text-align:center;margin:10px 0 24px}.up-file-status.tem{color:#8fe3b0}'''
+          new_css = '''.up-file-status{font-size:12px;color:#7a7f9a;text-align:center;margin:10px 0 8px}.up-file-status.tem{color:#8fe3b0}.up-rules{font-size:11px;color:#666c86;text-align:center;margin:0 0 18px}.up-rejected{margin:0 0 20px;padding:12px 14px;border:1px solid rgba(255,157,157,.25);border-radius:10px;background:rgba(255,157,157,.05)}.up-rejected p{font-size:12px;color:#ffb0b0;margin:0 0 7px}.up-rejected ul{margin:0;padding-left:18px;color:#8f93aa;font-size:11px;line-height:1.5}'''
+          if old_css not in text:
+              raise SystemExit('Upload css marker not found')
+          text = text.replace(old_css, new_css, 1)
+
+          old_ui = '''<label className="up-label">Fotos</label><input ref={inputRef} type="file" accept="image/*" multiple onChange={e=>setArquivos(e.target.files)} style={{display:"none"}}/><button type="button" className="up-file" onClick={()=>inputRef.current?.click()}>Escolher fotos</button><p className={"up-file-status"+(arquivos?.length?" tem":"")}>{arquivos?.length?`${arquivos.length} foto${arquivos.length===1?"":"s"} selecionada${arquivos.length===1?"":"s"}`:"Nenhuma foto selecionada"}</p><button className="up-enviar" onClick={enviarFotos} disabled={enviando}>{enviando?"Enviando…":nomeTravado?"Enviar fotos":"Criar nova galeria"}</button>'''
+          new_ui = '''<label className="up-label">Fotos</label><input ref={inputRef} type="file" accept={ACCEPT_FOTOS} multiple onChange={e=>{selecionarArquivos(e.target.files);e.currentTarget.value=""}} style={{display:"none"}}/><button type="button" className="up-file" onClick={()=>inputRef.current?.click()}>Escolher fotos</button><p className={"up-file-status"+(arquivos.length?" tem":"")}>{arquivos.length?`${arquivos.length} foto${arquivos.length===1?"":"s"} válida${arquivos.length===1?"":"s"} selecionada${arquivos.length===1?"":"s"}`:"Nenhuma foto válida selecionada"}</p><p className="up-rules">JPG, PNG ou WebP · até 50 MB por foto · até 500 fotos por lote</p>{arquivosRejeitados.length>0&&<div className="up-rejected"><p>{arquivosRejeitados.length} arquivo{arquivosRejeitados.length===1?" foi rejeitado":"s foram rejeitados"} antes do upload.</p><ul>{arquivosRejeitados.slice(0,4).map((item,i)=><li key={`${item.nome}-${i}`}>{item.nome}: {item.motivo}</li>)}{arquivosRejeitados.length>4&&<li>e mais {arquivosRejeitados.length-4} arquivo(s)</li>}</ul></div>}<button className="up-enviar" onClick={enviarFotos} disabled={enviando||arquivos.length===0}>{enviando?"Enviando…":nomeTravado?"Enviar fotos":"Criar nova galeria"}</button>'''
+          if old_ui not in text:
+              raise SystemExit('Upload UI marker not found')
+          text = text.replace(old_ui, new_ui, 1)
+
+          path.write_text(text)
+
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Build
+        working-directory: app
+        run: npm run build
+
+      - name: Commit change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/app/upload/page.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: validate photo uploads before sending"
+          git push origin main
