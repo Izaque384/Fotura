@@ -4,6 +4,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase-client";
 
+const ORIGEM_PRODUCAO = "https://fotura.vercel.app";
+
+function origemRecuperacao() {
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    return window.location.origin;
+  }
+  return ORIGEM_PRODUCAO;
+}
+
 export default function EsqueciSenhaPage() {
   const [email, setEmail] = useState("");
   const [enviado, setEnviado] = useState(false);
@@ -16,7 +25,7 @@ export default function EsqueciSenhaPage() {
     setCarregando(true);
 
     await supabase.auth.resetPasswordForEmail(emailNormalizado, {
-      redirectTo: `${window.location.origin}/redefinir-senha`,
+      redirectTo: `${origemRecuperacao()}/redefinir-senha`,
     });
 
     // Resposta deliberadamente genérica para não revelar se o e-mail possui conta.
