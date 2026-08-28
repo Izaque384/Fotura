@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { temAcessoGaleria } from "../../../../lib/gallery-access";
+import { consumirRateLimit } from "../../../../lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 const EXPIRA_SEG = 3600;
 
-function json(data: unknown, status = 200) {
-  return NextResponse.json(data, { status, headers: { "Cache-Control": "no-store, private" } });
+function json(data: unknown, status = 200, retryAfter?: number) {
+  const headers: Record<string, string> = { "Cache-Control": "no-store, private" };
+  if (retryAfter) headers["Retry-After"] = String(retryAfter);
+  return NextResponse.json(data, { status, headers });
 }
 
 export async function GET(req: NextRequest) {
-  const galeria = req.nextUrl.searchParams.get("galeria");
+  const galeria = req.nextUrl.searchParams.get("galeria")?.trim();
   if (!galeria) return json({ error: "galeria obrigatória." }, 400);
+
+  const permitido = await consumirRateLimit(req, "signed_gallery_urls", galeria, 60, 40);
+  if (!permitido) return json({ error: "Muitas solicitações. Aguarde um minuto." }, 429, 60);
 
   const supabase = createServiceClient();
   const { data: g } = await supabase
