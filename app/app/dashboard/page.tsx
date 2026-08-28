@@ -1,176 +1,143 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
 import { inscreverPush } from "../../lib/push-client";
 import MenuFotografo from "../MenuFotografo";
 
-type Foto = { nome: string; url: string; thumb: string };
-type Galeria = { id: string; slug: string; titulo: string; qtd: number; fotos: Foto[]; criadoEm?: string };
+type Galeria = { id: string; titulo: string; criadoEm: string | null; linkAte: string | null; prova: boolean };
+type Selecao = { galeria: string; fotos: string[]; finalizada: boolean; comentarios: Record<string, string>; atualizadoEm?: string };
 type Mes = { label: string; qtd: number };
 
 export default function DashboardPage() {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [carregando, setCarregando] = useState(true);
-  const [uid, setUid] = useState("");
-  const [email, setEmail] = useState<string | null>(null);
+  const [erro, setErro] = useState("");
+  const [email, setEmail] = useState("");
+  const [nome, setNome] = useState("");
   const [galerias, setGalerias] = useState<Galeria[]>([]);
-  const [aviso, setAviso] = useState("");
-  const [capas, setCapas] = useState<Record<string, string>>({});
-  const [configs, setConfigs] = useState<Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean; linkAte?: string | null }>>({});
-  const [configModal, setConfigModal] = useState<string | null>(null);
-  const [fProva, setFProva] = useState(false);
-  const [fLimite, setFLimite] = useState("");
-  const [fPrazo, setFPrazo] = useState("");
-  const [fLink, setFLink] = useState("");
-  const [fSenha, setFSenha] = useState("");
-  const [escolhendo, setEscolhendo] = useState<string | null>(null);
-  const [selecoes, setSelecoes] = useState<Record<string, { fotos: string[]; finalizada: boolean; comentarios: Record<string, string>; atualizadoEm?: string }>>({});
-  const [vendoSelecao, setVendoSelecao] = useState<string | null>(null);
-  const [menuAberto, setMenuAberto] = useState<string | null>(null);
+  const [selecoes, setSelecoes] = useState<Record<string, Selecao>>({});
   const [notifVistoEm, setNotifVistoEm] = useState<string | null>(null);
   const [sinoAberto, setSinoAberto] = useState(false);
-  const [ordem, setOrdem] = useState<"data" | "estado">("data");
-  const [baixandoSel, setBaixandoSel] = useState(false);
-  const [progSel, setProgSel] = useState(0);
 
   useEffect(() => {
+    let ativo = true;
     async function carregar() {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        router.replace("/login");
-        return;
-      }
-      const meuId = userData.user.id;
-      setUid(meuId);
-      setEmail(userData.user.email ?? null);
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) { router.replace("/login"); return; }
+      const uid = auth.user.id;
+      setEmail(auth.user.email ?? "");
+      inscreverPush(uid);
 
-      /* Inscreve push notifications (pede permissão se ainda não deu) */
-      inscreverPush(meuId);
+      const [perfilRes, galeriasRes] = await Promise.all([
+        supabase.from("perfis").select("nome_estudio,notif_visto_em").eq("id", uid).maybeSingle(),
+        supabase.from("galerias").select("id,titulo,criado_em,link_ate,prova").eq("user_id", uid).order("criado_em", { ascending: false }),
+      ]);
+      if (!ativo) return;
+      if (galeriasRes.error) { setErro("Não foi possível carregar seu painel agora."); setCarregando(false); return; }
 
-      const { data: notifRow } = await supabase
-        .from("perfis")
-        .select("notif_visto_em")
-        .eq("id", meuId)
-        .maybeSingle();
-      setNotifVistoEm((notifRow?.notif_visto_em as string | null) ?? null);
+      setNome((perfilRes.data?.nome_estudio as string | null)?.trim() ?? "");
+      setNotifVistoEm((perfilRes.data?.notif_visto_em as string | null) ?? null);
 
-      const { data: rows, error } = await supabase
-        .from("galerias")
-        .select("*")
-        .eq("user_id", meuId)
-        .order("criado_em", { ascending: false });
-
-      if (error) {
-        setAviso("Não foi possível carregar as galerias.");
-        setCarregando(false);
-        return;
-      }
-
-      const lista: Galeria[] = [];
-      const mapaCfg: Record<string, { prova?: boolean; limite?: number; prazo?: string | null; temSenha?: boolean; linkAte?: string | null }> = {};
-      const mapaCapa: Record<string, string> = {};
-
-      for (const row of rows ?? []) {
-        const gid = row.id as string;
-        const { data: fotos } = await supabase.storage
-          .from("fotos")
-          .list(`${meuId}/${gid}`, { limit: 500 });
-        const arquivos = (fotos ?? []).filter((f) => f.id !== null);
-        const caminhos = arquivos.flatMap((f) => [
-          `${meuId}/${gid}/${f.name}`,
-          `${meuId}/${gid}/thumbs/${f.name}`,
-        ]);
-        const { data: signedData } = caminhos.length > 0
-          ? await supabase.storage.from("fotos").createSignedUrls(caminhos, 3600)
-          : { data: [] };
-        const mapaUrls: Record<string, string> = {};
-        for (const s of signedData ?? []) {
-          if (s.signedUrl && s.path) mapaUrls[s.path] = s.signedUrl;
-        }
-        const fotosLista: Foto[] = arquivos.map((f) => ({
-          nome: f.name,
-          url: mapaUrls[`${meuId}/${gid}/${f.name}`] ?? "",
-          thumb: mapaUrls[`${meuId}/${gid}/thumbs/${f.name}`] ?? "",
-        }));
-        const criadoEm = arquivos.reduce<string | undefined>((m, f) => {
-          const c = (f as { created_at?: string | null }).created_at ?? undefined;
-          return c && (!m || c > m) ? c : m;
-        }, undefined) ?? (row.criado_em as string | undefined);
-        lista.push({ id: gid, slug: (row.slug as string) ?? "", titulo: (row.titulo as string) || "Galeria", qtd: arquivos.length, fotos: fotosLista, criadoEm });
-        mapaCfg[gid] = {
-          prova: Boolean(row.prova),
-          limite: (row.limite as number) ?? 0,
-          prazo: (row.prazo as string | null) ?? null,
-          linkAte: (row.link_ate as string | null) ?? null,
-          temSenha: Boolean(row.tem_senha),
-        };
-        if (row.capa) mapaCapa[gid] = row.capa as string;
-      }
+      const lista: Galeria[] = (galeriasRes.data ?? []).map((g) => ({
+        id: g.id as string,
+        titulo: (g.titulo as string) || "Galeria",
+        criadoEm: (g.criado_em as string | null) ?? null,
+        linkAte: (g.link_ate as string | null) ?? null,
+        prova: Boolean(g.prova),
+      }));
+      setGalerias(lista);
 
       const ids = lista.map((g) => g.id);
-      const mapaSel: Record<string, { fotos: string[]; finalizada: boolean; comentarios: Record<string, string>; atualizadoEm?: string }> = {};
-      if (ids.length > 0) {
-        const { data: sels } = await supabase
-          .from("selecoes")
-          .select("galeria, fotos, finalizada, comentarios, atualizado_em")
-          .in("galeria", ids);
-        for (const s of sels ?? []) {
-          mapaSel[s.galeria] = { fotos: (s.fotos as string[]) ?? [], finalizada: Boolean(s.finalizada), comentarios: (s.comentarios as Record<string, string>) ?? {}, atualizadoEm: (s.atualizado_em as string) ?? undefined };
-        }
+      const mapa: Record<string, Selecao> = {};
+      if (ids.length) {
+        const { data, error } = await supabase.from("selecoes").select("galeria,fotos,finalizada,comentarios,atualizado_em").in("galeria", ids);
+        if (!ativo) return;
+        if (error) { setErro("Não foi possível carregar as seleções agora."); setCarregando(false); return; }
+        for (const s of data ?? []) mapa[s.galeria as string] = {
+          galeria: s.galeria as string,
+          fotos: (s.fotos as string[]) ?? [],
+          finalizada: Boolean(s.finalizada),
+          comentarios: (s.comentarios as Record<string, string> | null) ?? {},
+          atualizadoEm: (s.atualizado_em as string | null) ?? undefined,
+        };
       }
-      setSelecoes(mapaSel);
-
-      setConfigs(mapaCfg);
-      setCapas(mapaCapa);
-      setGalerias(lista);
+      setSelecoes(mapa);
       setCarregando(false);
     }
     carregar();
+    return () => { ativo = false; };
   }, [router, supabase]);
 
-  async function copiarLink(id: string) {
-    const link = `${window.location.origin}/g/${id}`;
-    try {
-      await navigator.clipboard.writeText(link);
-      setAviso("Link copiado: " + link);
-    } catch {
-      setAviso("Copie manualmente: " + link);
-    }
+  const agoraMs = Date.now();
+  const totalGalerias = galerias.length;
+  const pendentes = Object.values(selecoes).filter((s) => !s.finalizada).length;
+  const finalizadas = Object.values(selecoes).filter((s) => s.finalizada).length;
+  const em7dias = agoraMs + 7 * 86400000;
+  const expirando = galerias.filter((g) => {
+    if (!g.linkAte) return false;
+    const exp = new Date(g.linkAte + "T23:59:59").getTime();
+    return exp > agoraMs && exp <= em7dias;
+  });
+
+  const galPorMes: Mes[] = [];
+  const agora = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const dt = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
+    const qtd = galerias.filter((g) => {
+      if (!g.criadoEm) return false;
+      const d = new Date(g.criadoEm);
+      return d.getFullYear() === dt.getFullYear() && d.getMonth() === dt.getMonth();
+    }).length;
+    galPorMes.push({ label: dt.toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""), qtd });
+  }
+  const maxMes = Math.max(1, ...galPorMes.map((m) => m.qtd));
+
+  const inicioAtual = new Date(agora.getFullYear(), agora.getMonth() - 5, 1).getTime();
+  const inicioAnterior = new Date(agora.getFullYear(), agora.getMonth() - 11, 1).getTime();
+  const atual6 = galerias.filter((g) => g.criadoEm && new Date(g.criadoEm).getTime() >= inicioAtual).length;
+  const anterior6 = galerias.filter((g) => {
+    if (!g.criadoEm) return false;
+    const t = new Date(g.criadoEm).getTime();
+    return t >= inicioAnterior && t < inicioAtual;
+  }).length;
+  const variacao = anterior6 > 0 ? Math.round(((atual6 - anterior6) / anterior6) * 100) : null;
+
+  const provas = galerias.filter((g) => g.prova);
+  const semInteracao = provas.filter((g) => !selecoes[g.id]).length;
+  const emAndamento = provas.filter((g) => selecoes[g.id] && !selecoes[g.id].finalizada).length;
+  const provasFinalizadas = provas.filter((g) => selecoes[g.id]?.finalizada).length;
+  const totalStatus = semInteracao + emAndamento + provasFinalizadas;
+
+  const pendentesLista = galerias
+    .filter((g) => selecoes[g.id] && !selecoes[g.id].finalizada)
+    .sort((a, b) => (selecoes[b.id]?.atualizadoEm ?? "").localeCompare(selecoes[a.id]?.atualizadoEm ?? ""))
+    .slice(0, 3);
+  const recentes = [...galerias].sort((a, b) => (b.criadoEm ?? "").localeCompare(a.criadoEm ?? "")).slice(0, 4);
+
+  const notificacoes = galerias
+    .filter((g) => selecoes[g.id]?.finalizada)
+    .map((g) => ({ id: g.id, titulo: g.titulo, quando: selecoes[g.id].atualizadoEm, qtd: selecoes[g.id].fotos.length }))
+    .sort((a, b) => (b.quando ?? "").localeCompare(a.quando ?? ""));
+  const naoLidas = notificacoes.filter((n) => !notifVistoEm || Boolean(n.quando && n.quando > notifVistoEm)).length;
+
+  async function abrirSino() {
+    const abrir = !sinoAberto;
+    setSinoAberto(abrir);
+    if (!abrir || naoLidas === 0) return;
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return;
+    const agoraIso = new Date().toISOString();
+    setNotifVistoEm(agoraIso);
+    await supabase.from("perfis").upsert({ id: auth.user.id, notif_visto_em: agoraIso });
   }
 
-  function capaDaGaleria(g: Galeria): string | null {
-    const nome = capas[g.id];
-    if (nome) {
-      const achou = g.fotos.find((f) => f.nome === nome);
-      if (achou) return achou.url;
-    }
-    return g.fotos[0]?.url ?? null;
-  }
-
-  async function definirCapa(id: string, nome: string) {
-    const novas = { ...capas, [id]: nome };
-    setCapas(novas);
-    setEscolhendo(null);
-    const { error } = await supabase.from("galerias").update({ capa: nome }).eq("id", id);
-    if (error) setAviso("Não consegui salvar a capa: " + error.message);
-    else setAviso("Capa atualizada!");
-  }
-
-  if (carregando) {
-    return <div className="dash-load">Carregando painel...</div>;
-  }
-
-  function qtdSel(id: string): number {
-    return selecoes[id]?.fotos?.length ?? 0;
-  }
-
-  function tempoRel(iso?: string) {
-    if (!iso) return "";
+  function relativo(iso?: string) {
+    if (!iso) return "Sem atualização";
     const diff = Date.now() - new Date(iso).getTime();
-    const min = Math.floor(diff / 60000);
+    const min = Math.max(0, Math.floor(diff / 60000));
     if (min < 1) return "agora";
     if (min < 60) return `há ${min} min`;
     const h = Math.floor(min / 60);
@@ -180,731 +147,53 @@ export default function DashboardPage() {
     return new Date(iso).toLocaleDateString("pt-BR");
   }
 
-  async function abrirSino() {
-    const abrir = !sinoAberto;
-    setSinoAberto(abrir);
-    if (!abrir) return;
-    const temNova = galerias.some((g) => {
-      const s = selecoes[g.id];
-      return s?.finalizada && (!notifVistoEm || (s.atualizadoEm && s.atualizadoEm > notifVistoEm));
-    });
-    if (!temNova) return;
-    const agora = new Date().toISOString();
-    setNotifVistoEm(agora);
-    const { data: userData } = await supabase.auth.getUser();
-    if (userData.user) await supabase.from("perfis").upsert({ id: userData.user.id, notif_visto_em: agora });
+  function dataCurta(iso: string | null) {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).replace(".", "");
   }
 
-  function qtdCom(id: string): number {
-    const c = selecoes[id]?.comentarios ?? {};
-    return Object.values(c).filter((t) => (t ?? "").trim() !== "").length;
+  function diasPara(linkAte: string | null) {
+    if (!linkAte) return null;
+    const fim = new Date(linkAte + "T23:59:59").getTime();
+    return Math.ceil((fim - Date.now()) / 86400000);
   }
 
-  async function baixarUma(url: string, nome: string) {
-    const resp = await fetch(url);
-    const blob = await resp.blob();
-    const href = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = href;
-    a.download = nome;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(href), 4000);
-  }
+  if (carregando) return <div className="dash mf-shift"><MenuFotografo/><style>{`.dash{min-height:100vh;background:linear-gradient(180deg,#0b0b1a 0%,#101024 100%)}.db-sk-wrap{max-width:1120px;margin:0 auto;padding:40px}.db-sk{height:98px;border-radius:16px;margin-bottom:16px;background:linear-gradient(90deg,#131329,#1a1a34,#131329);background-size:200% 100%;animation:sk 1.2s infinite}@keyframes sk{to{background-position:-200% 0}}@media(max-width:640px){.db-sk-wrap{padding:74px 18px}}`}</style><div className="db-sk-wrap"><div className="db-sk"/><div className="db-sk"/><div className="db-sk"/></div></div>;
 
-  async function baixarSelecionadas(fotosSel: Foto[]) {
-    if (baixandoSel || fotosSel.length === 0) return;
-    setBaixandoSel(true);
-    setProgSel(0);
-    for (let i = 0; i < fotosSel.length; i++) {
-      try {
-        await baixarUma(fotosSel[i].url, fotosSel[i].nome);
-      } catch {
-        // segue para a próxima
-      }
-      setProgSel(i + 1);
-      await new Promise((r) => setTimeout(r, 400));
-    }
-    setBaixandoSel(false);
-  }
-
-  function abrirConfig(id: string) {
-    const c = configs[id] ?? {};
-    setFProva(Boolean(c.prova));
-    setFLimite(c.limite ? String(c.limite) : "");
-    setFPrazo(c.prazo ?? "");
-    setFLink(c.linkAte ?? "");
-    setFSenha("");
-    setConfigModal(id);
-  }
-
-  async function salvarConfig(id: string) {
-    let temSenha = Boolean(configs[id]?.temSenha);
-    const s = fSenha.trim();
-    if (s) {
-      const { error: e1 } = await supabase.from("senhas").upsert({ galeria: id, senha: s, atualizado_em: new Date().toISOString() });
-      if (e1) { setAviso("Erro ao salvar senha: " + e1.message); return; }
-      temSenha = true;
-    }
-    const limiteN = Math.max(0, parseInt(fLimite || "0", 10) || 0);
-    const prazoV = fPrazo || null;
-    const linkV = fLink || null;
-    const { error } = await supabase.from("galerias").update({
-      prova: fProva,
-      limite: limiteN,
-      prazo: prazoV,
-      link_ate: linkV,
-      tem_senha: temSenha,
-    }).eq("id", id);
-    setConfigs({ ...configs, [id]: { ...(configs[id] ?? {}), prova: fProva, limite: limiteN, prazo: prazoV, linkAte: linkV, temSenha } });
-    setConfigModal(null);
-    if (error) setAviso("Erro ao salvar: " + error.message);
-    else setAviso("Configurações salvas.");
-  }
-
-  async function removerSenhaConfig(id: string) {
-    await supabase.from("senhas").delete().eq("galeria", id);
-    await supabase.from("galerias").update({ tem_senha: false }).eq("id", id);
-    setConfigs({ ...configs, [id]: { ...(configs[id] ?? {}), temSenha: false } });
-    setFSenha("");
-    setAviso("Senha removida.");
-  }
-
-  async function excluirGaleria(g: Galeria) {
-    const ok = window.confirm(
-      `Excluir a galeria "${g.titulo}" e todas as suas ${g.qtd} foto${g.qtd === 1 ? "" : "s"}? Esta ação não pode ser desfeita.`
-    );
-    if (!ok) return;
-    const caminhos = g.fotos.map((f) => `${uid}/${g.id}/${f.nome}`);
-    if (caminhos.length > 0) {
-      const { error } = await supabase.storage.from("fotos").remove(caminhos);
-      if (error) {
-        setAviso("Erro ao excluir as fotos: " + error.message);
-        return;
-      }
-    }
-    await supabase.from("selecoes").delete().eq("galeria", g.id);
-    await supabase.from("senhas").delete().eq("galeria", g.id);
-    await supabase.from("galerias").delete().eq("id", g.id);
-    setGalerias((prev) => prev.filter((x) => x.id !== g.id));
-    setAviso(`Galeria "${g.titulo}" excluída.`);
-  }
-
-  const totalGalerias = galerias.length;
-  const agoraMs = Date.now();
-
-  /* Seleções pendentes (cliente não finalizou) e finalizadas */
-  const pendentes = galerias.filter((g) => {
-    const s = selecoes[g.id];
-    return s && s.fotos.length > 0 && !s.finalizada;
-  }).length;
-  const finalizadas = galerias.filter((g) => selecoes[g.id]?.finalizada).length;
-
-  /* Galerias com link expirando em até 7 dias */
-  const em7dias = agoraMs + 7 * 86400000;
-  const expirandoBreve = galerias.filter((g) => {
-    const linkAte = configs[g.id]?.linkAte;
-    if (!linkAte) return false;
-    const exp = new Date(linkAte + "T23:59:59").getTime();
-    return exp > agoraMs && exp <= em7dias;
-  }).length;
-
-  const notificacoes = galerias
-    .filter((g) => selecoes[g.id]?.finalizada)
-    .map((g) => ({ id: g.id, nome: g.titulo, qtd: selecoes[g.id].fotos.length, quando: selecoes[g.id].atualizadoEm }))
-    .filter((n) => {
-      const naoLida = !notifVistoEm || (n.quando && n.quando > notifVistoEm);
-      if (naoLida) return true;
-      return notifVistoEm ? agoraMs - new Date(notifVistoEm).getTime() < 86400000 : false;
-    })
-    .sort((a, b) => (b.quando ?? "").localeCompare(a.quando ?? ""));
-  const naoLidas = notificacoes.filter((n) => !notifVistoEm || (n.quando && n.quando > notifVistoEm)).length;
-  const galeriasOrdenadas = [...galerias].sort((a, b) => {
-    if (ordem === "estado") {
-      const pa = configs[a.id]?.prova ? 1 : 0;
-      const pb = configs[b.id]?.prova ? 1 : 0;
-      if (pa !== pb) return pa - pb;
-    }
-    return (b.criadoEm ?? "").localeCompare(a.criadoEm ?? "");
-  });
-  const totalFotos = galerias.reduce((s, g) => s + g.qtd, 0);
-
-  const topGal = [...galerias].sort((a, b) => b.qtd - a.qtd).slice(0, 6);
-  const maxGal = Math.max(1, ...topGal.map((g) => g.qtd));
-
-  /* Galerias criadas por mês (últimos 6 meses) */
-  const agora = new Date();
-  const galPorMes: Mes[] = [];
-  for (let i = 5; i >= 0; i--) {
-    const dt = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
-    const ano = dt.getFullYear();
-    const mes = dt.getMonth();
-    const qtd = galerias.filter((g) => {
-      if (!g.criadoEm) return false;
-      const d = new Date(g.criadoEm);
-      return d.getFullYear() === ano && d.getMonth() === mes;
-    }).length;
-    const nome = dt.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
-    galPorMes.push({ label: nome, qtd });
-  }
-  const maxMes = Math.max(1, ...galPorMes.map((m) => m.qtd));
-
-  return (
-    <div className="dash mf-shift">
-      <style>{`
-        .dash { min-height: 100vh; background: linear-gradient(180deg, #0b0b1a 0%, #101024 100%); color: #f0f0f5; }
-        .dash-load {
-          min-height: 100vh; display: flex; align-items: center; justify-content: center;
-          background: linear-gradient(180deg, #0b0b1a 0%, #101024 100%); color: #7a7f9a;
-        }
-        .dash-body { max-width: 1120px; margin: 0 auto; padding: 40px 40px 80px; }
-
-        .dash-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }
-        .dash-eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #6f76a0; margin-bottom: 8px; }
-        .dash-h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; color: #f5f6fb; margin: 0; }
-        .dash-sub { font-size: 13px; color: #7a7f9a; margin-top: 6px; }
-        .dash-btn {
-          padding: 11px 18px; font-size: 14px; font-weight: 600; border-radius: 11px; cursor: pointer;
-          color: #fff; border: none; font-family: inherit;
-          background: linear-gradient(90deg, #1196fc, #5d0dfa);
-          box-shadow: 0 8px 24px rgba(74,108,247,0.30);
-          transition: transform .15s ease, box-shadow .15s ease;
-        }
-        .dash-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(74,108,247,0.45); }
-
-        .dash-aviso {
-          font-size: 13px; color: #8fe3b0; background: rgba(34,197,94,0.08);
-          border: 1px solid rgba(34,197,94,0.25); border-radius: 10px;
-          padding: 10px 14px; margin-bottom: 22px; word-break: break-all;
-        }
-
-        /* KPIs */
-        .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
-        .kpi {
-          position: relative; overflow: hidden;
-          background: linear-gradient(180deg, #14142b 0%, #101023 100%);
-          border: 1px solid #23233c; border-radius: 16px; padding: 20px;
-        }
-        .kpi::after {
-          content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-          background: linear-gradient(90deg, #1196fc, #5d0dfa); opacity: .55;
-        }
-        .kpi-ic {
-          width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
-          background: rgba(74,108,247,0.12); color: #7ea2ff; margin-bottom: 16px;
-        }
-        .kpi-ic svg { width: 20px; height: 20px; }
-        .kpi-val { font-size: 32px; font-weight: 700; line-height: 1; letter-spacing: -1px; color: #f5f6fb; }
-        .kpi-lab { font-size: 13px; color: #8a90a8; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-        /* Gráficos */
-        .charts { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; margin-bottom: 20px; }
-        .card { background: linear-gradient(180deg, #14142b 0%, #101023 100%); border: 1px solid #23233c; border-radius: 16px; padding: 22px 24px; }
-        .card-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-        .card-t { font-size: 15px; font-weight: 600; color: #eef1f6; }
-        .card-tag { font-size: 11px; color: #6f76a0; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
-
-        /* Barras horizontais */
-        .hbars { display: flex; flex-direction: column; gap: 14px; }
-        .hbar { display: grid; grid-template-columns: 130px 1fr 34px; align-items: center; gap: 12px; }
-        .hbar-name { font-size: 13px; color: #c3c7db; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .hbar-track { height: 10px; background: #1c1c34; border-radius: 999px; overflow: hidden; }
-        .hbar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #1196fc, #5d0dfa); min-width: 6px; transition: width .5s ease; }
-        .hbar-val { font-size: 13px; font-weight: 600; color: #f0f0f5; text-align: right; }
-
-        /* Barras verticais */
-        .vbars { display: flex; align-items: flex-end; gap: 10px; height: 180px; padding-top: 20px; }
-        .vbar { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
-        .vbar-area { width: 100%; display: flex; align-items: flex-end; justify-content: center; flex: 1; }
-        .vbar-fill { position: relative; width: 60%; max-width: 40px; border-radius: 8px 8px 2px 2px; background: linear-gradient(180deg, #1196fc, #5d0dfa); transition: height .5s ease; }
-        .vbar-num { position: absolute; top: -20px; left: 0; right: 0; text-align: center; font-size: 12px; font-weight: 600; color: #c3c7db; }
-        .vbar-lab { font-size: 11px; color: #7a7f9a; margin-top: 10px; text-transform: capitalize; }
-
-        .chart-vazio { font-size: 13px; color: #7a7f9a; text-align: center; padding: 30px 0; }
-
-        /* Lista de galerias */
-        .glist { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
-        .grow {
-          position: relative;
-          display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-          border: 1.5px solid transparent; border-radius: 13px; padding: 16px 18px;
-          background: linear-gradient(#141428, #141428) padding-box, var(--brd, linear-gradient(#23233c, #23233c)) border-box;
-          transition: background .15s ease;
-        }
-        .grow:hover { background: linear-gradient(#191934, #191934) padding-box, var(--brd, linear-gradient(#33364f, #33364f)) border-box; }
-        .grow.prova { --brd: linear-gradient(135deg, #f6c445, #ee8b2b); }
-        .grow.entrega { --brd: linear-gradient(135deg, #1196fc, #5d0dfa); }
-        .ord-wrap { display: flex; align-items: center; gap: 12px; }
-        .ord { display: inline-flex; background: rgba(255,255,255,0.03); border: 1px solid #2a2d40; border-radius: 9px; padding: 2px; }
-        .ord-b { padding: 5px 12px; font-size: 12px; font-weight: 600; color: #8a90a8; background: none; border: none; border-radius: 7px; cursor: pointer; font-family: inherit; }
-        .ord-b.on { background: rgba(74,108,247,0.18); color: #cdd2e4; }
-        .gname { font-size: 15px; font-weight: 600; color: #f0f0f5; }
-        .gqtd { font-size: 12px; color: #7a7f9a; margin-top: 2px; }
-        .gsel-badge { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: rgba(74,108,247,0.15); color: #9fb0ff; vertical-align: middle; }
-        .gsel-badge.fin { background: rgba(34,197,94,0.15); color: #8fe3b0; }
-        .gsel-badge.com { background: rgba(147,112,219,0.16); color: #c3aeff; }
-        .gacoes { display: flex; gap: 8px; flex-wrap: wrap; }
-        .gmenu-wrap { position: relative; }
-        .gmenu-btn { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 9px; background: rgba(255,255,255,0.03); border: 1px solid #2a2d40; color: #cdd2e4; cursor: pointer; }
-        .gmenu-btn:hover { border-color: #4a6cf7; color: #fff; }
-        .gmenu-btn svg { width: 20px; height: 20px; }
-        .gmenu-overlay { position: fixed; inset: 0; z-index: 40; }
-        .gmenu { position: absolute; z-index: 41; right: 0; top: 50%; transform: translateY(-50%); min-width: 200px; background: #16162c; border: 1px solid #2a2d44; border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,0.5); padding: 6px; }
-        .gmenu button { display: block; width: 100%; text-align: left; padding: 10px 12px; font-size: 14px; color: #cdd2e4; background: none; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; }
-        .gmenu button:hover { background: #1e1e38; color: #fff; }
-        .gmenu button.perigo { color: #ff8f8f; }
-        .gmenu button.perigo:hover { background: rgba(239,68,68,0.12); }
-        .gmenu .grad-txt { background-image: linear-gradient(90deg,#1196fc,#5d0dfa); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; font-weight: 700; }
-        .gmenu button.on { background: rgba(34,197,94,0.14); color: #8fe3b0; }
-        .gmenu button.on:hover { background: rgba(34,197,94,0.2); color: #a7f0c3; }
-        .gmenu button.off { background: rgba(239,68,68,0.12); color: #ff9d9d; }
-        .gmenu button.off:hover { background: rgba(239,68,68,0.18); color: #ffb3b3; }
-        .gmenu-sep { height: 1px; background: #23233c; margin: 6px 4px; }
-        .pl-panel { max-width: 460px; }
-        .pl-form { padding: 20px 22px 20px; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-        .pl-foot { flex-shrink: 0; padding: 15px 22px; border-top: 1px solid #23233c; background: #12122a; }
-        .pl-label { display: block; font-size: 13px; color: #a0a4b8; margin: 6px 0 6px; }
-        .pl-input { width: 100%; padding: 11px 13px; font-size: 14px; border: 1.5px solid #2a2d40; border-radius: 10px; background: #0f0f1a; color: #f0f0f5; outline: none; box-sizing: border-box; margin-bottom: 6px; font-family: inherit; color-scheme: dark; }
-        .pl-input:focus { border-color: #4a6cf7; }
-        .pl-hint { font-size: 11px; color: #6f76a0; margin-bottom: 18px; }
-        .pl-save { width: 100%; padding: 12px; font-size: 14px; font-weight: 700; color: #fff; border: none; border-radius: 11px; cursor: pointer; font-family: inherit; background: linear-gradient(90deg,#1196fc,#5d0dfa); }
-        .pl-save:hover { filter: brightness(1.08); }
-        .pl-remover { width: 100%; margin-top: 10px; padding: 11px; font-size: 13px; font-weight: 600; color: #ff9d9d; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); border-radius: 11px; cursor: pointer; font-family: inherit; }
-        .pl-remover:hover { background: rgba(239,68,68,0.16); }
-        .cfg-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 2px 0 16px; }
-        .cfg-txt { min-width: 0; }
-        .cfg-t { font-size: 14px; font-weight: 600; color: #f0f0f5; }
-        .cfg-d { font-size: 12px; color: #7a7f9a; margin-top: 2px; }
-        .cfg-switch { flex-shrink: 0; width: 46px; height: 26px; border-radius: 999px; border: none; background: #2a2d40; cursor: pointer; position: relative; transition: background .15s ease; }
-        .cfg-switch span { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left .15s ease; }
-        .cfg-switch.on { background: linear-gradient(90deg,#f6c445,#ee8b2b); }
-        .cfg-switch.on span { left: 23px; }
-        .gacao { padding: 8px 14px; font-size: 13px; font-weight: 600; border-radius: 9px; cursor: pointer; text-decoration: none; display: inline-block; font-family: inherit; }
-        .gacao-linha { background: transparent; color: #9fb0ff; border: 1px solid #34385a; }
-        .gacao-linha:hover { border-color: #4a6cf7; color: #fff; }
-        .gacao-azul { background: linear-gradient(90deg, #1196fc, #5d0dfa); color: #fff; border: none; }
-
-        .ginfo { display: flex; align-items: center; gap: 14px; min-width: 0; }
-        .gcapa { position: relative; width: 60px; height: 60px; flex-shrink: 0; border-radius: 11px; overflow: hidden; border: 1px solid #2a2d40; background: #0f0f1a; cursor: pointer; padding: 0; }
-        .gcapa:disabled { cursor: default; }
-        .gcapa img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .gcapa-vazia { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 10px; color: #5a5f78; }
-        .gcapa-hover { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #fff; background: rgba(11,11,26,0.55); opacity: 0; transition: opacity .15s ease; }
-        .gcapa:hover .gcapa-hover { opacity: 1; }
-
-        .cap-modal { position: fixed; inset: 0; z-index: 60; background: rgba(4,4,10,0.8); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 24px; }
-        .cap-panel { width: 100%; max-width: 720px; max-height: 82vh; display: flex; flex-direction: column; background: #12122a; border: 1px solid #262642; border-radius: 18px; overflow: hidden; }
-        .cap-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; border-bottom: 1px solid #23233c; }
-        .cap-title { font-size: 16px; font-weight: 700; color: #f5f6fb; }
-        .cap-sub { font-size: 13px; color: #7a7f9a; margin-top: 2px; }
-        .cap-x { width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.04); border: 1px solid #2a2d40; color: #cdd2e4; cursor: pointer; flex-shrink: 0; }
-        .cap-x:hover { border-color: #4a6cf7; color: #fff; }
-        .cap-x svg { width: 18px; height: 18px; }
-        .cap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; padding: 20px 22px; overflow-y: auto; }
-        .cap-item { position: relative; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; border: 2px solid transparent; cursor: pointer; padding: 0; background: #0f0f1a; }
-        .cap-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s ease; }
-        .cap-item:hover img { transform: scale(1.06); }
-        .cap-item.ativa { border-color: #4a6cf7; }
-        .cap-check { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; background: #4a6cf7; color: #fff; font-size: 13px; display: flex; align-items: center; justify-content: center; }
-        .cap-foot { padding: 16px 22px; border-top: 1px solid #23233c; display: flex; justify-content: flex-end; }
-        .sel-vazio { padding: 44px 22px; text-align: center; color: #7a7f9a; font-size: 14px; }
-        .sel-scroll { flex: 1; min-height: 0; overflow-y: auto; }
-        .sel-scroll .cap-grid { overflow: visible; }
-        .com-sec { padding: 8px 22px 22px; }
-        .com-sec-h { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #6f76a0; margin: 8px 0 12px; }
-        .com-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid #1e2036; }
-        .com-row img { width: 52px; height: 52px; border-radius: 9px; object-fit: cover; flex-shrink: 0; }
-        .com-body { min-width: 0; }
-        .com-txt { margin: 0; font-size: 14px; color: #e6e9f5; line-height: 1.45; }
-        .com-tag { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 600; color: #9fb0ff; background: rgba(74,108,247,0.14); padding: 2px 8px; border-radius: 999px; }
-
-        .dash-vazio {
-          text-align: center; padding: 48px 24px; border: 1px dashed #2a2d40; border-radius: 16px;
-          background: rgba(255,255,255,0.02);
-        }
-        .sino-wrap { position: relative; }
-        .sino-btn { position: relative; width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.03); border: 1px solid #2a2d40; color: #cdd2e4; cursor: pointer; }
-        .sino-btn:hover { border-color: #4a6cf7; color: #fff; }
-        .sino-btn svg { width: 23px; height: 23px; }
-        .sino-badge { position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
-        .sino-overlay { position: fixed; inset: 0; z-index: 40; }
-        .sino-menu { position: absolute; z-index: 41; right: 0; top: 50px; width: 320px; max-width: 86vw; max-height: 60vh; overflow-y: auto; background: #16162c; border: 1px solid #2a2d44; border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,0.5); padding: 8px; }
-        .sino-h { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #6f76a0; padding: 6px 10px 10px; }
-        .sino-item { display: flex; gap: 10px; align-items: flex-start; width: 100%; text-align: left; padding: 10px; border: none; background: none; border-radius: 10px; cursor: pointer; font-family: inherit; }
-        .sino-item:hover { background: #1e1e38; }
-        .sino-dot { width: 8px; height: 8px; border-radius: 50%; background: #4a6cf7; margin-top: 6px; flex-shrink: 0; }
-        .sino-dot.lida { background: transparent; border: 1px solid #3a3f5a; }
-        .sino-item-t { display: block; font-size: 14px; color: #f0f0f5; font-weight: 600; }
-        .sino-item-d { display: block; font-size: 12px; color: #8a90a8; margin-top: 2px; }
-        .sino-vazio { padding: 20px 12px; text-align: center; color: #7a7f9a; font-size: 13px; }
-        .dash-vazio-t { font-size: 16px; font-weight: 600; color: #f0f0f5; margin-bottom: 6px; }
-        .dash-vazio-d { font-size: 13px; color: #7a7f9a; margin-bottom: 20px; }
-
-        @media (max-width: 980px) {
-          .kpis { grid-template-columns: repeat(2, 1fr); }
-          .charts { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 860px) {
-          .dash-body { padding: 28px 20px 70px; }
-        }
-        @media (max-width: 520px) {
-          .hbar { grid-template-columns: 96px 1fr 30px; gap: 8px; }
-        }
-      `}</style>
-
-      <MenuFotografo />
-
-      <div className="dash-body">
-        <div className="dash-top">
-          <div>
-            <div className="dash-eyebrow">Painel</div>
-            <h1 className="dash-h1">Sua visão geral</h1>
-            <div className="dash-sub">{email}</div>
-          </div>
-          <div className="sino-wrap">
-            <button className="sino-btn" onClick={abrirSino} aria-label="Notificações" title="Notificações">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
-              {naoLidas > 0 && <span className="sino-badge">{naoLidas}</span>}
-            </button>
-            {sinoAberto && (
-              <>
-                <div className="sino-overlay" onClick={() => setSinoAberto(false)} />
-                <div className="sino-menu">
-                  <div className="sino-h">Seleções finalizadas</div>
-                  {notificacoes.length === 0 ? (
-                    <div className="sino-vazio">Nenhuma seleção finalizada ainda.</div>
-                  ) : (
-                    notificacoes.map((n) => {
-                      const naoLida = !notifVistoEm || (n.quando && n.quando > notifVistoEm);
-                      return (
-                        <button key={n.id} className="sino-item" onClick={() => { setSinoAberto(false); setVendoSelecao(n.id); }}>
-                          <span className={"sino-dot" + (naoLida ? "" : " lida")} />
-                          <span>
-                            <span className="sino-item-t">{n.nome}</span>
-                            <span className="sino-item-d">{n.qtd} foto{n.qtd === 1 ? "" : "s"} selecionada{n.qtd === 1 ? "" : "s"} · {tempoRel(n.quando)}</span>
-                          </span>
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+  return <div className="dash mf-shift">
+    <MenuFotografo />
+    <style>{`
+      .dash{min-height:100vh;background:linear-gradient(180deg,#0b0b1a 0%,#101024 100%);color:#f0f0f5}.dash-body{max-width:1120px;margin:0 auto;padding:40px 40px 80px}.dash-top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:28px}.dash-eyebrow{font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#6f76a0;margin-bottom:8px}.dash-h1{font-size:30px;font-weight:700;letter-spacing:-.5px;color:#f5f6fb;margin:0}.dash-sub{font-size:13px;color:#7a7f9a;margin-top:6px}.dash-actions{display:flex;align-items:center;gap:10px;position:relative}.dash-btn{padding:11px 18px;font-size:14px;font-weight:600;border-radius:11px;cursor:pointer;color:#fff;border:none;font-family:inherit;background:linear-gradient(90deg,#1196fc,#5d0dfa);box-shadow:0 8px 24px rgba(74,108,247,.30)}.bell{position:relative;width:42px;height:42px;border-radius:11px;border:1px solid #2a2d40;background:#131327;color:#cdd2e4;cursor:pointer}.bell-dot{position:absolute;right:7px;top:7px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#ff6b75;color:white;font-size:9px;display:flex;align-items:center;justify-content:center}.bell-pop{position:absolute;right:0;top:50px;width:min(330px,88vw);z-index:30;background:#15152b;border:1px solid #2a2d40;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.45);padding:8px}.bell-item{padding:11px;border-radius:9px}.bell-item:hover{background:#1b1b35}.bell-title{font-size:12px;color:#e8e9f1}.bell-meta{font-size:10px;color:#676d87;margin-top:3px}.bell-empty{padding:18px;text-align:center;color:#6f76a0;font-size:12px}.error{padding:14px 16px;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.07);border-radius:12px;color:#ff9d9d;font-size:13px;margin-bottom:18px}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px}.kpi{position:relative;overflow:hidden;background:linear-gradient(180deg,#14142b,#101023);border:1px solid #23233c;border-radius:16px;padding:20px}.kpi::after{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#1196fc,#5d0dfa);opacity:.55}.kpi-val{font-size:32px;font-weight:700;line-height:1;color:#f5f6fb}.kpi-lab{font-size:12px;color:#8a90a8;margin-top:8px}.kpi-sub{font-size:10px;color:#646a86;margin-top:8px}.alert{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 15px;border-radius:12px;margin-bottom:18px;border:1px solid rgba(246,196,69,.25);background:rgba(246,196,69,.07)}.alert strong{font-size:12px;color:#f6c445}.alert span{font-size:11px;color:#8f8b70;margin-left:8px}.alert button{border:0;background:transparent;color:#d8d9e6;font:600 11px inherit;cursor:pointer}.charts{display:grid;grid-template-columns:1.35fr .85fr;gap:16px;margin-bottom:18px}.card{background:linear-gradient(180deg,#14142b,#101023);border:1px solid #23233c;border-radius:16px;padding:22px 24px}.card-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}.card-t{font-size:15px;font-weight:600;color:#eef1f6}.card-sub{font-size:10px;color:#666d88;margin-top:4px}.card-link{border:0;background:transparent;color:#8ea7ff;font:600 11px inherit;cursor:pointer}.vbars{display:flex;align-items:flex-end;gap:10px;height:180px;padding-top:16px}.vbar{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}.vbar-area{width:100%;flex:1;display:flex;align-items:flex-end;justify-content:center}.vbar-fill{position:relative;width:58%;max-width:42px;min-height:3px;border-radius:8px 8px 2px 2px;background:linear-gradient(180deg,#1196fc,#5d0dfa)}.vbar-num{position:absolute;top:-19px;left:0;right:0;text-align:center;color:#c8ccdb;font-size:11px}.vbar-lab{font-size:10px;color:#727892;margin-top:8px;text-transform:capitalize}.status-wrap{display:flex;align-items:center;gap:22px;min-height:180px}.donut{width:126px;height:126px;border-radius:50%;position:relative;flex:0 0 auto}.donut::after{content:"";position:absolute;inset:24px;border-radius:50%;background:#121226}.donut-center{position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;flex-direction:column}.donut-center strong{font-size:25px}.donut-center span{font-size:9px;color:#6f76a0}.legend{display:flex;flex-direction:column;gap:11px;flex:1}.legend-row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:11px;color:#aeb2c5}.legend-left{display:flex;align-items:center;gap:7px}.dot{width:8px;height:8px;border-radius:50%}.dot.a{background:#5b6ee1}.dot.b{background:#f6c445}.dot.c{background:#53c98b}.lists{display:grid;grid-template-columns:1fr 1fr;gap:16px}.list-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid #202238}.list-row:last-child{border-bottom:0}.list-title{font-size:12px;color:#e1e3ed;font-weight:600}.list-meta{font-size:10px;color:#696f89;margin-top:4px}.status-pill{padding:4px 8px;border-radius:999px;background:rgba(74,108,247,.12);color:#9fb0ff;font-size:9px;font-weight:650}.status-pill.warn{background:rgba(246,196,69,.11);color:#f6c445}.empty{padding:28px 8px;text-align:center;color:#6f76a0;font-size:12px}@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr)}.charts,.lists{grid-template-columns:1fr}}@media(max-width:640px){.dash-body{padding:74px 18px 60px}.kpis{grid-template-columns:1fr 1fr;gap:10px}.kpi{padding:16px}.kpi-val{font-size:27px}.status-wrap{align-items:flex-start}.dash-actions{width:100%;justify-content:flex-end}}@media(max-width:430px){.kpis{grid-template-columns:1fr}.status-wrap{flex-direction:column}.donut{align-self:center}}
+    `}</style>
+    <main className="dash-body">
+      <div className="dash-top">
+        <div><div className="dash-eyebrow">Painel</div><h1 className="dash-h1">Sua visão geral</h1><div className="dash-sub">{nome ? `Bem-vindo(a) de volta, ${nome}.` : email}</div></div>
+        <div className="dash-actions">
+          <button className="bell" onClick={abrirSino} aria-label="Notificações" aria-expanded={sinoAberto}>♢{naoLidas>0&&<span className="bell-dot">{naoLidas}</span>}</button>
+          <button className="dash-btn" onClick={()=>router.push("/upload")}>+ Nova galeria</button>
+          {sinoAberto&&<div className="bell-pop">{notificacoes.length===0?<div className="bell-empty">Nenhuma notificação recente.</div>:notificacoes.slice(0,5).map((n)=><div className="bell-item" key={n.id}><div className="bell-title">Seleção finalizada em {n.titulo}</div><div className="bell-meta">{n.qtd} foto{n.qtd===1?"":"s"} · {relativo(n.quando)}</div></div>)}</div>}
         </div>
-
-        {aviso && <p className="dash-aviso">{aviso}</p>}
-
-        <section className="kpis">
-          <div className="kpi">
-            <div className="kpi-ic">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-            </div>
-            <div className="kpi-val">{totalGalerias}</div>
-            <div className="kpi-lab">Galerias · {totalFotos} foto{totalFotos === 1 ? "" : "s"}</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-ic" style={{ background: pendentes > 0 ? "rgba(246,196,69,0.14)" : undefined, color: pendentes > 0 ? "#f6c445" : undefined }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-            </div>
-            <div className="kpi-val">{pendentes}</div>
-            <div className="kpi-lab">Aguardando seleção</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-ic" style={{ background: finalizadas > 0 ? "rgba(34,197,94,0.12)" : undefined, color: finalizadas > 0 ? "#4ade80" : undefined }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            </div>
-            <div className="kpi-val">{finalizadas}</div>
-            <div className="kpi-lab">Seleções finalizadas</div>
-          </div>
-          <div className="kpi">
-            <div className="kpi-ic" style={{ background: expirandoBreve > 0 ? "rgba(239,68,68,0.12)" : undefined, color: expirandoBreve > 0 ? "#f87171" : undefined }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            </div>
-            <div className="kpi-val">{expirandoBreve}</div>
-            <div className="kpi-lab">Expiram em 7 dias</div>
-          </div>
-        </section>
-
-        {totalGalerias === 0 ? (
-          <div className="dash-vazio">
-            <div className="dash-vazio-t">Seu painel está pronto pra começar</div>
-            <div className="dash-vazio-d">Crie sua primeira galeria e os números aparecem aqui.</div>
-            <button className="dash-btn" onClick={() => router.push("/upload")}>Criar nova galeria</button>
-          </div>
-        ) : (
-          <>
-            <section className="charts">
-              <div className="card">
-                <div className="card-h">
-                  <span className="card-t">Fotos por galeria</span>
-                  <span className="card-tag">Top {topGal.length}</span>
-                </div>
-                <div className="hbars">
-                  {topGal.map((g) => (
-                    <div className="hbar" key={g.id}>
-                      <div className="hbar-name" title={g.titulo}>{g.titulo}</div>
-                      <div className="hbar-track">
-                        <div className="hbar-fill" style={{ width: `${Math.max(6, (g.qtd / maxGal) * 100)}%` }} />
-                      </div>
-                      <div className="hbar-val">{g.qtd}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="card">
-                <div className="card-h">
-                  <span className="card-t">Galerias por mês</span>
-                  <span className="card-tag">6 meses</span>
-                </div>
-                {galPorMes.every((m) => m.qtd === 0) ? (
-                  <div className="chart-vazio">Ainda sem galerias nos últimos meses.</div>
-                ) : (
-                  <div className="vbars">
-                    {galPorMes.map((m, i) => (
-                      <div className="vbar" key={i}>
-                        <div className="vbar-area">
-                          <div className="vbar-fill" style={{ height: `${m.qtd === 0 ? 0 : Math.max(6, (m.qtd / maxMes) * 130)}px` }}>
-                            <span className="vbar-num">{m.qtd}</span>
-                          </div>
-                        </div>
-                        <div className="vbar-lab">{m.label}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <section className="card">
-              <div className="card-h">
-                <span className="card-t">Suas galerias</span>
-                <div className="ord-wrap">
-                  <span className="card-tag">{totalGalerias} no total</span>
-                  <div className="ord">
-                    <button className={"ord-b" + (ordem === "data" ? " on" : "")} onClick={() => setOrdem("data")}>Data</button>
-                    <button className={"ord-b" + (ordem === "estado" ? " on" : "")} onClick={() => setOrdem("estado")}>Estado</button>
-                  </div>
-                </div>
-              </div>
-              <div className="glist">
-                {galeriasOrdenadas.map((g) => (
-                  <div className={"grow " + (configs[g.id]?.prova ? "prova" : "entrega")} key={g.id}>
-                    <div className="ginfo">
-                      <button
-                        className="gcapa"
-                        onClick={() => g.qtd > 0 && setEscolhendo(g.id)}
-                        disabled={g.qtd === 0}
-                        title={g.qtd > 0 ? "Trocar capa" : "Sem fotos"}
-                        aria-label="Trocar capa"
-                      >
-                        {capaDaGaleria(g) ? (
-                          <img src={capaDaGaleria(g) as string} alt="Capa" />
-                        ) : (
-                          <span className="gcapa-vazia">sem foto</span>
-                        )}
-                        {g.qtd > 0 && <span className="gcapa-hover">Trocar</span>}
-                      </button>
-                      <div>
-                        <div className="gname">{g.titulo}</div>
-                        <div className="gqtd">
-                          {g.qtd} foto{g.qtd === 1 ? "" : "s"}
-                          {qtdSel(g.id) > 0 && (
-                            <span className={"gsel-badge" + (selecoes[g.id]?.finalizada ? " fin" : "")}>
-                              {qtdSel(g.id)} selecionada{qtdSel(g.id) === 1 ? "" : "s"}{selecoes[g.id]?.finalizada ? " ✓" : ""}
-                            </span>
-                          )}
-                          {qtdCom(g.id) > 0 && (
-                            <span className="gsel-badge com">{qtdCom(g.id)} comentário{qtdCom(g.id) === 1 ? "" : "s"}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="gacoes">
-                      <div className="gmenu-wrap">
-                        <button className="gmenu-btn" onClick={() => setMenuAberto(menuAberto === g.id ? null : g.id)} aria-label="Opções da galeria" title="Opções">
-                          <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
-                        </button>
-                        {menuAberto === g.id && (
-                          <>
-                            <div className="gmenu-overlay" onClick={() => setMenuAberto(null)} />
-                            <div className="gmenu">
-                              {(qtdSel(g.id) > 0 || qtdCom(g.id) > 0) && (
-                                <button onClick={() => { setMenuAberto(null); setVendoSelecao(g.id); }}>Ver seleção</button>
-                              )}
-                              <button onClick={() => { setMenuAberto(null); copiarLink(g.id); }}>Copiar link</button>
-                              <button onClick={() => { setMenuAberto(null); window.open(`/g/${g.id}`, "_blank"); }}><span className="grad-txt">Ver galeria</span></button>
-                              <button onClick={() => { setMenuAberto(null); router.push(`/upload?galeria=${g.id}`); }}>Enviar mais fotos</button>
-                              <button onClick={() => { setMenuAberto(null); abrirConfig(g.id); }}>Configurações…</button>
-                              <div className="gmenu-sep" />
-                              <button className="perigo" onClick={() => { setMenuAberto(null); excluirGaleria(g); }}>Excluir galeria</button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </>
-        )}
       </div>
 
-      {escolhendo && (() => {
-        const g = galerias.find((x) => x.id === escolhendo);
-        if (!g) return null;
-        return (
-          <div className="cap-modal" onClick={() => setEscolhendo(null)}>
-            <div className="cap-panel" onClick={(e) => e.stopPropagation()}>
-              <div className="cap-head">
-                <div>
-                  <div className="cap-title">Escolher capa</div>
-                  <div className="cap-sub">{g.titulo}</div>
-                </div>
-                <button className="cap-x" onClick={() => setEscolhendo(null)} aria-label="Fechar">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
-                </button>
-              </div>
-              <div className="cap-grid">
-                {g.fotos.map((f) => {
-                  const ativa = capas[g.id] === f.nome;
-                  return (
-                    <button
-                      key={f.nome}
-                      className={"cap-item" + (ativa ? " ativa" : "")}
-                      onClick={() => definirCapa(g.id, f.nome)}
-                      title="Definir como capa"
-                    >
-                      <img src={f.thumb} alt="Foto" loading="lazy" onError={(e) => { const el = e.currentTarget; if (el.src !== f.url) el.src = f.url; }} />
-                      {ativa && <span className="cap-check">✓</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {erro&&<div className="error">{erro}</div>}
+      <section className="kpis">
+        <div className="kpi"><div className="kpi-val">{totalGalerias}</div><div className="kpi-lab">Total de galerias</div>{variacao!==null&&<div className="kpi-sub">{variacao>0?"+":""}{variacao}% vs. 6 meses anteriores</div>}</div>
+        <div className="kpi"><div className="kpi-val">{pendentes}</div><div className="kpi-lab">Seleções aguardando conclusão</div></div>
+        <div className="kpi"><div className="kpi-val">{finalizadas}</div><div className="kpi-lab">Seleções finalizadas</div></div>
+        <div className="kpi"><div className="kpi-val">{expirando.length}</div><div className="kpi-lab">Galerias expirando em 7 dias</div></div>
+      </section>
 
-      {vendoSelecao && (() => {
-        const g = galerias.find((x) => x.id === vendoSelecao);
-        if (!g) return null;
-        const sel = selecoes[g.id];
-        const nomes = sel?.fotos ?? [];
-        const fotosSel = g.fotos.filter((f) => nomes.includes(f.nome));
-        const coments = g.fotos.filter((f) => (sel?.comentarios?.[f.nome] ?? "").trim() !== "");
-        return (
-          <div className="cap-modal" onClick={() => setVendoSelecao(null)}>
-            <div className="cap-panel" onClick={(e) => e.stopPropagation()}>
-              <div className="cap-head">
-                <div>
-                  <div className="cap-title">Seleção do cliente</div>
-                  <div className="cap-sub">
-                    {g.titulo} · {fotosSel.length} foto{fotosSel.length === 1 ? "" : "s"}
-                    {coments.length > 0 ? ` · ${coments.length} comentário${coments.length === 1 ? "" : "s"}` : ""}
-                    {sel?.finalizada ? " · finalizada" : " · em andamento"}
-                  </div>
-                </div>
-                <button className="cap-x" onClick={() => setVendoSelecao(null)} aria-label="Fechar">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
-                </button>
-              </div>
-              {fotosSel.length === 0 && coments.length === 0 ? (
-                <div className="sel-vazio">O cliente ainda não escolheu nem comentou nenhuma foto.</div>
-              ) : (
-                <>
-                  <div className="sel-scroll">
-                    {fotosSel.length > 0 && (
-                      <div className="cap-grid">
-                        {fotosSel.map((f) => (
-                          <div className="cap-item" key={f.nome}>
-                            <img src={f.thumb} alt="Foto" loading="lazy" onError={(e) => { const el = e.currentTarget; if (el.src !== f.url) el.src = f.url; }} />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {coments.length > 0 && (
-                      <div className="com-sec">
-                        <div className="com-sec-h">Comentários do cliente</div>
-                        {coments.map((f) => (
-                          <div className="com-row" key={f.nome}>
-                            <img src={f.thumb} alt="Foto" loading="lazy" onError={(e) => { const el = e.currentTarget; if (el.src !== f.url) el.src = f.url; }} />
-                            <div className="com-body">
-                              <p className="com-txt">{sel?.comentarios?.[f.nome]}</p>
-                              {nomes.includes(f.nome) && <span className="com-tag">selecionada</span>}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {fotosSel.length > 0 && (
-                    <div className="cap-foot">
-                      <button className="dash-btn" onClick={() => baixarSelecionadas(fotosSel)} disabled={baixandoSel}>
-                        {baixandoSel ? `Baixando ${progSel}/${fotosSel.length}` : `Baixar selecionadas (${fotosSel.length})`}
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        );
-      })()}
+      {expirando.length>0?<div className="alert"><div><strong>{expirando.length} galeria{expirando.length===1?"":"s"} perto de expirar</strong><span>Revise os links antes do vencimento.</span></div><button onClick={()=>router.push("/dashboard/galerias")}>Ver galerias →</button></div>:pendentes>0?<div className="alert"><div><strong>{pendentes} seleção{pendentes===1?"":"ões"} em andamento</strong><span>Há clientes que ainda não finalizaram a escolha.</span></div><button onClick={()=>router.push("/dashboard/selecoes")}>Ver seleções →</button></div>:null}
 
-      {configModal && (() => {
-        const g = galerias.find((x) => x.id === configModal);
-        if (!g) return null;
-        const tem = Boolean(configs[g.id]?.temSenha);
-        return (
-          <div className="cap-modal" onClick={() => setConfigModal(null)}>
-            <div className="cap-panel pl-panel" onClick={(e) => e.stopPropagation()}>
-              <div className="cap-head">
-                <div>
-                  <div className="cap-title">Configurações da galeria</div>
-                  <div className="cap-sub">{g.titulo}</div>
-                </div>
-                <button className="cap-x" onClick={() => setConfigModal(null)} aria-label="Fechar">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" /></svg>
-                </button>
-              </div>
-              <div className="pl-form">
-                <div className="cfg-row">
-                  <div className="cfg-txt">
-                    <div className="cfg-t">Marca-d'água (modo prova)</div>
-                    <div className="cfg-d">Protege as fotos e esconde o download do cliente.</div>
-                  </div>
-                  <button type="button" className={"cfg-switch" + (fProva ? " on" : "")} onClick={() => setFProva(!fProva)} aria-label="Alternar marca-d'água"><span /></button>
-                </div>
+      <section className="charts">
+        <div className="card"><div className="card-h"><div><div className="card-t">Galerias por mês</div><div className="card-sub">{atual6} criadas nos últimos 6 meses</div></div><span className="card-sub">6 meses</span></div><div className="vbars">{galPorMes.map((m)=><div className="vbar" key={m.label}><div className="vbar-area"><div className="vbar-fill" style={{height:`${m.qtd===0?2:Math.max(10,(m.qtd/maxMes)*100)}%`}}><span className="vbar-num">{m.qtd}</span></div></div><div className="vbar-lab">{m.label}</div></div>)}</div></div>
+        <div className="card"><div className="card-h"><div><div className="card-t">Status das seleções</div><div className="card-sub">Somente galerias em modo prova</div></div></div>{totalStatus===0?<div className="empty">Nenhuma galeria em modo prova ainda.</div>:<div className="status-wrap"><div className="donut" style={{background:`conic-gradient(#5b6ee1 0 ${(semInteracao/totalStatus)*100}%,#f6c445 ${(semInteracao/totalStatus)*100}% ${((semInteracao+emAndamento)/totalStatus)*100}%,#53c98b ${((semInteracao+emAndamento)/totalStatus)*100}% 100%)`}}><div className="donut-center"><strong>{totalStatus}</strong><span>provas</span></div></div><div className="legend"><div className="legend-row"><span className="legend-left"><i className="dot a"/>Aguardando cliente</span><strong>{semInteracao}</strong></div><div className="legend-row"><span className="legend-left"><i className="dot b"/>Em andamento</span><strong>{emAndamento}</strong></div><div className="legend-row"><span className="legend-left"><i className="dot c"/>Finalizadas</span><strong>{provasFinalizadas}</strong></div></div></div>}</div>
+      </section>
 
-                <label className="pl-label">Limite de seleção</label>
-                <input type="number" min="0" className="pl-input" value={fLimite} onChange={(e) => setFLimite(e.target.value)} placeholder="0" />
-                <div className="pl-hint">Quantas fotos o cliente pode escolher. 0 ou vazio = sem limite.</div>
-
-                <label className="pl-label">Prazo da seleção</label>
-                <input type="date" className="pl-input" value={fPrazo} onChange={(e) => setFPrazo(e.target.value)} />
-                <div className="pl-hint">Depois dessa data a seleção fecha para o cliente. Em branco = sem prazo.</div>
-
-                <label className="pl-label">Validade do link</label>
-                <input type="date" className="pl-input" value={fLink} onChange={(e) => setFLink(e.target.value)} />
-                <div className="pl-hint">Depois dessa data o link para de abrir. Em branco = sem validade.</div>
-
-                <label className="pl-label">Senha da galeria</label>
-                <input type="text" className="pl-input" value={fSenha} onChange={(e) => setFSenha(e.target.value)} placeholder={tem ? "Digite para trocar" : "Sem senha"} />
-                <div className="pl-hint">{tem ? "Esta galeria já tem senha. Digite uma nova para trocá-la." : "O cliente precisa digitar essa senha para ver as fotos. Em branco = sem senha."}</div>
-                {tem && <button className="pl-remover" onClick={() => removerSenhaConfig(g.id)}>Remover senha</button>}
-              </div>
-              <div className="pl-foot">
-                <button className="pl-save" onClick={() => salvarConfig(g.id)}>Salvar</button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
-    </div>
-  );
+      <section className="lists">
+        <div className="card"><div className="card-h"><div className="card-t">Seleções aguardando cliente</div><button className="card-link" onClick={()=>router.push("/dashboard/selecoes")}>Ver todas</button></div>{pendentesLista.length===0?<div className="empty">Nenhuma seleção em andamento.</div>:pendentesLista.map((g)=>{const s=selecoes[g.id];const comentarios=Object.values(s.comentarios).filter((x)=>(x??"").trim()).length;return <div className="list-row" key={g.id}><div><div className="list-title">{g.titulo}</div><div className="list-meta">{s.fotos.length} escolhida{s.fotos.length===1?"":"s"} · {comentarios} comentário{comentarios===1?"":"s"} · {relativo(s.atualizadoEm)}</div></div><button className="card-link" onClick={()=>router.push(`/dashboard/selecoes?galeria=${g.id}`)}>Ver seleção</button></div>})}</div>
+        <div className="card"><div className="card-h"><div className="card-t">Últimas galerias</div><button className="card-link" onClick={()=>router.push("/dashboard/galerias")}>Ver todas</button></div>{recentes.length===0?<div className="empty">Nenhuma galeria criada ainda.</div>:recentes.map((g)=>{const dias=diasPara(g.linkAte);return <div className="list-row" key={g.id}><div><div className="list-title">{g.titulo}</div><div className="list-meta">Criada em {dataCurta(g.criadoEm)}</div></div><span className={"status-pill"+(dias!==null&&dias>0&&dias<=7?" warn":"")}>{dias!==null&&dias>0&&dias<=7?`Expira em ${dias}d`:g.prova?"Prova":"Entrega"}</span></div>})}</div>
+      </section>
+    </main>
+  </div>;
 }
