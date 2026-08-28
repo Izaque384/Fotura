@@ -1,0 +1,63 @@
+name: One-time gallery confirm migration
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Patch gallery confirmation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/app/dashboard/galerias/page.tsx')
+          s = p.read_text()
+
+          old = 'import ModalSelecao from "../../components/ModalSelecao";'
+          new = old + '\nimport ConfirmDialog from "../../components/ConfirmDialog";'
+          if 'ConfirmDialog from "../../components/ConfirmDialog"' not in s:
+              assert old in s
+              s = s.replace(old, new, 1)
+
+          old = ' const[capaModal,setCapaModal]=useState<string|null>(null),[fotosCapa,setFotosCapa]=useState<FotoModal[]>([]),[carregandoCapa,setCarregandoCapa]=useState(false),[selecaoModal,setSelecaoModal]=useState<string|null>(null);'
+          new = old + '\n const[excluirGaleria,setExcluirGaleria]=useState<Galeria|null>(null),[excluindo,setExcluindo]=useState(false);'
+          if '[excluirGaleria,setExcluirGaleria]' not in s:
+              assert old in s
+              s = s.replace(old, new, 1)
+
+          old = ''' async function excluir(g:Galeria){if(!confirm(`Excluir a galeria “${g.titulo}” e todas as fotos?`))return;setAviso("Excluindo galeria…");const{data:{session}}=await supabase.auth.getSession();if(!session?.access_token){setAviso("Sua sessão expirou. Entre novamente para excluir a galeria.");return}const r=await fetch("/api/galeria/excluir",{method:"DELETE",headers:{"Content-Type":"application/json",Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({galeria:g.id})});if(!r.ok){const d=await r.json().catch(()=>({error:"Não foi possível excluir a galeria."}));setAviso(d.error||"Não foi possível excluir a galeria.");return}setGalerias(p=>p.filter(x=>x.id!==g.id));setSelecoes(p=>{const n={...p};delete n[g.id];return n});setAviso("Galeria excluída.")}'''
+          new = ''' async function confirmarExclusao(){const g=excluirGaleria;if(!g||excluindo)return;setExcluindo(true);setAviso("Excluindo galeria…");const{data:{session}}=await supabase.auth.getSession();if(!session?.access_token){setExcluindo(false);setAviso("Sua sessão expirou. Entre novamente para excluir a galeria.");return}const r=await fetch("/api/galeria/excluir",{method:"DELETE",headers:{"Content-Type":"application/json",Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({galeria:g.id})});if(!r.ok){const d=await r.json().catch(()=>({error:"Não foi possível excluir a galeria."}));setExcluindo(false);setAviso(d.error||"Não foi possível excluir a galeria.");return}setGalerias(p=>p.filter(x=>x.id!==g.id));setSelecoes(p=>{const n={...p};delete n[g.id];return n});setExcluirGaleria(null);setExcluindo(false);setAviso("Galeria excluída.")}'''
+          if 'async function confirmarExclusao()' not in s:
+              assert old in s
+              s = s.replace(old, new, 1)
+
+          old = '<button className="act" onClick={()=>excluir(g)}>Excluir</button>'
+          new = '<button className="act" type="button" onClick={()=>setExcluirGaleria(g)}>Excluir</button>'
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          old = '{sel&&<ModalSelecao uid={uid} galeriaId={sel.id} titulo={sel.titulo} selecao={selecoes[sel.id]} onFechar={()=>setSelecaoModal(null)}/>}</div>'
+          new = '{sel&&<ModalSelecao uid={uid} galeriaId={sel.id} titulo={sel.titulo} selecao={selecoes[sel.id]} onFechar={()=>setSelecaoModal(null)}/>}<ConfirmDialog open={Boolean(excluirGaleria)} title="Excluir galeria?" description={excluirGaleria?`A galeria “${excluirGaleria.titulo}” e todas as fotos armazenadas nela serão removidas permanentemente.`:""} confirmLabel="Excluir galeria" loading={excluindo} danger onCancel={()=>!excluindo&&setExcluirGaleria(null)} onConfirm={confirmarExclusao}/></div>'
+          if '<ConfirmDialog open={Boolean(excluirGaleria)}' not in s:
+              assert old in s
+              s = s.replace(old, new, 1)
+
+          p.write_text(s)
+          PY
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/app/dashboard/galerias/page.tsx
+          git commit -m "ux: replace gallery deletion confirm dialog"
+          git push origin main
