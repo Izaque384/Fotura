@@ -1,0 +1,83 @@
+name: One-time notification bell UX
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Improve dashboard notifications
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('app/app/dashboard/page.tsx')
+          s = p.read_text()
+
+          old = '''  async function abrirSino() {
+    const abrir = !sinoAberto;
+    setSinoAberto(abrir);
+    if (!abrir || naoLidas === 0) return;
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return;
+    const agoraIso = new Date().toISOString();
+    setNotifVistoEm(agoraIso);
+    await supabase.from("perfis").upsert({ id: auth.user.id, notif_visto_em: agoraIso });
+  }'''
+          new = '''  function abrirSino() {
+    setSinoAberto((aberto) => !aberto);
+  }
+
+  async function marcarNotificacoesComoLidas() {
+    if (naoLidas === 0) return;
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) { router.replace("/login"); return; }
+    const agoraIso = new Date().toISOString();
+    const anterior = notifVistoEm;
+    setNotifVistoEm(agoraIso);
+    const { error } = await supabase.from("perfis").upsert({ id: auth.user.id, notif_visto_em: agoraIso });
+    if (error) {
+      setNotifVistoEm(anterior);
+      setErro("Não foi possível marcar as notificações como lidas.");
+    }
+  }
+
+  function abrirNotificacao(galeriaId: string) {
+    setSinoAberto(false);
+    router.push(`/dashboard/selecoes?galeria=${galeriaId}`);
+  }'''
+          assert old in s
+          s = s.replace(old, new, 1)
+
+          old = '.bell-pop{position:absolute;right:0;top:50px;width:min(330px,88vw);z-index:30;background:#15152b;border:1px solid #2a2d40;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.45);padding:8px}.bell-item{padding:11px;border-radius:9px}.bell-item:hover{background:#1b1b35}.bell-title{font-size:12px;color:#e8e9f1}.bell-meta{font-size:10px;color:#676d87;margin-top:3px}.bell-empty{padding:18px;text-align:center;color:#6f76a0;font-size:12px}'
+          new = '.bell-pop{position:absolute;right:0;top:50px;width:min(350px,88vw);z-index:30;background:#15152b;border:1px solid #2a2d40;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.45);padding:8px}.bell-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 9px 7px;border-bottom:1px solid #24263b}.bell-head strong{font-size:12px;color:#eef0f7}.bell-read{border:0;background:transparent;color:#8ea7ff;font:600 10px inherit;cursor:pointer;padding:4px}.bell-read:disabled{opacity:.45;cursor:default}.bell-item{width:100%;text-align:left;border:0;background:transparent;padding:11px;border-radius:9px;cursor:pointer;font:inherit;display:block}.bell-item:hover,.bell-item:focus-visible{background:#1b1b35;outline:none}.bell-title{font-size:12px;color:#e8e9f1}.bell-meta{font-size:10px;color:#676d87;margin-top:3px}.bell-unread{display:inline-block;width:6px;height:6px;border-radius:50%;background:#5d6dfa;margin-right:7px;vertical-align:1px}.bell-empty{padding:18px;text-align:center;color:#6f76a0;font-size:12px}.bell-foot{border-top:1px solid #24263b;padding:7px 9px 3px}.bell-all{width:100%;border:0;background:transparent;color:#8ea7ff;font:600 10px inherit;cursor:pointer;padding:6px;text-align:center}'
+          assert old in s
+          s = s.replace(old, new, 1)
+
+          old = '''          <button className="bell" onClick={abrirSino} aria-label="Notificações" aria-expanded={sinoAberto}>♢{naoLidas>0&&<span className="bell-dot">{naoLidas}</span>}</button>
+          <button className="dash-btn" onClick={()=>router.push("/upload")}>+ Nova galeria</button>
+          {sinoAberto&&<div className="bell-pop">{notificacoes.length===0?<div className="bell-empty">Nenhuma notificação recente.</div>:notificacoes.slice(0,5).map((n)=><div className="bell-item" key={n.id}><div className="bell-title">Seleção finalizada em {n.titulo}</div><div className="bell-meta">{n.qtd} foto{n.qtd===1?"":"s"} · {relativo(n.quando)}</div></div>)}</div>}'''
+          new = '''          <button className="bell" type="button" onClick={abrirSino} aria-label={naoLidas>0?`Notificações, ${naoLidas} não lida${naoLidas===1?"":"s"}`:"Notificações"} aria-expanded={sinoAberto}>🔔{naoLidas>0&&<span className="bell-dot">{naoLidas>9?"9+":naoLidas}</span>}</button>
+          <button className="dash-btn" onClick={()=>router.push("/upload")}>+ Nova galeria</button>
+          {sinoAberto&&<div className="bell-pop" role="region" aria-label="Notificações"><div className="bell-head"><strong>Notificações</strong><button className="bell-read" type="button" disabled={naoLidas===0} onClick={marcarNotificacoesComoLidas}>{naoLidas>0?"Marcar como lidas":"Tudo lido"}</button></div>{notificacoes.length===0?<div className="bell-empty">Nenhuma notificação recente.</div>:notificacoes.slice(0,5).map((n)=>{const naoLida=!notifVistoEm||Boolean(n.quando&&n.quando>notifVistoEm);return <button className="bell-item" type="button" key={n.id} onClick={()=>abrirNotificacao(n.id)}><div className="bell-title">{naoLida&&<span className="bell-unread"/>}Seleção finalizada em {n.titulo}</div><div className="bell-meta">{n.qtd} foto{n.qtd===1?"":"s"} · {relativo(n.quando)}</div></button>})}{notificacoes.length>0&&<div className="bell-foot"><button className="bell-all" type="button" onClick={()=>{setSinoAberto(false);router.push("/dashboard/selecoes")}}>Ver todas as seleções</button></div>}</div>}'''
+          assert old in s
+          s = s.replace(old, new, 1)
+
+          p.write_text(s)
+          PY
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/app/dashboard/page.tsx
+          git commit -m "ux: improve dashboard notification bell"
+          git push origin main
