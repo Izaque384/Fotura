@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase-client";
 
+const ORIGEM_PRODUCAO = "https://fotura.vercel.app";
+
 function senhaCadastroValida(senha: string) {
   return senha.length >= 6 && senha.length <= 128;
 }
@@ -45,7 +47,10 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signUp({
         email: emailNormalizado,
         password: senha,
-        options: { data: { aceitou_termos_em: new Date().toISOString() } },
+        options: {
+          emailRedirectTo: ORIGEM_PRODUCAO,
+          data: { aceitou_termos_em: new Date().toISOString() },
+        },
       });
       if (error) {
         setMensagem("Erro: Não foi possível criar a conta. Verifique os dados ou tente entrar.");
