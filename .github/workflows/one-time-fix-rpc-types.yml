@@ -1,0 +1,46 @@
+name: One-time fix RPC result types
+
+on:
+  push:
+    paths:
+      - '.github/workflows/one-time-fix-rpc-types.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Add explicit RPC result typings
+        shell: python
+        run: |
+          from pathlib import Path
+
+          up = Path('app/app/upload/page.tsx')
+          text = up.read_text()
+          old = '''const{data:nova,error:e}=await supabase.rpc("criar_galeria_transacional",{p_slug:gerarSlug(t),p_titulo:t,p_cliente_id:novoCliente?null:(clienteId||null),p_cliente_nome:novoCliente?novoNome:null,p_cliente_email:novoCliente?(clienteEmail.trim()||null):null,p_cliente_telefone:novoCliente?(clienteTelefone.trim()||null):null}).single();if(e||!nova){setErro(true);setMensagem("Não foi possível criar a galeria.");return}galeriaId=nova.galeria_id as string'''
+          new = '''const{data:nova,error:e}=await supabase.rpc("criar_galeria_transacional",{p_slug:gerarSlug(t),p_titulo:t,p_cliente_id:novoCliente?null:(clienteId||null),p_cliente_nome:novoCliente?novoNome:null,p_cliente_email:novoCliente?(clienteEmail.trim()||null):null,p_cliente_telefone:novoCliente?(clienteTelefone.trim()||null):null}).single();const registro=nova as {galeria_id:string}|null;if(e||!registro){setErro(true);setMensagem("Não foi possível criar a galeria.");return}galeriaId=registro.galeria_id'''
+          if old not in text:
+              raise SystemExit('Upload RPC result block not found')
+          up.write_text(text.replace(old, new, 1))
+
+          gp = Path('app/app/dashboard/galerias/page.tsx')
+          text = gp.read_text()
+          old = '''const{data:res,error}=await supabase.rpc("atualizar_galeria_transacional",{p_galeria:g.id,p_prova:fProva,p_limite:limite,p_prazo:fPrazo||null,p_link_ate:fLink||null,p_cliente_id:novoCliente?null:(fCliente||null),p_cliente_nome:novoCliente?novoNome:null,p_cliente_email:novoCliente?(ncEmail.trim()||null):null,p_cliente_telefone:novoCliente?(ncTelefone.trim()||null):null,p_senha:senha||null}).single();setSalvando(false);if(error||!res){setAviso("Não foi possível salvar as configurações.");return}const cliente=(res.cliente_id as string|null)??null,temSenha=Boolean(res.tem_senha)'''
+          new = '''const{data:res,error}=await supabase.rpc("atualizar_galeria_transacional",{p_galeria:g.id,p_prova:fProva,p_limite:limite,p_prazo:fPrazo||null,p_link_ate:fLink||null,p_cliente_id:novoCliente?null:(fCliente||null),p_cliente_nome:novoCliente?novoNome:null,p_cliente_email:novoCliente?(ncEmail.trim()||null):null,p_cliente_telefone:novoCliente?(ncTelefone.trim()||null):null,p_senha:senha||null}).single();const registro=res as {cliente_id:string|null;tem_senha:boolean}|null;setSalvando(false);if(error||!registro){setAviso("Não foi possível salvar as configurações.");return}const cliente=registro.cliente_id??null,temSenha=Boolean(registro.tem_senha)'''
+          if old not in text:
+              raise SystemExit('Galerias RPC result block not found')
+          gp.write_text(text.replace(old, new, 1))
+
+      - name: Commit change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/app/upload/page.tsx app/app/dashboard/galerias/page.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: type transactional RPC results"
+          git push origin main
