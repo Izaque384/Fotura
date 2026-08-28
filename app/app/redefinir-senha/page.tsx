@@ -21,8 +21,11 @@ export default function RedefinirSenhaPage() {
   const [verificando, setVerificando] = useState(true);
 
   useEffect(() => {
+    let fluxoRecuperacao = new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery";
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
+        fluxoRecuperacao = true;
         setSessaoOk(true);
         setVerificando(false);
       }
@@ -30,7 +33,7 @@ export default function RedefinirSenhaPage() {
 
     const timer = setTimeout(async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) setSessaoOk(true);
+      if (fluxoRecuperacao && session) setSessaoOk(true);
       setVerificando(false);
     }, 1500);
 
@@ -42,7 +45,7 @@ export default function RedefinirSenhaPage() {
   }, []);
 
   async function handleRedefinir() {
-    if (carregando) return;
+    if (carregando || !sessaoOk) return;
     setErro("");
     setMensagem("");
 
