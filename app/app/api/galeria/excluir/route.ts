@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
+import { registrarErro } from "../../../../lib/observability";
 import { uuidValido } from "../../../../lib/validation";
 
 const PAGE_SIZE = 1000;
@@ -61,7 +62,10 @@ export async function DELETE(req: NextRequest) {
     .eq("id", galeria)
     .maybeSingle();
 
-  if (galleryError) return NextResponse.json({ error: "Não foi possível verificar a galeria." }, { status: 500 });
+  if (galleryError) {
+    registrarErro("gallery.delete.lookup", req, galleryError, { galeria });
+    return NextResponse.json({ error: "Não foi possível verificar a galeria." }, { status: 500 });
+  }
   if (!g || g.user_id !== auth.user.id) return NextResponse.json({ error: "Galeria não encontrada." }, { status: 404 });
 
   const base = `${auth.user.id}/${galeria}`;
@@ -78,7 +82,8 @@ export async function DELETE(req: NextRequest) {
     ];
 
     await removerEmLotes(supabase, caminhos);
-  } catch {
+  } catch (error) {
+    registrarErro("gallery.delete.storage", req, error, { galeria });
     return NextResponse.json({ error: "Não foi possível excluir todos os arquivos da galeria." }, { status: 500 });
   }
 
@@ -88,6 +93,7 @@ export async function DELETE(req: NextRequest) {
   });
 
   if (dbError || removida !== true) {
+    registrarErro("gallery.delete.database", req, dbError ?? new Error("RPC retornou falso"), { galeria });
     return NextResponse.json(
       { error: "Os arquivos foram removidos, mas não foi possível concluir a exclusão dos dados da galeria." },
       { status: 500 }
