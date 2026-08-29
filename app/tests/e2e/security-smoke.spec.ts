@@ -35,6 +35,30 @@ test("APIs de galeria rejeitam identificadores que não são UUID", async ({ req
   expect(selecao.status()).toBe(400);
 });
 
+test("mutações de galeria bloqueiam origem externa", async ({ request }) => {
+  const headers = {
+    origin: "https://exemplo-malicioso.invalid",
+    "sec-fetch-site": "cross-site",
+  };
+
+  const acesso = await request.post("/api/galeria/acesso", {
+    headers,
+    data: { galeria: "00000000-0000-4000-8000-000000000000", senha: "teste" },
+  });
+  expect(acesso.status()).toBe(403);
+
+  const selecao = await request.post("/api/galeria/selecao", {
+    headers,
+    data: {
+      galeria: "00000000-0000-4000-8000-000000000000",
+      fotos: [],
+      finalizada: false,
+      comentarios: {},
+    },
+  });
+  expect(selecao.status()).toBe(403);
+});
+
 test("headers essenciais permanecem ativos", async ({ request }) => {
   const resposta = await request.get("/");
   expect(resposta.ok()).toBeTruthy();
