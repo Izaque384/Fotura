@@ -5,6 +5,9 @@ import { consumirRateLimit } from "../../../../lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 const EXPIRA_SEG = 3600;
+const LISTA_LOTE = 1000;
+const ASSINATURA_LOTE = 200;
+const CONCORRENCIA_ASSINATURA = 3;
 
 function json(data: unknown, status = 200, retryAfter?: number) {
   const headers: Record<string, string> = { "Cache-Control": "no-store, private" };
@@ -32,10 +35,21 @@ export async function GET(req: NextRequest) {
   if (g.tem_senha && !temAcessoGaleria(req, galeria)) return json({ error: "Acesso à galeria necessário." }, 401);
 
   const dono = g.user_id as string;
-  const { data: arquivos, error: listError } = await supabase.storage.from("fotos").list(`${dono}/${galeria}`, { limit: 500 });
-  if (listError) return json({ error: "Não foi possível listar a galeria." }, 500);
+  const lista: Array<{ name: string }> = [];
+  let offset = 0;
+  while (true) {
+    const { data: arquivos, error: listError } = await supabase.storage.from("fotos").list(`${dono}/${galeria}`, {
+      limit: LISTA_LOTE,
+      offset,
+      sortBy: { column: "created_at", order: "asc" },
+    });
+    if (listError) return json({ error: "Não foi possível listar a galeria." }, 500);
+    const pagina = arquivos ?? [];
+    lista.push(...pagina.filter((f) => f.id !== null).map((f) => ({ name: f.name })));
+    if (pagina.length < LISTA_LOTE) break;
+    offset += LISTA_LOTE;
+  }
 
-  const lista = (arquivos ?? []).filter((f) => f.id !== null);
   if (lista.length === 0) return json({ fotos: [], capaUrl: null });
 
   const caminhos: string[] = [];
@@ -46,11 +60,23 @@ export async function GET(req: NextRequest) {
   const capaFile = (g.capa as string | null) ?? null;
   if (capaFile && !caminhos.includes(`${dono}/${galeria}/${capaFile}`)) caminhos.push(`${dono}/${galeria}/${capaFile}`);
 
-  const { data: signed, error: signedError } = await supabase.storage.from("fotos").createSignedUrls(caminhos, EXPIRA_SEG);
-  if (signedError) return json({ error: "Não foi possível assinar os arquivos." }, 500);
-
+  const lotes: string[][] = [];
+  for (let i = 0; i < caminhos.length; i += ASSINATURA_LOTE) lotes.push(caminhos.slice(i, i + ASSINATURA_LOTE));
   const mapa: Record<string, string> = {};
-  for (const s of signed ?? []) if (s.signedUrl && s.path) mapa[s.path] = s.signedUrl;
+  let cursor = 0;
+  let erroAssinatura = false;
+  const worker = async () => {
+    while (true) {
+      const i = cursor++;
+      if (i >= lotes.length || erroAssinatura) return;
+      const { data, error } = await supabase.storage.from("fotos").createSignedUrls(lotes[i], EXPIRA_SEG);
+      if (error) { erroAssinatura = true; return; }
+      for (const s of data ?? []) if (s.signedUrl && s.path) mapa[s.path] = s.signedUrl;
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(CONCORRENCIA_ASSINATURA, lotes.length) }, () => worker()));
+  if (erroAssinatura) return json({ error: "Não foi possível assinar os arquivos." }, 500);
+
   const fotos = lista.map((f) => {
     const url = mapa[`${dono}/${galeria}/${f.name}`] ?? "";
     const thumb = mapa[`${dono}/${galeria}/thumbs/${f.name}`] || url;
