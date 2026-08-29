@@ -198,6 +198,20 @@ export default function ConfiguracoesPage() {
               {mensagem}
             </p>
           )}
+
+          <div style={{ marginTop: 28, paddingTop: 24, borderTop: "1px solid #2a2d40" }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "#f0f0f5", margin: 0 }}>Segurança e atividade</p>
+            <p style={{ fontSize: 12, color: "#7a7f9a", lineHeight: 1.6, margin: "7px 0 14px" }}>
+              Consulte o histórico de ações importantes da sua conta, galerias, clientes e seleções.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard/atividade")}
+              style={{ width: "100%", padding: "11px 13px", fontSize: 13, fontWeight: 600, color: "#cfd5ea", background: "#111124", border: "1px solid #2a2d40", borderRadius: 10, cursor: "pointer" }}
+            >
+              Ver histórico de atividades
+            </button>
+          </div>
         </div>
       </div>
     </div>
