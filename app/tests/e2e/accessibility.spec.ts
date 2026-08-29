@@ -10,7 +10,8 @@ test("login expõe campos rotulados e feedback de erro acessível", async ({ pag
 
   await email.focus();
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("alert")).toHaveText("Erro: Preencha e-mail e senha.");
+  const erro = page.getByText("Erro: Preencha e-mail e senha.", { exact: true });
+  await expect(erro).toHaveAttribute("role", "alert");
 });
 
 test("login não cria rolagem horizontal em viewport mobile", async ({ page }) => {
