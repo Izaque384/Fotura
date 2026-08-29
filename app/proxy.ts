@@ -6,6 +6,7 @@ function rotaComNonce(pathname: string) {
     || pathname === "/esqueci-senha"
     || pathname === "/redefinir-senha"
     || pathname === "/upload"
+    || pathname === "/perfil"
     || pathname === "/configuracoes"
     || pathname === "/dashboard"
     || pathname.startsWith("/dashboard/");
@@ -24,10 +25,7 @@ export function proxy(request: NextRequest) {
     requestHeaders.set("Content-Security-Policy", csp);
   }
 
-  const response = NextResponse.next({
-    request: { headers: requestHeaders },
-  });
-
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("x-request-id", requestId);
   if (csp) response.headers.set("Content-Security-Policy", csp);
   return response;
@@ -41,6 +39,7 @@ export const config = {
     "/redefinir-senha",
     "/dashboard/:path*",
     "/upload",
+    "/perfil",
     "/configuracoes",
   ],
 };
