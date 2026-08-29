@@ -3,6 +3,7 @@ import webpush from "web-push";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { temAcessoGaleria } from "../../../../lib/gallery-access";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
+import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
 
 let webPushConfigurado = false;
@@ -85,6 +86,10 @@ async function notificar(supabase: ReturnType<typeof createServiceClient>, userI
 }
 
 export async function POST(req: NextRequest) {
+  if (!requisicaoMesmoOrigin(req)) {
+    return NextResponse.json({ error: "Origem da requisição não permitida." }, { status: 403 });
+  }
+
   let body: Body;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Requisição inválida." }, { status: 400 }); }
   const galeria = body.galeria?.trim();
