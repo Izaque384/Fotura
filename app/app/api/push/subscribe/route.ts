@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
+import { registrarErro } from "../../../../lib/observability";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 
 type Body = { endpoint?: unknown; p256dh?: unknown; auth?: unknown };
@@ -55,10 +56,14 @@ export async function POST(req: NextRequest) {
       { user_id: user.id, endpoint, p256dh, auth },
       { onConflict: "user_id,endpoint" }
     );
-    if (error) return NextResponse.json({ error: "Não foi possível registrar a inscrição." }, { status: 500 });
+    if (error) {
+      registrarErro("push.subscribe.database", req, error);
+      return NextResponse.json({ error: "Não foi possível registrar a inscrição." }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (error) {
+    registrarErro("push.subscribe.unhandled", req, error);
     return NextResponse.json({ error: "Erro interno." }, { status: 500 });
   }
 }
