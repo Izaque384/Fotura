@@ -164,17 +164,48 @@ export default function SelecoesPage() {
     }
   }, [router, supabase]);
 
+
+  const atualizarSelecoes = useCallback(async () => {
+    if (!itens.length) return;
+    setAtualizando(true);
+    const ids = itens.map((x) => x.id);
+    const { data, error } = await supabase
+      .from("selecoes")
+      .select("galeria,fotos,finalizada,comentarios,atualizado_em")
+      .in("galeria", ids);
+    if (error) { setAtualizando(false); return; }
+    const porGaleria = new Map((data ?? []).map((s) => [s.galeria as string, s]));
+    setItens((atuais) => atuais.map((item) => {
+      const s = porGaleria.get(item.id);
+      if (!s) return { ...item, selecao: null, comentarios: 0, status: "sem_interacao" as const };
+      const comentarios = (s.comentarios as Record<string, string> | null) ?? {};
+      const selecao: Selecao = {
+        fotos: (s.fotos as string[]) ?? [],
+        finalizada: Boolean(s.finalizada),
+        comentarios,
+        atualizadoEm: (s.atualizado_em as string | null) ?? undefined,
+      };
+      return {
+        ...item,
+        selecao,
+        comentarios: Object.values(comentarios).filter((t) => (t ?? "").trim()).length,
+        status: selecao.finalizada ? "finalizada" as const : "andamento" as const,
+      };
+    }).sort((a,b)=>(b.selecao?.atualizadoEm??b.criadoEm??"").localeCompare(a.selecao?.atualizadoEm??a.criadoEm??"")));
+    setAtualizando(false);
+  }, [itens, supabase]);
+
   useEffect(() => { void carregar(false); }, [carregar]);
 
   useEffect(() => {
-    const id = window.setInterval(() => { void carregar(true); }, 60_000);
-    const aoVisivel = () => { if (document.visibilityState === "visible") void carregar(true); };
+    const id = window.setInterval(() => { void atualizarSelecoes(); }, 60_000);
+    const aoVisivel = () => { if (document.visibilityState === "visible") void atualizarSelecoes(); };
     document.addEventListener("visibilitychange", aoVisivel);
     return () => {
       window.clearInterval(id);
       document.removeEventListener("visibilitychange", aoVisivel);
     };
-  }, [carregar]);
+  }, [atualizarSelecoes]);
 
   const contagens = useMemo(() => ({
     sem_interacao: itens.filter((x) => x.status === "sem_interacao").length,
