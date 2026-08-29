@@ -5,11 +5,20 @@ import { temAcessoGaleria } from "../../../../lib/gallery-access";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { uuidValido } from "../../../../lib/validation";
 
-webpush.setVapidDetails(
-  process.env.VAPID_EMAIL || "mailto:contato@fotura.com.br",
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+let webPushConfigurado = false;
+function configurarWebPush() {
+  if (webPushConfigurado) return true;
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+  if (!publicKey || !privateKey) return false;
+  webpush.setVapidDetails(
+    process.env.VAPID_EMAIL || "mailto:contato@fotura.com.br",
+    publicKey,
+    privateKey
+  );
+  webPushConfigurado = true;
+  return true;
+}
 
 type Body = { galeria?: string; fotos?: unknown; finalizada?: unknown; comentarios?: unknown };
 
@@ -60,6 +69,7 @@ async function nomesOriginaisGaleria(
 }
 
 async function notificar(supabase: ReturnType<typeof createServiceClient>, userId: string, titulo: string, qtd: number) {
+  if (!configurarWebPush()) return;
   const { data: subs } = await supabase.from("push_subscriptions").select("endpoint,p256dh,auth").eq("user_id", userId);
   if (!subs?.length) return;
   const payload = JSON.stringify({ titulo: "Seleção finalizada!", corpo: `O cliente finalizou a seleção de ${qtd} foto${qtd === 1 ? "" : "s"} na galeria "${titulo}".`, url: "/dashboard" });
