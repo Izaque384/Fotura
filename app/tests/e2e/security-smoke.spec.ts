@@ -40,6 +40,10 @@ test("headers essenciais permanecem ativos", async ({ request }) => {
   expect(resposta.ok()).toBeTruthy();
   expect(resposta.headers()["x-content-type-options"]).toBe("nosniff");
   expect(resposta.headers()["x-frame-options"]).toBe("DENY");
-  expect(resposta.headers()["content-security-policy"]).toContain("default-src 'self'");
+  const csp = resposta.headers()["content-security-policy"];
+  expect(csp).toContain("default-src 'self'");
+  expect(csp).toContain("object-src 'none'");
+  expect(csp).toContain("frame-ancestors 'none'");
+  expect(csp).toContain("script-src-attr 'none'");
   expect(resposta.headers()["referrer-policy"]).toBe("strict-origin-when-cross-origin");
 });
