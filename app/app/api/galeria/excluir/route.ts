@@ -81,19 +81,17 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Não foi possível excluir todos os arquivos da galeria." }, { status: 500 });
   }
 
-  const { error: selecaoError } = await supabase.from("selecoes").delete().eq("galeria", galeria);
-  if (selecaoError) return NextResponse.json({ error: "Os arquivos foram removidos, mas não foi possível concluir a exclusão." }, { status: 500 });
+  const { data: removida, error: dbError } = await supabase.rpc("excluir_dados_galeria_backend", {
+    p_galeria: galeria,
+    p_user_id: auth.user.id,
+  });
 
-  const { error: senhaError } = await supabase.from("senhas").delete().eq("galeria", galeria);
-  if (senhaError) return NextResponse.json({ error: "Os arquivos foram removidos, mas não foi possível concluir a exclusão." }, { status: 500 });
-
-  const { error: galeriaError } = await supabase
-    .from("galerias")
-    .delete()
-    .eq("id", galeria)
-    .eq("user_id", auth.user.id);
-
-  if (galeriaError) return NextResponse.json({ error: "Os arquivos foram removidos, mas não foi possível concluir a exclusão." }, { status: 500 });
+  if (dbError || removida !== true) {
+    return NextResponse.json(
+      { error: "Os arquivos foram removidos, mas não foi possível concluir a exclusão dos dados da galeria." },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ ok: true });
 }
