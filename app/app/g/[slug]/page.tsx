@@ -18,7 +18,7 @@ export default function GaleriaClientePage(){
  const[meta,setMeta]=useState<Meta|null>(null),[perfil,setPerfil]=useState<Perfil>({nome:null,logo:null,cor:null}),[fotos,setFotos]=useState<Foto[]>([]),[capaUrl,setCapaUrl]=useState<string|null>(null);
  const[selecionadas,setSelecionadas]=useState<string[]>([]),[finalizada,setFinalizada]=useState(false),[comentarios,setComentarios]=useState<Record<string,string>>({}),[aberta,setAberta]=useState<number|null>(null),[rascunho,setRascunho]=useState("");
  const[senha,setSenha]=useState(""),[senhaErro,setSenhaErro]=useState(""),[validando,setValidando]=useState(false),[limiteMsg,setLimiteMsg]=useState(""),[baixandoTudo,setBaixandoTudo]=useState(false),[progresso,setProgresso]=useState(0),[confirmandoFinalizacao,setConfirmandoFinalizacao]=useState(false),[finalizando,setFinalizando]=useState(false);
- const toqueX=useRef<number|null>(null),downloadAbort=useRef<AbortController|null>(null),cancelarDownload=useRef(false);
+ const toqueX=useRef<number|null>(null),downloadAbort=useRef<AbortController|null>(null),cancelarDownload=useRef(false),ultimaAssinatura=useRef(0),renovacaoEmAndamento=useRef<Promise<Foto[]|null>|null>(null);
 
  async function carregar(){
   setCarregando(true);setMensagem("");
@@ -36,16 +36,22 @@ export default function GaleriaClientePage(){
   setCarregando(false);
  }
  async function renovarAssinaturas(){
-  const rf=await fetch(`/api/fotos/signed?galeria=${encodeURIComponent(slug)}`,{cache:"no-store"});
-  if(!rf.ok)return null;
-  const df=await rf.json() as {fotos:Foto[];capaUrl:string|null};
-  setFotos(df.fotos);setCapaUrl(df.capaUrl);
-  return df.fotos;
+  if(renovacaoEmAndamento.current)return renovacaoEmAndamento.current;
+  const tarefa=(async()=>{
+   const rf=await fetch(`/api/fotos/signed?galeria=${encodeURIComponent(slug)}`,{cache:"no-store"});
+   if(!rf.ok)return null;
+   const df=await rf.json() as {fotos:Foto[];capaUrl:string|null};
+   setFotos(df.fotos);setCapaUrl(df.capaUrl);ultimaAssinatura.current=Date.now();
+   return df.fotos;
+  })();
+  renovacaoEmAndamento.current=tarefa;
+  try{return await tarefa}finally{renovacaoEmAndamento.current=null}
  }
  useEffect(()=>{carregar()},[slug]);
  useEffect(()=>{if(aberta===null)return;const f=fotos[aberta];setRascunho(f?(comentarios[f.nome]??""):"")},[aberta,fotos,comentarios]);
  useEffect(()=>{if(aberta===null)return;const key=(e:KeyboardEvent)=>{const a=e.target as HTMLElement|null;if(a&&(a.tagName==="TEXTAREA"||a.tagName==="INPUT"))return;if(e.key==="Escape")setAberta(null);if(e.key==="ArrowRight")proxima();if(e.key==="ArrowLeft")anterior()};window.addEventListener("keydown",key);return()=>window.removeEventListener("keydown",key)},[aberta,fotos.length]);
  useEffect(()=>{if(!meta||meta.linkExpirado||!meta.desbloqueada||!fotos.length)return;const id=window.setInterval(()=>{void renovarAssinaturas()},50*60*1000);return()=>window.clearInterval(id)},[slug,meta?.linkExpirado,meta?.desbloqueada,fotos.length]);
+ useEffect(()=>{if(!meta||meta.linkExpirado||!meta.desbloqueada||!fotos.length)return;const atualizarSeAntiga=()=>{if(Date.now()-ultimaAssinatura.current>=45*60*1000)void renovarAssinaturas()};const aoVisivel=()=>{if(document.visibilityState==="visible")atualizarSeAntiga()};document.addEventListener("visibilitychange",aoVisivel);window.addEventListener("online",atualizarSeAntiga);return()=>{document.removeEventListener("visibilitychange",aoVisivel);window.removeEventListener("online",atualizarSeAntiga)}},[slug,meta?.linkExpirado,meta?.desbloqueada,fotos.length]);
 
  async function verificarSenha(){if(validando||!senha)return;setValidando(true);setSenhaErro("");const r=await fetch("/api/galeria/acesso",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({galeria:slug,senha})});setValidando(false);if(r.ok){setSenha("");await carregar()}else{const d=await r.json().catch(()=>({error:"Senha incorreta."}));setSenhaErro(r.status===429?d.error:"Senha incorreta. Tente novamente.")}}
  async function salvar(nomes:string[],fin:boolean,coments:Record<string,string>){const r=await fetch("/api/galeria/selecao",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({galeria:slug,fotos:nomes,finalizada:fin,comentarios:coments})});if(!r.ok){const d=await r.json().catch(()=>({error:"Não foi possível salvar."}));setMensagem(d.error||"Não foi possível salvar a seleção.");return false}return true}
