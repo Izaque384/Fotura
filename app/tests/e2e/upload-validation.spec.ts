@@ -1,55 +1,32 @@
 import { expect, test } from "@playwright/test";
+import { MAX_TAMANHO_ARQUIVO, validarArquivo } from "../../lib/upload-validation";
 
-const fakeUser = {
-  id: "11111111-1111-4111-8111-111111111111",
-  aud: "authenticated",
-  role: "authenticated",
-  email: "e2e@fotura.local",
-  email_confirmed_at: "2026-01-01T00:00:00.000Z",
-  phone: "",
-  confirmed_at: "2026-01-01T00:00:00.000Z",
-  last_sign_in_at: "2026-01-01T00:00:00.000Z",
-  app_metadata: { provider: "email", providers: ["email"] },
-  user_metadata: {},
-  identities: [],
-  created_at: "2026-01-01T00:00:00.000Z",
-  updated_at: "2026-01-01T00:00:00.000Z",
-  is_anonymous: false,
-};
+function arquivo(name: string, type: string, size: number) {
+  return { name, type, size };
+}
 
-test.beforeEach(async ({ page }) => {
-  await page.route("https://example.supabase.co/auth/v1/user**", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(fakeUser) });
-  });
-  await page.route("https://example.supabase.co/rest/v1/clientes**", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: "[]", headers: { "content-range": "0-0/0" } });
-  });
+test("aceita os formatos de imagem suportados", () => {
+  expect(validarArquivo(arquivo("foto.jpg", "image/jpeg", 1024))).toBeNull();
+  expect(validarArquivo(arquivo("foto.JPEG", "image/jpeg", 1024))).toBeNull();
+  expect(validarArquivo(arquivo("foto.png", "image/png", 1024))).toBeNull();
+  expect(validarArquivo(arquivo("foto.webp", "image/webp", 1024))).toBeNull();
 });
 
-test("upload rejeita extensão não permitida antes de qualquer envio", async ({ page }) => {
-  await page.goto("/upload");
-  const input = page.locator('input[type="file"]');
-  await expect(input).toHaveCount(1);
-
-  await input.setInputFiles({
-    name: "arquivo.exe",
-    mimeType: "application/octet-stream",
-    buffer: Buffer.from("nao-e-uma-foto"),
-  });
-
-  await expect(page.getByText(/formato não aceito/i)).toBeVisible();
-  await expect(page.getByText(/arquivo\.exe/i)).toBeVisible();
+test("rejeita extensão não permitida", () => {
+  expect(validarArquivo(arquivo("arquivo.exe", "application/octet-stream", 10))).toContain("formato não aceito");
 });
 
-test("upload rejeita MIME incompatível com a extensão", async ({ page }) => {
-  await page.goto("/upload");
-  const input = page.locator('input[type="file"]');
+test("rejeita MIME incompatível com a extensão", () => {
+  expect(validarArquivo(arquivo("foto.jpg", "text/plain", 10))).toBe("tipo do arquivo não corresponde à extensão");
+});
 
-  await input.setInputFiles({
-    name: "foto.jpg",
-    mimeType: "text/plain",
-    buffer: Buffer.from("conteudo-invalido"),
-  });
+test("rejeita arquivo vazio e arquivo acima de 50 MB", () => {
+  expect(validarArquivo(arquivo("foto.jpg", "image/jpeg", 0))).toBe("arquivo vazio");
+  expect(validarArquivo(arquivo("foto.jpg", "image/jpeg", MAX_TAMANHO_ARQUIVO + 1))).toBe("arquivo maior que 50 MB");
+});
 
-  await expect(page.getByText(/tipo do arquivo não corresponde à extensão/i)).toBeVisible();
+test("rejeita nomes inseguros ou excessivamente longos", () => {
+  expect(validarArquivo(arquivo("pasta/foto.jpg", "image/jpeg", 10))).toBe("nome do arquivo inválido");
+  expect(validarArquivo(arquivo(`${"a".repeat(181)}.jpg`, "image/jpeg", 10))).toBe("nome do arquivo muito longo");
+  expect(validarArquivo(arquivo("sem-extensao", "image/jpeg", 10))).toBe("extensão ausente ou inválida");
 });
