@@ -1,0 +1,22 @@
+name: One-time performance block
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - run: python3 .github/scripts/performance_block_patch.py
+      - run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 'app/app/dashboard/galerias/page.tsx' 'app/app/dashboard/selecoes/page.tsx' 'app/app/g/[slug]/page.tsx'
+          git commit -m "perf: reduce storage and polling overhead"
+          git push origin main
