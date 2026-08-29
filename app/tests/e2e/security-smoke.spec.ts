@@ -47,3 +47,26 @@ test("headers essenciais permanecem ativos", async ({ request }) => {
   expect(csp).toContain("script-src-attr 'none'");
   expect(resposta.headers()["referrer-policy"]).toBe("strict-origin-when-cross-origin");
 });
+
+test("rotas sensíveis usam nonce sem unsafe-inline em script-src", async ({ request }) => {
+  const resposta = await request.get("/login");
+  expect(resposta.ok()).toBeTruthy();
+  const csp = resposta.headers()["content-security-policy"];
+  expect(csp).toMatch(/script-src 'self' 'nonce-[^']+' 'strict-dynamic'/);
+  const scriptSrc = csp.split(";").find((diretiva) => diretiva.trim().startsWith("script-src "));
+  expect(scriptSrc).toBeTruthy();
+  expect(scriptSrc).not.toContain("'unsafe-inline'");
+  expect(csp).toContain("style-src 'self' 'unsafe-inline'");
+
+  const nonce = csp.match(/'nonce-([^']+)'/)?.[1];
+  expect(nonce).toBeTruthy();
+  const html = await resposta.text();
+  expect(html).toContain(`nonce="${nonce}"`);
+});
+
+test("página pública mantém política compatível sem forçar nonce", async ({ request }) => {
+  const resposta = await request.get("/");
+  const csp = resposta.headers()["content-security-policy"];
+  expect(csp).toContain("script-src 'self' 'unsafe-inline'");
+  expect(csp).not.toContain("'strict-dynamic'");
+});
