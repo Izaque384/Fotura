@@ -53,3 +53,4 @@ s = s.replace('onClick={()=>baixar(f.url,f.nome)} aria-label={`Baixar ${f.nome}`
 s = s.replace('e.stopPropagation();baixar(fotos[aberta].url,fotos[aberta].nome)', 'e.stopPropagation();baixarComRenovacao(fotos[aberta].url,fotos[aberta].nome)', 1)
 
 p.write_text(s)
+# trigger
