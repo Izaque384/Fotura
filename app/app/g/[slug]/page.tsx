@@ -18,7 +18,7 @@ export default function GaleriaClientePage(){
  const[meta,setMeta]=useState<Meta|null>(null),[perfil,setPerfil]=useState<Perfil>({nome:null,logo:null,cor:null}),[fotos,setFotos]=useState<Foto[]>([]),[capaUrl,setCapaUrl]=useState<string|null>(null);
  const[selecionadas,setSelecionadas]=useState<string[]>([]),[finalizada,setFinalizada]=useState(false),[comentarios,setComentarios]=useState<Record<string,string>>({}),[aberta,setAberta]=useState<number|null>(null),[rascunho,setRascunho]=useState("");
  const[senha,setSenha]=useState(""),[senhaErro,setSenhaErro]=useState(""),[validando,setValidando]=useState(false),[limiteMsg,setLimiteMsg]=useState(""),[baixandoTudo,setBaixandoTudo]=useState(false),[progresso,setProgresso]=useState(0),[confirmandoFinalizacao,setConfirmandoFinalizacao]=useState(false),[finalizando,setFinalizando]=useState(false);
- const toqueX=useRef<number|null>(null),downloadAbort=useRef<AbortController|null>(null),cancelarDownload=useRef(false),ultimaAssinatura=useRef(0),renovacaoEmAndamento=useRef<Promise<Foto[]|null>|null>(null);
+ const toqueX=useRef<number|null>(null),downloadAbort=useRef<AbortController|null>(null),cancelarDownload=useRef(false),ultimaAssinatura=useRef(0),renovacaoEmAndamento=useRef<Promise<Foto[]|null>|null>(null),filaSalvamento=useRef<Promise<void>>(Promise.resolve()),selecaoAtual=useRef<string[]>([]),comentariosAtuais=useRef<Record<string,string>>({});
 
  async function carregar(){
   setCarregando(true);setMensagem("");
@@ -27,8 +27,8 @@ export default function GaleriaClientePage(){
   if(!r.ok){setMensagem("Não foi possível carregar a galeria.");setCarregando(false);return}
   const d=await r.json() as {galeria:Meta;perfil:Perfil;selecao:Selecao|null};
   setMeta(d.galeria);setPerfil(d.perfil);
-  if(d.selecao){setSelecionadas(d.selecao.fotos);setFinalizada(d.selecao.finalizada);setComentarios(d.selecao.comentarios)}
-  else {setSelecionadas([]);setFinalizada(false);setComentarios({})}
+  if(d.selecao){selecaoAtual.current=d.selecao.fotos;comentariosAtuais.current=d.selecao.comentarios;setSelecionadas(d.selecao.fotos);setFinalizada(d.selecao.finalizada);setComentarios(d.selecao.comentarios)}
+  else {selecaoAtual.current=[];comentariosAtuais.current={};setSelecionadas([]);setFinalizada(false);setComentarios({})}
   if(!d.galeria.linkExpirado&&d.galeria.desbloqueada){
    const df=await renovarAssinaturas();
    if(!df)setMensagem("Não foi possível carregar as fotos.");
@@ -54,10 +54,13 @@ export default function GaleriaClientePage(){
  useEffect(()=>{if(!meta||meta.linkExpirado||!meta.desbloqueada||!fotos.length)return;const atualizarSeAntiga=()=>{if(Date.now()-ultimaAssinatura.current>=45*60*1000)void renovarAssinaturas()};const aoVisivel=()=>{if(document.visibilityState==="visible")atualizarSeAntiga()};document.addEventListener("visibilitychange",aoVisivel);window.addEventListener("online",atualizarSeAntiga);return()=>{document.removeEventListener("visibilitychange",aoVisivel);window.removeEventListener("online",atualizarSeAntiga)}},[slug,meta?.linkExpirado,meta?.desbloqueada,fotos.length]);
 
  async function verificarSenha(){if(validando||!senha)return;setValidando(true);setSenhaErro("");const r=await fetch("/api/galeria/acesso",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({galeria:slug,senha})});setValidando(false);if(r.ok){setSenha("");await carregar()}else{const d=await r.json().catch(()=>({error:"Senha incorreta."}));setSenhaErro(r.status===429?d.error:"Senha incorreta. Tente novamente.")}}
- async function salvar(nomes:string[],fin:boolean,coments:Record<string,string>){const r=await fetch("/api/galeria/selecao",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({galeria:slug,fotos:nomes,finalizada:fin,comentarios:coments})});if(!r.ok){const d=await r.json().catch(()=>({error:"Não foi possível salvar."}));setMensagem(d.error||"Não foi possível salvar a seleção.");return false}return true}
- async function alternar(nome:string){if(!meta||finalizada||encerrada())return;const tem=selecionadas.includes(nome);if(!tem&&meta.limite>0&&selecionadas.length>=meta.limite){setLimiteMsg(`Você já escolheu o máximo de ${meta.limite} foto${meta.limite===1?"":"s"}.`);setTimeout(()=>setLimiteMsg(""),2600);return}const n=tem?selecionadas.filter(x=>x!==nome):[...selecionadas,nome];setSelecionadas(n);if(!await salvar(n,false,comentarios))setSelecionadas(selecionadas)}
- async function finalizar(){if(!selecionadas.length||finalizada||encerrada()||finalizando)return;setFinalizando(true);const ok=await salvar(selecionadas,true,comentarios);setFinalizando(false);if(ok){setFinalizada(true);setConfirmandoFinalizacao(false)}}
- async function comentar(){if(aberta===null)return;const nome=fotos[aberta].nome,n={...comentarios,[nome]:rascunho.trim()};setComentarios(n);if(!await salvar(selecionadas,false,n))setComentarios(comentarios);else setAberta(null)}
+ async function salvar(nomes:string[],fin:boolean,coments:Record<string,string>){
+  const executar=async()=>{try{const r=await fetch("/api/galeria/selecao",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({galeria:slug,fotos:nomes,finalizada:fin,comentarios:coments})});if(!r.ok){const d=await r.json().catch(()=>({error:"Não foi possível salvar."}));setMensagem(d.error||"Não foi possível salvar a seleção.");return false}return true}catch{setMensagem("Não foi possível salvar a seleção. Verifique sua conexão e tente novamente.");return false}};
+  let resultado=false;const anterior=filaSalvamento.current;const atual=anterior.then(async()=>{resultado=await executar()});filaSalvamento.current=atual.catch(()=>undefined);await atual;return resultado
+ }
+ async function alternar(nome:string){if(!meta||finalizada||encerrada())return;const atual=selecaoAtual.current,tem=atual.includes(nome);if(!tem&&meta.limite>0&&atual.length>=meta.limite){setLimiteMsg(`Você já escolheu o máximo de ${meta.limite} foto${meta.limite===1?"":"s"}.`);setTimeout(()=>setLimiteMsg(""),2600);return}const n=tem?atual.filter(x=>x!==nome):[...atual,nome];selecaoAtual.current=n;setSelecionadas(n);await salvar(n,false,comentariosAtuais.current)}
+ async function finalizar(){if(!selecaoAtual.current.length||finalizada||encerrada()||finalizando)return;setFinalizando(true);const ok=await salvar(selecaoAtual.current,true,comentariosAtuais.current);setFinalizando(false);if(ok){setFinalizada(true);setConfirmandoFinalizacao(false)}}
+ async function comentar(){if(aberta===null)return;const nome=fotos[aberta].nome,n={...comentariosAtuais.current,[nome]:rascunho.trim()};comentariosAtuais.current=n;setComentarios(n);if(await salvar(selecaoAtual.current,false,n))setAberta(null)}
  function encerrada(){return Boolean(meta?.prazo&&Date.now()>new Date(`${meta.prazo}T23:59:59`).getTime())}
  function fmt(d:string){return new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR")}
  function proxima(){setAberta(v=>v===null?null:(v+1)%fotos.length)}function anterior(){setAberta(v=>v===null?null:(v-1+fotos.length)%fotos.length)}
