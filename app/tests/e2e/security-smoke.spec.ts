@@ -59,6 +59,11 @@ test("mutações de galeria bloqueiam origem externa", async ({ request }) => {
   expect(selecao.status()).toBe(403);
 });
 
+test("APIs retornam identificador de requisição para correlação", async ({ request }) => {
+  const resposta = await request.get("/api/galeria/publica");
+  expect(resposta.headers()["x-request-id"]).toMatch(/^[0-9a-f-]{36}$/i);
+});
+
 test("headers essenciais permanecem ativos", async ({ request }) => {
   const resposta = await request.get("/");
   expect(resposta.ok()).toBeTruthy();
