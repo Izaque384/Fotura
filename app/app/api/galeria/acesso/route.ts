@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { criarTokenGaleria, nomeCookieGaleria } from "../../../../lib/gallery-access";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
+import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
 
 const JANELA_SEG = 10 * 60;
 
 export async function POST(req: NextRequest) {
+  if (!requisicaoMesmoOrigin(req)) {
+    return NextResponse.json({ error: "Origem da requisição não permitida." }, { status: 403 });
+  }
+
   let body: { galeria?: string; senha?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Requisição inválida." }, { status: 400 }); }
 
