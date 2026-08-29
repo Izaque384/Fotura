@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
+import { uuidValido } from "../../../../lib/validation";
 
 const PAGE_SIZE = 1000;
 const REMOVE_BATCH = 500;
@@ -44,7 +45,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   const galeria = typeof body.galeria === "string" ? body.galeria.trim() : "";
-  if (!galeria || galeria.length > 100) {
+  if (!uuidValido(galeria)) {
     return NextResponse.json({ error: "Galeria inválida." }, { status: 400 });
   }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { criarTokenGaleria, nomeCookieGaleria } from "../../../../lib/gallery-access";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
+import { uuidValido } from "../../../../lib/validation";
 
 const JANELA_SEG = 10 * 60;
 
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
 
   const galeria = body.galeria?.trim();
   const senha = body.senha ?? "";
-  if (!galeria || !senha || galeria.length > 100 || senha.length > 256) {
+  if (!uuidValido(galeria) || !senha || senha.length > 256) {
     return NextResponse.json({ error: "Dados obrigatórios ausentes ou inválidos." }, { status: 400 });
   }
 

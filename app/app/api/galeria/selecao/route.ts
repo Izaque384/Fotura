@@ -3,6 +3,7 @@ import webpush from "web-push";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { temAcessoGaleria } from "../../../../lib/gallery-access";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
+import { uuidValido } from "../../../../lib/validation";
 
 webpush.setVapidDetails(
   process.env.VAPID_EMAIL || "mailto:contato@fotura.com.br",
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
   let body: Body;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Requisição inválida." }, { status: 400 }); }
   const galeria = body.galeria?.trim();
-  if (!galeria || galeria.length > 100) return NextResponse.json({ error: "galeria inválida." }, { status: 400 });
+  if (!uuidValido(galeria)) return NextResponse.json({ error: "galeria inválida." }, { status: 400 });
   if (!Array.isArray(body.fotos) || body.fotos.length > 500 || !body.fotos.every(nomeArquivoValido)) {
     return NextResponse.json({ error: "Seleção inválida." }, { status: 400 });
   }

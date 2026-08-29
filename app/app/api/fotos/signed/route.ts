@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { temAcessoGaleria } from "../../../../lib/gallery-access";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
+import { uuidValido } from "../../../../lib/validation";
 
 export const dynamic = "force-dynamic";
 const EXPIRA_SEG = 3600;
@@ -17,7 +18,7 @@ function json(data: unknown, status = 200, retryAfter?: number) {
 
 export async function GET(req: NextRequest) {
   const galeria = req.nextUrl.searchParams.get("galeria")?.trim();
-  if (!galeria) return json({ error: "galeria obrigatória." }, 400);
+  if (!uuidValido(galeria)) return json({ error: "galeria inválida." }, 400);
 
   const permitido = await consumirRateLimit(req, "signed_gallery_urls", galeria, 60, 40);
   if (!permitido) return json({ error: "Muitas solicitações. Aguarde um minuto." }, 429, 60);
