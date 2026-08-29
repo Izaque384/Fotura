@@ -17,6 +17,24 @@ test("rotas sensíveis rejeitam chamadas sem autenticação ou payload", async (
   expect(publica.status()).toBe(400);
 });
 
+test("APIs de galeria rejeitam identificadores que não são UUID", async ({ request }) => {
+  const publica = await request.get("/api/galeria/publica?galeria=nao-e-uuid");
+  expect(publica.status()).toBe(400);
+
+  const signed = await request.get("/api/fotos/signed?galeria=nao-e-uuid");
+  expect(signed.status()).toBe(400);
+
+  const acesso = await request.post("/api/galeria/acesso", {
+    data: { galeria: "nao-e-uuid", senha: "teste" },
+  });
+  expect(acesso.status()).toBe(400);
+
+  const selecao = await request.post("/api/galeria/selecao", {
+    data: { galeria: "nao-e-uuid", fotos: [], finalizada: false, comentarios: {} },
+  });
+  expect(selecao.status()).toBe(400);
+});
+
 test("headers essenciais permanecem ativos", async ({ request }) => {
   const resposta = await request.get("/");
   expect(resposta.ok()).toBeTruthy();
