@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Sora } from "next/font/google";
 import "./globals.css";
+import UxEnhancements from "./components/UxEnhancements";
 
 const sora = Sora({
   variable: "--font-sora",
@@ -36,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${sora.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">{children}<UxEnhancements/></body>
     </html>
   );
 }
