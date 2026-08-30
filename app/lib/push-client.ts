@@ -1,9 +1,22 @@
 import { createClient } from "./supabase-client";
 
+const PUSH_PREF_KEY = "fotura_push_enabled";
+
+export function notificacoesPushAtivadas(): boolean {
+  if (typeof window === "undefined") return true;
+  return window.localStorage.getItem(PUSH_PREF_KEY) !== "false";
+}
+
+export function definirPreferenciaPush(ativa: boolean) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(PUSH_PREF_KEY, ativa ? "true" : "false");
+}
+
 /** Registra o Service Worker e inscreve o navegador em push notifications.
  * Retorna true se inscreveu (ou já estava inscrito), false se negou/falhou. */
 export async function inscreverPush(userId: string): Promise<boolean> {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+  if (!notificacoesPushAtivadas()) return false;
 
   try {
     const supabase = createClient();
@@ -39,7 +52,40 @@ export async function inscreverPush(userId: string): Promise<boolean> {
       body: JSON.stringify({ endpoint: sub.endpoint, p256dh: keys.p256dh, auth: keys.auth }),
     });
 
+    if (res.ok) definirPreferenciaPush(true);
     return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function desinscreverPush(userId: string): Promise<boolean> {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    definirPreferenciaPush(false);
+    return true;
+  }
+
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token || session.user.id !== userId) return false;
+
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      const res = await fetch("/api/push/subscribe", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ endpoint: sub.endpoint }),
+      });
+      if (!res.ok) return false;
+      await sub.unsubscribe();
+    }
+    definirPreferenciaPush(false);
+    return true;
   } catch {
     return false;
   }
