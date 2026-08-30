@@ -5,6 +5,34 @@ import { usePathname } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
 import { desinscreverPush, definirPreferenciaPush, inscreverPush, notificacoesPushAtivadas } from "../../lib/push-client";
 
+type GalleryVisual={id:string;titulo:string;prova:boolean;url:string};
+
+async function carregarVisuaisGalerias():Promise<GalleryVisual[]>{
+  const supabase=createClient();
+  const {data:auth}=await supabase.auth.getUser();
+  if(!auth.user)return[];
+  const uid=auth.user.id;
+  const [{data:rows},{data:resumos}]=await Promise.all([
+    supabase.from("galerias").select("id,titulo,capa,prova,criado_em").eq("user_id",uid).order("criado_em",{ascending:false}),
+    supabase.rpc("resumo_storage_galerias")
+  ]);
+  const resumo=new Map(((resumos??[]) as {galeria_id:string;arquivo_capa:string|null}[]).map(r=>[r.galeria_id,r.arquivo_capa]));
+  const bases=(rows??[]).map(g=>({id:g.id as string,titulo:(g.titulo as string)||"Galeria",prova:Boolean(g.prova),nome:(g.capa as string|null)||resumo.get(g.id as string)||null}));
+  const caminhos=bases.filter(x=>x.nome).flatMap(x=>[`${uid}/${x.id}/thumbs/${x.nome}`,`${uid}/${x.id}/${x.nome}`]);
+  const mapa=new Map<string,string>();
+  for(let i=0;i<caminhos.length;i+=200){
+    const {data}=await supabase.storage.from("fotos").createSignedUrls(caminhos.slice(i,i+200),3600);
+    for(const u of data??[])if(u.path&&u.signedUrl)mapa.set(u.path as string,u.signedUrl as string);
+  }
+  return bases.map(x=>({id:x.id,titulo:x.titulo,prova:x.prova,url:x.nome?(mapa.get(`${uid}/${x.id}/thumbs/${x.nome}`)||mapa.get(`${uid}/${x.id}/${x.nome}`)||""):""}));
+}
+
+function acharPorTitulo(lista:GalleryVisual[],titulo:string){return lista.find(x=>x.titulo.trim()===titulo.trim())}
+function aplicarModo(el:Element,prova:boolean){el.classList.toggle("ux-proof-card",prova);el.classList.toggle("ux-delivery-card",!prova)}
+function criarCapa(url:string,classe="ux-gallery-cover"){
+  const img=document.createElement("img");img.className=classe;img.src=url;img.alt="";img.loading="lazy";return img;
+}
+
 export default function UxEnhancements(){
   const pathname=usePathname();
 
@@ -22,68 +50,97 @@ export default function UxEnhancements(){
   },[]);
 
   useEffect(()=>{
-    if(pathname!=="/dashboard/galerias")return;
-    const aplicar=()=>{
-      const toolbar=document.querySelector(".dash-body .card .toolbar");
-      const busca=toolbar?.querySelector("input.input") as HTMLInputElement|null;
-      if(busca)busca.classList.add("ux-gallery-search");
-      document.querySelectorAll(".dash-body .row").forEach(row=>{
-        if(row.querySelector(".ux-mode"))return;
-        const info=row.children.item(1) as HTMLElement|null;
-        const nome=info?.querySelector(".name");
-        const meta=info?.querySelector(".meta")?.textContent?.toLowerCase()??"";
-        if(!nome)return;
-        const badge=document.createElement("span");
-        badge.className="ux-mode "+(meta.includes("modo prova")?"proof":"delivery");
-        badge.textContent=meta.includes("modo prova")?"Prova":"Entrega";
-        nome.appendChild(badge);
-      });
+    const medir=(input:HTMLInputElement)=>{
+      const texto=input.placeholder.trim();if(!texto||!texto.toLocaleLowerCase("pt-BR").includes("buscar"))return;
+      input.classList.add("ux-search-input");
+      const canvas=document.createElement("canvas"),ctx=canvas.getContext("2d");
+      if(!ctx)return;
+      const st=getComputedStyle(input);ctx.font=`${st.fontWeight} ${st.fontSize} ${st.fontFamily}`;
+      const largura=Math.ceil(ctx.measureText(texto).width+48);
+      input.style.width=`${largura}px`;input.style.minWidth=`${largura}px`;input.style.maxWidth="100%";
     };
-    aplicar();
-    const obs=new MutationObserver(aplicar);obs.observe(document.body,{childList:true,subtree:true});
+    const aplicar=()=>document.querySelectorAll<HTMLInputElement>('input[placeholder]').forEach(medir);
+    aplicar();const obs=new MutationObserver(aplicar);obs.observe(document.body,{childList:true,subtree:true});
     return()=>obs.disconnect();
   },[pathname]);
 
   useEffect(()=>{
     if(pathname!=="/dashboard/clientes")return;
     const aplicar=()=>document.querySelectorAll(".client-card").forEach(card=>{
-      const main=card.querySelector(".client-main");
-      const contact=card.querySelector(".contact-line");
-      if(!main||!contact||contact.classList.contains("ux-contact-lower"))return;
-      contact.classList.add("ux-contact-lower");
-      main.insertAdjacentElement("afterend",contact);
+      const main=card.querySelector(".client-main") as HTMLElement|null;
+      const contact=card.querySelector(".contact-line") as HTMLElement|null;
+      const actions=card.querySelector(".client-actions") as HTMLElement|null;
+      if(!main||!contact||!actions)return;
+      contact.querySelectorAll<HTMLElement>(".contact-chip").forEach((chip,i)=>{
+        if(chip.dataset.uxLabel)return;chip.dataset.uxLabel="1";
+        const valor=chip.textContent?.trim()||"";
+        chip.textContent=`${i===0?"E-mail":"Telefone"}: ${valor}`;
+      });
+      let footer=card.querySelector(".ux-client-footer") as HTMLElement|null;
+      if(!footer){footer=document.createElement("div");footer.className="ux-client-footer";card.appendChild(footer)}
+      if(contact.parentElement!==footer)footer.appendChild(contact);
+      if(actions.parentElement!==footer)footer.appendChild(actions);
     });
     aplicar();const obs=new MutationObserver(aplicar);obs.observe(document.body,{childList:true,subtree:true});return()=>obs.disconnect();
   },[pathname]);
 
   useEffect(()=>{
+    if(pathname!=="/dashboard/galerias")return;
+    let cancelado=false;let visuais:GalleryVisual[]=[];
+    void carregarVisuaisGalerias().then(v=>{visuais=v;if(!cancelado)aplicar()});
+    const aplicar=()=>{
+      document.querySelectorAll(".dash-body .row").forEach(row=>{
+        const titulo=row.querySelector(".name")?.childNodes[0]?.textContent?.trim()||row.querySelector(".name")?.textContent?.trim()||"";
+        const item=acharPorTitulo(visuais,titulo);if(!item)return;
+        aplicarModo(row,item.prova);
+        const nome=row.querySelector(".name");
+        if(nome&&!nome.querySelector(".ux-mode")){const b=document.createElement("span");b.className=`ux-mode ${item.prova?"proof":"delivery"}`;b.textContent=item.prova?"Prova":"Entrega";nome.appendChild(b)}
+        const actions=row.querySelector(".actions");if(!actions)return;
+        const botoes=[...actions.querySelectorAll("button")];const abrir=botoes[0] as HTMLButtonElement|undefined;const gerenciar=botoes[1] as HTMLButtonElement|undefined;
+        if(abrir){abrir.textContent="Ver galeria";abrir.classList.add("ux-view-gallery")}
+        let copiar=actions.querySelector(".ux-copy-link") as HTMLButtonElement|null;
+        if(!copiar){copiar=document.createElement("button");copiar.className="act ux-copy-link";copiar.textContent="Copiar link";copiar.onclick=async()=>{try{await navigator.clipboard.writeText(`${location.origin}/g/${item.id}`);copiar!.textContent="Copiado";setTimeout(()=>{if(copiar)copiar.textContent="Copiar link"},1200)}catch{}};actions.insertBefore(copiar,gerenciar||null)}
+        if(gerenciar){gerenciar.textContent="⋯";gerenciar.classList.add("ux-more");gerenciar.title="Mais opções";gerenciar.setAttribute("aria-label","Mais opções")}
+      });
+    };
+    aplicar();const obs=new MutationObserver(aplicar);obs.observe(document.body,{childList:true,subtree:true});return()=>{cancelado=true;obs.disconnect()};
+  },[pathname]);
+
+  useEffect(()=>{
+    if(pathname!=="/dashboard/selecoes")return;
+    let cancelado=false;let visuais:GalleryVisual[]=[];
+    const aplicar=()=>document.querySelectorAll(".sel-row").forEach(row=>{
+      const titulo=row.querySelector(".sel-title")?.textContent?.trim()||"";const item=acharPorTitulo(visuais,titulo);if(!item)return;
+      aplicarModo(row,true);
+      const primeiro=row.firstElementChild as HTMLElement|null;if(!primeiro)return;
+      primeiro.classList.add("ux-selection-main");
+      if(item.url&&!row.querySelector(".ux-selection-cover")){primeiro.prepend(criarCapa(item.url,"ux-selection-cover"))}
+      const title=row.querySelector(".sel-title");if(title&&!title.querySelector(".ux-mode")){const b=document.createElement("span");b.className="ux-mode proof";b.textContent="Prova";title.appendChild(b)}
+    });
+    void carregarVisuaisGalerias().then(v=>{visuais=v;if(!cancelado)aplicar()});
+    aplicar();const obs=new MutationObserver(aplicar);obs.observe(document.body,{childList:true,subtree:true});return()=>{cancelado=true;obs.disconnect()};
+  },[pathname]);
+
+  useEffect(()=>{
     if(pathname!=="/dashboard")return;
-    let cancelado=false;
-    void(async()=>{
-      const supabase=createClient();
-      const {data:auth}=await supabase.auth.getUser();if(!auth.user||cancelado)return;
-      const uid=auth.user.id;
-      const {data:rows}=await supabase.from("galerias").select("id,titulo,capa,criado_em").eq("user_id",uid).order("criado_em",{ascending:false}).limit(4);
-      if(!rows?.length||cancelado)return;
-      const itens=await Promise.all(rows.map(async g=>{
-        let nome=(g.capa as string|null)??null;
-        if(!nome){const{data}=await supabase.storage.from("fotos").list(`${uid}/${g.id}`,{limit:1,sortBy:{column:"created_at",order:"asc"}});nome=(data??[]).find(f=>f.id!==null)?.name??null}
-        if(!nome)return{titulo:g.titulo as string,url:""};
-        const caminhos=[`${uid}/${g.id}/thumbs/${nome}`,`${uid}/${g.id}/${nome}`];
-        const{data:signed}=await supabase.storage.from("fotos").createSignedUrls(caminhos,3600);
-        const url=signed?.find(x=>x.path===caminhos[0])?.signedUrl||signed?.find(x=>x.path===caminhos[1])?.signedUrl||"";
-        return{titulo:g.titulo as string,url};
+    let cancelado=false;let visuais:GalleryVisual[]=[];
+    const aplicar=()=>{
+      const cards=[...document.querySelectorAll(".lists .card")];
+      cards.forEach(card=>card.querySelectorAll(".list-row").forEach(row=>{
+        const titulo=row.querySelector(".list-title")?.textContent?.trim()||"";const item=acharPorTitulo(visuais,titulo);if(!item)return;
+        aplicarModo(row,item.prova);
+        if(item.url&&!row.querySelector(".ux-dash-cover"))row.prepend(criarCapa(item.url,"ux-dash-cover"));
+        const title=row.querySelector(".list-title");if(title&&!title.querySelector(".ux-mode")){const b=document.createElement("span");b.className=`ux-mode ${item.prova?"proof":"delivery"}`;b.textContent=item.prova?"Prova":"Entrega";title.appendChild(b)}
       }));
-      if(cancelado)return;
-      const aplicar=()=>{
-        const card=[...document.querySelectorAll(".lists .card")].find(c=>c.querySelector(".card-t")?.textContent?.includes("Últimas galerias"));
-        if(!card)return false;
-        const rowsDom=[...card.querySelectorAll(".list-row")];
-        rowsDom.forEach((row,i)=>{const item=itens[i];if(!item?.url||row.querySelector(".ux-dash-cover"))return;const img=document.createElement("img");img.className="ux-dash-cover";img.src=item.url;img.alt="";row.prepend(img)});return true;
-      };
-      if(!aplicar()){const obs=new MutationObserver(()=>{if(aplicar())obs.disconnect()});obs.observe(document.body,{childList:true,subtree:true});setTimeout(()=>obs.disconnect(),5000)}
-    })();
-    return()=>{cancelado=true};
+    };
+    void carregarVisuaisGalerias().then(v=>{visuais=v;if(!cancelado)aplicar()});
+    aplicar();const obs=new MutationObserver(aplicar);obs.observe(document.body,{childList:true,subtree:true});return()=>{cancelado=true;obs.disconnect()};
+  },[pathname]);
+
+  useEffect(()=>{
+    if(pathname!=="/dashboard/clientes")return;
+    const aplicar=()=>document.querySelectorAll(".pill").forEach(p=>{const t=p.textContent?.toLowerCase()||"";if(t.includes("entrega")){p.classList.add("ux-delivery-pill")}else{p.classList.add("ux-proof-pill")}});
+    aplicar();const obs=new MutationObserver(aplicar);obs.observe(document.body,{childList:true,subtree:true});return()=>obs.disconnect();
   },[pathname]);
 
   useEffect(()=>{
@@ -91,34 +148,31 @@ export default function UxEnhancements(){
     let ocupado=false;
     const secao=()=>[...document.querySelectorAll("section.card")].find(s=>s.querySelector(".title")?.textContent?.trim()==="Notificações") as HTMLElement|undefined;
     const atualizar=()=>{
-      const s=secao();if(!s)return;
-      const b=s.querySelector("button") as HTMLButtonElement|null;const v=s.querySelector(".value") as HTMLElement|null;if(!b)return;
+      const s=secao();if(!s)return;const b=s.querySelector("button") as HTMLButtonElement|null;const v=s.querySelector(".value") as HTMLElement|null;if(!b)return;
       const ativa=notificacoesPushAtivadas()&&typeof Notification!=="undefined"&&Notification.permission==="granted";
-      b.disabled=ocupado||typeof Notification==="undefined";
-      b.textContent=ocupado?"Salvando…":ativa?"Desativar":"Ativar";
-      b.classList.toggle("ux-notif-off",ativa);
-      if(v)v.textContent=ativa?"Ativas neste navegador":"Desativadas neste navegador";
+      b.disabled=ocupado||typeof Notification==="undefined";b.textContent=ocupado?"Salvando…":ativa?"Desativar":"Ativar";b.classList.toggle("ux-notif-off",ativa);if(v)v.textContent=ativa?"Ativas neste navegador":"Desativadas neste navegador";
     };
     const onClick=async(e:Event)=>{
-      const s=secao();const b=s?.querySelector("button");if(!s||!b||e.target!==b||ocupado)return;
-      e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();ocupado=true;atualizar();
+      const s=secao();const b=s?.querySelector("button");if(!s||!b||e.target!==b||ocupado)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();ocupado=true;atualizar();
       const supabase=createClient();const{data}=await supabase.auth.getUser();if(!data.user){ocupado=false;atualizar();return}
       const ativa=notificacoesPushAtivadas()&&typeof Notification!=="undefined"&&Notification.permission==="granted";
       if(ativa)await desinscreverPush(data.user.id);else{definirPreferenciaPush(true);const ok=await inscreverPush(data.user.id);if(!ok&&Notification.permission!=="granted")definirPreferenciaPush(false)}
       ocupado=false;atualizar();
     };
-    const id=setInterval(atualizar,250);document.addEventListener("click",onClick,true);atualizar();
-    return()=>{clearInterval(id);document.removeEventListener("click",onClick,true)};
+    const id=setInterval(atualizar,250);document.addEventListener("click",onClick,true);atualizar();return()=>{clearInterval(id);document.removeEventListener("click",onClick,true)};
   },[pathname]);
 
   return <style>{`
-    .ux-gallery-search{min-width:360px!important;width:360px!important}
-    .ux-mode{display:inline-flex;align-items:center;margin-left:9px;padding:3px 7px;border-radius:999px;font-size:9px;font-weight:700;vertical-align:2px;letter-spacing:.2px}
-    .ux-mode.proof{color:#aebaff;background:rgba(93,109,250,.14);border:1px solid rgba(93,109,250,.28)}
-    .ux-mode.delivery{color:#9fe0ba;background:rgba(83,201,139,.10);border:1px solid rgba(83,201,139,.22)}
-    .client-card .name{font-size:16px!important;font-weight:720!important;letter-spacing:-.15px}.ux-contact-lower{margin:13px 0 0 61px!important;padding-top:10px;border-top:1px solid #202238}.ux-contact-lower .contact-chip{font-size:11px!important;padding:6px 9px!important}
-    .ux-dash-cover{width:48px;height:40px;object-fit:cover;border-radius:8px;flex:0 0 auto;border:1px solid #282a42;background:#0d0d1b}.lists .card:last-child .list-row{gap:11px}.lists .card:last-child .list-row>div{flex:1;min-width:0}
-    .ux-notif-off{background:#17172d!important;border:1px solid #343750!important;color:#cfd5ea!important}
-    @media(max-width:640px){.ux-gallery-search{min-width:100%!important;width:100%!important}.ux-contact-lower{margin-left:0!important}.ux-dash-cover{width:44px;height:38px}}
+    .ux-search-input{padding-left:34px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237a7f9a' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:12px center!important;background-size:14px 14px!important}
+    .ux-mode{display:inline-flex;align-items:center;margin-left:9px;padding:3px 7px;border-radius:999px;font-size:9px;font-weight:750;vertical-align:2px;letter-spacing:.2px}
+    .ux-mode.proof{color:#ffc56c;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.38)}
+    .ux-mode.delivery{color:#71c7ff;background:rgba(17,150,252,.12);border:1px solid rgba(17,150,252,.38)}
+    .ux-proof-card{border-color:rgba(245,158,11,.68)!important;box-shadow:inset 0 0 0 1px rgba(245,158,11,.13)!important}
+    .ux-delivery-card{border-color:rgba(17,150,252,.62)!important;box-shadow:inset 0 0 0 1px rgba(17,150,252,.12)!important}
+    .client-card{padding-bottom:13px!important}.client-card .name{font-size:16px!important;font-weight:720!important;letter-spacing:-.15px}.ux-client-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 0 61px;padding-top:9px;border-top:1px solid #202238}.ux-client-footer .contact-line{margin:0!important;display:flex;align-items:center;gap:7px;min-width:0}.ux-client-footer .contact-chip{font-size:10px!important;padding:5px 8px!important}.ux-client-footer .client-actions{margin:0!important;justify-content:flex-end!important;flex:none}
+    .ux-gallery-cover,.ux-dash-cover,.ux-selection-cover{object-fit:cover;border-radius:9px;flex:0 0 auto;border:1px solid #282a42;background:#0d0d1b}.ux-dash-cover{width:48px;height:40px}.ux-selection-cover{width:58px;height:48px;margin-right:12px}.ux-selection-main{display:flex;align-items:center;min-width:0}.ux-selection-main>div:not(.ux-selection-cover){min-width:0}.lists .list-row{gap:11px}.lists .list-row>div{flex:1;min-width:0}.lists .list-row.ux-proof-card,.lists .list-row.ux-delivery-card{padding-left:10px!important;padding-right:10px!important;border-style:solid!important;border-width:1px!important;border-radius:10px!important;margin:4px 0!important}
+    .ux-view-gallery{border-color:transparent!important;background:transparent!important;font-weight:750!important;background-image:linear-gradient(90deg,#1196fc,#5d0dfa)!important;background-clip:text!important;-webkit-background-clip:text!important;color:transparent!important;padding-left:7px!important;padding-right:7px!important}.ux-copy-link{white-space:nowrap}.ux-more{width:34px!important;min-width:34px!important;padding:6px 0!important;font-size:20px!important;line-height:1!important;letter-spacing:2px}.ux-notif-off{background:#17172d!important;border:1px solid #343750!important;color:#cfd5ea!important}
+    .ux-delivery-pill{border-color:rgba(17,150,252,.48)!important;color:#71c7ff!important}.ux-proof-pill{border-color:rgba(245,158,11,.48)!important;color:#ffc56c!important}
+    @media(max-width:640px){.ux-client-footer{margin-left:0;align-items:flex-start;flex-direction:column}.ux-client-footer .client-actions{justify-content:flex-start!important}.ux-dash-cover{width:44px;height:38px}.ux-selection-cover{width:52px;height:44px}.ux-search-input{max-width:100%!important}.ux-view-gallery,.ux-copy-link{font-size:10px!important}}
   `}</style>;
 }
