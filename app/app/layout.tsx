@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Sora } from "next/font/google";
 import "./globals.css";
 import "./premium.css";
+import "./premium-tuning.css";
 import ClientShortcuts from "./components/ClientShortcuts";
 
 const sora = Sora({
