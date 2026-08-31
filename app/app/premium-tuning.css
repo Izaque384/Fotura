@@ -21,6 +21,52 @@
   background: linear-gradient(180deg,#111120 0%,#0e0e1d 100%) !important;
 }
 
+/* Gallery lifecycle contours: proof → finalized → preparing → delivered. */
+.mf-shift :is(.row.proof,.list-row.proof,.gallery-block.proof),
+.mf-shift .sel-row:has(.sel-status.sem),
+.mf-shift .sel-row:has(.sel-status.and) {
+  border-color: rgba(245,158,11,.72) !important;
+  box-shadow: inset 0 0 0 1px rgba(245,158,11,.045) !important;
+}
+
+.mf-shift :is(.row.finalized,.list-row.finalized,.gallery-block.finalized),
+.mf-shift .sel-row:has(.sel-status.fin) {
+  border-color: rgba(139,92,246,.72) !important;
+  box-shadow: inset 0 0 0 1px rgba(139,92,246,.06) !important;
+}
+
+.mf-shift :is(.row.preparing,.list-row.preparing,.gallery-block.preparing),
+.mf-shift .sel-row.preparing,
+.mf-shift .sel-row:has(.sel-status.prep) {
+  border-color: rgba(17,150,252,.72) !important;
+  box-shadow: inset 0 0 0 1px rgba(17,150,252,.06) !important;
+}
+
+.mf-shift :is(.row.delivery,.list-row.delivery,.gallery-block.delivery,.gallery-block.delivered),
+.mf-shift .sel-row.delivered,
+.mf-shift .sel-row:has(.sel-status.done) {
+  border-color: rgba(143,227,176,.62) !important;
+  box-shadow: inset 0 0 0 1px rgba(143,227,176,.055) !important;
+}
+
+.mf-shift :is(.mode.delivery,.mode-stage.done,.status-pill.done) {
+  color: #9fe8bc !important;
+  background: rgba(143,227,176,.08) !important;
+  border-color: rgba(143,227,176,.38) !important;
+}
+
+.mf-shift :is(.mode.finalized,.mode-stage.finalized,.status-pill.finalized) {
+  color: #bba4ff !important;
+  background: rgba(139,92,246,.09) !important;
+  border-color: rgba(139,92,246,.40) !important;
+}
+
+.mf-shift :is(.mode.preparing,.mode-stage.prepare,.status-pill.preparing) {
+  color: #8acfff !important;
+  background: rgba(17,150,252,.08) !important;
+  border-color: rgba(17,150,252,.40) !important;
+}
+
 /* Gallery primary actions */
 .mf-shift .card-action.view,
 .mf-shift .card-action.send {
@@ -51,16 +97,16 @@
 
 /* Final delivery workspace: stable actions with no wrapping or overlap. */
 .delivery-page .delivery-card {
-  min-height: 272px !important;
+  min-height: 290px !important;
   padding-bottom: 82px !important;
   overflow: visible !important;
 }
 
 .delivery-page .delivery-actions {
   position: absolute !important;
-  left: 20px !important;
-  right: 20px !important;
-  bottom: 20px !important;
+  left: 21px !important;
+  right: 21px !important;
+  bottom: 21px !important;
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
@@ -104,11 +150,11 @@
   z-index: 1 !important;
 }
 
-@media (max-width: 1100px) and (min-width: 801px) {
+@media (max-width: 1100px) and (min-width: 901px) {
   .delivery-page .delivery-wrap {
-    max-width: 1120px !important;
-    padding-left: 28px !important;
-    padding-right: 28px !important;
+    max-width: 1140px !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
   }
   .delivery-page .delivery-grid {
     grid-template-columns: repeat(3,minmax(0,1fr)) !important;
@@ -128,11 +174,13 @@
   }
 }
 
-@media (max-width: 800px) {
+@media (max-width: 900px) {
   .delivery-page .delivery-card {
     min-height: 238px !important;
   }
   .delivery-page .delivery-actions {
+    position: static !important;
+    margin-top: 24px !important;
     flex-wrap: wrap !important;
   }
   .delivery-page .delivery-actions .delivery-btn {
