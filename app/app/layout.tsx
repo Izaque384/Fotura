@@ -3,7 +3,9 @@ import { Sora } from "next/font/google";
 import "./globals.css";
 import "./premium.css";
 import "./premium-tuning.css";
+import "./ux-refinements.css";
 import ClientShortcuts from "./components/ClientShortcuts";
+import BellOutsideDismiss from "./components/BellOutsideDismiss";
 
 const sora = Sora({
   variable: "--font-sora",
@@ -39,7 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${sora.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}<ClientShortcuts/></body>
+      <body className="min-h-full flex flex-col">{children}<ClientShortcuts/><BellOutsideDismiss/></body>
     </html>
   );
 }
