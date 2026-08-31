@@ -36,3 +36,19 @@ svg.channel-icon:has(path[fill="#4285F4"]) {
   background-size: 90% !important;
   background-position: center !important;
 }
+
+/* Galeria final: ícone de download perfeitamente centralizado nos botões circulares. */
+.gc-download,
+.gc-lightbox-download {
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  line-height: 0 !important;
+}
+.gc-download .gc-download-icon,
+.gc-lightbox-download .gc-download-icon {
+  display: block !important;
+  margin: 0 !important;
+  position: static !important;
+  transform: none !important;
+}
