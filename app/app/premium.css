@@ -1,0 +1,269 @@
+/* Fotura authenticated UI — premium control-center system.
+   Scoped to .mf-shift so public/client-facing galleries remain untouched. */
+
+.mf-shift {
+  --fx-surface: #111120;
+  --fx-surface-deep: #0d0d1a;
+  --fx-surface-soft: #141426;
+  --fx-border: #252940;
+  --fx-border-strong: #303654;
+  --fx-text: #f2f3f8;
+  --fx-muted: #767e9b;
+  --fx-accent-a: #1196fc;
+  --fx-accent-b: #5d0dfa;
+}
+
+/* Core surfaces */
+.mf-shift :is(.card,.panel,.kpi,.stat,.client-card,.sel-card,.list-row) {
+  border-color: var(--fx-border) !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(93,13,250,.035), transparent 38%),
+    linear-gradient(180deg,#111120 0%,#0e0e1d 100%) !important;
+  box-shadow:
+    0 12px 34px rgba(0,0,0,.12),
+    inset 0 1px 0 rgba(255,255,255,.018) !important;
+}
+
+/* Gallery rows are cards; .row elsewhere (e.g. Settings) stays structural. */
+.mf-shift.dash .row,
+.dash.mf-shift .row {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(93,13,250,.025), transparent 42%),
+    #111120 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.016);
+}
+
+.mf-shift :is(.card,.panel,.client-card,.sel-card,.list-row),
+.mf-shift.dash .row,
+.dash.mf-shift .row {
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.mf-shift :is(.client-card,.sel-card,.list-row):hover,
+.mf-shift.dash .row:hover,
+.dash.mf-shift .row:hover {
+  border-color: var(--fx-border-strong) !important;
+  box-shadow: 0 16px 36px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.025) !important;
+}
+
+/* Nested control-center blocks */
+.mf-shift :is(.account,.switch,.newc,.action-summary,.action-group,.send-client,.send-option,.gallery-block,.bell-pop) {
+  border-color: #24283f !important;
+  background:
+    linear-gradient(180deg, rgba(17,17,34,.96), rgba(13,13,27,.98)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.014);
+}
+
+/* Inputs and selectors */
+.mf-shift :is(.input,.select) {
+  border-color: #292d45 !important;
+  background: #0c0c18 !important;
+  color: #eef0f7 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.012);
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.mf-shift :is(.input,.select):hover {
+  border-color: #343950 !important;
+}
+
+.mf-shift :is(.input,.select):focus {
+  border-color: rgba(99,116,255,.7) !important;
+  box-shadow: 0 0 0 3px rgba(74,108,247,.09) !important;
+  outline: none;
+}
+
+.mf-shift :is(.input,.select)::placeholder {
+  color: #666e8a !important;
+}
+
+/* Secondary controls */
+.mf-shift :is(.act,.mini,.tab,.filter,.card-action,.bell,.mf-mobile-btn) {
+  border-color: #292d45 !important;
+  background: linear-gradient(180deg,#121221,#0f0f1d) !important;
+  color: #b7bed5 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.016);
+  transition: border-color .16s ease, background .16s ease, color .16s ease, transform .16s ease;
+}
+
+.mf-shift :is(.act,.mini,.tab,.filter,.card-action,.bell):hover {
+  border-color: #3a4163 !important;
+  background: linear-gradient(180deg,#161629,#111120) !important;
+  color: #eef0f8 !important;
+}
+
+/* Keep primary actions vivid but more polished. */
+.mf-shift .btn,
+.mf-shift .dash-btn {
+  border-radius: 11px !important;
+  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+}
+
+.mf-shift .btn:not(.ghost):not(.off):not(.danger),
+.mf-shift .dash-btn {
+  box-shadow: 0 10px 28px rgba(74,108,247,.18) !important;
+}
+
+.mf-shift .btn:not(:disabled):hover,
+.mf-shift .dash-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+}
+
+.mf-shift :is(.btn.ghost,.btn.off) {
+  border-color: #2b3049 !important;
+  background: linear-gradient(180deg,#151526,#10101e) !important;
+  color: #c7ccdc !important;
+}
+
+/* Tabs and filters */
+.mf-shift :is(.tab.on,.filter.ativo) {
+  border-color: rgba(82,104,240,.52) !important;
+  background:
+    linear-gradient(90deg,rgba(17,150,252,.12),rgba(93,13,250,.10)) !important;
+  color: #fff !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025), 0 6px 18px rgba(57,70,180,.08);
+}
+
+/* Page headings */
+.mf-shift :is(.ey,.dash-eyebrow) {
+  color: #747da7 !important;
+  font-weight: 650 !important;
+  letter-spacing: 2.15px !important;
+}
+
+.mf-shift :is(.h1,.dash-h1) {
+  color: #f4f5fa !important;
+  letter-spacing: -.55px !important;
+}
+
+.mf-shift :is(.sub,.desc,.meta,.value,.hint) {
+  color: #737b98;
+}
+
+/* Setting/profile icon tiles */
+.mf-shift .icon {
+  border-color: rgba(82,104,240,.28) !important;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(17,150,252,.12), transparent 55%),
+    rgba(74,108,247,.07) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025), 0 8px 22px rgba(0,0,0,.10);
+}
+
+/* Profile preview and media containers */
+.mf-shift :is(.preview,.sample,.thumb,.action-thumb) {
+  border-color: #292d45 !important;
+  background: #0b0b17 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.015);
+}
+
+/* KPI cards: subtle technical accent, not neon. */
+.mf-shift .kpi,
+.mf-shift .stat {
+  position: relative;
+  overflow: hidden;
+}
+
+.mf-shift .kpi::before,
+.mf-shift .stat::before {
+  content: "";
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  right: -42px;
+  top: -48px;
+  border-radius: 50%;
+  background: radial-gradient(circle,rgba(93,13,250,.09),transparent 68%);
+  pointer-events: none;
+}
+
+/* Sidebar */
+.mf-shift .mf-side {
+  background:
+    radial-gradient(circle at 0 0, rgba(93,13,250,.035), transparent 28%),
+    linear-gradient(180deg,#090918,#080812) !important;
+  border-right-color: #1e2135 !important;
+  box-shadow: 18px 0 50px rgba(0,0,0,.08);
+}
+
+.mf-shift .mf-item {
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+}
+
+.mf-shift .mf-item:hover {
+  background: #111120 !important;
+  transform: translateX(1px);
+}
+
+.mf-shift .mf-item.ativo {
+  background:
+    linear-gradient(90deg,rgba(17,150,252,.14),rgba(93,13,250,.08)) !important;
+  border-color: rgba(79,98,220,.40) !important;
+  box-shadow: inset 2px 0 0 rgba(68,139,255,.85), 0 8px 24px rgba(0,0,0,.08);
+}
+
+.mf-shift .mf-user {
+  background: rgba(13,13,27,.62) !important;
+  border-color: #20243a !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.012);
+}
+
+.mf-shift .mf-user:hover,
+.mf-shift .mf-user.ativo {
+  background: linear-gradient(90deg,rgba(17,150,252,.08),rgba(93,13,250,.055)) !important;
+  border-color: rgba(79,98,220,.44) !important;
+}
+
+/* Notification popover */
+.mf-shift .bell-pop {
+  background:
+    radial-gradient(circle at 100% 0, rgba(93,13,250,.055), transparent 34%),
+    linear-gradient(180deg,#111120,#0d0d1b) !important;
+  border-color: #292d46 !important;
+  box-shadow: 0 24px 70px rgba(0,0,0,.46) !important;
+}
+
+.mf-shift .bell-item:hover {
+  background: #151527 !important;
+}
+
+/* Management / delivery action tiles outside the redesigned modal */
+.mf-shift :is(.send-option,.action-btn) {
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.mf-shift :is(.send-option,.action-btn):hover {
+  transform: translateY(-1px);
+  border-color: #3a4163 !important;
+  box-shadow: 0 12px 28px rgba(0,0,0,.14);
+}
+
+/* Scrollbars inside authenticated modals. */
+.mf-shift .panel {
+  scrollbar-width: thin;
+  scrollbar-color: #444a66 #0d0d1b;
+}
+
+.mf-shift .panel::-webkit-scrollbar { width: 9px; }
+.mf-shift .panel::-webkit-scrollbar-track { background: #0d0d1b; }
+.mf-shift .panel::-webkit-scrollbar-thumb {
+  background: #3a405a;
+  border-radius: 999px;
+  border: 2px solid #0d0d1b;
+}
+
+@media (max-width: 640px) {
+  .mf-shift :is(.card,.panel,.kpi,.stat,.client-card,.sel-card,.list-row) {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.016) !important;
+  }
+
+  .mf-shift .mf-item:hover { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mf-shift *,
+  .mf-shift *::before,
+  .mf-shift *::after {
+    transition-duration: .01ms !important;
+  }
+}
