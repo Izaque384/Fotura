@@ -1,0 +1,32 @@
+/* Final tuning for authenticated premium surfaces. */
+.mf-shift :is(.card,.panel,.kpi,.stat,.client-card,.sel-card,.list-row),
+.mf-shift.dash .row,
+.dash.mf-shift .row {
+  box-shadow: 0 12px 30px rgba(0,0,0,.11) !important;
+}
+
+.mf-shift :is(.account,.switch,.newc,.action-summary,.action-group,.send-client,.send-option,.gallery-block,.bell-pop),
+.mf-shift :is(.input,.select),
+.mf-shift :is(.act,.mini,.tab,.filter,.card-action,.bell,.mf-mobile-btn),
+.mf-shift .icon,
+.mf-shift :is(.preview,.sample,.thumb,.action-thumb),
+.mf-shift .mf-user {
+  box-shadow: none !important;
+}
+
+.mf-shift .card,
+.mf-shift .panel,
+.mf-shift .kpi,
+.mf-shift .stat {
+  background: linear-gradient(180deg,#111120 0%,#0e0e1d 100%) !important;
+}
+
+.mf-shift .cfg .card,
+.cfg.mf-shift .card {
+  background: linear-gradient(180deg,#10101f 0%,#0d0d1a 100%) !important;
+}
+
+.mf-shift .google-icon {
+  background: #10101d !important;
+  border-color: #2a2e45 !important;
+}
