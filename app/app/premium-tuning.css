@@ -21,12 +21,33 @@
   background: linear-gradient(180deg,#111120 0%,#0e0e1d 100%) !important;
 }
 
-.mf-shift .cfg .card,
-.cfg.mf-shift .card {
+/* Configurações: superfície plana, sem halo claro ao redor dos cards. */
+.cfg.mf-shift .card,
+.mf-shift .cfg .card {
   background: linear-gradient(180deg,#10101f 0%,#0d0d1a 100%) !important;
+  border-color: #1b1e30 !important;
+  box-shadow: none !important;
+}
+
+.cfg.mf-shift .card:hover,
+.mf-shift .cfg .card:hover {
+  border-color: #20243a !important;
+  box-shadow: none !important;
+}
+
+.cfg.mf-shift .row,
+.mf-shift .cfg .row {
+  border-top-color: #1b1e2f !important;
+}
+
+.cfg.mf-shift .account,
+.mf-shift .cfg .account {
+  border-color: #1d2032 !important;
+  box-shadow: none !important;
 }
 
 .mf-shift .google-icon {
   background: #10101d !important;
-  border-color: #2a2e45 !important;
+  border-color: #24283b !important;
+  box-shadow: none !important;
 }
