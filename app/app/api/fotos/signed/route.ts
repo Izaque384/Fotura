@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g } = await supabase
     .from("galerias")
-    .select("user_id,capa,link_ate,tem_senha")
+    .select("user_id,capa,link_ate,tem_senha,etapa,prova")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -36,30 +36,33 @@ export async function GET(req: NextRequest) {
   if (g.tem_senha && !temAcessoGaleria(req, galeria)) return json({ error: "Acesso à galeria necessário." }, 401);
 
   const dono = g.user_id as string;
+  const etapa = (g.etapa as string | null) || (g.prova ? "prova" : "entrega");
+  const entregaFinal = etapa === "entrega";
+  const base = entregaFinal ? `${dono}/${galeria}/entrega` : `${dono}/${galeria}`;
   const lista: Array<{ name: string }> = [];
   let offset = 0;
   while (true) {
-    const { data: arquivos, error: listError } = await supabase.storage.from("fotos").list(`${dono}/${galeria}`, {
+    const { data: arquivos, error: listError } = await supabase.storage.from("fotos").list(base, {
       limit: LISTA_LOTE,
       offset,
       sortBy: { column: "created_at", order: "asc" },
     });
     if (listError) return json({ error: "Não foi possível listar a galeria." }, 500);
     const pagina = arquivos ?? [];
-    lista.push(...pagina.filter((f) => f.id !== null).map((f) => ({ name: f.name })));
+    lista.push(...pagina.filter((f) => f.id !== null && f.name !== "thumbs").map((f) => ({ name: f.name })));
     if (pagina.length < LISTA_LOTE) break;
     offset += LISTA_LOTE;
   }
 
-  if (lista.length === 0) return json({ fotos: [], capaUrl: null });
+  if (lista.length === 0) return json({ fotos: [], capaUrl: null, etapa });
 
   const caminhos: string[] = [];
   for (const f of lista) {
-    caminhos.push(`${dono}/${galeria}/${f.name}`);
-    caminhos.push(`${dono}/${galeria}/thumbs/${f.name}`);
+    caminhos.push(`${base}/${f.name}`);
+    caminhos.push(`${base}/thumbs/${f.name}`);
   }
   const capaFile = (g.capa as string | null) ?? null;
-  if (capaFile && !caminhos.includes(`${dono}/${galeria}/${capaFile}`)) caminhos.push(`${dono}/${galeria}/${capaFile}`);
+  if (capaFile && lista.some((f) => f.name === capaFile) && !caminhos.includes(`${base}/${capaFile}`)) caminhos.push(`${base}/${capaFile}`);
 
   const lotes: string[][] = [];
   for (let i = 0; i < caminhos.length; i += ASSINATURA_LOTE) lotes.push(caminhos.slice(i, i + ASSINATURA_LOTE));
@@ -79,10 +82,11 @@ export async function GET(req: NextRequest) {
   if (erroAssinatura) return json({ error: "Não foi possível assinar os arquivos." }, 500);
 
   const fotos = lista.map((f) => {
-    const url = mapa[`${dono}/${galeria}/${f.name}`] ?? "";
-    const thumb = mapa[`${dono}/${galeria}/thumbs/${f.name}`] || url;
+    const url = mapa[`${base}/${f.name}`] ?? "";
+    const thumb = mapa[`${base}/thumbs/${f.name}`] || url;
     return { nome: f.name, url, thumb };
   });
-  const capaUrl = capaFile ? (mapa[`${dono}/${galeria}/${capaFile}`] ?? null) : null;
-  return json({ fotos, capaUrl });
+  const capaNome = capaFile && lista.some((f) => f.name === capaFile) ? capaFile : lista[0]?.name;
+  const capaUrl = capaNome ? (mapa[`${base}/${capaNome}`] ?? null) : null;
+  return json({ fotos, capaUrl, etapa });
 }
