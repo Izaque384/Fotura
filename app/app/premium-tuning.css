@@ -46,6 +46,21 @@
   box-shadow: none !important;
 }
 
+/* Configurações: botões neutros não devem herdar o brilho azul global. */
+.cfg.mf-shift .btn,
+.mf-shift .cfg .btn,
+.cfg.mf-shift .links .btn,
+.mf-shift .cfg .links .btn {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+.cfg.mf-shift .btn:hover,
+.mf-shift .cfg .btn:hover {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
 .mf-shift .google-icon {
   background: #10101d !important;
   border-color: #24283b !important;
