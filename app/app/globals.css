@@ -89,6 +89,247 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
   background-color: #101021 !important;
 }
 
+/* Gerenciamento de galeria: painel compacto, técnico e sem atalhos duplicados. */
+.mf-shift .action-panel {
+  width: min(760px, calc(100vw - 36px)) !important;
+  padding: 22px !important;
+  border-color: #292d49 !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(93,13,250,.08), transparent 34%),
+    linear-gradient(180deg, #111121 0%, #0d0d1b 100%) !important;
+  box-shadow: 0 28px 80px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.mf-shift .action-panel .mhead {
+  align-items: center;
+  padding: 2px 2px 16px;
+  border-bottom: 1px solid #20233a;
+}
+
+.mf-shift .action-panel .mhead h2 {
+  font-size: 19px;
+  letter-spacing: -.25px;
+}
+
+.mf-shift .action-panel .mhead .sub {
+  margin: 5px 0 0;
+  font-size: 11px;
+}
+
+.mf-shift .action-panel .mhead .act {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  background: #10101f;
+  border-color: #282c47;
+}
+
+.mf-shift .action-panel .action-summary {
+  position: relative;
+  margin: 16px 0;
+  padding: 14px 16px;
+  border-color: #282c49;
+  border-radius: 14px;
+  background:
+    linear-gradient(90deg, rgba(17,150,252,.055), rgba(93,13,250,.035)),
+    #0f0f1e !important;
+  overflow: hidden;
+}
+
+.mf-shift .action-panel .action-summary::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: linear-gradient(180deg, #1196fc, #5d0dfa);
+}
+
+.mf-shift .action-panel .action-thumb {
+  width: 64px;
+  height: 50px;
+  border: 1px solid #2b2e45;
+  border-radius: 11px;
+}
+
+.mf-shift .action-panel .action-summary .name {
+  font-size: 14px;
+  letter-spacing: -.1px;
+}
+
+.mf-shift .action-panel .action-groups {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 210px;
+  grid-template-areas:
+    "main share"
+    "main danger";
+  gap: 11px !important;
+  align-items: stretch;
+}
+
+.mf-shift .action-panel .action-group {
+  margin: 0;
+  padding: 14px !important;
+  border-color: #252940 !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, #101020 0%, #0d0d1b 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.018);
+}
+
+.mf-shift .action-panel .action-group:nth-child(1) { grid-area: share; }
+.mf-shift .action-panel .action-group:nth-child(2) { grid-area: main; }
+.mf-shift .action-panel .action-group:nth-child(3) { grid-area: danger; }
+
+/* Enviar e Ver galeria já existem no card principal. */
+.mf-shift .action-panel .action-group:nth-child(1) .action-grid > .action-btn:first-child,
+.mf-shift .action-panel .action-group:nth-child(1) .action-grid > .action-btn:nth-child(3) {
+  display: none !important;
+}
+
+.mf-shift .action-panel .action-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 11px;
+  color: #767fa4;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+}
+
+.mf-shift .action-panel .action-title::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #5968d8;
+  box-shadow: 0 0 12px rgba(89,104,216,.55);
+}
+
+.mf-shift .action-panel .action-group:nth-child(3) .action-title::before {
+  background: #d66b78;
+  box-shadow: 0 0 12px rgba(214,107,120,.38);
+}
+
+.mf-shift .action-panel .action-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.mf-shift .action-panel .action-group:nth-child(1) .action-grid,
+.mf-shift .action-panel .action-group:nth-child(3) .action-grid {
+  grid-template-columns: 1fr !important;
+}
+
+.mf-shift .action-panel .action-btn {
+  position: relative;
+  min-height: 74px;
+  padding: 13px 38px 13px 13px !important;
+  border-color: #292d49 !important;
+  border-radius: 12px !important;
+  background: linear-gradient(145deg, #141427 0%, #101020 100%) !important;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+  overflow: hidden;
+}
+
+.mf-shift .action-panel .action-btn::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 13px;
+  bottom: 13px;
+  width: 2px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(17,150,252,.8), rgba(93,13,250,.8));
+  opacity: .58;
+}
+
+.mf-shift .action-panel .action-btn::after {
+  content: "›";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-52%);
+  color: #59617f;
+  font-size: 20px;
+  font-weight: 400;
+  transition: color .16s ease, transform .16s ease;
+}
+
+.mf-shift .action-panel .action-btn:hover {
+  transform: translateY(-1px);
+  border-color: #3a4168 !important;
+  background: linear-gradient(145deg, #17172d 0%, #111122 100%) !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,.18);
+}
+
+.mf-shift .action-panel .action-btn:hover::after {
+  color: #9aa8ff;
+  transform: translate(2px,-52%);
+}
+
+.mf-shift .action-panel .action-btn strong {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #eef0f8;
+}
+
+.mf-shift .action-panel .action-btn span {
+  max-width: 240px;
+  margin-top: 5px;
+  color: #737b99;
+  font-size: 9.5px;
+  line-height: 1.45;
+}
+
+.mf-shift .action-panel .action-group:nth-child(1) .action-btn {
+  min-height: 88px;
+  border-color: rgba(74,108,247,.28) !important;
+  background: linear-gradient(145deg, rgba(28,31,61,.82), rgba(15,15,32,.94)) !important;
+}
+
+.mf-shift .action-panel .action-group:nth-child(3) .action-btn {
+  min-height: 88px;
+  border-color: rgba(255,157,157,.18) !important;
+  background: linear-gradient(145deg, rgba(49,23,32,.44), rgba(20,14,25,.9)) !important;
+}
+
+.mf-shift .action-panel .action-group:nth-child(3) .action-btn::before {
+  background: #d66b78;
+}
+
+.mf-shift .action-panel .action-group:nth-child(3) .action-btn::after {
+  color: #9c5f69;
+}
+
+@media (max-width: 700px) {
+  .mf-shift .action-panel {
+    width: min(620px, calc(100vw - 24px)) !important;
+    padding: 17px !important;
+  }
+
+  .mf-shift .action-panel .action-groups {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "share"
+      "main"
+      "danger";
+  }
+
+  .mf-shift .action-panel .action-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .mf-shift .action-panel .action-btn,
+  .mf-shift .action-panel .action-group:nth-child(1) .action-btn,
+  .mf-shift .action-panel .action-group:nth-child(3) .action-btn {
+    min-height: 68px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html:focus-within {
     scroll-behavior: auto;
