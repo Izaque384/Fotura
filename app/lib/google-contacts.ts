@@ -14,9 +14,11 @@ type Integracao = {
 };
 
 function encryptionKey(){
-  const raw=process.env.GOOGLE_TOKEN_ENCRYPTION_KEY||"";
-  const key=Buffer.from(raw,"base64");
-  if(key.length!==32) throw new Error("GOOGLE_TOKEN_ENCRYPTION_KEY deve conter 32 bytes em base64.");
+  const raw=(process.env.GOOGLE_TOKEN_ENCRYPTION_KEY||"").trim();
+  let key:Buffer;
+  if(/^[0-9a-fA-F]{64}$/.test(raw)) key=Buffer.from(raw,"hex");
+  else key=Buffer.from(raw,"base64");
+  if(key.length!==32) throw new Error("GOOGLE_TOKEN_ENCRYPTION_KEY deve conter 32 bytes em hexadecimal (64 caracteres) ou base64.");
   return key;
 }
 
