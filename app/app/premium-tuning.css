@@ -38,6 +38,8 @@
 .cfg.mf-shift .row,
 .mf-shift .cfg .row {
   border-top-color: #1b1e2f !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .cfg.mf-shift .account,
@@ -46,17 +48,34 @@
   box-shadow: none !important;
 }
 
-/* Configurações: botões neutros não devem herdar o brilho azul global. */
-.cfg.mf-shift .btn,
-.mf-shift .cfg .btn,
+/* Configurações: botões neutros totalmente planos, sem qualquer glow. */
+.cfg.mf-shift .btn:not(.primary):not(.off):not(.danger),
+.mf-shift .cfg .btn:not(.primary):not(.off):not(.danger),
 .cfg.mf-shift .links .btn,
 .mf-shift .cfg .links .btn {
+  background: #0f0f1c !important;
+  border-color: #25283a !important;
   box-shadow: none !important;
   filter: none !important;
+  text-shadow: none !important;
 }
 
-.cfg.mf-shift .btn:hover,
-.mf-shift .cfg .btn:hover {
+.cfg.mf-shift .btn:not(.primary):not(.off):not(.danger):hover,
+.mf-shift .cfg .btn:not(.primary):not(.off):not(.danger):hover,
+.cfg.mf-shift .links .btn:hover,
+.mf-shift .cfg .links .btn:hover {
+  background: #11111f !important;
+  border-color: #303448 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+}
+
+.cfg.mf-shift .btn::before,
+.cfg.mf-shift .btn::after,
+.mf-shift .cfg .btn::before,
+.mf-shift .cfg .btn::after {
   box-shadow: none !important;
   filter: none !important;
 }
