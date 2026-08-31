@@ -49,6 +49,98 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dfe6ff' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 3-7.2 18-3.4-7.4L3 10.2 21 3Z'/%3E%3Cpath d='M10.4 13.6 21 3'/%3E%3C/svg%3E");
 }
 
+/* Final delivery workspace: stable actions with no wrapping or overlap. */
+.delivery-page .delivery-card {
+  min-height: 272px !important;
+  padding-bottom: 82px !important;
+  overflow: visible !important;
+}
+
+.delivery-page .delivery-actions {
+  position: absolute !important;
+  left: 20px !important;
+  right: 20px !important;
+  bottom: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: nowrap !important;
+}
+
+.delivery-page .delivery-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  min-width: max-content !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  flex: 0 0 auto !important;
+}
+
+.delivery-page .delivery-actions:has(.delivery-btn + .delivery-btn) .delivery-btn {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
+
+.delivery-page .delivery-actions:has(.delivery-btn + .delivery-btn) .delivery-btn:first-child {
+  flex-basis: 48% !important;
+}
+
+.delivery-page .delivery-actions:has(.delivery-btn + .delivery-btn) .delivery-btn:last-child {
+  flex-basis: 52% !important;
+}
+
+.delivery-page .delivery-file-list {
+  margin-bottom: 0 !important;
+  padding-bottom: 6px !important;
+}
+
+.delivery-page .delivery-muted,
+.delivery-page .delivery-progress,
+.delivery-page .delivery-rejected {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+@media (max-width: 1100px) and (min-width: 801px) {
+  .delivery-page .delivery-wrap {
+    max-width: 1120px !important;
+    padding-left: 28px !important;
+    padding-right: 28px !important;
+  }
+  .delivery-page .delivery-grid {
+    grid-template-columns: repeat(3,minmax(0,1fr)) !important;
+  }
+  .delivery-page .delivery-card {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+  .delivery-page .delivery-actions {
+    left: 18px !important;
+    right: 18px !important;
+  }
+  .delivery-page .delivery-btn {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .delivery-page .delivery-card {
+    min-height: 238px !important;
+  }
+  .delivery-page .delivery-actions {
+    flex-wrap: wrap !important;
+  }
+  .delivery-page .delivery-actions .delivery-btn {
+    flex: 1 1 auto !important;
+    min-width: max-content !important;
+  }
+}
+
 /* Configurações: superfície plana, sem halo claro ao redor dos cards. */
 .cfg.mf-shift .card,
 .mf-shift .cfg .card {
