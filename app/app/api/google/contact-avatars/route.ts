@@ -3,6 +3,11 @@ import { createServiceClient } from "../../../../lib/supabase-server";
 import { getGoogleAccessToken } from "../../../../lib/google-contacts";
 
 type Body={emails?:unknown};
+type GooglePerson={
+  emailAddresses?:Array<{value?:string}>;
+  photos?:Array<{url?:string;default?:boolean}>;
+};
+type ConnectionsResponse={connections?:GooglePerson[];nextPageToken?:string};
 
 async function authUser(req:NextRequest){const h=req.headers.get("authorization")||"";const token=h.startsWith("Bearer ")?h.slice(7).trim():"";if(!token)return null;const supabase=createServiceClient();const {data,error}=await supabase.auth.getUser(token);return error||!data.user?null:data.user;}
 
@@ -15,15 +20,26 @@ export async function POST(req:NextRequest){
   if(!access)return NextResponse.json({avatars:{},conectado:false});
 
   const headers={Authorization:`Bearer ${access}`};
-  await fetch("https://people.googleapis.com/v1/people:searchContacts?query=&readMask=emailAddresses,photos",{headers,cache:"no-store"}).catch(()=>null);
+  const wanted=new Set(emails);
   const avatars:Record<string,string>={};
-  for(const email of emails){
-    const url=`https://people.googleapis.com/v1/people:searchContacts?query=${encodeURIComponent(email)}&readMask=emailAddresses,photos&pageSize=10`;
-    const r=await fetch(url,{headers,cache:"no-store"});if(!r.ok)continue;
-    const d=await r.json() as {results?:Array<{person?:{emailAddresses?:Array<{value?:string}>;photos?:Array<{url?:string;default?:boolean}>}}>};
-    const person=d.results?.map(x=>x.person).find(p=>p?.emailAddresses?.some(e=>(e.value||"").trim().toLowerCase()===email));
-    const photo=person?.photos?.find(p=>p.url&&!p.default)?.url;
-    if(photo)avatars[email]=photo;
-  }
+  let pageToken="";
+
+  try{
+    do{
+      const params=new URLSearchParams({personFields:"emailAddresses,photos",pageSize:"500",sortOrder:"LAST_MODIFIED_DESCENDING"});
+      if(pageToken)params.set("pageToken",pageToken);
+      const r=await fetch(`https://people.googleapis.com/v1/people/me/connections?${params}`,{headers,cache:"no-store"});
+      if(!r.ok)break;
+      const d=await r.json() as ConnectionsResponse;
+      for(const person of d.connections??[]){
+        const matched=person.emailAddresses?.map(e=>(e.value||"").trim().toLowerCase()).find(email=>wanted.has(email));
+        if(!matched||avatars[matched])continue;
+        const photo=person.photos?.find(p=>p.url&&!p.default)?.url??person.photos?.find(p=>p.url)?.url;
+        if(photo)avatars[matched]=photo;
+      }
+      pageToken=d.nextPageToken??"";
+    }while(pageToken&&Object.keys(avatars).length<wanted.size);
+  }catch{}
+
   return NextResponse.json({avatars,conectado:true});
 }
