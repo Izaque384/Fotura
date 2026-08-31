@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
 
 type Selecao = {
@@ -23,6 +24,7 @@ type Props = {
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export default function ModalSelecao({ uid, galeriaId, titulo, selecao, onFechar }: Props) {
+  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const painelRef = useRef<HTMLElement>(null);
   const lightboxRef = useRef<HTMLDivElement>(null);
@@ -214,6 +216,11 @@ export default function ModalSelecao({ uid, galeriaId, titulo, selecao, onFechar
     setBaixando(false);
   }
 
+  function prepararEntrega() {
+    onFechar();
+    router.push(`/dashboard/entrega/${galeriaId}`);
+  }
+
   const fotoAberta = aberta !== null ? fotoPorNome(escolhidas[aberta]) : null;
 
   return (
@@ -235,7 +242,8 @@ export default function ModalSelecao({ uid, galeriaId, titulo, selecao, onFechar
             <span className="ms-progress" aria-live="polite">{selecao.finalizada ? "Seleção finalizada" : "Seleção em andamento"}</span>
             <div className="ms-actions-right">
               {baixando && <button type="button" className="ms-btn secondary" onClick={cancelarDownload}>Cancelar</button>}
-              <button type="button" className="ms-btn" onClick={() => void baixarTodas()} disabled={!escolhidas.length || baixando} aria-busy={baixando}>{baixando ? `Baixando ${progresso}/${escolhidas.length}` : "Baixar selecionadas"}</button>
+              <button type="button" className="ms-btn secondary" onClick={() => void baixarTodas()} disabled={!escolhidas.length || baixando} aria-busy={baixando}>{baixando ? `Baixando ${progresso}/${escolhidas.length}` : "Baixar selecionadas"}</button>
+              {selecao.finalizada && <button type="button" className="ms-btn" onClick={prepararEntrega}>Preparar entrega</button>}
             </div>
           </div>
           {falhasDownload > 0 && <div className="ms-warning" role="status" style={{marginBottom:12}}>{falhasDownload} arquivo{falhasDownload === 1 ? " não pôde" : "s não puderam"} ser baixado{falhasDownload === 1 ? "" : "s"}.</div>}
