@@ -52,3 +52,141 @@ svg.channel-icon:has(path[fill="#4285F4"]) {
   position: static !important;
   transform: none !important;
 }
+
+/* Galerias e Seleções: ferramentas de busca/filtro com linguagem tech premium. */
+.dash.mf-shift .toolbar,
+.dash.mf-shift .sel-tools {
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.dash.mf-shift .search-input,
+.dash.mf-shift .sel-search {
+  height: 42px !important;
+  min-height: 42px !important;
+  border: 1px solid #293049 !important;
+  border-radius: 12px !important;
+  background-color: #0c0d19 !important;
+  color: #eef2fb !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.018) !important;
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease !important;
+}
+.dash.mf-shift .search-input:hover,
+.dash.mf-shift .sel-search:hover {
+  border-color: #37415f !important;
+  background-color: #0e0f1d !important;
+}
+.dash.mf-shift .search-input:focus,
+.dash.mf-shift .sel-search:focus {
+  border-color: #5369a1 !important;
+  background-color: #0f1020 !important;
+  box-shadow: 0 0 0 3px rgba(17,150,252,.065), inset 0 1px 0 rgba(255,255,255,.02) !important;
+  outline: none !important;
+}
+.dash.mf-shift .search-input::placeholder,
+.dash.mf-shift .sel-search::placeholder {
+  color: #69738f !important;
+}
+
+.dash.mf-shift .tabs,
+.dash.mf-shift .sel-tabs {
+  min-height: 42px !important;
+  box-sizing: border-box !important;
+  padding: 4px !important;
+  gap: 4px !important;
+  border: 1px solid #242a40 !important;
+  border-radius: 12px !important;
+  background: linear-gradient(180deg,#10111f,#0c0d18) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.018) !important;
+}
+.dash.mf-shift .tab,
+.dash.mf-shift .sel-tab {
+  min-height: 32px !important;
+  padding: 0 13px !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #7f89a7 !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  transition: color .15s ease, border-color .15s ease, background .15s ease, transform .15s ease !important;
+}
+.dash.mf-shift .tab:hover,
+.dash.mf-shift .sel-tab:hover {
+  color: #c6cee2 !important;
+  background: rgba(255,255,255,.025) !important;
+}
+.dash.mf-shift .tab.on,
+.dash.mf-shift .sel-tab.on {
+  color: #f4f7ff !important;
+  border-color: rgba(82,111,184,.38) !important;
+  background: linear-gradient(180deg,rgba(30,57,105,.68),rgba(24,35,72,.64)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+.dash.mf-shift .sel-refresh {
+  height: 42px !important;
+  border-radius: 11px !important;
+  border-color: #293049 !important;
+  background: #0d0e1b !important;
+  color: #9ca8c8 !important;
+  box-shadow: none !important;
+}
+.dash.mf-shift .sel-refresh:hover:not(:disabled) {
+  border-color: #3b4667 !important;
+  color: #d2d9eb !important;
+  background: #111321 !important;
+}
+
+/* Preparação de entrega: CTAs compactos, centralizados e sem vazamento. */
+.delivery-page .delivery-card:first-child .delivery-actions {
+  left: 14px !important;
+  right: 14px !important;
+  gap: 6px !important;
+  justify-content: center !important;
+}
+.delivery-page .delivery-card:first-child .delivery-actions .delivery-btn {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  font-size: 10.5px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+.delivery-page .delivery-card:first-child .delivery-actions .delivery-btn:first-child {
+  flex: 1.35 1 0 !important;
+}
+.delivery-page .delivery-card:first-child .delivery-actions .delivery-btn:last-child:not(:first-child) {
+  flex: .8 1 0 !important;
+}
+
+/* Texto solicitado no CTA da etapa 2; durante upload preserva o progresso original. */
+.delivery-page .delivery-card:nth-child(2) .delivery-btn.blue:not(:disabled) {
+  font-size: 0 !important;
+}
+.delivery-page .delivery-card:nth-child(2) .delivery-btn.blue:not(:disabled)::after {
+  content: "Enviar fotos finais";
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .dash.mf-shift .toolbar,
+  .dash.mf-shift .sel-tools {
+    width: 100% !important;
+  }
+  .dash.mf-shift .tabs,
+  .dash.mf-shift .sel-tabs {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+  }
+  .delivery-page .delivery-card:first-child .delivery-actions {
+    left: 0 !important;
+    right: 0 !important;
+    position: static !important;
+    margin-top: 24px !important;
+  }
+}
