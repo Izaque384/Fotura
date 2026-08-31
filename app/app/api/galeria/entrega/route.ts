@@ -131,7 +131,6 @@ export async function POST(req: NextRequest) {
   const { error } = await auth.supabase.from("galerias").update({
     etapa: "entrega",
     prova: false,
-    capa: finais[0],
     storage_limpo: false,
     storage_limpo_em: null,
   }).eq("id", galeria).eq("user_id", auth.user.id);
