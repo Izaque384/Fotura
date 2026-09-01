@@ -60,6 +60,18 @@ test("mutações de galeria bloqueiam origem externa", async ({ request }) => {
     },
   });
   expect(selecao.status()).toBe(403);
+
+  const entrega = await request.post("/api/galeria/entrega", {
+    headers,
+    data: { galeria: "00000000-0000-4000-8000-000000000000", acao: "iniciar" },
+  });
+  expect(entrega.status()).toBe(403);
+
+  const enviar = await request.post("/api/galeria/enviar", {
+    headers,
+    data: { galeria: "00000000-0000-4000-8000-000000000000" },
+  });
+  expect(enviar.status()).toBe(403);
 });
 
 test("APIs retornam identificador de requisição para correlação", async ({ request }) => {
