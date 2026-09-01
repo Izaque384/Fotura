@@ -16,6 +16,80 @@ function json(data: unknown, status = 200, retryAfter?: number) {
   return NextResponse.json(data, { status, headers });
 }
 
+function corSegura(valor: string | null | undefined) {
+  const cor = (valor || "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(cor) ? cor : "#0b0b1a";
+}
+
+function heroSvg(corBase: string, estilo: string) {
+  const cor = corSegura(corBase);
+  const preset = estilo === "minimal" || estilo === "tech" ? estilo : "premium";
+  let decoracao = "";
+
+  if (preset === "minimal") {
+    decoracao = `
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="${cor}"/>
+          <stop offset="1" stop-color="#070711"/>
+        </linearGradient>
+      </defs>
+      <rect width="1600" height="700" fill="url(#bg)"/>
+      <rect x="120" y="120" width="1" height="460" fill="#ffffff" opacity=".10"/>
+      <rect x="1480" y="120" width="1" height="460" fill="#ffffff" opacity=".06"/>`;
+  } else if (preset === "tech") {
+    decoracao = `
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#080912"/>
+          <stop offset=".52" stop-color="${cor}"/>
+          <stop offset="1" stop-color="#070711"/>
+        </linearGradient>
+        <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+          <path d="M48 0H0V48" fill="none" stroke="#ffffff" stroke-width="1" opacity=".055"/>
+        </pattern>
+        <radialGradient id="glow" cx="75%" cy="25%" r="55%">
+          <stop offset="0" stop-color="#1196fc" stop-opacity=".34"/>
+          <stop offset=".55" stop-color="#5d0dfa" stop-opacity=".13"/>
+          <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="1600" height="700" fill="url(#bg)"/>
+      <rect width="1600" height="700" fill="url(#grid)"/>
+      <rect width="1600" height="700" fill="url(#glow)"/>
+      <path d="M1070 90h330v2h-330zM1180 608h240v2h-240z" fill="#8ecbff" opacity=".22"/>
+      <circle cx="1400" cy="90" r="4" fill="#8ecbff" opacity=".5"/>
+      <circle cx="1180" cy="609" r="4" fill="#a98cff" opacity=".46"/>`;
+  } else {
+    decoracao = `
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#090a13"/>
+          <stop offset=".48" stop-color="${cor}"/>
+          <stop offset="1" stop-color="#090913"/>
+        </linearGradient>
+        <radialGradient id="glowA" cx="25%" cy="38%" r="52%">
+          <stop offset="0" stop-color="#ffffff" stop-opacity=".12"/>
+          <stop offset=".46" stop-color="#8c72ff" stop-opacity=".12"/>
+          <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="glowB" cx="82%" cy="22%" r="48%">
+          <stop offset="0" stop-color="#1196fc" stop-opacity=".22"/>
+          <stop offset=".56" stop-color="#5d0dfa" stop-opacity=".10"/>
+          <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="1600" height="700" fill="url(#bg)"/>
+      <rect width="1600" height="700" fill="url(#glowA)"/>
+      <rect width="1600" height="700" fill="url(#glowB)"/>
+      <circle cx="1350" cy="110" r="210" fill="none" stroke="#ffffff" stroke-width="1" opacity=".055"/>
+      <circle cx="1350" cy="110" r="270" fill="none" stroke="#ffffff" stroke-width="1" opacity=".035"/>`;
+  }
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="700" viewBox="0 0 1600 700">${decoracao}</svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 export async function GET(req: NextRequest) {
   const galeria = req.nextUrl.searchParams.get("galeria")?.trim();
   if (!uuidValido(galeria)) return json({ error: "galeria inválida." }, 400);
@@ -38,10 +112,12 @@ export async function GET(req: NextRequest) {
   const dono = g.user_id as string;
   const { data: perfil } = await supabase
     .from("perfis")
-    .select("hero_galeria_ativo")
+    .select("hero_galeria_ativo,hero_galeria_estilo,cor_hero")
     .eq("id", dono)
     .maybeSingle();
   const usarHeroEstudio = Boolean(perfil?.hero_galeria_ativo);
+  const heroEstilo = (perfil?.hero_galeria_estilo as string | null) ?? "premium";
+  const heroCor = (perfil?.cor_hero as string | null) ?? "#0b0b1a";
 
   const etapa = (g.etapa as string | null) || (g.prova ? "prova" : "entrega");
   const entregaFinal = etapa === "entrega";
@@ -61,7 +137,7 @@ export async function GET(req: NextRequest) {
     offset += LISTA_LOTE;
   }
 
-  if (lista.length === 0) return json({ fotos: [], capaUrl: null, etapa });
+  if (lista.length === 0) return json({ fotos: [], capaUrl: usarHeroEstudio ? heroSvg(heroCor, heroEstilo) : null, etapa });
 
   const caminhos: string[] = [];
   for (const f of lista) {
@@ -94,6 +170,6 @@ export async function GET(req: NextRequest) {
     return { nome: f.name, url, thumb };
   });
   const capaNome = capaFile && lista.some((f) => f.name === capaFile) ? capaFile : lista[0]?.name;
-  const capaUrl = usarHeroEstudio ? null : (capaNome ? (mapa[`${base}/${capaNome}`] ?? null) : null);
+  const capaUrl = usarHeroEstudio ? heroSvg(heroCor, heroEstilo) : (capaNome ? (mapa[`${base}/${capaNome}`] ?? null) : null);
   return json({ fotos, capaUrl, etapa });
 }
