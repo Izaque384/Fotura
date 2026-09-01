@@ -4,6 +4,7 @@ export type PlanoFotura = {
   codigo: PlanoCodigo;
   nome: string;
   descricao: string;
+  precoMensalCentavos: number | null;
   limites: {
     galeriasAtivas: number | null;
     armazenamentoGb: number | null;
@@ -28,6 +29,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     codigo: "legacy",
     nome: "Legacy",
     descricao: "Acesso preservado para contas existentes antes da monetização.",
+    precoMensalCentavos: null,
     limites: {
       galeriasAtivas: null,
       armazenamentoGb: null,
@@ -50,6 +52,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     codigo: "essencial",
     nome: "Essencial",
     descricao: "Para fotógrafos que estão organizando e profissionalizando a entrega aos clientes.",
+    precoMensalCentavos: 2990,
     limites: {
       galeriasAtivas: 10,
       armazenamentoGb: 20,
@@ -72,6 +75,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     codigo: "profissional",
     nome: "Profissional",
     descricao: "Para fotógrafos com volume recorrente de trabalhos e maior necessidade de apresentação.",
+    precoMensalCentavos: 5990,
     limites: {
       galeriasAtivas: 50,
       armazenamentoGb: 100,
@@ -94,6 +98,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     codigo: "studio",
     nome: "Studio",
     descricao: "Para estúdios e operações com grande volume de clientes e galerias.",
+    precoMensalCentavos: 11990,
     limites: {
       galeriasAtivas: null,
       armazenamentoGb: 500,
