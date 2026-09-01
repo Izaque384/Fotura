@@ -31,8 +31,8 @@ function heroSvg(corBase: string, estilo: string) {
       <defs>
         <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stop-color="${cor}" stop-opacity=".82"/>
-          <stop offset=".48" stop-color="#0b1716"/>
-          <stop offset="1" stop-color="#050812"/>
+          <stop offset=".52" stop-color="#0c1918"/>
+          <stop offset="1" stop-color="#091116"/>
         </linearGradient>
         <radialGradient id="soft" cx="20%" cy="16%" r="65%">
           <stop offset="0" stop-color="#4ac98b" stop-opacity=".08"/>
@@ -45,9 +45,9 @@ function heroSvg(corBase: string, estilo: string) {
     decoracao = `
       <defs>
         <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#050b0d"/>
-          <stop offset=".50" stop-color="${cor}" stop-opacity=".72"/>
-          <stop offset="1" stop-color="#050812"/>
+          <stop offset="0" stop-color="#071013"/>
+          <stop offset=".50" stop-color="${cor}" stop-opacity=".68"/>
+          <stop offset="1" stop-color="#091117"/>
         </linearGradient>
         <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
           <circle cx="1" cy="1" r="1" fill="#72dda6" opacity=".12"/>
@@ -76,16 +76,16 @@ function heroSvg(corBase: string, estilo: string) {
       <defs>
         <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stop-color="${cor}" stop-opacity=".88"/>
-          <stop offset=".46" stop-color="#0c1917"/>
-          <stop offset="1" stop-color="#050812"/>
+          <stop offset=".50" stop-color="#0d1b19"/>
+          <stop offset="1" stop-color="#091116"/>
         </linearGradient>
         <radialGradient id="leftGlow" cx="24%" cy="42%" r="48%">
           <stop offset="0" stop-color="#43bd80" stop-opacity=".12"/>
           <stop offset="1" stop-color="#000000" stop-opacity="0"/>
         </radialGradient>
-        <radialGradient id="vignette" cx="50%" cy="45%" r="72%">
-          <stop offset=".55" stop-color="#000000" stop-opacity="0"/>
-          <stop offset="1" stop-color="#000000" stop-opacity=".34"/>
+        <radialGradient id="vignette" cx="50%" cy="45%" r="78%">
+          <stop offset=".62" stop-color="#000000" stop-opacity="0"/>
+          <stop offset="1" stop-color="#000000" stop-opacity=".16"/>
         </radialGradient>
       </defs>
       <rect width="1600" height="700" fill="url(#bg)"/>
