@@ -25,9 +25,10 @@ export async function POST(req:NextRequest){
 
   const supabase=createServiceClient();
   const {data:g,error}=await supabase.from("galerias")
-    .select("id,titulo,cliente_id,prova,prazo,link_ate,perfis:user_id(nome_estudio)")
+    .select("id,titulo,cliente_id,prova,prazo,link_ate,config_revisada_em,perfis:user_id(nome_estudio)")
     .eq("id",galeria).eq("user_id",user.id).maybeSingle();
   if(error||!g)return NextResponse.json({error:"Galeria não encontrada."},{status:404});
+  if(!g.config_revisada_em)return NextResponse.json({error:"Revise e confirme as configurações da galeria antes de enviá-la."},{status:409});
   if(!g.cliente_id)return NextResponse.json({error:"Vincule um cliente à galeria antes de enviar."},{status:400});
 
   const {data:cliente}=await supabase.from("clientes").select("nome,email").eq("id",g.cliente_id).eq("user_id",user.id).maybeSingle();
