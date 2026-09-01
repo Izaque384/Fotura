@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { temAcessoGaleria } from "../../../../lib/gallery-access";
+import { registrarErro } from "../../../../lib/observability";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { uuidValido } from "../../../../lib/validation";
 
@@ -191,23 +192,31 @@ export async function GET(req: NextRequest) {
   if (!permitido) return json({ error: "Muitas solicitações. Aguarde um minuto." }, 429, 60);
 
   const supabase = createServiceClient();
-  const { data: g } = await supabase
+  const { data: g, error: galleryError } = await supabase
     .from("galerias")
     .select("user_id,capa,link_ate,tem_senha,etapa,prova")
     .eq("id", galeria)
     .maybeSingle();
 
+  if (galleryError) {
+    registrarErro("gallery.signed.lookup", req, galleryError, { galeria });
+    return json({ error: "Não foi possível verificar a galeria." }, 500);
+  }
   if (!g) return json({ error: "Galeria não encontrada." }, 404);
   const linkAte = (g.link_ate as string | null) ?? null;
   if (linkAte && Date.now() > new Date(`${linkAte}T23:59:59`).getTime()) return json({ error: "Link expirado." }, 403);
   if (g.tem_senha && !temAcessoGaleria(req, galeria)) return json({ error: "Acesso à galeria necessário." }, 401);
 
   const dono = g.user_id as string;
-  const { data: perfil } = await supabase
+  const { data: perfil, error: profileError } = await supabase
     .from("perfis")
     .select("hero_galeria_ativo,hero_galeria_estilo,cor_hero")
     .eq("id", dono)
     .maybeSingle();
+  if (profileError) {
+    registrarErro("gallery.signed.profile", req, profileError, { galeria });
+    return json({ error: "Não foi possível carregar a identidade da galeria." }, 500);
+  }
   const usarHeroEstudio = Boolean(perfil?.hero_galeria_ativo);
   const heroEstilo = (perfil?.hero_galeria_estilo as string | null) ?? "premium";
   const heroCor = (perfil?.cor_hero as string | null) ?? "#0b0b1a";
@@ -223,7 +232,10 @@ export async function GET(req: NextRequest) {
       offset,
       sortBy: { column: "created_at", order: "asc" },
     });
-    if (listError) return json({ error: "Não foi possível listar a galeria." }, 500);
+    if (listError) {
+      registrarErro("gallery.signed.storage_list", req, listError, { galeria });
+      return json({ error: "Não foi possível listar a galeria." }, 500);
+    }
     const pagina = arquivos ?? [];
     lista.push(...pagina.filter((f) => f.id !== null && f.name !== "thumbs").map((f) => ({ name: f.name })));
     if (pagina.length < LISTA_LOTE) break;
@@ -244,18 +256,21 @@ export async function GET(req: NextRequest) {
   for (let i = 0; i < caminhos.length; i += ASSINATURA_LOTE) lotes.push(caminhos.slice(i, i + ASSINATURA_LOTE));
   const mapa: Record<string, string> = {};
   let cursor = 0;
-  let erroAssinatura = false;
+  let erroAssinatura: unknown = null;
   const worker = async () => {
     while (true) {
       const i = cursor++;
       if (i >= lotes.length || erroAssinatura) return;
       const { data, error } = await supabase.storage.from("fotos").createSignedUrls(lotes[i], EXPIRA_SEG);
-      if (error) { erroAssinatura = true; return; }
+      if (error) { erroAssinatura = error; return; }
       for (const s of data ?? []) if (s.signedUrl && s.path) mapa[s.path] = s.signedUrl;
     }
   };
   await Promise.all(Array.from({ length: Math.min(CONCORRENCIA_ASSINATURA, lotes.length) }, () => worker()));
-  if (erroAssinatura) return json({ error: "Não foi possível assinar os arquivos." }, 500);
+  if (erroAssinatura) {
+    registrarErro("gallery.signed.sign_urls", req, erroAssinatura, { galeria });
+    return json({ error: "Não foi possível assinar os arquivos." }, 500);
+  }
 
   const fotos = lista.map((f) => {
     const url = mapa[`${base}/${f.name}`] ?? "";
