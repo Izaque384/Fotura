@@ -3,7 +3,7 @@ import { planoFotura, type PlanoCodigo } from "../../../../lib/billing-plans";
 import { registrarErro } from "../../../../lib/observability";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { createServiceClient } from "../../../../lib/supabase-server";
-import { STRIPE_PRICE_POR_PLANO, stripePost, type StripeCheckoutSession } from "../../../../lib/stripe-billing";
+import { stripePost, stripePricePorPlano, type StripeCheckoutSession } from "../../../../lib/stripe-billing";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +30,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Plano inválido." }, { status: 400 });
   }
 
-  const priceId = STRIPE_PRICE_POR_PLANO[planoCodigo];
-  if (!priceId) return NextResponse.json({ error: "Plano ainda não disponível para contratação." }, { status: 503 });
+  let priceId: string | null;
+  try { priceId = stripePricePorPlano(planoCodigo); }
+  catch (error) {
+    registrarErro("billing.checkout.price_config", req, error, { userId: auth.user.id, plano: planoCodigo });
+    return NextResponse.json({ error: "Checkout ainda não configurado no ambiente." }, { status: 503 });
+  }
+  if (!priceId) {
+    return NextResponse.json({ error: "Preço Stripe deste plano não está configurado para este ambiente." }, { status: 503 });
+  }
 
   const { data: assinatura, error: assinaturaError } = await supabase
     .from("assinaturas")
