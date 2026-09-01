@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { criarTokenGaleria, nomeCookieGaleria } from "../../../../lib/gallery-access";
+import { registrarErro } from "../../../../lib/observability";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
@@ -22,7 +23,11 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = createServiceClient();
-  const { data: g } = await supabase.from("galerias").select("id,tem_senha,link_ate").eq("id", galeria).maybeSingle();
+  const { data: g, error: galleryError } = await supabase.from("galerias").select("id,tem_senha,link_ate").eq("id", galeria).maybeSingle();
+  if (galleryError) {
+    registrarErro("gallery.access.lookup", req, galleryError, { galeria });
+    return NextResponse.json({ error: "Não foi possível verificar a galeria." }, { status: 500 });
+  }
   if (!g) return NextResponse.json({ error: "Galeria não encontrada." }, { status: 404 });
 
   const permitidoGlobal = await consumirRateLimit(req, "gallery_password_ip", "global", JANELA_SEG, 60);
@@ -41,7 +46,11 @@ export async function POST(req: NextRequest) {
   if (!g.tem_senha) return NextResponse.json({ ok: true });
 
   const { data: ok, error } = await supabase.rpc("verificar_senha_galeria", { p_galeria: galeria, p_senha: senha });
-  if (error || ok !== true) return NextResponse.json({ error: "Senha incorreta." }, { status: 401 });
+  if (error) {
+    registrarErro("gallery.access.password_rpc", req, error, { galeria });
+    return NextResponse.json({ error: "Não foi possível validar a senha agora." }, { status: 500 });
+  }
+  if (ok !== true) return NextResponse.json({ error: "Senha incorreta." }, { status: 401 });
 
   const token = criarTokenGaleria(galeria);
   const res = NextResponse.json({ ok: true });
