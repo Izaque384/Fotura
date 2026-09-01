@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
 
   const { data: perfil } = await supabase
     .from("perfis")
-    .select("nome_estudio,logo_url,cor_hero")
+    .select("nome_estudio,logo_url,cor_hero,hero_galeria_ativo,hero_galeria_estilo")
     .eq("id", g.user_id)
     .maybeSingle();
 
@@ -69,7 +69,9 @@ export async function GET(req: NextRequest) {
       nome: (perfil.nome_estudio as string | null) ?? null,
       logo: (perfil.logo_url as string | null) ?? null,
       cor: (perfil.cor_hero as string | null) ?? null,
-    } : { nome: null, logo: null, cor: null },
+      heroAtivo: Boolean(perfil.hero_galeria_ativo),
+      heroEstilo: ((perfil.hero_galeria_estilo as string | null) ?? "premium") as "minimal" | "premium" | "tech",
+    } : { nome: null, logo: null, cor: null, heroAtivo: false, heroEstilo: "premium" },
     selecao,
   });
 }
