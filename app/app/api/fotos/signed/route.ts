@@ -29,59 +29,68 @@ function heroSvg(corBase: string, estilo: string) {
   if (preset === "minimal") {
     decoracao = `
       <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="${cor}"/>
-          <stop offset="1" stop-color="#070711"/>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="${cor}" stop-opacity=".82"/>
+          <stop offset=".48" stop-color="#0b1716"/>
+          <stop offset="1" stop-color="#050812"/>
         </linearGradient>
+        <radialGradient id="soft" cx="20%" cy="16%" r="65%">
+          <stop offset="0" stop-color="#4ac98b" stop-opacity=".08"/>
+          <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+        </radialGradient>
       </defs>
-      <rect width="1600" height="700" fill="url(#bg)"/>`;
+      <rect width="1600" height="700" fill="url(#bg)"/>
+      <rect width="1600" height="700" fill="url(#soft)"/>`;
   } else if (preset === "tech") {
     decoracao = `
       <defs>
         <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#080912"/>
-          <stop offset=".52" stop-color="${cor}"/>
-          <stop offset="1" stop-color="#070711"/>
+          <stop offset="0" stop-color="#050b0d"/>
+          <stop offset=".50" stop-color="${cor}" stop-opacity=".72"/>
+          <stop offset="1" stop-color="#050812"/>
         </linearGradient>
-        <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
-          <path d="M48 0H0V48" fill="none" stroke="#ffffff" stroke-width="1" opacity=".055"/>
+        <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+          <circle cx="1" cy="1" r="1" fill="#72dda6" opacity=".12"/>
         </pattern>
-        <radialGradient id="glow" cx="75%" cy="25%" r="55%">
-          <stop offset="0" stop-color="#1196fc" stop-opacity=".34"/>
-          <stop offset=".55" stop-color="#5d0dfa" stop-opacity=".13"/>
+        <radialGradient id="centerGlow" cx="50%" cy="43%" r="46%">
+          <stop offset="0" stop-color="#61d99a" stop-opacity=".22"/>
+          <stop offset=".58" stop-color="#3ea978" stop-opacity=".07"/>
           <stop offset="1" stop-color="#000000" stop-opacity="0"/>
         </radialGradient>
+        <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#65d89b" stop-opacity="0"/>
+          <stop offset=".5" stop-color="#65d89b" stop-opacity=".42"/>
+          <stop offset="1" stop-color="#65d89b" stop-opacity="0"/>
+        </linearGradient>
       </defs>
       <rect width="1600" height="700" fill="url(#bg)"/>
       <rect width="1600" height="700" fill="url(#grid)"/>
-      <rect width="1600" height="700" fill="url(#glow)"/>
-      <path d="M1070 90h330v2h-330zM1180 608h240v2h-240z" fill="#8ecbff" opacity=".22"/>
-      <circle cx="1400" cy="90" r="4" fill="#8ecbff" opacity=".5"/>
-      <circle cx="1180" cy="609" r="4" fill="#a98cff" opacity=".46"/>`;
+      <rect width="1600" height="700" fill="url(#centerGlow)"/>
+      <circle cx="800" cy="360" r="330" fill="none" stroke="#6be0a3" stroke-width="1" opacity=".07"/>
+      <circle cx="800" cy="360" r="255" fill="none" stroke="#6be0a3" stroke-width="1" opacity=".055"/>
+      <path d="M0 382H125l72-72h176l64 64h190M1600 382h-125l-72-72h-176l-64 64H973" fill="none" stroke="#6be0a3" stroke-width="1" opacity=".18"/>
+      <path d="M0 520H240l42-42h220M1600 520h-240l-42-42h-220" fill="none" stroke="#6be0a3" stroke-width="1" opacity=".08"/>
+      <rect x="360" y="295" width="880" height="1" fill="url(#line)" opacity=".5"/>`;
   } else {
     decoracao = `
       <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#090a13"/>
-          <stop offset=".48" stop-color="${cor}"/>
-          <stop offset="1" stop-color="#090913"/>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="${cor}" stop-opacity=".88"/>
+          <stop offset=".46" stop-color="#0c1917"/>
+          <stop offset="1" stop-color="#050812"/>
         </linearGradient>
-        <radialGradient id="glowA" cx="25%" cy="38%" r="52%">
-          <stop offset="0" stop-color="#ffffff" stop-opacity=".12"/>
-          <stop offset=".46" stop-color="#8c72ff" stop-opacity=".12"/>
+        <radialGradient id="leftGlow" cx="24%" cy="42%" r="48%">
+          <stop offset="0" stop-color="#43bd80" stop-opacity=".12"/>
           <stop offset="1" stop-color="#000000" stop-opacity="0"/>
         </radialGradient>
-        <radialGradient id="glowB" cx="82%" cy="22%" r="48%">
-          <stop offset="0" stop-color="#1196fc" stop-opacity=".22"/>
-          <stop offset=".56" stop-color="#5d0dfa" stop-opacity=".10"/>
-          <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+        <radialGradient id="vignette" cx="50%" cy="45%" r="72%">
+          <stop offset=".55" stop-color="#000000" stop-opacity="0"/>
+          <stop offset="1" stop-color="#000000" stop-opacity=".34"/>
         </radialGradient>
       </defs>
       <rect width="1600" height="700" fill="url(#bg)"/>
-      <rect width="1600" height="700" fill="url(#glowA)"/>
-      <rect width="1600" height="700" fill="url(#glowB)"/>
-      <circle cx="1350" cy="110" r="210" fill="none" stroke="#ffffff" stroke-width="1" opacity=".055"/>
-      <circle cx="1350" cy="110" r="270" fill="none" stroke="#ffffff" stroke-width="1" opacity=".035"/>`;
+      <rect width="1600" height="700" fill="url(#leftGlow)"/>
+      <rect width="1600" height="700" fill="url(#vignette)"/>`;
   }
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="700" viewBox="0 0 1600 700">${decoracao}</svg>`;
