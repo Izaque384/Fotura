@@ -2,88 +2,98 @@
    Preset identity is carried by the generated data-URI fragment on .gc-hero-bg. */
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-"]) .gc-hero-bg::after {
-  background: rgba(4, 5, 12, 0.04) !important;
+  background: rgba(4, 5, 12, 0.025) !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-"]) .gc-hero-wrap {
-  min-height: 500px;
+  min-height: 492px !important;
   box-sizing: border-box;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-"]) .gc-brand img {
   width: auto;
   object-fit: contain;
-  filter: drop-shadow(0 12px 36px rgba(0, 0, 0, 0.28));
+  filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.24));
 }
 
-/* Minimal — concept: small mark in upper-left, centered editorial information. */
+/* MINIMAL — faithful to concept: compact translucent logo tile at upper-left,
+   generous negative space and centered gallery information. */
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-minimal"]) .gc-hero-wrap {
   position: relative !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: center !important;
   align-items: center !important;
-  min-height: 500px !important;
-  padding: 110px 48px 82px !important;
+  min-height: 492px !important;
+  padding: 96px 48px 72px !important;
   text-align: center !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-minimal"]) .gc-brand {
   position: absolute !important;
   top: 42px !important;
-  left: 42px !important;
-  width: 112px !important;
-  height: 112px !important;
+  left: 43px !important;
+  width: 111px !important;
+  height: 111px !important;
   min-width: 0 !important;
   margin: 0 !important;
+  padding: 14px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 0 !important;
-  text-align: left !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(91, 218, 151, .055) !important;
+  background: linear-gradient(145deg, rgba(13, 72, 57, .62), rgba(6, 37, 34, .46)) !important;
+  box-shadow: inset 0 0 32px rgba(70, 215, 143, .045), 0 12px 34px rgba(0,0,0,.08) !important;
+  backdrop-filter: blur(2px) !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-minimal"]) .gc-brand img {
-  max-width: 112px !important;
-  max-height: 112px !important;
+  max-width: 76px !important;
+  max-height: 76px !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-minimal"]) .gc-info {
   flex: 0 1 auto !important;
-  width: min(92%, 760px) !important;
-  max-width: 760px !important;
-  margin: 22px auto 0 !important;
+  width: min(90%, 700px) !important;
+  max-width: 700px !important;
+  margin: -4px auto 0 !important;
   text-align: center !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-minimal"]) .gc-info > div {
   font-size: 11px !important;
-  letter-spacing: 0.22em !important;
+  line-height: 1.2 !important;
+  letter-spacing: .19em !important;
   text-transform: uppercase !important;
+  opacity: .82 !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-minimal"]) .gc-info h1 {
-  margin: 24px 0 18px !important;
-  font-size: clamp(44px, 5.4vw, 66px) !important;
-  font-weight: 600 !important;
-  line-height: 0.98 !important;
-  letter-spacing: -0.045em !important;
+  margin: 26px 0 20px !important;
+  font-size: clamp(42px, 4.7vw, 60px) !important;
+  font-weight: 650 !important;
+  line-height: .98 !important;
+  letter-spacing: -.04em !important;
 }
 
-/* Premium — concept: large logo + tall green divider + copy as one centered signature. */
+/* PREMIUM — faithful to concept: smaller signature logo, long hairline divider,
+   compact left-aligned copy; all three parts behave as one centered module. */
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap {
   display: grid !important;
-  grid-template-columns: 250px minmax(410px, 590px) !important;
+  grid-template-columns: 190px minmax(390px, 520px) !important;
   justify-content: center !important;
   align-items: center !important;
-  column-gap: 46px !important;
-  min-height: 500px !important;
-  padding: 70px 48px !important;
+  column-gap: 62px !important;
+  min-height: 492px !important;
+  padding: 68px 48px !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand {
   min-width: 0 !important;
-  width: 250px !important;
+  width: 190px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: flex-end !important;
@@ -91,14 +101,14 @@
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand img {
-  max-width: 240px !important;
-  max-height: 168px !important;
+  max-width: 172px !important;
+  max-height: 122px !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-info {
   position: relative !important;
   min-width: 0 !important;
-  padding: 10px 0 10px 58px !important;
+  padding: 8px 0 8px 76px !important;
   text-align: left !important;
 }
 
@@ -106,100 +116,149 @@
   content: "";
   position: absolute;
   left: 0;
-  top: -42px;
-  bottom: -42px;
+  top: -48px;
+  bottom: -48px;
   width: 1px;
-  background: linear-gradient(180deg, rgba(79, 217, 143, 0), rgba(79, 217, 143, .65) 16%, rgba(79, 217, 143, .52) 84%, rgba(79, 217, 143, 0));
-  box-shadow: 0 0 18px rgba(79, 217, 143, .12);
+  background: linear-gradient(180deg, rgba(78, 217, 143, 0), rgba(78, 217, 143, .55) 12%, rgba(78, 217, 143, .35) 88%, rgba(78, 217, 143, 0));
+  box-shadow: 0 0 16px rgba(78, 217, 143, .10);
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-info > div {
   font-size: 11px !important;
-  letter-spacing: 0.19em !important;
+  line-height: 1.2 !important;
+  letter-spacing: .19em !important;
   text-transform: uppercase !important;
+  opacity: .82 !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-info h1 {
-  max-width: 590px !important;
-  margin: 18px 0 13px !important;
-  font-size: clamp(44px, 5.1vw, 66px) !important;
+  max-width: 520px !important;
+  margin: 18px 0 15px !important;
+  font-size: clamp(43px, 4.8vw, 62px) !important;
+  font-weight: 650 !important;
   line-height: .98 !important;
-  letter-spacing: -0.05em !important;
+  letter-spacing: -.047em !important;
 }
 
-/* Tech — concept: two large rounded panels, nearly touching, centered over tech background. */
+/* TECH — faithful to concept: centered 2-card instrument panel over the generated
+   arc/grid background, narrow inter-card gap and restrained neon edge treatment. */
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-hero-wrap {
   display: grid !important;
-  grid-template-columns: 255px 475px !important;
+  grid-template-columns: 256px 482px !important;
   grid-template-rows: 265px !important;
   justify-content: center !important;
   align-items: center !important;
-  gap: 12px !important;
-  min-height: 500px !important;
-  padding: 72px 48px !important;
+  gap: 13px !important;
+  min-height: 492px !important;
+  padding: 70px 48px 76px !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-brand,
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-info {
+  position: relative !important;
   height: 265px !important;
   min-height: 265px !important;
   box-sizing: border-box !important;
-  border: 1px solid rgba(102, 225, 158, 0.50) !important;
-  border-radius: 20px !important;
-  background: linear-gradient(145deg, rgba(16, 48, 38, .35), rgba(8, 13, 18, .58)) !important;
-  backdrop-filter: blur(4px) !important;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.025), 0 18px 55px rgba(0,0,0,.18), 0 0 34px rgba(75, 210, 141, .05) !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(94, 213, 147, .44) !important;
+  border-radius: 19px !important;
+  background: linear-gradient(145deg, rgba(13, 47, 38, .45), rgba(8, 13, 18, .63)) !important;
+  backdrop-filter: blur(5px) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.02), 0 16px 46px rgba(0,0,0,.18), 0 0 26px rgba(73, 210, 140, .045) !important;
+}
+
+.gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-brand::before,
+.gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-info::before {
+  content: "";
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(100, 226, 158, .46), transparent);
+  opacity: .7;
+}
+
+.gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-brand::after,
+.gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-info::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 34%;
+  width: 32%;
+  height: 1px;
+  background: rgba(99, 225, 157, .32);
+  box-shadow: 0 0 8px rgba(99, 225, 157, .18);
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-brand {
   min-width: 0 !important;
-  width: 255px !important;
+  width: 256px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 26px !important;
+  padding: 28px !important;
   text-align: center !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-brand img {
-  max-width: 205px !important;
-  max-height: 150px !important;
+  max-width: 184px !important;
+  max-height: 136px !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-info {
   min-width: 0 !important;
-  width: 475px !important;
+  width: 482px !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: center !important;
   align-items: center !important;
-  padding: 30px 38px !important;
+  padding: 28px 40px !important;
   text-align: center !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-info > div {
   font-size: 10px !important;
-  letter-spacing: 0.22em !important;
+  line-height: 1.2 !important;
+  letter-spacing: .22em !important;
   text-transform: uppercase !important;
+  opacity: .78 !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-info h1 {
   width: 100% !important;
-  margin: 17px 0 14px !important;
-  font-size: clamp(40px, 4.5vw, 58px) !important;
+  margin: 18px 0 26px !important;
+  font-size: clamp(40px, 4.35vw, 58px) !important;
+  font-weight: 650 !important;
   line-height: .98 !important;
-  letter-spacing: -0.045em !important;
+  letter-spacing: -.045em !important;
   text-align: center !important;
+}
+
+/* Short luminous separator from the approved tech concept. */
+.gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-info h1::after {
+  content: "";
+  display: block;
+  width: 30px;
+  height: 2px;
+  margin: 24px auto -8px;
+  border-radius: 999px;
+  background: rgba(96, 226, 157, .72);
+  box-shadow: 0 0 10px rgba(96, 226, 157, .22);
 }
 
 @media (max-width: 900px) {
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap {
-    grid-template-columns: 210px minmax(340px, 500px) !important;
-    column-gap: 34px !important;
+    grid-template-columns: 170px minmax(340px, 450px) !important;
+    column-gap: 46px !important;
+  }
+
+  .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand {
+    width: 170px !important;
   }
 
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-hero-wrap {
-    grid-template-columns: 225px minmax(360px, 445px) !important;
+    grid-template-columns: 225px minmax(360px, 440px) !important;
   }
 
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-brand,
@@ -216,7 +275,7 @@
     flex-direction: column !important;
     justify-content: center !important;
     align-items: center !important;
-    gap: 22px !important;
+    gap: 20px !important;
     min-height: 430px !important;
     padding: 46px 22px !important;
     text-align: center !important;
@@ -231,11 +290,12 @@
     left: 22px !important;
     width: 78px !important;
     height: 78px !important;
+    padding: 10px !important;
   }
 
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-minimal"]) .gc-brand img {
-    max-width: 78px !important;
-    max-height: 78px !important;
+    max-width: 56px !important;
+    max-height: 56px !important;
   }
 
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand,
@@ -266,7 +326,7 @@
 
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-brand img,
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand img {
-    max-width: 180px !important;
-    max-height: 112px !important;
+    max-width: 170px !important;
+    max-height: 108px !important;
   }
 }
