@@ -79,94 +79,152 @@
   letter-spacing: -.04em !important;
 }
 
-/* PREMIUM — larger centered signature with hairline divider and restrained editorial ornaments. */
+/* PREMIUM — editorial luxury: centered signature, luminous vertical hairline,
+   restrained framing and a soft central spotlight. */
+.gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-bg::after {
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.035) 0%, rgba(255,255,255,.012) 30%, transparent 58%),
+    linear-gradient(90deg, rgba(2,7,7,.12), rgba(2,7,7,.19) 50%, rgba(2,7,7,.13)) !important;
+}
+
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap {
   position: relative !important;
   display: grid !important;
-  grid-template-columns: 270px minmax(450px, 620px) !important;
+  grid-template-columns: 292px minmax(470px, 610px) !important;
   justify-content: center !important;
   align-items: center !important;
-  column-gap: 54px !important;
+  column-gap: 68px !important;
   min-height: 492px !important;
-  padding: 62px 56px !important;
+  padding: 64px 58px !important;
   overflow: hidden !important;
 }
 
-/* Fine horizontal ornaments frame the central signature without competing with it. */
+/* Short, neutral metallic hairlines create a quiet editorial frame. */
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::before,
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::after {
   content: "";
   position: absolute;
   left: 50%;
-  width: min(68vw, 980px);
+  width: min(26vw, 330px);
   height: 1px;
   transform: translateX(-50%);
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.045) 16%, rgba(117,226,165,.24) 50%, rgba(255,255,255,.045) 84%, transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.11) 28%, rgba(255,255,255,.34) 50%, rgba(255,255,255,.11) 72%, transparent);
+  box-shadow: 0 0 12px rgba(255,255,255,.035);
   pointer-events: none;
 }
 
-.gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::before { top: 82px; }
-.gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::after { bottom: 82px; }
+.gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::before { top: 94px; }
+.gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::after { bottom: 94px; opacity: .68; }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand {
+  position: relative !important;
   min-width: 0 !important;
-  width: 270px !important;
+  width: 292px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   text-align: center !important;
 }
 
+/* A very soft halo gives the logo presence without putting it inside a card. */
+.gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 260px;
+  height: 210px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255,255,255,.045), rgba(255,255,255,.012) 44%, transparent 72%);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -34px;
+  width: 46px;
+  height: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.32), transparent);
+  box-shadow: 0 0 10px rgba(255,255,255,.055);
+}
+
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand img {
-  max-width: 242px !important;
-  max-height: 168px !important;
-  filter: drop-shadow(0 16px 40px rgba(0,0,0,.26)) !important;
+  position: relative !important;
+  z-index: 1 !important;
+  max-width: 258px !important;
+  max-height: 178px !important;
+  filter: drop-shadow(0 18px 44px rgba(0,0,0,.24)) drop-shadow(0 0 18px rgba(255,255,255,.025)) !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-info {
   position: relative !important;
   min-width: 0 !important;
-  padding: 18px 0 18px 58px !important;
+  padding: 20px 0 20px 72px !important;
   text-align: left !important;
 }
 
+/* Signature divider: bright in the middle, disappearing softly at both ends. */
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-info::before {
   content: "";
   position: absolute;
   left: 0;
-  top: -56px;
-  bottom: -56px;
+  top: -68px;
+  bottom: -68px;
   width: 1px;
-  background: linear-gradient(180deg, rgba(78,217,143,0), rgba(78,217,143,.62) 14%, rgba(78,217,143,.42) 86%, rgba(78,217,143,0));
-  box-shadow: 0 0 18px rgba(78,217,143,.11);
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(255,255,255,.08) 12%,
+    rgba(255,255,255,.42) 38%,
+    rgba(255,255,255,.76) 50%,
+    rgba(255,255,255,.42) 62%,
+    rgba(255,255,255,.08) 88%,
+    transparent 100%);
+  box-shadow: 0 0 14px rgba(255,255,255,.10), 0 0 28px rgba(255,255,255,.035);
 }
 
+/* Tiny jewel at the center of the divider. */
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-info::after {
   content: "";
   position: absolute;
-  left: 58px;
-  top: -20px;
-  width: 72px;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(107,226,163,.62), transparent);
-  box-shadow: 0 0 10px rgba(107,226,163,.12);
+  left: -2px;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  transform: translateY(-50%) rotate(45deg);
+  border: 1px solid rgba(255,255,255,.56);
+  background: rgba(255,255,255,.20);
+  box-shadow: 0 0 10px rgba(255,255,255,.14);
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-info > div {
-  font-size: 13px !important;
+  font-size: 12px !important;
   line-height: 1.2 !important;
-  letter-spacing: .21em !important;
+  letter-spacing: .28em !important;
   text-transform: uppercase !important;
-  opacity: .86 !important;
+  font-weight: 500 !important;
+  opacity: .84 !important;
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-info h1 {
-  max-width: 620px !important;
-  margin: 20px 0 16px !important;
-  font-size: clamp(52px, 5.3vw, 74px) !important;
-  font-weight: 650 !important;
-  line-height: .96 !important;
-  letter-spacing: -.052em !important;
+  max-width: 610px !important;
+  margin: 22px 0 18px !important;
+  font-size: clamp(54px, 5.45vw, 78px) !important;
+  font-weight: 600 !important;
+  line-height: .95 !important;
+  letter-spacing: -.048em !important;
+  text-shadow: 0 12px 36px rgba(0,0,0,.12) !important;
+}
+
+.gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-info p {
+  margin-top: 0 !important;
+  font-size: 17px !important;
+  letter-spacing: .015em !important;
+  opacity: .72 !important;
 }
 
 /* TECH — no cards: logo and copy float directly over a denser instrument-style background. */
@@ -285,17 +343,21 @@
 
 @media (max-width: 900px) {
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap {
-    grid-template-columns: 220px minmax(360px, 500px) !important;
-    column-gap: 42px !important;
+    grid-template-columns: 230px minmax(360px, 500px) !important;
+    column-gap: 50px !important;
   }
 
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand {
-    width: 220px !important;
+    width: 230px !important;
   }
 
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand img {
-    max-width: 205px !important;
-    max-height: 144px !important;
+    max-width: 214px !important;
+    max-height: 150px !important;
+  }
+
+  .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-info {
+    padding-left: 56px !important;
   }
 
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-tech"]) .gc-hero-wrap {
@@ -360,7 +422,9 @@
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-info::before,
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-info::after,
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::before,
-  .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::after {
+  .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::after,
+  .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand::before,
+  .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand::after {
     display: none !important;
   }
 
