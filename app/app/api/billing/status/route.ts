@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
+import { planoFotura } from "../../../../lib/billing-plans";
 import { registrarErro } from "../../../../lib/observability";
 
 export const dynamic = "force-dynamic";
@@ -33,8 +34,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Assinatura não encontrada." }, { status: 404 });
   }
 
+  const plano = planoFotura(assinatura.plano_codigo as string | null);
+
   return NextResponse.json({
-    plano: assinatura.plano_codigo,
+    plano: {
+      codigo: plano.codigo,
+      nome: plano.nome,
+      descricao: plano.descricao,
+      limites: plano.limites,
+      recursos: plano.recursos,
+    },
     status: assinatura.status,
     provedor: assinatura.provedor,
     periodoInicio: assinatura.periodo_inicio,
