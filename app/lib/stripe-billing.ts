@@ -4,24 +4,47 @@ import type { PlanoCodigo } from "./billing-plans";
 
 const STRIPE_API = "https://api.stripe.com/v1";
 
-export const STRIPE_PRICE_POR_PLANO: Partial<Record<PlanoCodigo, string>> = {
+const STRIPE_PRICE_LIVE_POR_PLANO: Partial<Record<PlanoCodigo, string>> = {
   essencial: "price_1UAxnsPNUFf8TwH8rk19eNLO",
   profissional: "price_1UAxo1PNUFf8TwH8mtTjyndm",
   studio: "price_1UAxoxPNUFf8TwH8fnkLnqam",
 };
 
-export function planoPorStripePrice(priceId: string | null | undefined): PlanoCodigo | null {
-  if (!priceId) return null;
-  for (const [plano, id] of Object.entries(STRIPE_PRICE_POR_PLANO)) {
-    if (id === priceId) return plano as PlanoCodigo;
-  }
-  return null;
-}
-
 function stripeSecret() {
   const secret = process.env.STRIPE_SECRET_KEY?.trim();
   if (!secret) throw new Error("STRIPE_SECRET_KEY não configurada");
   return secret;
+}
+
+function stripeTestMode() {
+  return stripeSecret().startsWith("sk_test_");
+}
+
+function priceEnv(plano: PlanoCodigo) {
+  const nome = plano === "essencial"
+    ? "STRIPE_PRICE_ESSENCIAL"
+    : plano === "profissional"
+      ? "STRIPE_PRICE_PROFISSIONAL"
+      : plano === "studio"
+        ? "STRIPE_PRICE_STUDIO"
+        : null;
+  return nome ? process.env[nome]?.trim() || null : null;
+}
+
+export function stripePricePorPlano(plano: PlanoCodigo): string | null {
+  const configurado = priceEnv(plano);
+  if (configurado) return configurado;
+  if (stripeTestMode()) return null;
+  return STRIPE_PRICE_LIVE_POR_PLANO[plano] ?? null;
+}
+
+export function planoPorStripePrice(priceId: string | null | undefined): PlanoCodigo | null {
+  if (!priceId) return null;
+  const planos: PlanoCodigo[] = ["essencial", "profissional", "studio"];
+  for (const plano of planos) {
+    if (stripePricePorPlano(plano) === priceId) return plano;
+  }
+  return null;
 }
 
 export function stripeWebhookSecret() {
