@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { planoPorStripePrice, periodoAssinatura, stripeWebhookSecret, verificarAssinaturaStripe, type StripeCheckoutSession, type StripeSubscription } from "../../../../../lib/stripe-billing";
-import { registrarErro } from "../../../../../lib/observability";
-import { createServiceClient } from "../../../../../lib/supabase-server";
+import { planoPorStripePrice, periodoAssinatura, stripeWebhookSecret, verificarAssinaturaStripe, type StripeCheckoutSession, type StripeSubscription } from "../../../../lib/stripe-billing";
+import { registrarErro } from "../../../../lib/observability";
+import { createServiceClient } from "../../../../lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
