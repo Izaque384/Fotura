@@ -34,9 +34,7 @@ function heroSvg(corBase: string, estilo: string) {
           <stop offset="1" stop-color="#070711"/>
         </linearGradient>
       </defs>
-      <rect width="1600" height="700" fill="url(#bg)"/>
-      <rect x="120" y="120" width="1" height="460" fill="#ffffff" opacity=".10"/>
-      <rect x="1480" y="120" width="1" height="460" fill="#ffffff" opacity=".06"/>`;
+      <rect width="1600" height="700" fill="url(#bg)"/>`;
   } else if (preset === "tech") {
     decoracao = `
       <defs>
