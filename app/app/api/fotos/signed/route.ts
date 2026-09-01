@@ -21,8 +21,47 @@ function corSegura(valor: string | null | undefined) {
   return /^#[0-9a-fA-F]{6}$/.test(cor) ? cor : "#0b0b1a";
 }
 
+function hexRgb(hex: string) {
+  const cor = corSegura(hex).slice(1);
+  return {
+    r: parseInt(cor.slice(0, 2), 16),
+    g: parseInt(cor.slice(2, 4), 16),
+    b: parseInt(cor.slice(4, 6), 16),
+  };
+}
+
+function rgbHex(r: number, g: number, b: number) {
+  const canal = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
+  return `#${canal(r)}${canal(g)}${canal(b)}`;
+}
+
+function misturarCores(a: string, b: string, pesoB: number) {
+  const ca = hexRgb(a);
+  const cb = hexRgb(b);
+  const p = Math.max(0, Math.min(1, pesoB));
+  return rgbHex(
+    ca.r * (1 - p) + cb.r * p,
+    ca.g * (1 - p) + cb.g * p,
+    ca.b * (1 - p) + cb.b * p,
+  );
+}
+
+function paletaHero(corBase: string) {
+  const base = corSegura(corBase);
+  const ancoraEscura = "#07110f";
+  return {
+    base,
+    esquerda: misturarCores(base, ancoraEscura, 0.68),
+    meio: misturarCores(base, ancoraEscura, 0.82),
+    direita: misturarCores(base, ancoraEscura, 0.90),
+    brilho: misturarCores(base, "#ffffff", 0.18),
+    detalhe: misturarCores(base, "#d7ffe8", 0.34),
+  };
+}
+
 function heroSvg(corBase: string, estilo: string) {
   const cor = corSegura(corBase);
+  const paleta = paletaHero(cor);
   const preset = estilo === "minimal" || estilo === "tech" ? estilo : "premium";
   let decoracao = "";
 
@@ -30,12 +69,12 @@ function heroSvg(corBase: string, estilo: string) {
     decoracao = `
       <defs>
         <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="${cor}" stop-opacity=".82"/>
-          <stop offset=".52" stop-color="#0c1918"/>
-          <stop offset="1" stop-color="#091116"/>
+          <stop offset="0" stop-color="${paleta.esquerda}"/>
+          <stop offset=".54" stop-color="${paleta.meio}"/>
+          <stop offset="1" stop-color="${paleta.direita}"/>
         </linearGradient>
         <radialGradient id="soft" cx="20%" cy="16%" r="65%">
-          <stop offset="0" stop-color="#4ac98b" stop-opacity=".08"/>
+          <stop offset="0" stop-color="${paleta.brilho}" stop-opacity=".12"/>
           <stop offset="1" stop-color="#000000" stop-opacity="0"/>
         </radialGradient>
       </defs>
@@ -45,47 +84,47 @@ function heroSvg(corBase: string, estilo: string) {
     decoracao = `
       <defs>
         <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#071013"/>
-          <stop offset=".50" stop-color="${cor}" stop-opacity=".68"/>
-          <stop offset="1" stop-color="#091117"/>
+          <stop offset="0" stop-color="${paleta.direita}"/>
+          <stop offset=".48" stop-color="${paleta.esquerda}"/>
+          <stop offset="1" stop-color="${paleta.direita}"/>
         </linearGradient>
         <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
-          <circle cx="1" cy="1" r="1" fill="#72dda6" opacity=".12"/>
+          <circle cx="1" cy="1" r="1" fill="${paleta.detalhe}" opacity=".13"/>
         </pattern>
         <radialGradient id="centerGlow" cx="50%" cy="43%" r="46%">
-          <stop offset="0" stop-color="#61d99a" stop-opacity=".22"/>
-          <stop offset=".58" stop-color="#3ea978" stop-opacity=".07"/>
+          <stop offset="0" stop-color="${paleta.brilho}" stop-opacity=".24"/>
+          <stop offset=".58" stop-color="${paleta.esquerda}" stop-opacity=".11"/>
           <stop offset="1" stop-color="#000000" stop-opacity="0"/>
         </radialGradient>
         <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#65d89b" stop-opacity="0"/>
-          <stop offset=".5" stop-color="#65d89b" stop-opacity=".42"/>
-          <stop offset="1" stop-color="#65d89b" stop-opacity="0"/>
+          <stop offset="0" stop-color="${paleta.detalhe}" stop-opacity="0"/>
+          <stop offset=".5" stop-color="${paleta.detalhe}" stop-opacity=".44"/>
+          <stop offset="1" stop-color="${paleta.detalhe}" stop-opacity="0"/>
         </linearGradient>
       </defs>
       <rect width="1600" height="700" fill="url(#bg)"/>
       <rect width="1600" height="700" fill="url(#grid)"/>
       <rect width="1600" height="700" fill="url(#centerGlow)"/>
-      <circle cx="800" cy="360" r="330" fill="none" stroke="#6be0a3" stroke-width="1" opacity=".07"/>
-      <circle cx="800" cy="360" r="255" fill="none" stroke="#6be0a3" stroke-width="1" opacity=".055"/>
-      <path d="M0 382H125l72-72h176l64 64h190M1600 382h-125l-72-72h-176l-64 64H973" fill="none" stroke="#6be0a3" stroke-width="1" opacity=".18"/>
-      <path d="M0 520H240l42-42h220M1600 520h-240l-42-42h-220" fill="none" stroke="#6be0a3" stroke-width="1" opacity=".08"/>
+      <circle cx="800" cy="360" r="330" fill="none" stroke="${paleta.detalhe}" stroke-width="1" opacity=".08"/>
+      <circle cx="800" cy="360" r="255" fill="none" stroke="${paleta.detalhe}" stroke-width="1" opacity=".06"/>
+      <path d="M0 382H125l72-72h176l64 64h190M1600 382h-125l-72-72h-176l-64 64H973" fill="none" stroke="${paleta.detalhe}" stroke-width="1" opacity=".18"/>
+      <path d="M0 520H240l42-42h220M1600 520h-240l-42-42h-220" fill="none" stroke="${paleta.detalhe}" stroke-width="1" opacity=".08"/>
       <rect x="360" y="295" width="880" height="1" fill="url(#line)" opacity=".5"/>`;
   } else {
     decoracao = `
       <defs>
         <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="${cor}" stop-opacity=".88"/>
-          <stop offset=".50" stop-color="#0d1b19"/>
-          <stop offset="1" stop-color="#091116"/>
+          <stop offset="0" stop-color="${paleta.esquerda}"/>
+          <stop offset=".52" stop-color="${paleta.meio}"/>
+          <stop offset="1" stop-color="${paleta.direita}"/>
         </linearGradient>
         <radialGradient id="leftGlow" cx="24%" cy="42%" r="48%">
-          <stop offset="0" stop-color="#43bd80" stop-opacity=".12"/>
+          <stop offset="0" stop-color="${paleta.brilho}" stop-opacity=".14"/>
           <stop offset="1" stop-color="#000000" stop-opacity="0"/>
         </radialGradient>
-        <radialGradient id="vignette" cx="50%" cy="45%" r="78%">
-          <stop offset=".62" stop-color="#000000" stop-opacity="0"/>
-          <stop offset="1" stop-color="#000000" stop-opacity=".16"/>
+        <radialGradient id="vignette" cx="50%" cy="45%" r="82%">
+          <stop offset=".66" stop-color="#000000" stop-opacity="0"/>
+          <stop offset="1" stop-color="#000000" stop-opacity=".10"/>
         </radialGradient>
       </defs>
       <rect width="1600" height="700" fill="url(#bg)"/>
