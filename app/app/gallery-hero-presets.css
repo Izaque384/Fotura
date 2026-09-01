@@ -79,8 +79,8 @@
   letter-spacing: -.04em !important;
 }
 
-/* PREMIUM — editorial luxury: centered signature, luminous vertical hairline,
-   restrained framing and a soft central spotlight. */
+/* PREMIUM — editorial luxury: centered signature, luminous vertical hairline
+   and a soft central spotlight. */
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-bg::after {
   background:
     radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.035) 0%, rgba(255,255,255,.012) 30%, transparent 58%),
@@ -98,23 +98,6 @@
   padding: 64px 58px !important;
   overflow: hidden !important;
 }
-
-/* Short, neutral metallic hairlines create a quiet editorial frame. */
-.gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::before,
-.gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  width: min(26vw, 330px);
-  height: 1px;
-  transform: translateX(-50%);
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.11) 28%, rgba(255,255,255,.34) 50%, rgba(255,255,255,.11) 72%, transparent);
-  box-shadow: 0 0 12px rgba(255,255,255,.035);
-  pointer-events: none;
-}
-
-.gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::before { top: 94px; }
-.gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::after { bottom: 94px; opacity: .68; }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand {
   position: relative !important;
@@ -139,18 +122,6 @@
   background: radial-gradient(ellipse, rgba(255,255,255,.045), rgba(255,255,255,.012) 44%, transparent 72%);
   filter: blur(4px);
   pointer-events: none;
-}
-
-.gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -34px;
-  width: 46px;
-  height: 1px;
-  transform: translateX(-50%);
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.32), transparent);
-  box-shadow: 0 0 10px rgba(255,255,255,.055);
 }
 
 .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand img {
@@ -421,10 +392,7 @@
 
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-info::before,
   .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-info::after,
-  .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::before,
-  .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-hero-wrap::after,
-  .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand::before,
-  .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand::after {
+  .gc-hero:has(.gc-hero-bg[style*="fotura-hero-premium"]) .gc-brand::before {
     display: none !important;
   }
 
