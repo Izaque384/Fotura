@@ -20,12 +20,19 @@ export async function GET(req: NextRequest) {
   if (!permitido) return json({ error: "Muitas solicitações. Aguarde um minuto." }, 429, 60);
 
   const supabase = createServiceClient();
-  const { data: g } = await supabase
+  const { data: g, error: galeriaError } = await supabase
     .from("galerias")
     .select("user_id,titulo,capa,prova,limite,prazo,link_ate,tem_senha")
     .eq("id", galeria)
     .maybeSingle();
 
+  if (galeriaError) {
+    console.error("[public-gallery] failed to load gallery metadata", {
+      code: galeriaError.code,
+      galeria,
+    });
+    return json({ error: "Não foi possível carregar a galeria." }, 500);
+  }
   if (!g) return json({ error: "Galeria não encontrada." }, 404);
 
   const linkAte = (g.link_ate as string | null) ?? null;
@@ -33,19 +40,36 @@ export async function GET(req: NextRequest) {
   const protegida = Boolean(g.tem_senha);
   const desbloqueada = !protegida || temAcessoGaleria(req, galeria);
 
-  const { data: perfil } = await supabase
+  const { data: perfil, error: perfilError } = await supabase
     .from("perfis")
     .select("nome_estudio,logo_url,cor_hero,hero_galeria_ativo,hero_galeria_estilo")
     .eq("id", g.user_id)
     .maybeSingle();
 
+  if (perfilError) {
+    console.error("[public-gallery] failed to load studio profile", {
+      code: perfilError.code,
+      galeria,
+    });
+    return json({ error: "Não foi possível carregar a galeria." }, 500);
+  }
+
   let selecao: { fotos: string[]; finalizada: boolean; comentarios: Record<string, string> } | null = null;
   if (desbloqueada && !linkExpirado) {
-    const { data: s } = await supabase
+    const { data: s, error: selecaoError } = await supabase
       .from("selecoes")
       .select("fotos,finalizada,comentarios")
       .eq("galeria", galeria)
       .maybeSingle();
+
+    if (selecaoError) {
+      console.error("[public-gallery] failed to load selection", {
+        code: selecaoError.code,
+        galeria,
+      });
+      return json({ error: "Não foi possível carregar a galeria." }, 500);
+    }
+
     if (s) selecao = {
       fotos: (s.fotos as string[]) ?? [],
       finalizada: Boolean(s.finalizada),
