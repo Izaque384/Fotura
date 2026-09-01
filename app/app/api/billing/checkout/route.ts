@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { planoFotura, type PlanoCodigo } from "../../../../../lib/billing-plans";
-import { registrarErro } from "../../../../../lib/observability";
-import { requisicaoMesmoOrigin } from "../../../../../lib/request-security";
-import { createServiceClient } from "../../../../../lib/supabase-server";
-import { STRIPE_PRICE_POR_PLANO, stripePost, type StripeCheckoutSession } from "../../../../../lib/stripe-billing";
+import { planoFotura, type PlanoCodigo } from "../../../../lib/billing-plans";
+import { registrarErro } from "../../../../lib/observability";
+import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
+import { createServiceClient } from "../../../../lib/supabase-server";
+import { STRIPE_PRICE_POR_PLANO, stripePost, type StripeCheckoutSession } from "../../../../lib/stripe-billing";
 
 export const dynamic = "force-dynamic";
 
