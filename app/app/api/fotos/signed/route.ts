@@ -89,20 +89,20 @@ function heroSvg(corBase: string, estilo: string) {
           <stop offset="1" stop-color="${paleta.direita}"/>
         </linearGradient>
         <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
-          <circle cx="1" cy="1" r="1" fill="${paleta.detalhe}" opacity=".17"/>
+          <circle cx="1" cy="1" r="1.05" fill="${paleta.detalhe}" opacity=".22"/>
         </pattern>
         <radialGradient id="centerGlow" cx="50%" cy="45%" r="48%">
-          <stop offset="0" stop-color="${paleta.brilho}" stop-opacity=".31"/>
-          <stop offset=".52" stop-color="${paleta.esquerda}" stop-opacity=".15"/>
+          <stop offset="0" stop-color="${paleta.brilho}" stop-opacity=".36"/>
+          <stop offset=".52" stop-color="${paleta.esquerda}" stop-opacity=".18"/>
           <stop offset="1" stop-color="#000000" stop-opacity="0"/>
         </radialGradient>
         <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stop-color="${paleta.detalhe}" stop-opacity="0"/>
-          <stop offset=".5" stop-color="${paleta.detalhe}" stop-opacity=".68"/>
+          <stop offset=".5" stop-color="${paleta.detalhe}" stop-opacity=".82"/>
           <stop offset="1" stop-color="${paleta.detalhe}" stop-opacity="0"/>
         </linearGradient>
-        <filter id="techGlow" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="1.35" result="blur"/>
+        <filter id="techGlow" x="-35%" y="-35%" width="170%" height="170%">
+          <feGaussianBlur stdDeviation="1.7" result="blur"/>
           <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
@@ -111,22 +111,22 @@ function heroSvg(corBase: string, estilo: string) {
       <rect width="1600" height="700" fill="url(#centerGlow)"/>
 
       <g fill="none" stroke="${paleta.detalhe}" filter="url(#techGlow)">
-        <circle cx="800" cy="350" r="345" stroke-width="1" opacity=".15"/>
-        <circle cx="800" cy="350" r="270" stroke-width="1" opacity=".11"/>
-        <circle cx="800" cy="350" r="194" stroke-width="1" opacity=".075" stroke-dasharray="7 12"/>
+        <circle cx="800" cy="350" r="345" stroke-width="1.1" opacity=".22"/>
+        <circle cx="800" cy="350" r="270" stroke-width="1.05" opacity=".17"/>
+        <circle cx="800" cy="350" r="194" stroke-width="1" opacity=".11" stroke-dasharray="7 12"/>
 
-        <path d="M0 378H128l72-72h182l58 58h160M1600 378h-128l-72-72h-182l-58 58H1000" stroke-width="1.1" opacity=".31"/>
-        <path d="M0 512H235l44-44h208M1600 512h-235l-44-44h-208" stroke-width="1" opacity=".17"/>
-        <path d="M0 228h188l38 38h154M1600 228h-188l-38 38h-154" stroke-width="1" opacity=".15"/>
-        <path d="M90 116h16v16M1494 116h16v16M90 584h16v-16M1494 584h16v-16" stroke-width="1" opacity=".38"/>
-        <path d="M800 72v54M800 574v54M522 350h54M1024 350h54" stroke-width="1" opacity=".23"/>
-        <circle cx="800" cy="350" r="5" opacity=".36"/>
+        <path d="M0 378H128l72-72h182l58 58h160M1600 378h-128l-72-72h-182l-58 58H1000" stroke-width="1.25" opacity=".42"/>
+        <path d="M0 512H235l44-44h208M1600 512h-235l-44-44h-208" stroke-width="1.1" opacity=".25"/>
+        <path d="M0 228h188l38 38h154M1600 228h-188l-38 38h-154" stroke-width="1.1" opacity=".22"/>
+        <path d="M90 116h16v16M1494 116h16v16M90 584h16v-16M1494 584h16v-16" stroke-width="1.1" opacity=".48"/>
+        <path d="M800 72v54M800 574v54M522 350h54M1024 350h54" stroke-width="1.05" opacity=".32"/>
+        <circle cx="800" cy="350" r="5" opacity=".46"/>
       </g>
 
-      <path d="M120 116h92v1h-92zM1388 116h92v1h-92zM120 584h92v1h-92zM1388 584h92v1h-92z" fill="${paleta.detalhe}" opacity=".34"/>
-      <rect x="300" y="286" width="1000" height="1" fill="url(#line)" opacity=".72"/>
-      <rect x="425" y="426" width="750" height="1" fill="url(#line)" opacity=".43"/>
-      <circle cx="800" cy="350" r="1.5" fill="${paleta.detalhe}" opacity=".80"/>`;
+      <path d="M120 116h92v1h-92zM1388 116h92v1h-92zM120 584h92v1h-92zM1388 584h92v1h-92z" fill="${paleta.detalhe}" opacity=".43"/>
+      <rect x="300" y="286" width="1000" height="1.2" fill="url(#line)" opacity=".86"/>
+      <rect x="425" y="426" width="750" height="1" fill="url(#line)" opacity=".56"/>
+      <circle cx="800" cy="350" r="1.7" fill="${paleta.detalhe}" opacity=".92"/>`;
   } else {
     decoracao = `
       <defs>
@@ -145,13 +145,13 @@ function heroSvg(corBase: string, estilo: string) {
         </radialGradient>
         <linearGradient id="premiumLine" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stop-color="${paleta.detalhe}" stop-opacity="0"/>
-          <stop offset=".22" stop-color="${paleta.detalhe}" stop-opacity=".10"/>
-          <stop offset=".52" stop-color="${paleta.detalhe}" stop-opacity=".30"/>
-          <stop offset=".82" stop-color="${paleta.detalhe}" stop-opacity=".11"/>
+          <stop offset=".18" stop-color="${paleta.detalhe}" stop-opacity=".17"/>
+          <stop offset=".50" stop-color="${paleta.detalhe}" stop-opacity=".42"/>
+          <stop offset=".82" stop-color="${paleta.detalhe}" stop-opacity=".17"/>
           <stop offset="1" stop-color="${paleta.detalhe}" stop-opacity="0"/>
         </linearGradient>
-        <filter id="premiumGlow" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="1.15" result="blur"/>
+        <filter id="premiumGlow" x="-35%" y="-35%" width="170%" height="170%">
+          <feGaussianBlur stdDeviation="1.55" result="blur"/>
           <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
@@ -160,22 +160,22 @@ function heroSvg(corBase: string, estilo: string) {
       <rect width="1600" height="700" fill="url(#vignette)"/>
 
       <g fill="none" stroke="url(#premiumLine)" stroke-linecap="round" filter="url(#premiumGlow)">
-        <path d="M-24 112 C76 94 130 126 210 116 C294 106 326 82 392 94" stroke-width="1" opacity=".24"/>
-        <path d="M22 176 C104 158 158 188 228 178 C282 170 318 146 360 152" stroke-width=".9" opacity=".16"/>
-        <path d="M-18 566 C74 550 126 574 198 568 C258 562 294 540 354 548" stroke-width="1" opacity=".21"/>
-        <path d="M52 624 C132 608 172 630 232 624 C284 618 316 602 350 606" stroke-width=".9" opacity=".14"/>
+        <path d="M-50 82 C42 48 118 112 218 86 C314 62 374 34 462 58 C518 74 550 86 612 72" stroke-width="1.15" opacity=".38"/>
+        <path d="M-18 156 C72 126 134 190 228 160 C306 136 350 106 422 120" stroke-width="1" opacity=".25"/>
+        <path d="M-44 548 C64 514 132 586 230 552 C316 522 358 500 434 514" stroke-width="1.12" opacity=".34"/>
+        <path d="M28 634 C104 606 160 656 242 630 C304 612 342 588 402 598" stroke-width=".95" opacity=".22"/>
 
-        <path d="M1624 128 C1532 110 1474 138 1398 128 C1320 118 1284 94 1216 104" stroke-width="1" opacity=".23"/>
-        <path d="M1576 190 C1500 176 1450 198 1380 190 C1328 184 1292 164 1246 170" stroke-width=".9" opacity=".15"/>
-        <path d="M1620 554 C1528 540 1470 568 1398 558 C1332 550 1294 530 1234 538" stroke-width="1" opacity=".20"/>
-        <path d="M1562 620 C1492 606 1442 628 1382 620 C1334 614 1300 598 1260 604" stroke-width=".9" opacity=".13"/>
+        <path d="M1650 98 C1556 60 1480 126 1382 98 C1288 72 1232 48 1142 68 C1088 80 1052 90 998 78" stroke-width="1.15" opacity=".37"/>
+        <path d="M1618 172 C1530 140 1466 198 1374 170 C1300 148 1258 120 1186 132" stroke-width="1" opacity=".24"/>
+        <path d="M1644 536 C1540 504 1472 576 1374 542 C1290 514 1246 492 1174 506" stroke-width="1.12" opacity=".33"/>
+        <path d="M1578 628 C1500 602 1446 646 1364 622 C1302 604 1268 584 1210 594" stroke-width=".95" opacity=".21"/>
       </g>
 
       <g fill="none" stroke="${paleta.detalhe}" stroke-linecap="round" filter="url(#premiumGlow)">
-        <path d="M72 82h72M72 82q-18 0-18 18v22" stroke-width="1" opacity=".17"/>
-        <path d="M1528 90h-70M1528 90q18 0 18 18v20" stroke-width="1" opacity=".17"/>
-        <path d="M82 610h64M82 610q-18 0-18-18v-20" stroke-width="1" opacity=".14"/>
-        <path d="M1518 606h-66M1518 606q18 0 18-18v-18" stroke-width="1" opacity=".14"/>
+        <path d="M54 58h116M54 58q-22 0-22 22v32" stroke-width="1.05" opacity=".24"/>
+        <path d="M1546 66h-112M1546 66q22 0 22 22v30" stroke-width="1.05" opacity=".24"/>
+        <path d="M68 626h102M68 626q-22 0-22-22v-30" stroke-width="1.05" opacity=".20"/>
+        <path d="M1532 620h-102M1532 620q22 0 22-22v-28" stroke-width="1.05" opacity=".20"/>
       </g>`;
   }
 
