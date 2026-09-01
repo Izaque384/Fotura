@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { registrarErro } from "../../../../../lib/observability";
-import { requisicaoMesmoOrigin } from "../../../../../lib/request-security";
-import { createServiceClient } from "../../../../../lib/supabase-server";
-import { stripePost, type StripePortalSession } from "../../../../../lib/stripe-billing";
+import { registrarErro } from "../../../../lib/observability";
+import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
+import { createServiceClient } from "../../../../lib/supabase-server";
+import { stripePost, type StripePortalSession } from "../../../../lib/stripe-billing";
 
 export const dynamic = "force-dynamic";
 
