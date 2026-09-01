@@ -13,6 +13,9 @@ test("rotas sensíveis rejeitam chamadas sem autenticação ou payload", async (
   const billing = await request.get("/api/billing/status");
   expect(billing.status()).toBe(401);
 
+  const billingUsage = await request.get("/api/billing/usage");
+  expect(billingUsage.status()).toBe(401);
+
   const acesso = await request.post("/api/galeria/acesso", { data: {} });
   expect(acesso.status()).toBe(400);
 
