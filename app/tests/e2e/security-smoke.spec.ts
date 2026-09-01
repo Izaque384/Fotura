@@ -19,6 +19,15 @@ test("rotas sensíveis rejeitam chamadas sem autenticação ou payload", async (
   const billingAuthorize = await request.post("/api/billing/authorize", { data: { acao: "criar_galeria" } });
   expect(billingAuthorize.status()).toBe(401);
 
+  const checkout = await request.post("/api/billing/checkout", { data: { plano: "essencial" } });
+  expect(checkout.status()).toBe(401);
+
+  const portal = await request.post("/api/billing/portal");
+  expect(portal.status()).toBe(401);
+
+  const webhook = await request.post("/api/billing/webhook", { data: {} });
+  expect(webhook.status()).toBe(400);
+
   const acesso = await request.post("/api/galeria/acesso", { data: {} });
   expect(acesso.status()).toBe(400);
 
@@ -44,7 +53,7 @@ test("APIs de galeria rejeitam identificadores que não são UUID", async ({ req
   expect(selecao.status()).toBe(400);
 });
 
-test("mutações de galeria bloqueiam origem externa", async ({ request }) => {
+test("mutações de galeria e cobrança bloqueiam origem externa", async ({ request }) => {
   const headers = {
     origin: "https://exemplo-malicioso.invalid",
     "sec-fetch-site": "cross-site",
@@ -84,6 +93,15 @@ test("mutações de galeria bloqueiam origem externa", async ({ request }) => {
     data: { acao: "criar_galeria" },
   });
   expect(billingAuthorize.status()).toBe(403);
+
+  const checkout = await request.post("/api/billing/checkout", {
+    headers,
+    data: { plano: "profissional" },
+  });
+  expect(checkout.status()).toBe(403);
+
+  const portal = await request.post("/api/billing/portal", { headers });
+  expect(portal.status()).toBe(403);
 });
 
 test("APIs retornam identificador de requisição para correlação", async ({ request }) => {
