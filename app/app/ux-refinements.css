@@ -70,6 +70,43 @@ svg.channel-icon:has(path[fill="#4285F4"]) {
   transform: none !important;
 }
 
+/* Galeria pública: entrega final não reapresenta a confirmação da seleção antiga. */
+.gc-page:has(.gc-download-all) .gc-bar.done {
+  display: none !important;
+}
+
+/* Lightbox: centralização óptica das setas dentro dos controles circulares. */
+.gc-nav {
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+  font-size: 0 !important;
+  text-align: center !important;
+}
+.gc-nav::before {
+  display: block;
+  font-size: 34px;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+.gc-nav.prev::before { content: "‹"; }
+.gc-nav.next::before { content: "›"; }
+
+/* Prova pública: a barra informativa ocupa seu próprio espaço e nunca invade as fotos. */
+.gc-hint,
+.gc-prazo {
+  position: relative !important;
+  z-index: 2 !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  margin: 0 0 18px !important;
+}
+.gc-grid {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
 /* Galerias e Seleções: ferramentas de busca/filtro com linguagem tech premium. */
 .dash.mf-shift .toolbar,
 .dash.mf-shift .sel-tools {
@@ -249,5 +286,12 @@ svg.channel-icon:has(path[fill="#4285F4"]) {
     right: 0 !important;
     position: static !important;
     margin-top: 24px !important;
+  }
+  .gc-nav::before {
+    font-size: 30px;
+  }
+  .gc-hint,
+  .gc-prazo {
+    margin-bottom: 14px !important;
   }
 }
