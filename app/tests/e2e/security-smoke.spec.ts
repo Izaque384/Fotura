@@ -16,6 +16,9 @@ test("rotas sensíveis rejeitam chamadas sem autenticação ou payload", async (
   const billingUsage = await request.get("/api/billing/usage");
   expect(billingUsage.status()).toBe(401);
 
+  const billingAuthorize = await request.post("/api/billing/authorize", { data: { acao: "criar_galeria" } });
+  expect(billingAuthorize.status()).toBe(401);
+
   const acesso = await request.post("/api/galeria/acesso", { data: {} });
   expect(acesso.status()).toBe(400);
 
@@ -75,6 +78,12 @@ test("mutações de galeria bloqueiam origem externa", async ({ request }) => {
     data: { galeria: "00000000-0000-4000-8000-000000000000" },
   });
   expect(enviar.status()).toBe(403);
+
+  const billingAuthorize = await request.post("/api/billing/authorize", {
+    headers,
+    data: { acao: "criar_galeria" },
+  });
+  expect(billingAuthorize.status()).toBe(403);
 });
 
 test("APIs retornam identificador de requisição para correlação", async ({ request }) => {
