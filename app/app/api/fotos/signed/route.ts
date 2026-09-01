@@ -36,6 +36,13 @@ export async function GET(req: NextRequest) {
   if (g.tem_senha && !temAcessoGaleria(req, galeria)) return json({ error: "Acesso à galeria necessário." }, 401);
 
   const dono = g.user_id as string;
+  const { data: perfil } = await supabase
+    .from("perfis")
+    .select("hero_galeria_ativo")
+    .eq("id", dono)
+    .maybeSingle();
+  const usarHeroEstudio = Boolean(perfil?.hero_galeria_ativo);
+
   const etapa = (g.etapa as string | null) || (g.prova ? "prova" : "entrega");
   const entregaFinal = etapa === "entrega";
   const base = entregaFinal ? `${dono}/${galeria}/entrega` : `${dono}/${galeria}`;
@@ -87,6 +94,6 @@ export async function GET(req: NextRequest) {
     return { nome: f.name, url, thumb };
   });
   const capaNome = capaFile && lista.some((f) => f.name === capaFile) ? capaFile : lista[0]?.name;
-  const capaUrl = capaNome ? (mapa[`${base}/${capaNome}`] ?? null) : null;
+  const capaUrl = usarHeroEstudio ? null : (capaNome ? (mapa[`${base}/${capaNome}`] ?? null) : null);
   return json({ fotos, capaUrl, etapa });
 }
