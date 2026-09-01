@@ -64,9 +64,9 @@ test("cliente seleciona, comenta e finaliza uma prova", async ({ page }) => {
   await expect(page.getByText("2 / 2 selecionadas")).toBeVisible();
 
   await page.locator(".gc-bar").getByRole("button", { name: "Finalizar seleção" }).click();
-  const dialog = page.getByRole("dialog", { name: "Finalizar seleção?" });
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "Finalizar seleção" }).click();
+  const confirmacao = page.locator(".gc-confirm-card");
+  await expect(confirmacao.getByRole("heading", { name: "Finalizar seleção?" })).toBeVisible();
+  await confirmacao.getByRole("button", { name: "Finalizar seleção" }).click();
 
   await expect(page.getByText("Seleção enviada — 2 fotos")).toBeVisible();
   await expect.poll(() => salvamentos.at(-1)?.finalizada).toBe(true);
