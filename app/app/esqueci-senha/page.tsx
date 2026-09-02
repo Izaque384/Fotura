@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase-client";
 
-const ORIGEM_PRODUCAO = "https://fotura.vercel.app";
+const ORIGEM_PRODUCAO = "https://foturax.com.br";
 
 function origemRecuperacao() {
   if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
