@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validarAdmin, registrarAdminAuditoria } from "../../../../../../lib/admin-server";
 import { registrarErro } from "../../../../../../lib/observability";
+import { createServiceClient } from "../../../../../../lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -14,7 +15,7 @@ type Body = {
   confirmacao?: string;
 };
 
-async function carregarEstado(supabase: Awaited<ReturnType<typeof validarAdmin>> extends infer T ? T extends { supabase: infer S } ? S : never : never, userId: string) {
+async function carregarEstado(supabase: ReturnType<typeof createServiceClient>, userId: string) {
   const [encerramentoRes, purgeRes, previewRes, assinaturaRes] = await Promise.all([
     supabase.from("admin_encerramentos").select("status,motivo,confirmado_em,executado_em").eq("user_id", userId).maybeSingle(),
     supabase.from("admin_purges").select("status,motivo,agendado_por,agendado_em,elegivel_em,cancelado_por,cancelado_em,executado_por,executado_em,atualizado_em").eq("user_id", userId).maybeSingle(),
