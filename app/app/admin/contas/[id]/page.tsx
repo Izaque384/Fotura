@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "../../../../lib/supabase-client";
+import AdminActions from "./AdminActions";
 
 type ContaDetalhe = {
   id: string;
@@ -94,6 +95,8 @@ export default function AdminContaPage() {
           <div className="row"><span>ID da conta</span><strong style={{fontSize:10}}>{conta.id}</strong></div>
         </div></div>
       </section>
+
+      <AdminActions userId={conta.id} temStripe={Boolean(conta.assinatura?.provedor === "stripe" && conta.assinatura?.provedor_assinatura_id)} />
 
       <section className="card tablecard"><div className="title">Galerias recentes</div><div className="tablewrap"><table className="table"><thead><tr><th>Título</th><th>Etapa</th><th>Tipo</th><th>Criada em</th><th>Link até</th><th>Storage limpo</th></tr></thead><tbody>{conta.galerias.map(g=><tr key={g.id}><td>{g.titulo || "Sem título"}</td><td>{g.etapa}</td><td>{g.prova?"Prova":"Entrega"}</td><td>{data(g.criado_em)}</td><td>{g.link_ate || "—"}</td><td>{g.storage_limpo?"Sim":"Não"}</td></tr>)}</tbody></table>{!conta.galerias.length&&<div className="empty">Nenhuma galeria.</div>}</div></section>
 
