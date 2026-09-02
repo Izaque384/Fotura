@@ -6,6 +6,12 @@ import { createServiceClient } from "../../../../lib/supabase-server";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+type StripeInvoice = {
+  id?: string;
+  customer?: string | null;
+  status?: string | null;
+};
+
 function iso(epoch: number | null | undefined) {
   return epoch ? new Date(epoch * 1000).toISOString() : null;
 }
@@ -55,6 +61,19 @@ async function atualizarCheckout(req: NextRequest, session: StripeCheckoutSessio
   if (error) throw error;
 }
 
+async function registrarFalhaPagamento(invoice: StripeInvoice) {
+  if (!invoice.customer) return;
+  const supabase = createServiceClient();
+  const { error } = await supabase
+    .from("assinaturas")
+    .update({ status: "past_due", atualizado_em: new Date().toISOString() })
+    .eq("provedor", "stripe")
+    .eq("provedor_cliente_id", invoice.customer)
+    .not("provedor_assinatura_id", "is", null)
+    .in("status", ["active", "trialing", "past_due"]);
+  if (error) throw error;
+}
+
 export async function POST(req: NextRequest) {
   const assinatura = req.headers.get("stripe-signature");
   if (!assinatura) return NextResponse.json({ error: "Assinatura Stripe ausente." }, { status: 400 });
@@ -84,6 +103,12 @@ export async function POST(req: NextRequest) {
       case "customer.subscription.updated":
       case "customer.subscription.deleted":
         await atualizarPorSubscription(req, event.data?.object as StripeSubscription);
+        break;
+      case "invoice.payment_failed":
+        await registrarFalhaPagamento(event.data?.object as StripeInvoice);
+        break;
+      case "invoice.paid":
+        // A subscription.updated continua sendo a fonte de verdade do status e do plano.
         break;
       default:
         break;
