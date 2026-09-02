@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase-client";
 
-const ORIGEM_PRODUCAO = "https://fotura.vercel.app";
+const ORIGEM_PRODUCAO = "https://foturax.com.br";
 
 function senhaCadastroValida(senha: string) {
   return senha.length >= 6 && senha.length <= 128;
@@ -48,7 +48,7 @@ export default function LoginPage() {
         email: emailNormalizado,
         password: senha,
         options: {
-          emailRedirectTo: ORIGEM_PRODUCAO,
+          emailRedirectTo: `${ORIGEM_PRODUCAO}/login?confirmado=1`,
           data: { aceitou_termos_em: new Date().toISOString() },
         },
       });
