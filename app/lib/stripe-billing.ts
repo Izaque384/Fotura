@@ -58,6 +58,17 @@ function adicionar(params: URLSearchParams, chave: string, valor: string | numbe
   params.append(chave, String(valor));
 }
 
+export async function stripeGet<T>(path: string): Promise<T> {
+  const response = await fetch(`${STRIPE_API}${path}`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${stripeSecret()}` },
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => null) as { error?: { message?: string } } | null;
+  if (!response.ok) throw new Error(payload?.error?.message || `Stripe HTTP ${response.status}`);
+  return payload as T;
+}
+
 export async function stripePost<T>(path: string, campos: Record<string, string | number | boolean | null | undefined>, idempotencyKey?: string): Promise<T> {
   const body = new URLSearchParams();
   for (const [chave, valor] of Object.entries(campos)) adicionar(body, chave, valor);
