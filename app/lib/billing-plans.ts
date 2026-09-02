@@ -1,4 +1,4 @@
-export type PlanoCodigo = "legacy" | "essencial" | "profissional" | "studio";
+export type PlanoCodigo = "sem_plano" | "legacy" | "essencial" | "profissional" | "studio";
 
 export type PlanoFotura = {
   codigo: PlanoCodigo;
@@ -25,6 +25,29 @@ export type PlanoFotura = {
 };
 
 export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
+  sem_plano: {
+    codigo: "sem_plano",
+    nome: "Sem plano",
+    descricao: "Escolha um plano para começar a usar os recursos comerciais do Fotura.",
+    precoMensalCentavos: null,
+    limites: {
+      galeriasAtivas: 0,
+      armazenamentoGb: 0,
+      clientes: 0,
+      fotosPorGaleria: 0,
+    },
+    recursos: {
+      selecaoProva: false,
+      comentarios: false,
+      senhaGaleria: false,
+      entregaFinal: false,
+      envioEmail: false,
+      brandingPersonalizado: false,
+      heroEstudio: false,
+      heroPremiumTech: false,
+      notificacoesPush: false,
+    },
+  },
   legacy: {
     codigo: "legacy",
     nome: "Legacy",
@@ -121,5 +144,5 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
 
 export function planoFotura(codigo: string | null | undefined): PlanoFotura {
   if (codigo && codigo in PLANOS_FOTURA) return PLANOS_FOTURA[codigo as PlanoCodigo];
-  return PLANOS_FOTURA.legacy;
+  return PLANOS_FOTURA.sem_plano;
 }
