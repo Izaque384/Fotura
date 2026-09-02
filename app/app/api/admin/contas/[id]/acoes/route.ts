@@ -35,6 +35,71 @@ export async function POST(req: NextRequest, contexto: { params: Promise<{ id: s
       .maybeSingle();
     if (assinaturaError) throw assinaturaError;
 
+    if (acao === "suspender") {
+      if (alvoUserId === adminUserId) {
+        return NextResponse.json({ error: "Você não pode suspender a própria conta administrativa." }, { status: 409 });
+      }
+      const agora = new Date().toISOString();
+      const { data: anterior, error: suspensaoLookupError } = await supabase
+        .from("admin_suspensoes")
+        .select("ativa,motivo,suspenso_por,suspenso_em,reativado_por,reativado_em")
+        .eq("user_id", alvoUserId)
+        .maybeSingle();
+      if (suspensaoLookupError) throw suspensaoLookupError;
+      if (anterior?.ativa) return NextResponse.json({ error: "Esta conta já está suspensa." }, { status: 409 });
+
+      const { error } = await supabase.from("admin_suspensoes").upsert({
+        user_id: alvoUserId,
+        ativa: true,
+        motivo,
+        suspenso_por: adminUserId,
+        suspenso_em: agora,
+        reativado_por: null,
+        reativado_em: null,
+        atualizado_em: agora,
+      }, { onConflict: "user_id" });
+      if (error) throw error;
+
+      await registrarAdminAuditoria({
+        supabase, req, adminUserId, papel,
+        acao: "conta.suspender",
+        alvoUserId,
+        entidade: "conta",
+        entidadeId: alvoUserId,
+        detalhes: { motivo, anterior: anterior ?? null },
+      });
+      return NextResponse.json({ ok: true, mensagem: "Conta suspensa administrativamente." });
+    }
+
+    if (acao === "reativar") {
+      const { data: anterior, error: suspensaoLookupError } = await supabase
+        .from("admin_suspensoes")
+        .select("ativa,motivo,suspenso_por,suspenso_em,reativado_por,reativado_em")
+        .eq("user_id", alvoUserId)
+        .maybeSingle();
+      if (suspensaoLookupError) throw suspensaoLookupError;
+      if (!anterior?.ativa) return NextResponse.json({ error: "Esta conta não está suspensa." }, { status: 409 });
+
+      const agora = new Date().toISOString();
+      const { error } = await supabase.from("admin_suspensoes").update({
+        ativa: false,
+        reativado_por: adminUserId,
+        reativado_em: agora,
+        atualizado_em: agora,
+      }).eq("user_id", alvoUserId);
+      if (error) throw error;
+
+      await registrarAdminAuditoria({
+        supabase, req, adminUserId, papel,
+        acao: "conta.reativar",
+        alvoUserId,
+        entidade: "conta",
+        entidadeId: alvoUserId,
+        detalhes: { motivo, anterior },
+      });
+      return NextResponse.json({ ok: true, mensagem: "Conta reativada administrativamente." });
+    }
+
     if (acao === "plano_manual") {
       const plano = String(body?.plano ?? "");
       if (!PLANOS_MANUAIS.has(plano)) return NextResponse.json({ error: "Plano manual inválido." }, { status: 400 });
