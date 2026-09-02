@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
   const { data: assinatura, error } = await supabase
     .from("assinaturas")
-    .select("plano_codigo,status,provedor,periodo_inicio,periodo_fim,cancelar_no_fim")
+    .select("plano_codigo,status,provedor,provedor_assinatura_id,periodo_inicio,periodo_fim,cancelar_no_fim")
     .eq("user_id", auth.user.id)
     .maybeSingle();
 
@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
   }
 
   const plano = planoFotura(assinatura.plano_codigo as string | null);
+  const temAssinatura = assinatura.provedor === "stripe" && Boolean(assinatura.provedor_assinatura_id);
 
   return NextResponse.json({
     plano: {
@@ -46,6 +47,7 @@ export async function GET(req: NextRequest) {
     },
     status: assinatura.status,
     provedor: assinatura.provedor,
+    temAssinatura,
     periodoInicio: assinatura.periodo_inicio,
     periodoFim: assinatura.periodo_fim,
     cancelarNoFim: Boolean(assinatura.cancelar_no_fim),
