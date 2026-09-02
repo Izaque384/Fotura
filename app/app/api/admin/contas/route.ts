@@ -34,11 +34,12 @@ export async function GET(req: NextRequest) {
     const users = usersData.users ?? [];
     const ids = users.map(u => u.id);
 
-    const [perfisRes, assinaturasRes, suspensoesRes, takedownsRes, galeriasRes, clientesRes] = await Promise.all([
+    const [perfisRes, assinaturasRes, suspensoesRes, takedownsRes, encerramentosRes, galeriasRes, clientesRes] = await Promise.all([
       ids.length ? supabase.from("perfis").select("id,nome_estudio").in("id", ids) : Promise.resolve({ data: [], error: null }),
       ids.length ? supabase.from("assinaturas").select("user_id,plano_codigo,status,provedor,provedor_assinatura_id,periodo_fim,cancelar_no_fim").in("user_id", ids) : Promise.resolve({ data: [], error: null }),
       ids.length ? supabase.from("admin_suspensoes").select("user_id,ativa,motivo,suspenso_em").in("user_id", ids) : Promise.resolve({ data: [], error: null }),
       ids.length ? supabase.from("admin_takedowns_publicos").select("user_id,ativo,motivo,atualizado_em,criado_em").in("user_id", ids) : Promise.resolve({ data: [], error: null }),
+      ids.length ? supabase.from("admin_encerramentos").select("user_id,status,motivo,solicitado_em,elegivel_em,confirmado_em").in("user_id", ids) : Promise.resolve({ data: [], error: null }),
       ids.length ? supabase.from("galerias").select("user_id").in("user_id", ids) : Promise.resolve({ data: [], error: null }),
       ids.length ? supabase.from("clientes").select("user_id").in("user_id", ids) : Promise.resolve({ data: [], error: null }),
     ]);
@@ -47,6 +48,7 @@ export async function GET(req: NextRequest) {
     if (assinaturasRes.error) throw assinaturasRes.error;
     if (suspensoesRes.error) throw suspensoesRes.error;
     if (takedownsRes.error) throw takedownsRes.error;
+    if (encerramentosRes.error) throw encerramentosRes.error;
     if (galeriasRes.error) throw galeriasRes.error;
     if (clientesRes.error) throw clientesRes.error;
 
@@ -54,6 +56,7 @@ export async function GET(req: NextRequest) {
     const assinaturas = new Map((assinaturasRes.data ?? []).map(a => [String(a.user_id), a]));
     const suspensoes = new Map((suspensoesRes.data ?? []).map(s => [String(s.user_id), s]));
     const takedowns = new Map((takedownsRes.data ?? []).map(t => [String(t.user_id), t]));
+    const encerramentos = new Map((encerramentosRes.data ?? []).map(e => [String(e.user_id), e]));
     const galerias = new Map<string, number>();
     const clientes = new Map<string, number>();
     for (const g of galeriasRes.data ?? []) galerias.set(String(g.user_id), (galerias.get(String(g.user_id)) ?? 0) + 1);
@@ -63,6 +66,7 @@ export async function GET(req: NextRequest) {
       const a = assinaturas.get(u.id);
       const s = suspensoes.get(u.id);
       const t = takedowns.get(u.id);
+      const e = encerramentos.get(u.id);
       return {
         id: u.id,
         email: u.email ?? "",
@@ -82,12 +86,17 @@ export async function GET(req: NextRequest) {
         takedownPublico: Boolean(t?.ativo),
         takedownMotivo: t?.ativo ? String(t.motivo ?? "") : null,
         takedownEm: t?.ativo ? (t.atualizado_em ?? t.criado_em ?? null) : null,
+        encerramentoStatus: e?.status ?? null,
+        encerramentoMotivo: e?.status === "pendente" || e?.status === "confirmado" ? String(e.motivo ?? "") : null,
+        encerramentoElegivelEm: e?.status === "pendente" ? e.elegivel_em ?? null : null,
+        encerramentoConfirmadoEm: e?.status === "confirmado" ? e.confirmado_em ?? null : null,
         galerias: galerias.get(u.id) ?? 0,
         clientes: clientes.get(u.id) ?? 0,
       };
     }).sort((a, b) => {
-      const riscoA = Number(a.suspensa) * 2 + Number(a.takedownPublico);
-      const riscoB = Number(b.suspensa) * 2 + Number(b.takedownPublico);
+      const peso = (c: typeof a) => (c.encerramentoStatus === "confirmado" ? 8 : c.encerramentoStatus === "pendente" ? 4 : 0) + Number(c.suspensa) * 2 + Number(c.takedownPublico);
+      const riscoA = peso(a);
+      const riscoB = peso(b);
       if (riscoA !== riscoB) return riscoB - riscoA;
       return String(b.criadoEm ?? "").localeCompare(String(a.criadoEm ?? ""));
     });
