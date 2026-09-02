@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   const { data: assinatura, error } = await supabase
     .from("assinaturas")
-    .select("provedor,provedor_cliente_id")
+    .select("provedor,provedor_cliente_id,provedor_assinatura_id")
     .eq("user_id", auth.user.id)
     .maybeSingle();
 
@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
     registrarErro("billing.portal.subscription_lookup", req, error, { userId: auth.user.id });
     return NextResponse.json({ error: "Não foi possível carregar sua assinatura." }, { status: 500 });
   }
-  if (!assinatura?.provedor_cliente_id || assinatura.provedor !== "stripe") {
-    return NextResponse.json({ error: "Sua assinatura ainda não é gerenciada pela Stripe." }, { status: 409 });
+  if (!assinatura?.provedor_cliente_id || !assinatura.provedor_assinatura_id || assinatura.provedor !== "stripe") {
+    return NextResponse.json({ error: "Sua conta ainda não possui uma assinatura Stripe para gerenciar." }, { status: 409 });
   }
 
   try {
