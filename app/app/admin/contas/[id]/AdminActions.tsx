@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { createClient } from "../../../../lib/supabase-client";
 
-export default function AdminActions({ userId, temStripe, suspenso }: { userId: string; temStripe: boolean; suspenso: boolean }) {
+export default function AdminActions({ userId, temStripe, suspenso = false }: { userId: string; temStripe: boolean; suspenso?: boolean }) {
   const supabase = useMemo(() => createClient(), []);
   const [plano, setPlano] = useState("legacy");
   const [motivo, setMotivo] = useState("");
