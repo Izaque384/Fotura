@@ -60,7 +60,7 @@ async function removerPrefixoStorage(
 async function checkpoint(
   supabase: ReturnType<typeof createServiceClient>,
   userId: string,
-  etapa: "storage" | "banco" | "auth" | "concluido" | "falhou",
+  etapa: "storage" | "banco" | "auth" | "falhou",
   erro: string | null = null,
 ) {
   const agora = new Date().toISOString();
@@ -133,25 +133,11 @@ export async function executarPurgeDefinitivo({
         resultado.authRemovido = true;
       }
 
-      const agora = new Date().toISOString();
-      const { error: finalError } = await supabase.from("admin_purges").update({
-        status: "executado",
-        execucao_etapa: "concluido",
-        execucao_erro: null,
-        executado_por: adminUserId,
-        executado_em: agora,
-        execucao_atualizada_em: agora,
-        atualizado_em: agora,
-      }).eq("user_id", userId);
-      if (finalError) throw finalError;
-      const { error: closureError } = await supabase.from("admin_encerramentos").update({
-        status: "executado",
-        executado_por: adminUserId,
-        executado_em: agora,
-        atualizado_em: agora,
-      }).eq("user_id", userId);
-      if (closureError) throw closureError;
-      etapa = "concluido";
+      const { error: finalizarError } = await supabase.rpc("finalizar_purge_backend", {
+        p_user_id: userId,
+        p_admin_user_id: adminUserId,
+      });
+      if (finalizarError) throw finalizarError;
     }
 
     return resultado;
