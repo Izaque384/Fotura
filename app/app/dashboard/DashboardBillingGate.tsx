@@ -9,7 +9,7 @@ type BillingStatus = {
   status?: string;
 };
 
-const ROTAS_SEM_PLANO = ["/dashboard/assinatura"];
+const ROTAS_SEM_PLANO = ["/dashboard/assinatura", "/dashboard/onboarding"];
 
 export default function DashboardBillingGate({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
@@ -51,7 +51,7 @@ export default function DashboardBillingGate({ children }: Readonly<{ children: 
         if (!ativo) return;
 
         if (billing.plano?.codigo === "sem_plano") {
-          router.replace("/dashboard/assinatura?motivo=plano");
+          router.replace("/dashboard/onboarding");
           return;
         }
 
