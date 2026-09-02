@@ -10,6 +10,7 @@ type StatusBilling = {
   plano: { codigo: PlanoCodigo; nome: string; descricao: string };
   status: string;
   provedor: string | null;
+  temAssinatura: boolean;
   periodoInicio: string | null;
   periodoFim: string | null;
   cancelarNoFim: boolean;
@@ -139,10 +140,11 @@ export default function AssinaturaPage() {
     }
   }
 
-  const atual = status?.plano.codigo ?? "legacy";
+  const atual = status?.plano.codigo ?? "sem_plano";
   const planoAtual = PLANOS_FOTURA[atual];
   const armazenamentoUsado = usage?.uso.armazenamentoGb ?? 0;
-  const gerenciadaStripe = status?.provedor === "stripe";
+  const gerenciadaStripe = Boolean(status?.temAssinatura);
+  const statusRestrito = status ? ["canceled", "unpaid", "paused", "incomplete", "incomplete_expired"].includes(status.status) : false;
 
   return <main className="bill-page mf-shift">
     <MenuFotografo/>
@@ -159,6 +161,8 @@ export default function AssinaturaPage() {
             <div className="current-head"><div><div className="bill-ey">Plano atual</div><div className="current-name">{planoAtual.nome}</div></div><span className="tag">{statusLabel(status?.status ?? "active")}</span></div>
             <p className="bill-sub" style={{marginTop:10}}>{planoAtual.descricao}</p>
             {atual === "legacy" && <div className="legacy">Sua conta atual mantém acesso integral enquanto o Fotura conclui a transição para os planos comerciais. Nenhum recurso foi removido da sua conta.</div>}
+            {atual === "sem_plano" && !statusRestrito && <div className="legacy">Sua conta ainda não possui uma assinatura ativa. Escolha um dos planos abaixo para liberar a criação de galerias, clientes e novos uploads.</div>}
+            {statusRestrito && <div className="legacy">Sua assinatura não está com acesso comercial ativo. Você pode contratar novamente abaixo{gerenciadaStripe ? " ou abrir o gerenciamento da cobrança" : ""}.</div>}
             {gerenciadaStripe && <button className="manage-btn" disabled={Boolean(processando)} onClick={()=>void gerenciar()}>{processando==="portal"?"Abrindo…":"Gerenciar assinatura"}</button>}
           </div>
           <div className="card usage">
@@ -171,7 +175,7 @@ export default function AssinaturaPage() {
 
         <div className="plans-head"><div><div className="bill-ey">Planos comerciais</div><h2>Escolha o nível certo para sua operação</h2></div><p>Valores mensais em reais.</p></div>
         <section className="plans">
-          {comerciais.map((codigo) => { const p=PLANOS_FOTURA[codigo]; const ehAtual=atual===codigo; const ocupado=Boolean(processando); return <article key={codigo} className={`card plan${codigo==="profissional"?" featured":""}`}>
+          {comerciais.map((codigo) => { const p=PLANOS_FOTURA[codigo]; const ehAtual=atual===codigo && !statusRestrito; const ocupado=Boolean(processando); return <article key={codigo} className={`card plan${codigo==="profissional"?" featured":""}`}>
             {codigo==="profissional" && <span className="recommended">MAIS ESCOLHIDO</span>}
             <div className="plan-name">{p.nome}</div><div className="plan-desc">{p.descricao}</div>
             <div><span className="price">{dinheiro(p.precoMensalCentavos)}</span><span className="month">/mês</span></div>
