@@ -4,6 +4,13 @@ import { registrarErro } from "../../../../lib/observability";
 
 export const dynamic = "force-dynamic";
 
+const PRECOS: Record<string, number> = {
+  essencial: 2990,
+  profissional: 5990,
+  studio: 11990,
+};
+const STATUS_COMERCIAIS = new Set(["active", "trialing", "past_due"]);
+
 export async function GET(req: NextRequest) {
   const authorization = req.headers.get("authorization") ?? "";
   const match = authorization.match(/^Bearer\s+(.+)$/i);
@@ -39,20 +46,24 @@ export async function GET(req: NextRequest) {
     const assinaturas = assinaturasRes.data ?? [];
     const porPlano = { sem_plano: 0, legacy: 0, essencial: 0, profissional: 0, studio: 0 } as Record<string, number>;
     const porStatus: Record<string, number> = {};
+    let assinantes = 0;
+    let mrrCentavos = 0;
+
     for (const item of assinaturas) {
       const plano = String(item.plano_codigo ?? "sem_plano");
-      porPlano[plano] = (porPlano[plano] ?? 0) + 1;
       const status = String(item.status ?? "desconhecido");
+      porPlano[plano] = (porPlano[plano] ?? 0) + 1;
       porStatus[status] = (porStatus[status] ?? 0) + 1;
+      if (PRECOS[plano] && STATUS_COMERCIAIS.has(status)) {
+        assinantes += 1;
+        mrrCentavos += PRECOS[plano];
+      }
     }
-
-    const pagasAtivas = assinaturas.filter(a => ["essencial","profissional","studio"].includes(String(a.plano_codigo)) && ["active","trialing","past_due"].includes(String(a.status))).length;
-    const mrrCentavos = porPlano.essencial * 2990 + porPlano.profissional * 5990 + porPlano.studio * 11990;
 
     return NextResponse.json({
       papel: admin.papel,
       contas: assinaturas.length,
-      assinantes: pagasAtivas,
+      assinantes,
       mrrCentavos,
       galerias: galeriasRes.count ?? 0,
       clientes: clientesRes.count ?? 0,
