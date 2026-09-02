@@ -10,20 +10,18 @@ export async function GET(req: NextRequest) {
   const { supabase, adminUserId, papel } = validacao;
 
   try {
-    const { data, error } = await supabase
-      .from("admin_auditoria")
-      .select("id,admin_user_id,admin_papel,acao,alvo_user_id,entidade,entidade_id,detalhes,criado_em")
-      .order("criado_em", { ascending: false })
-      .limit(100);
+    const [{ data, error }, { data: usersData, error: usersError }] = await Promise.all([
+      supabase
+        .from("admin_auditoria")
+        .select("id,admin_user_id,admin_papel,acao,alvo_user_id,entidade,entidade_id,detalhes,criado_em")
+        .order("criado_em", { ascending: false })
+        .limit(100),
+      supabase.auth.admin.listUsers({ page: 1, perPage: 200 }),
+    ]);
     if (error) throw error;
+    if (usersError) throw usersError;
 
-    const ids = Array.from(new Set((data ?? []).flatMap(item => [item.admin_user_id, item.alvo_user_id].filter(Boolean) as string[])));
-    const emails = new Map<string, string>();
-    for (const id of ids) {
-      const { data: usuario } = await supabase.auth.admin.getUserById(id);
-      if (usuario.user) emails.set(id, usuario.user.email ?? "");
-    }
-
+    const emails = new Map((usersData.users ?? []).map(user => [user.id, user.email ?? ""]));
     const eventos = (data ?? []).map(item => ({
       ...item,
       admin_email: emails.get(String(item.admin_user_id)) ?? "",
