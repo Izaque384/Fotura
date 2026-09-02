@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { contextoPlano, podeAdicionarFotos } from "../../../../lib/billing-usage";
+import { obterSuspensaoAdministrativa } from "../../../../lib/account-access";
 import { registrarErro } from "../../../../lib/observability";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { createServiceClient } from "../../../../lib/supabase-server";
@@ -46,7 +47,19 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const contexto = await contextoPlano(supabase, auth.user.id);
+    const [contexto, suspensao] = await Promise.all([
+      contextoPlano(supabase, auth.user.id),
+      obterSuspensaoAdministrativa(supabase, auth.user.id),
+    ]);
+
+    if (suspensao?.ativa) {
+      return NextResponse.json({
+        autorizado: false,
+        codigo: "conta_suspensa",
+        error: "Esta conta está temporariamente suspensa. Entre em contato com o suporte do Fotura.",
+      }, { status: 403, headers: { "Cache-Control": "no-store, private" } });
+    }
+
     if (contexto.plano.codigo === "legacy") {
       return NextResponse.json({ autorizado: true, plano: contexto.plano.codigo }, { headers: { "Cache-Control": "no-store, private" } });
     }
