@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { planoFotura, type PlanoFotura } from "./billing-plans";
 
 const GIB = 1024 * 1024 * 1024;
+const STATUS_COM_ACESSO = new Set(["active", "trialing", "past_due"]);
 
 export type UsoPlano = {
   galeriasAtivas: number;
@@ -74,12 +75,15 @@ export async function contextoPlano(supabase: SupabaseClient, userId: string) {
     .maybeSingle();
   if (error) throw error;
 
-  const plano = planoFotura((assinatura?.plano_codigo as string | null) ?? "legacy");
+  const status = (assinatura?.status as string | null) ?? "active";
+  const codigoPersistido = (assinatura?.plano_codigo as string | null) ?? "sem_plano";
+  const plano = STATUS_COM_ACESSO.has(status) ? planoFotura(codigoPersistido) : planoFotura("sem_plano");
   const uso = await obterUsoPlano(supabase, userId);
 
   return {
     plano,
-    status: (assinatura?.status as string | null) ?? "active",
+    planoPersistido: planoFotura(codigoPersistido),
+    status,
     uso,
     limites: avaliarLimites(plano, uso),
   };
