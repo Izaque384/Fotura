@@ -35,6 +35,76 @@ export async function POST(req: NextRequest, contexto: { params: Promise<{ id: s
       .maybeSingle();
     if (assinaturaError) throw assinaturaError;
 
+    if (acao === "takedown_publico") {
+      const { data: anterior, error: lookupError } = await supabase
+        .from("admin_takedowns_publicos")
+        .select("ativo,motivo,criado_por,criado_em,atualizado_por,atualizado_em,removido_por,removido_em")
+        .eq("user_id", alvoUserId)
+        .maybeSingle();
+      if (lookupError) throw lookupError;
+      if (anterior?.ativo) return NextResponse.json({ error: "O conteúdo público desta conta já está bloqueado." }, { status: 409 });
+
+      const agora = new Date().toISOString();
+      const { error } = await supabase.from("admin_takedowns_publicos").upsert({
+        user_id: alvoUserId,
+        ativo: true,
+        motivo,
+        criado_por: anterior?.criado_por ?? adminUserId,
+        criado_em: anterior?.criado_em ?? agora,
+        atualizado_por: adminUserId,
+        atualizado_em: agora,
+        removido_por: null,
+        removido_em: null,
+      }, { onConflict: "user_id" });
+      if (error) throw error;
+
+      const { error: aplicarError } = await supabase.rpc("aplicar_takedown_publico_backend", { p_user_id: alvoUserId });
+      if (aplicarError) throw aplicarError;
+
+      await registrarAdminAuditoria({
+        supabase, req, adminUserId, papel,
+        acao: "conta.takedown_publico",
+        alvoUserId,
+        entidade: "conteudo_publico",
+        entidadeId: alvoUserId,
+        detalhes: { motivo, anterior: anterior ?? null },
+      });
+      return NextResponse.json({ ok: true, mensagem: "Galerias públicas bloqueadas temporariamente." });
+    }
+
+    if (acao === "restaurar_publico") {
+      const { data: anterior, error: lookupError } = await supabase
+        .from("admin_takedowns_publicos")
+        .select("ativo,motivo,criado_por,criado_em,atualizado_por,atualizado_em,removido_por,removido_em")
+        .eq("user_id", alvoUserId)
+        .maybeSingle();
+      if (lookupError) throw lookupError;
+      if (!anterior?.ativo) return NextResponse.json({ error: "O conteúdo público desta conta não está bloqueado." }, { status: 409 });
+
+      const agora = new Date().toISOString();
+      const { error } = await supabase.from("admin_takedowns_publicos").update({
+        ativo: false,
+        atualizado_por: adminUserId,
+        atualizado_em: agora,
+        removido_por: adminUserId,
+        removido_em: agora,
+      }).eq("user_id", alvoUserId);
+      if (error) throw error;
+
+      const { error: restaurarError } = await supabase.rpc("remover_takedown_publico_backend", { p_user_id: alvoUserId });
+      if (restaurarError) throw restaurarError;
+
+      await registrarAdminAuditoria({
+        supabase, req, adminUserId, papel,
+        acao: "conta.restaurar_publico",
+        alvoUserId,
+        entidade: "conteudo_publico",
+        entidadeId: alvoUserId,
+        detalhes: { motivo, anterior },
+      });
+      return NextResponse.json({ ok: true, mensagem: "Galerias públicas restauradas com os prazos anteriores." });
+    }
+
     if (acao === "suspender") {
       if (alvoUserId === adminUserId) {
         return NextResponse.json({ error: "Você não pode suspender a própria conta administrativa." }, { status: 409 });
