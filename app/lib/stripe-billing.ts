@@ -5,9 +5,15 @@ import type { PlanoCodigo } from "./billing-plans";
 const STRIPE_API = "https://api.stripe.com/v1";
 
 const STRIPE_PRICE_LIVE_POR_PLANO: Partial<Record<PlanoCodigo, string>> = {
-  essencial: "price_1UAxnsPNUFf8TwH8rk19eNLO",
-  profissional: "price_1UAxo1PNUFf8TwH8mtTjyndm",
-  studio: "price_1UAxoxPNUFf8TwH8fnkLnqam",
+  essencial: "price_1UBZoTPNUFf8TwH8X6fqs6Dn",
+  profissional: "price_1UBZoePNUFf8TwH8Y0V7IrQ6",
+  studio: "price_1UBZorPNUFf8TwH83lW4zxAr",
+};
+
+const STRIPE_PRICE_LEGACY_POR_PLANO: Partial<Record<PlanoCodigo, string[]>> = {
+  essencial: ["price_1UAxnsPNUFf8TwH8rk19eNLO"],
+  profissional: ["price_1UAxo1PNUFf8TwH8mtTjyndm"],
+  studio: ["price_1UAxoxPNUFf8TwH8fnkLnqam"],
 };
 
 function stripeSecret() {
@@ -43,6 +49,7 @@ export function planoPorStripePrice(priceId: string | null | undefined): PlanoCo
   const planos: PlanoCodigo[] = ["essencial", "profissional", "studio"];
   for (const plano of planos) {
     if (stripePricePorPlano(plano) === priceId) return plano;
+    if (STRIPE_PRICE_LEGACY_POR_PLANO[plano]?.includes(priceId)) return plano;
   }
   return null;
 }
