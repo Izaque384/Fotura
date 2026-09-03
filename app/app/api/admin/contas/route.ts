@@ -23,15 +23,29 @@ async function validarAdmin(req: NextRequest) {
   return { supabase, userId: auth.user.id, papel: String(admin.papel ?? "admin") };
 }
 
+async function listarTodosUsuariosAuth(supabase: ReturnType<typeof createServiceClient>) {
+  const perPage = 100;
+  const users = [];
+
+  for (let page = 1; ; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    const lote = data.users ?? [];
+    users.push(...lote);
+    if (lote.length < perPage) break;
+    if (page >= 1000) throw new Error("Paginação de usuários excedeu o limite de segurança");
+  }
+
+  return users;
+}
+
 export async function GET(req: NextRequest) {
   const validacao = await validarAdmin(req);
   if ("error" in validacao) return validacao.error;
   const { supabase, userId, papel } = validacao;
 
   try {
-    const { data: usersData, error: usersError } = await supabase.auth.admin.listUsers({ page: 1, perPage: 200 });
-    if (usersError) throw usersError;
-    const users = usersData.users ?? [];
+    const users = await listarTodosUsuariosAuth(supabase);
     const ids = users.map(u => u.id);
 
     const [perfisRes, assinaturasRes, suspensoesRes, takedownsRes, encerramentosRes, galeriasRes, clientesRes] = await Promise.all([
@@ -101,7 +115,7 @@ export async function GET(req: NextRequest) {
       return String(b.criadoEm ?? "").localeCompare(String(a.criadoEm ?? ""));
     });
 
-    return NextResponse.json({ papel, contas }, { headers: { "Cache-Control": "no-store, private" } });
+    return NextResponse.json({ papel, contas, total: contas.length }, { headers: { "Cache-Control": "no-store, private" } });
   } catch (error) {
     registrarErro("admin.contas", req, error, { userId });
     return NextResponse.json({ error: "Não foi possível carregar as contas." }, { status: 500 });
