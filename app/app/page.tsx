@@ -15,21 +15,21 @@ const recursos = [
 const planos = [
   {
     nome: "Essencial",
-    preco: "29,90",
+    preco: "14,90",
     descricao: "Para começar a profissionalizar suas entregas.",
     destaque: false,
     itens: ["10 galerias ativas", "20 GB de armazenamento", "Até 1.000 fotos por galeria", "250 clientes", "Prova, comentários e branding"],
   },
   {
     nome: "Profissional",
-    preco: "59,90",
+    preco: "29,90",
     descricao: "Para quem fotografa com frequência e precisa de mais espaço.",
     destaque: true,
     itens: ["50 galerias ativas", "100 GB de armazenamento", "Até 3.000 fotos por galeria", "2.000 clientes", "Experiência premium do estúdio"],
   },
   {
     nome: "Studio",
-    preco: "119,90",
+    preco: "59,90",
     descricao: "Para estúdios e operações com grande volume.",
     destaque: false,
     itens: ["Galerias ativas ilimitadas", "500 GB de armazenamento", "Até 5.000 fotos por galeria", "Clientes ilimitados", "Todos os recursos do Fotura"],
@@ -71,7 +71,7 @@ export default function Home() {
           <h1>Entregue seu trabalho com a <span className="grad">experiência que ele merece.</span></h1>
           <p>Galerias profissionais para enviar, apresentar, provar e entregar fotos aos seus clientes — com sua marca, em um fluxo simples do início ao fim.</p>
           <div className="hero-actions"><a className="btn primary" href={destinoPrincipal}>{logado ? "Ir para o painel" : "Criar minha conta"}</a><a className="btn" href="#como-funciona">Ver como funciona</a></div>
-          <div className="micro">Planos a partir de R$ 29,90/mês · Cancele quando quiser</div>
+          <div className="micro">Planos a partir de R$ 14,90/mês · Cancele quando quiser</div>
         </section>
 
         <section className="shell product" aria-label="Prévia do painel Fotura"><div className="product-in"><div className="browser"><i/><i/><i/></div><div className="mock"><aside className="side"><div className="side-brand">FOTURA</div><div className="side-item on">Painel</div><div className="side-item">Galerias</div><div className="side-item">Seleções</div><div className="side-item">Clientes</div><div className="side-item">Configurações</div></aside><div className="dash"><div className="dash-top"><div><h3>Visão geral</h3><div className="dash-sub">Seu trabalho organizado em um só lugar.</div></div><span className="mock-btn">Nova galeria</span></div><div className="kpis"><div className="kpi"><b>12</b><span>Galerias ativas</span></div><div className="kpi"><b>348</b><span>Fotos entregues</span></div><div className="kpi"><b>7</b><span>Seleções finalizadas</span></div></div><div className="gallery-row"><div className="gallery-card"><div className="gallery-head">Galeria recente</div><div className="thumbs"><div className="thumb"/><div className="thumb"/><div className="thumb"/></div></div><div className="gallery-card"><div className="gallery-head">Seleções</div><div className="select-list"><div className="select-line"><span>Ensaio Mariana</span><span className="check">Finalizada</span></div><div className="select-line"><span>Casamento L + R</span><span>Em andamento</span></div><div className="select-line"><span>Corporativo</span><span>12 fotos</span></div></div></div></div></div></div></div></section>
