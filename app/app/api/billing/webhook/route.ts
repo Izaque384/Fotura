@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { planoPorStripePrice, periodoAssinatura, stripeWebhookSecret, verificarAssinaturaStripe, type StripeCheckoutSession, type StripeSubscription } from "../../../../lib/stripe-billing";
+import { planoPorStripePrice, periodoAssinatura, stripeGet, stripeWebhookSecret, verificarAssinaturaStripe, type StripeCheckoutSession, type StripeSubscription } from "../../../../lib/stripe-billing";
 import { registrarErro } from "../../../../lib/observability";
 import { createServiceClient } from "../../../../lib/supabase-server";
 
@@ -10,10 +10,21 @@ type StripeInvoice = {
   id?: string;
   customer?: string | null;
   status?: string | null;
+  subscription?: string | { id?: string } | null;
+  parent?: {
+    subscription_details?: {
+      subscription?: string | { id?: string } | null;
+    } | null;
+  } | null;
 };
 
 function iso(epoch: number | null | undefined) {
   return epoch ? new Date(epoch * 1000).toISOString() : null;
+}
+
+function idDeReferenciaStripe(valor: string | { id?: string } | null | undefined) {
+  if (typeof valor === "string") return valor;
+  return valor?.id ?? null;
 }
 
 async function atualizarPorSubscription(req: NextRequest, subscription: StripeSubscription) {
@@ -74,6 +85,30 @@ async function registrarFalhaPagamento(invoice: StripeInvoice) {
   if (error) throw error;
 }
 
+async function reconciliarPagamentoRecebido(req: NextRequest, invoice: StripeInvoice) {
+  let subscriptionId = idDeReferenciaStripe(invoice.parent?.subscription_details?.subscription)
+    ?? idDeReferenciaStripe(invoice.subscription);
+
+  if (!subscriptionId && invoice.customer) {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("assinaturas")
+      .select("provedor_assinatura_id")
+      .eq("provedor", "stripe")
+      .eq("provedor_cliente_id", invoice.customer)
+      .not("provedor_assinatura_id", "is", null)
+      .maybeSingle();
+    if (error) throw error;
+    subscriptionId = data?.provedor_assinatura_id ? String(data.provedor_assinatura_id) : null;
+  }
+
+  // Invoices avulsas também podem emitir invoice.paid e não possuem subscription.
+  if (!subscriptionId) return;
+
+  const subscription = await stripeGet<StripeSubscription>(`/subscriptions/${encodeURIComponent(subscriptionId)}`);
+  await atualizarPorSubscription(req, subscription);
+}
+
 export async function POST(req: NextRequest) {
   const assinatura = req.headers.get("stripe-signature");
   if (!assinatura) return NextResponse.json({ error: "Assinatura Stripe ausente." }, { status: 400 });
@@ -108,7 +143,7 @@ export async function POST(req: NextRequest) {
         await registrarFalhaPagamento(event.data?.object as StripeInvoice);
         break;
       case "invoice.paid":
-        // A subscription.updated continua sendo a fonte de verdade do status e do plano.
+        await reconciliarPagamentoRecebido(req, event.data?.object as StripeInvoice);
         break;
       default:
         break;
