@@ -38,9 +38,7 @@ function priceEnv(plano: PlanoCodigo) {
 }
 
 export function stripePricePorPlano(plano: PlanoCodigo): string | null {
-  const configurado = priceEnv(plano);
-  if (configurado) return configurado;
-  if (stripeTestMode()) return null;
+  if (stripeTestMode()) return priceEnv(plano);
   return STRIPE_PRICE_LIVE_POR_PLANO[plano] ?? null;
 }
 
