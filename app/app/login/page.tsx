@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase-client";
 
@@ -13,6 +13,7 @@ function senhaCadastroValida(senha: string) {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [modo, setModo] = useState<"login" | "cadastro">("login");
@@ -20,6 +21,10 @@ export default function LoginPage() {
   const [carregando, setCarregando] = useState(false);
   const [aceitouTermos, setAceitouTermos] = useState(false);
   const supabase = createClient();
+
+  useEffect(() => {
+    if (searchParams.get("modo") === "cadastro") setModo("cadastro");
+  }, [searchParams]);
 
   async function handleSubmit() {
     if (carregando) return;
