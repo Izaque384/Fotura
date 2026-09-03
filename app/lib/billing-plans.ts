@@ -75,7 +75,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     codigo: "essencial",
     nome: "Essencial",
     descricao: "Para fotógrafos que estão organizando e profissionalizando a entrega aos clientes.",
-    precoMensalCentavos: 2990,
+    precoMensalCentavos: 1490,
     limites: {
       galeriasAtivas: 10,
       armazenamentoGb: 20,
@@ -98,7 +98,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     codigo: "profissional",
     nome: "Profissional",
     descricao: "Para fotógrafos com volume recorrente de trabalhos e maior necessidade de apresentação.",
-    precoMensalCentavos: 5990,
+    precoMensalCentavos: 2990,
     limites: {
       galeriasAtivas: 50,
       armazenamentoGb: 100,
@@ -121,7 +121,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     codigo: "studio",
     nome: "Studio",
     descricao: "Para estúdios e operações com grande volume de clientes e galerias.",
-    precoMensalCentavos: 11990,
+    precoMensalCentavos: 5990,
     limites: {
       galeriasAtivas: null,
       armazenamentoGb: 500,
