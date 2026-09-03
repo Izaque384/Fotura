@@ -1,181 +1,95 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "../lib/supabase-client";
 
+const recursos = [
+  { titulo: "Prova e seleção", texto: "Seu cliente favorita as fotos, comenta e finaliza a seleção dentro da própria galeria." },
+  { titulo: "Sua marca na entrega", texto: "Logo, identidade do estúdio e uma experiência que mantém você no centro da apresentação." },
+  { titulo: "Galerias protegidas", texto: "Defina senha, prazo do link, limite de seleção e marque provas com segurança." },
+  { titulo: "Entrega sem atrito", texto: "Links simples para visualizar e baixar fotos sem exigir cadastro do cliente." },
+  { titulo: "Tudo organizado", texto: "Acompanhe galerias, clientes, seleções e notificações em um único painel." },
+  { titulo: "Feito para o fluxo real", texto: "Crie a galeria, envie as fotos, receba a seleção e entregue o trabalho final." },
+];
+
+const planos = [
+  {
+    nome: "Essencial",
+    preco: "29,90",
+    descricao: "Para começar a profissionalizar suas entregas.",
+    destaque: false,
+    itens: ["10 galerias ativas", "20 GB de armazenamento", "Até 1.000 fotos por galeria", "250 clientes", "Prova, comentários e branding"],
+  },
+  {
+    nome: "Profissional",
+    preco: "59,90",
+    descricao: "Para quem fotografa com frequência e precisa de mais espaço.",
+    destaque: true,
+    itens: ["50 galerias ativas", "100 GB de armazenamento", "Até 3.000 fotos por galeria", "2.000 clientes", "Experiência premium do estúdio"],
+  },
+  {
+    nome: "Studio",
+    preco: "119,90",
+    descricao: "Para estúdios e operações com grande volume.",
+    destaque: false,
+    itens: ["Galerias ativas ilimitadas", "500 GB de armazenamento", "Até 5.000 fotos por galeria", "Clientes ilimitados", "Todos os recursos do Fotura"],
+  },
+];
+
 export default function Home() {
-  const router = useRouter();
   const supabase = createClient();
   const [logado, setLogado] = useState(false);
 
-  // Se já estiver logado, mostra "Ir para o painel" em vez de "Entrar"
   useEffect(() => {
-    async function checar() {
-      const { data } = await supabase.auth.getUser();
-      setLogado(Boolean(data.user));
-    }
-    checar();
+    let ativo = true;
+    void supabase.auth.getUser().then(({ data }) => {
+      if (ativo) setLogado(Boolean(data.user));
+    });
+    return () => { ativo = false; };
   }, [supabase]);
+
+  const destinoPrincipal = logado ? "/dashboard" : "/login?modo=cadastro";
 
   return (
     <div className="lp">
       <style>{`
-        .lp {
-          min-height: 100vh;
-          background:
-            radial-gradient(1200px 600px at 50% -10%, rgba(74,108,247,0.18), transparent 60%),
-            linear-gradient(180deg, #0b0b1a 0%, #111126 100%);
-          display: flex;
-          flex-direction: column;
-        }
-
-        /* Cabeçalho da landing */
-        .lp-top {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 20px 32px;
-          max-width: 1120px; width: 100%; margin: 0 auto;
-        }
-        .lp-brand { display: flex; align-items: center; gap: 10px; }
-        .lp-brand svg { height: 28px; width: 32px; display: block; }
-        .lp-brand span { font-size: 20px; font-weight: 700; letter-spacing: 3px; color: #f0f0f5; }
-        .lp-top-actions { display: flex; align-items: center; gap: 10px; }
-        .lp-ghost {
-          padding: 9px 18px; font-size: 14px; font-weight: 600;
-          color: #cdd2e4; background: transparent; border: 1px solid #2a2d40;
-          border-radius: 10px; cursor: pointer; text-decoration: none;
-        }
-        .lp-ghost:hover { border-color: #4a6cf7; color: #fff; }
-
-        /* Hero central */
-        .lp-hero {
-          flex: 1;
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-          text-align: center; padding: 60px 24px 40px;
-        }
-        .lp-pill {
-          display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 1px;
-          color: #9fb0ff; background: rgba(74,108,247,0.12); border: 1px solid rgba(74,108,247,0.35);
-          padding: 6px 14px; border-radius: 999px; margin-bottom: 24px; text-transform: uppercase;
-        }
-        .lp-title {
-          font-size: clamp(36px, 6vw, 64px); font-weight: 700; line-height: 1.08;
-          color: #f5f6fb; margin: 0 0 20px; max-width: 780px; letter-spacing: -1px;
-        }
-        .lp-title .grad {
-          background: linear-gradient(90deg, #2F72FF, #6422E8);
-          -webkit-background-clip: text; background-clip: text; color: transparent;
-        }
-        .lp-sub {
-          font-size: clamp(15px, 2.2vw, 19px); color: #9aa0b8; max-width: 560px;
-          line-height: 1.6; margin: 0 0 40px;
-        }
-        .lp-cta { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
-        .lp-primary {
-          padding: 15px 30px; font-size: 15px; font-weight: 700; color: #fff;
-          background: linear-gradient(90deg, #4a6cf7, #6422E8);
-          border: none; border-radius: 12px; cursor: pointer; text-decoration: none;
-          box-shadow: 0 10px 30px rgba(74,108,247,0.35);
-          transition: transform 0.15s ease, box-shadow 0.15s ease;
-        }
-        .lp-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(74,108,247,0.5); }
-        .lp-secondary {
-          padding: 15px 30px; font-size: 15px; font-weight: 600; color: #cdd2e4;
-          background: rgba(255,255,255,0.04); border: 1px solid #2a2d40;
-          border-radius: 12px; cursor: pointer; text-decoration: none;
-        }
-        .lp-secondary:hover { border-color: #4a6cf7; color: #fff; }
-
-        /* Faixa dos 3 passos */
-        .lp-steps {
-          display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
-          max-width: 900px; width: 100%; margin: 20px auto 0; padding: 0 24px 64px;
-        }
-        .lp-step {
-          background: rgba(255,255,255,0.03); border: 1px solid #1e2036;
-          border-radius: 14px; padding: 22px; text-align: left;
-        }
-        .lp-step-n {
-          display: inline-flex; align-items: center; justify-content: center;
-          width: 30px; height: 30px; border-radius: 8px; margin-bottom: 12px;
-          background: rgba(74,108,247,0.15); color: #9fb0ff; font-weight: 700; font-size: 14px;
-        }
-        .lp-step-t { font-size: 15px; font-weight: 600; color: #eef1f6; margin: 0 0 6px; }
-        .lp-step-d { font-size: 13px; color: #8a90a8; margin: 0; line-height: 1.5; }
-
-        .lp-foot { text-align: center; color: #5a5f78; font-size: 12px; padding: 0 24px 28px; }
-
-        @media (max-width: 680px) {
-          .lp-steps { grid-template-columns: 1fr; }
-          .lp-top { padding: 16px 20px; }
-        }
+        *{box-sizing:border-box}.lp{min-height:100vh;background:radial-gradient(900px 520px at 50% -80px,rgba(74,108,247,.18),transparent 64%),linear-gradient(180deg,#0b0b1a 0%,#101024 48%,#0b0b1a 100%);color:#f0f0f5;font-family:Sora,sans-serif}.lp a{text-decoration:none}.shell{width:min(1160px,calc(100% - 40px));margin:auto}.top{height:76px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{display:flex;align-items:center;gap:10px;color:#f5f6fb}.brand svg{width:31px;height:28px}.brand strong{font-size:19px;letter-spacing:3px}.nav{display:flex;align-items:center;gap:22px}.nav a{font-size:12px;color:#8f95ad}.nav a:hover{color:#fff}.actions{display:flex;gap:9px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 17px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid #2b2d46;color:#d9ddef;background:rgba(255,255,255,.025)}.btn:hover{border-color:#4a6cf7;color:#fff}.btn.primary{border:0;color:#fff;background:linear-gradient(90deg,#1196fc,#5d0dfa);box-shadow:0 12px 34px rgba(58,61,238,.22)}.hero{padding:92px 0 74px;text-align:center}.eyebrow{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid rgba(100,111,255,.25);border-radius:999px;background:rgba(74,108,247,.08);color:#aab5ff;font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase}.dot{width:6px;height:6px;border-radius:50%;background:#8fe3b0;box-shadow:0 0 14px rgba(143,227,176,.7)}h1{max-width:900px;margin:24px auto 20px;font-size:clamp(42px,7vw,78px);line-height:1.02;letter-spacing:-3px}.grad{background:linear-gradient(90deg,#1196fc,#6c35f4);-webkit-background-clip:text;background-clip:text;color:transparent}.hero p{max-width:680px;margin:0 auto;color:#9096b0;font-size:clamp(15px,2vw,18px);line-height:1.75}.hero-actions{display:flex;justify-content:center;gap:11px;flex-wrap:wrap;margin-top:32px}.hero-actions .btn{min-height:50px;padding:0 24px;font-size:13px}.micro{margin-top:15px;color:#626982;font-size:10px}.product{margin:12px auto 90px;max-width:1050px;padding:1px;border-radius:22px;background:linear-gradient(135deg,rgba(17,150,252,.42),rgba(93,13,250,.24),rgba(255,255,255,.06));box-shadow:0 40px 100px rgba(0,0,0,.3)}.product-in{background:#0e0e20;border-radius:21px;padding:18px}.browser{height:32px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #20223a}.browser i{width:7px;height:7px;border-radius:50%;background:#30334e}.mock{display:grid;grid-template-columns:190px 1fr;min-height:390px}.side{padding:24px 14px;border-right:1px solid #20223a}.side-brand{font-size:11px;font-weight:800;letter-spacing:2px;margin-bottom:28px}.side-item{font-size:10px;color:#747b98;padding:9px 10px;border-radius:8px;margin:4px 0}.side-item.on{color:#fff;background:linear-gradient(90deg,rgba(17,150,252,.18),rgba(93,13,250,.12));border:1px solid rgba(80,83,185,.25)}.dash{padding:26px}.dash-top{display:flex;justify-content:space-between;gap:20px}.dash h3{margin:0;font-size:19px}.dash-sub{color:#68708e;font-size:9px;margin-top:6px}.mock-btn{font-size:9px;padding:8px 11px;border-radius:8px;background:linear-gradient(90deg,#1196fc,#5d0dfa)}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}.kpi,.gallery-card{background:linear-gradient(180deg,#15152c,#111124);border:1px solid #22243d;border-radius:12px}.kpi{padding:16px}.kpi b{display:block;font-size:20px}.kpi span{font-size:8px;color:#6f7693}.gallery-row{display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-top:10px}.gallery-card{padding:15px}.gallery-head{font-size:10px;font-weight:700}.thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px}.thumb{aspect-ratio:1;border-radius:8px;background:linear-gradient(145deg,#232744,#111328);position:relative;overflow:hidden}.thumb:after{content:'';position:absolute;inset:15% 18%;border-radius:50%;background:radial-gradient(circle at 40% 35%,#6f77a1,#282b4b 62%,#15172b)}.select-list{margin-top:11px;display:grid;gap:7px}.select-line{height:28px;border-radius:7px;background:#15172c;border:1px solid #232640;display:flex;align-items:center;justify-content:space-between;padding:0 9px;font-size:8px;color:#8990aa}.check{color:#8fe3b0}.section{padding:92px 0}.section-head{max-width:700px;margin:0 auto 44px;text-align:center}.section-label{font-size:10px;letter-spacing:1.7px;text-transform:uppercase;color:#7180c4;font-weight:700}.section h2{font-size:clamp(30px,5vw,46px);letter-spacing:-1.8px;margin:11px 0 14px}.section-head p{color:#7d849e;font-size:14px;line-height:1.7;margin:0}.features{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.feature{padding:24px;background:linear-gradient(180deg,#14142b,#101023);border:1px solid #23233c;border-radius:16px}.feature-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:rgba(74,108,247,.1);border:1px solid rgba(74,108,247,.18);font-size:13px;color:#a9b5ff}.feature h3{font-size:14px;margin:17px 0 8px}.feature p{font-size:11px;line-height:1.65;color:#777e98;margin:0}.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;counter-reset:steps}.flow-item{padding:22px;border-top:1px solid #2b2d47}.flow-n{font-size:10px;color:#6776b9;margin-bottom:16px}.flow-item h3{font-size:13px;margin:0 0 7px}.flow-item p{font-size:10px;color:#757c96;line-height:1.6;margin:0}.pricing{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:stretch}.plan{position:relative;padding:26px;background:linear-gradient(180deg,#14142b,#101023);border:1px solid #242640;border-radius:17px}.plan.hot{border-color:#535ad8;box-shadow:0 18px 55px rgba(66,61,205,.13)}.popular{position:absolute;top:12px;right:12px;padding:5px 8px;border-radius:999px;background:rgba(74,108,247,.12);color:#aeb7ff;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.7px}.plan h3{font-size:18px;margin:0 0 8px}.plan-desc{font-size:10px;color:#747b96;line-height:1.55;min-height:32px}.price{margin:22px 0 5px;font-size:31px;font-weight:800}.price small{font-size:10px;color:#767d98;font-weight:500}.per{font-size:9px;color:#626983}.plan ul{list-style:none;padding:0;margin:23px 0;display:grid;gap:10px}.plan li{font-size:10px;color:#a8aec4}.plan li:before{content:'✓';color:#8fe3b0;margin-right:8px}.plan .btn{width:100%}.trust{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.trust-card{text-align:center;padding:24px}.trust-card b{display:block;font-size:13px;margin-bottom:7px}.trust-card span{font-size:10px;color:#737a95;line-height:1.6}.faq{max-width:820px;margin:auto;display:grid;gap:9px}.faq details{background:#111124;border:1px solid #23253d;border-radius:12px;padding:16px 18px}.faq summary{cursor:pointer;font-size:12px;font-weight:650;color:#dfe2ec}.faq p{font-size:10px;color:#777f9a;line-height:1.7;margin:12px 0 0}.final{padding:80px 0 100px}.final-card{text-align:center;padding:58px 28px;border-radius:22px;border:1px solid #292b48;background:radial-gradient(600px 260px at 50% 0,rgba(74,108,247,.16),transparent 65%),linear-gradient(180deg,#14142b,#101023)}.final-card h2{font-size:clamp(30px,5vw,46px);margin:0 0 14px;letter-spacing:-1.7px}.final-card p{color:#7f869f;font-size:13px;margin:0 auto 27px;max-width:540px;line-height:1.7}.footer{border-top:1px solid #1d1f35;padding:30px 0 40px}.footer-in{display:flex;align-items:center;justify-content:space-between;gap:18px}.footer-copy{font-size:9px;color:#555c76}.footer-links{display:flex;gap:16px}.footer-links a{font-size:9px;color:#666d88}.footer-links a:hover{color:#fff}@media(max-width:860px){.nav{display:none}.mock{grid-template-columns:130px 1fr}.features,.pricing{grid-template-columns:1fr 1fr}.pricing .plan:last-child{grid-column:1/-1}.flow{grid-template-columns:1fr 1fr}.trust{grid-template-columns:1fr}.section{padding:70px 0}}@media(max-width:620px){.shell{width:min(100% - 28px,1160px)}.top{height:68px}.actions .btn:first-child{display:none}.hero{padding:70px 0 48px}h1{letter-spacing:-2px}.product{margin-bottom:55px}.mock{grid-template-columns:1fr}.side{display:none}.dash{padding:18px}.kpis{grid-template-columns:1fr 1fr}.kpis .kpi:last-child{display:none}.gallery-row{grid-template-columns:1fr}.features,.pricing,.flow{grid-template-columns:1fr}.pricing .plan:last-child{grid-column:auto}.footer-in{flex-direction:column;align-items:flex-start}}
       `}</style>
 
-      <header className="lp-top">
-        <div className="lp-brand">
-          <svg viewBox="0 0 115 101" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="lpGrad" x1="1" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#1196fc" />
-              <stop offset="1" stopColor="#5d0dfa" />
-            </linearGradient>
-          </defs>
-          <g fill="url(#lpGrad)">
-            <path d="M 65.5,6.1 C 60.6,6.6 56.3,8.3 52.5,11.4 C 51.2,12.4 49.5,14.1 40.1,23.2 C 36.2,27.0 31.6,31.5 29.7,33.3 C 27.8,35.1 24.4,38.4 22.2,40.7 C 19.9,42.9 16.6,46.1 14.9,47.8 C 9.3,53.2 8.5,54.0 7.7,55.1 C 6.4,57.1 6.0,58.5 6.0,60.7 C 6.0,62.4 6.1,63.0 6.8,64.3 C 7.8,66.3 9.5,67.7 12.0,68.4 C 12.9,68.7 12.9,68.7 17.0,68.7 C 21.5,68.8 22.3,68.7 24.1,68.2 C 26.8,67.3 29.0,66.0 31.4,63.8 C 34.4,61.0 42.6,53.2 43.9,52.0 C 44.7,51.2 46.2,49.7 47.4,48.7 C 50.1,46.1 56.8,39.7 59.1,37.4 C 60.1,36.4 61.3,35.3 61.7,34.9 C 64.5,32.6 67.9,31.2 71.5,30.9 C 72.2,30.8 76.2,30.8 80.4,30.8 C 85.4,30.9 88.6,30.8 89.3,30.8 C 92.1,30.5 94.4,29.7 96.7,28.2 C 97.9,27.3 98.2,27.1 101.4,24.1 C 106.2,19.7 107.0,18.8 107.9,16.9 C 108.7,15.5 108.9,14.4 108.8,12.9 C 108.7,11.0 108.3,9.8 107.0,8.5 C 106.1,7.5 104.8,6.7 103.2,6.2 C 102.5,6.0 102.5,6.0 84.4,6.0 C 74.5,6.0 65.9,6.0 65.5,6.1" />
-            <path d="M 71.3,45.7 C 68.6,46.1 66.0,47.4 63.7,49.4 C 63.1,49.8 59.3,53.4 55.0,57.5 C 53.7,58.7 52.2,60.2 51.6,60.8 C 51.0,61.3 49.8,62.5 49.0,63.3 C 48.2,64.1 47.2,65.0 46.9,65.3 C 45.8,66.3 38.0,73.7 33.1,78.4 C 30.7,80.8 29.7,81.9 29.0,83.0 C 26.4,87.3 28.0,92.3 32.5,94.2 C 34.1,94.8 34.1,94.8 39.3,94.8 C 43.9,94.8 43.9,94.8 45.0,94.5 C 47.6,93.9 49.8,92.7 51.7,91.0 C 52.5,90.3 57.4,85.8 61.2,82.1 C 62.3,81.1 63.9,79.6 64.9,78.6 C 65.9,77.7 67.3,76.4 68.0,75.7 C 68.6,75.1 69.6,74.2 70.1,73.7 C 74.5,69.6 82.3,62.1 84.5,60.0 C 87.5,56.9 88.4,55.4 88.5,52.8 C 88.6,50.7 88.0,49.1 86.6,47.7 C 85.4,46.6 84.2,45.9 82.5,45.6 C 81.2,45.4 72.8,45.4 71.3,45.7" />
-          </g>
-        </svg>
-          <span>FOTURA</span>
-        </div>
-        <div className="lp-top-actions">
-          <a className="lp-ghost" href={logado ? "/dashboard" : "/login"}>
-            {logado ? "Ir para o painel" : "Entrar"}
-          </a>
-        </div>
+      <header className="shell top">
+        <a className="brand" href="/" aria-label="Fotura">
+          <svg viewBox="0 0 115 101" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="logoGrad" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#1196fc"/><stop offset="1" stopColor="#5d0dfa"/></linearGradient></defs><g fill="url(#logoGrad)"><path d="M65.5 6.1C60.6 6.6 56.3 8.3 52.5 11.4 51.2 12.4 49.5 14.1 40.1 23.2 36.2 27 31.6 31.5 29.7 33.3 27.8 35.1 24.4 38.4 22.2 40.7 19.9 42.9 16.6 46.1 14.9 47.8 9.3 53.2 8.5 54 7.7 55.1 6.4 57.1 6 58.5 6 60.7 6 62.4 6.1 63 6.8 64.3 7.8 66.3 9.5 67.7 12 68.4 12.9 68.7 12.9 68.7 17 68.7 21.5 68.8 22.3 68.7 24.1 68.2 26.8 67.3 29 66 31.4 63.8 34.4 61 42.6 53.2 43.9 52 44.7 51.2 46.2 49.7 47.4 48.7 50.1 46.1 56.8 39.7 59.1 37.4 60.1 36.4 61.3 35.3 61.7 34.9 64.5 32.6 67.9 31.2 71.5 30.9 72.2 30.8 76.2 30.8 80.4 30.8 85.4 30.9 88.6 30.8 89.3 30.8 92.1 30.5 94.4 29.7 96.7 28.2 97.9 27.3 98.2 27.1 101.4 24.1 106.2 19.7 107 18.8 107.9 16.9 108.7 15.5 108.9 14.4 108.8 12.9 108.7 11 108.3 9.8 107 8.5 106.1 7.5 104.8 6.7 103.2 6.2 102.5 6 102.5 6 84.4 6 74.5 6 65.9 6 65.5 6.1"/><path d="M71.3 45.7C68.6 46.1 66 47.4 63.7 49.4 63.1 49.8 59.3 53.4 55 57.5 53.7 58.7 52.2 60.2 51.6 60.8 51 61.3 49.8 62.5 49 63.3 48.2 64.1 47.2 65 46.9 65.3 45.8 66.3 38 73.7 33.1 78.4 30.7 80.8 29.7 81.9 29 83 26.4 87.3 28 92.3 32.5 94.2 34.1 94.8 34.1 94.8 39.3 94.8 43.9 94.8 43.9 94.8 45 94.5 47.6 93.9 49.8 92.7 51.7 91 52.5 90.3 57.4 85.8 61.2 82.1 62.3 81.1 63.9 79.6 64.9 78.6 65.9 77.7 67.3 76.4 68 75.7 68.6 75.1 69.6 74.2 70.1 73.7 74.5 69.6 82.3 62.1 84.5 60 87.5 56.9 88.4 55.4 88.5 52.8 88.6 50.7 88 49.1 86.6 47.7 85.4 46.6 84.2 45.9 82.5 45.6 81.2 45.4 72.8 45.4 71.3 45.7"/></g></svg>
+          <strong>FOTURA</strong>
+        </a>
+        <nav className="nav"><a href="#recursos">Recursos</a><a href="#como-funciona">Como funciona</a><a href="#planos">Planos</a><a href="#faq">Dúvidas</a></nav>
+        <div className="actions"><a className="btn" href={logado ? "/dashboard" : "/login"}>{logado ? "Painel" : "Entrar"}</a><a className="btn primary" href={destinoPrincipal}>{logado ? "Abrir Fotura" : "Criar conta"}</a></div>
       </header>
 
-      <main className="lp-hero">
+      <main>
+        <section className="shell hero">
+          <div className="eyebrow"><span className="dot"/>Feito para fotógrafos</div>
+          <h1>Entregue seu trabalho com a <span className="grad">experiência que ele merece.</span></h1>
+          <p>Galerias profissionais para enviar, apresentar, provar e entregar fotos aos seus clientes — com sua marca, em um fluxo simples do início ao fim.</p>
+          <div className="hero-actions"><a className="btn primary" href={destinoPrincipal}>{logado ? "Ir para o painel" : "Criar minha conta"}</a><a className="btn" href="#como-funciona">Ver como funciona</a></div>
+          <div className="micro">Planos a partir de R$ 29,90/mês · Cancele quando quiser</div>
+        </section>
 
-        <span className="lp-pill">Entrega de fotos para fotógrafos</span>
+        <section className="shell product" aria-label="Prévia do painel Fotura"><div className="product-in"><div className="browser"><i/><i/><i/></div><div className="mock"><aside className="side"><div className="side-brand">FOTURA</div><div className="side-item on">Painel</div><div className="side-item">Galerias</div><div className="side-item">Seleções</div><div className="side-item">Clientes</div><div className="side-item">Configurações</div></aside><div className="dash"><div className="dash-top"><div><h3>Visão geral</h3><div className="dash-sub">Seu trabalho organizado em um só lugar.</div></div><span className="mock-btn">Nova galeria</span></div><div className="kpis"><div className="kpi"><b>12</b><span>Galerias ativas</span></div><div className="kpi"><b>348</b><span>Fotos entregues</span></div><div className="kpi"><b>7</b><span>Seleções finalizadas</span></div></div><div className="gallery-row"><div className="gallery-card"><div className="gallery-head">Galeria recente</div><div className="thumbs"><div className="thumb"/><div className="thumb"/><div className="thumb"/></div></div><div className="gallery-card"><div className="gallery-head">Seleções</div><div className="select-list"><div className="select-line"><span>Ensaio Mariana</span><span className="check">Finalizada</span></div><div className="select-line"><span>Casamento L + R</span><span>Em andamento</span></div><div className="select-line"><span>Corporativo</span><span>12 fotos</span></div></div></div></div></div></div></div></section>
 
-        <h1 className="lp-title">
-          A forma mais <span className="grad">bonita</span> de entregar fotos
-        </h1>
+        <section className="section" id="recursos"><div className="shell"><div className="section-head"><div className="section-label">Mais que um link de download</div><h2>Do envio à aprovação, sem sair do Fotura.</h2><p>O cliente recebe uma experiência bonita. Você recebe um fluxo de trabalho mais organizado.</p></div><div className="features">{recursos.map((r,i)=><article className="feature" key={r.titulo}><div className="feature-icon">0{i+1}</div><h3>{r.titulo}</h3><p>{r.texto}</p></article>)}</div></div></section>
 
-        <p className="lp-sub">
-          Suba as fotos, gere um link com a sua marca e deixe o cliente visualizar
-          e baixar — simples, rápido e elegante.
-        </p>
+        <section className="section" id="como-funciona"><div className="shell"><div className="section-head"><div className="section-label">Fluxo simples</div><h2>Menos mensagens. Mais clareza em cada trabalho.</h2></div><div className="flow"><div className="flow-item"><div className="flow-n">01</div><h3>Crie a galeria</h3><p>Defina cliente, prazo, proteção, prova e quantidade de fotos.</p></div><div className="flow-item"><div className="flow-n">02</div><h3>Envie e compartilhe</h3><p>Suba as imagens e entregue um link profissional com sua identidade.</p></div><div className="flow-item"><div className="flow-n">03</div><h3>Receba a seleção</h3><p>O cliente favorita, comenta e finaliza. Você acompanha tudo pelo painel.</p></div><div className="flow-item"><div className="flow-n">04</div><h3>Faça a entrega</h3><p>Disponibilize o material final de forma organizada e fácil de baixar.</p></div></div></div></section>
 
-        <div className="lp-cta">
-          <a className="lp-primary" href={logado ? "/dashboard" : "/login"}>
-            {logado ? "Ir para o painel" : "Começar agora"}
-          </a>
-          <a className="lp-secondary" href="/login">
-            Já tenho conta
-          </a>
-        </div>
+        <section className="section" id="planos"><div className="shell"><div className="section-head"><div className="section-label">Planos</div><h2>Escolha pelo volume do seu trabalho.</h2><p>Os recursos principais de prova, entrega e personalização já fazem parte da experiência Fotura.</p></div><div className="pricing">{planos.map(p=><article className={`plan${p.destaque?" hot":""}`} key={p.nome}>{p.destaque&&<span className="popular">Mais indicado</span>}<h3>{p.nome}</h3><div className="plan-desc">{p.descricao}</div><div className="price"><small>R$ </small>{p.preco}</div><div className="per">por mês</div><ul>{p.itens.map(item=><li key={item}>{item}</li>)}</ul><a className={`btn${p.destaque?" primary":""}`} href={destinoPrincipal}>Começar com {p.nome}</a></article>)}</div></div></section>
+
+        <section className="section"><div className="shell"><div className="trust"><div className="trust-card"><b>Cliente sem cadastro</b><span>Quem recebe suas fotos acessa a galeria sem precisar criar conta no Fotura.</span></div><div className="trust-card"><b>Arquivos protegidos</b><span>Fotos privadas são entregues por URLs temporárias e o acesso pode ter senha e prazo.</span></div><div className="trust-card"><b>Seu negócio no centro</b><span>A apresentação leva a identidade do seu estúdio, não a aparência de uma pasta genérica.</span></div></div></div></section>
+
+        <section className="section" id="faq"><div className="shell"><div className="section-head"><div className="section-label">Dúvidas frequentes</div><h2>Antes de começar.</h2></div><div className="faq"><details><summary>Meu cliente precisa criar uma conta?</summary><p>Não. O cliente acessa a galeria pelo link enviado por você. Se a galeria tiver senha, ele informa apenas essa senha.</p></details><details><summary>Posso usar o Fotura para prova de fotos?</summary><p>Sim. Você pode habilitar seleção, definir limite de favoritas e receber comentários por foto antes da entrega final.</p></details><details><summary>Consigo colocar minha marca nas galerias?</summary><p>Sim. O Fotura permite configurar identidade do estúdio e apresentar o trabalho de forma mais alinhada à sua marca.</p></details><details><summary>Posso cancelar o plano?</summary><p>Sim. A assinatura pode ser gerenciada pelo portal de cobrança e o cancelamento pode ser programado para o fim do período vigente.</p></details></div></div></section>
+
+        <section className="shell final"><div className="final-card"><h2>Sua fotografia já é profissional.<br/>A entrega também pode ser.</h2><p>Organize clientes, galerias e seleções enquanto oferece uma experiência melhor para quem recebe o seu trabalho.</p><a className="btn primary" href={destinoPrincipal}>{logado ? "Abrir meu painel" : "Criar minha conta no Fotura"}</a></div></section>
       </main>
 
-      <section className="lp-steps">
-        <div className="lp-step">
-          <div className="lp-step-n">1</div>
-          <p className="lp-step-t">Envie as fotos</p>
-          <p className="lp-step-d">Faça o upload da galeria do seu cliente em segundos.</p>
-        </div>
-        <div className="lp-step">
-          <div className="lp-step-n">2</div>
-          <p className="lp-step-t">Compartilhe o link</p>
-          <p className="lp-step-d">Um endereço único e bonito para cada galeria.</p>
-        </div>
-        <div className="lp-step">
-          <div className="lp-step-n">3</div>
-          <p className="lp-step-t">O cliente baixa</p>
-          <p className="lp-step-d">Sem cadastro, sem complicação. Só as fotos.</p>
-        </div>
-      </section>
-
-      <footer className="lp-foot">© {new Date().getFullYear()} Fotura</footer>
+      <footer className="footer"><div className="shell footer-in"><a className="brand" href="/"><strong>FOTURA</strong></a><div className="footer-links"><a href="/termos">Termos</a><a href="/privacidade">Privacidade</a><a href="/login">Entrar</a></div><div className="footer-copy">© {new Date().getFullYear()} Fotura</div></div></footer>
     </div>
   );
 }
