@@ -20,9 +20,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Fotura — A forma mais bonita de entregar fotos",
+  title: "Fotura — Galerias profissionais para fotógrafos",
   description:
-    "Plataforma simples e bonita para fotógrafos entregarem suas fotos: link com sua marca, visualização, favoritas e download.",
+    "Crie galerias profissionais, envie fotos, receba seleções e entregue aos seus clientes com uma experiência premium e com a sua marca.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
