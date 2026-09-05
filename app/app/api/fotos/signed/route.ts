@@ -222,8 +222,8 @@ export async function GET(req: NextRequest) {
   const heroCor = (perfil?.cor_hero as string | null) ?? "#0b0b1a";
 
   const etapa = (g.etapa as string | null) || (g.prova ? "prova" : "entrega");
-  const entregaFinal = etapa === "entrega";
-  const base = entregaFinal ? `${dono}/${galeria}/entrega` : `${dono}/${galeria}`;
+  const entregaFinalDeProva = etapa === "entrega" && Boolean(g.prova);
+  const base = entregaFinalDeProva ? `${dono}/${galeria}/entrega` : `${dono}/${galeria}`;
   const lista: Array<{ name: string }> = [];
   let offset = 0;
   while (true) {
