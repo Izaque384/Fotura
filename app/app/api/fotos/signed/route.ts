@@ -144,39 +144,26 @@ function heroSvg(corBase: string, estilo: string) {
           <stop offset=".66" stop-color="#000000" stop-opacity="0"/>
           <stop offset="1" stop-color="#000000" stop-opacity=".10"/>
         </radialGradient>
-        <linearGradient id="premiumLine" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="${paleta.detalhe}" stop-opacity="0"/>
-          <stop offset=".18" stop-color="${paleta.detalhe}" stop-opacity=".17"/>
-          <stop offset=".50" stop-color="${paleta.detalhe}" stop-opacity=".42"/>
-          <stop offset=".82" stop-color="${paleta.detalhe}" stop-opacity=".17"/>
-          <stop offset="1" stop-color="${paleta.detalhe}" stop-opacity="0"/>
-        </linearGradient>
-        <filter id="premiumGlow" x="-35%" y="-35%" width="170%" height="170%">
-          <feGaussianBlur stdDeviation="1.55" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        <filter id="bokehBlur" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="13"/>
         </filter>
       </defs>
       <rect width="1600" height="700" fill="url(#bg)"/>
       <rect width="1600" height="700" fill="url(#leftGlow)"/>
       <rect width="1600" height="700" fill="url(#vignette)"/>
 
-      <g fill="none" stroke="url(#premiumLine)" stroke-linecap="round" filter="url(#premiumGlow)">
-        <path d="M-50 82 C42 48 118 112 218 86 C314 62 374 34 462 58 C518 74 550 86 612 72" stroke-width="1.15" opacity=".38"/>
-        <path d="M-18 156 C72 126 134 190 228 160 C306 136 350 106 422 120" stroke-width="1" opacity=".25"/>
-        <path d="M-44 548 C64 514 132 586 230 552 C316 522 358 500 434 514" stroke-width="1.12" opacity=".34"/>
-        <path d="M28 634 C104 606 160 656 242 630 C304 612 342 588 402 598" stroke-width=".95" opacity=".22"/>
-
-        <path d="M1650 98 C1556 60 1480 126 1382 98 C1288 72 1232 48 1142 68 C1088 80 1052 90 998 78" stroke-width="1.15" opacity=".37"/>
-        <path d="M1618 172 C1530 140 1466 198 1374 170 C1300 148 1258 120 1186 132" stroke-width="1" opacity=".24"/>
-        <path d="M1644 536 C1540 504 1472 576 1374 542 C1290 514 1246 492 1174 506" stroke-width="1.12" opacity=".33"/>
-        <path d="M1578 628 C1500 602 1446 646 1364 622 C1302 604 1268 584 1210 594" stroke-width=".95" opacity=".21"/>
+      <g fill="${paleta.brilho}" filter="url(#bokehBlur)">
+        <circle cx="158" cy="126" r="28" opacity=".055"/>
+        <circle cx="330" cy="555" r="38" opacity=".045"/>
+        <circle cx="520" cy="146" r="19" opacity=".04"/>
+        <circle cx="1100" cy="118" r="31" opacity=".04"/>
+        <circle cx="1288" cy="520" r="46" opacity=".05"/>
+        <circle cx="1470" cy="242" r="23" opacity=".045"/>
       </g>
-
-      <g fill="none" stroke="${paleta.detalhe}" stroke-linecap="round" filter="url(#premiumGlow)">
-        <path d="M54 58h116M54 58q-22 0-22 22v32" stroke-width="1.05" opacity=".24"/>
-        <path d="M1546 66h-112M1546 66q22 0 22 22v30" stroke-width="1.05" opacity=".24"/>
-        <path d="M68 626h102M68 626q-22 0-22-22v-30" stroke-width="1.05" opacity=".20"/>
-        <path d="M1532 620h-102M1532 620q22 0 22-22v-28" stroke-width="1.05" opacity=".20"/>
+      <g fill="${paleta.detalhe}">
+        <circle cx="260" cy="232" r="4" opacity=".10"/>
+        <circle cx="1180" cy="210" r="5" opacity=".08"/>
+        <circle cx="1410" cy="438" r="3.5" opacity=".09"/>
       </g>`;
   }
 
