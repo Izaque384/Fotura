@@ -1,0 +1,289 @@
+/* Mobile hardening for the public client gallery. Scoped to .gc-* classes only. */
+@media (max-width: 700px) {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .gc-page,
+  .gc-center,
+  .gc-gate {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .gc-hero-wrap {
+    min-height: auto !important;
+    padding: 36px 18px 32px !important;
+    gap: 16px !important;
+  }
+
+  .gc-brand {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .gc-brand img {
+    max-width: min(72vw, 220px) !important;
+    max-height: 96px !important;
+    object-fit: contain;
+  }
+
+  .gc-brand span {
+    display: block;
+    max-width: 100%;
+    font-size: clamp(30px, 11vw, 42px) !important;
+    overflow-wrap: anywhere;
+  }
+
+  .gc-info {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .gc-info h1 {
+    max-width: 100%;
+    margin: 8px 0 !important;
+    font-size: clamp(26px, 8vw, 38px) !important;
+    line-height: 1.08;
+    overflow-wrap: anywhere;
+  }
+
+  .gc-body {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 30px 12px 112px !important;
+  }
+
+  .gc-head {
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .gc-head h2 {
+    min-width: 0;
+    margin: 0;
+    flex: 1 1 150px;
+  }
+
+  .gc-download-all {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .gc-secondary,
+  .gc-select,
+  .gc-download,
+  .gc-close,
+  .gc-lightbox-download,
+  .gc-com button,
+  .gc-bar button {
+    min-height: 44px;
+  }
+
+  .gc-secondary {
+    box-sizing: border-box;
+    white-space: nowrap;
+  }
+
+  .gc-input,
+  .gc-com textarea {
+    font-size: 16px !important;
+  }
+
+  .gc-grid {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .gc-card {
+    min-width: 0;
+    border-radius: 12px !important;
+  }
+
+  .gc-select,
+  .gc-download {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .gc-select {
+    top: 8px !important;
+    left: 8px !important;
+  }
+
+  .gc-download {
+    right: 8px !important;
+    bottom: 8px !important;
+  }
+
+  .gc-lightbox {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    box-sizing: border-box;
+    padding:
+      calc(12px + env(safe-area-inset-top))
+      8px
+      calc(78px + env(safe-area-inset-bottom)) !important;
+    overflow: hidden;
+  }
+
+  .gc-photo {
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100vh - 120px) !important;
+    max-height: calc(100dvh - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+  }
+
+  .gc-photo img {
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100vh - 120px) !important;
+    max-height: calc(100dvh - 120px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    object-fit: contain;
+  }
+
+  .gc-close {
+    top: calc(10px + env(safe-area-inset-top)) !important;
+    right: 10px !important;
+    width: 46px !important;
+    height: 46px !important;
+    z-index: 10 !important;
+  }
+
+  .gc-lightbox-download {
+    top: calc(10px + env(safe-area-inset-top)) !important;
+    right: 64px !important;
+    width: 46px !important;
+    height: 46px !important;
+    z-index: 10 !important;
+  }
+
+  .gc-nav {
+    top: 50% !important;
+    transform: translateY(-50%);
+    width: 48px !important;
+    height: 48px !important;
+    z-index: 12 !important;
+  }
+
+  .gc-nav.prev {
+    left: 8px !important;
+  }
+
+  .gc-nav.next {
+    right: 8px !important;
+  }
+
+  .gc-com {
+    bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .gc-com textarea {
+    min-width: 0;
+  }
+
+  .gc-bar {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+    box-sizing: border-box;
+    justify-content: space-between;
+    gap: 8px !important;
+    padding: 8px 8px 8px 14px !important;
+  }
+
+  .gc-bar span {
+    min-width: 0;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .gc-bar button {
+    flex: 0 0 auto;
+  }
+
+  .gc-bar.done {
+    width: auto !important;
+    max-width: calc(100vw - 20px) !important;
+    padding: 13px 18px !important;
+    text-align: center;
+  }
+
+  .gc-toast {
+    width: calc(100vw - 24px);
+    max-width: 420px;
+    box-sizing: border-box;
+    bottom: calc(78px + env(safe-area-inset-bottom)) !important;
+    text-align: center;
+  }
+
+  .gc-confirm {
+    box-sizing: border-box;
+    padding:
+      calc(16px + env(safe-area-inset-top))
+      14px
+      calc(16px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .gc-confirm-card {
+    max-height: calc(100vh - 32px);
+    max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .gc-gate {
+    box-sizing: border-box;
+    padding:
+      calc(20px + env(safe-area-inset-top))
+      16px
+      calc(20px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .gc-gate-card {
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 380px) {
+  .gc-head {
+    align-items: stretch !important;
+  }
+
+  .gc-download-all {
+    width: 100%;
+  }
+
+  .gc-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .gc-grid {
+    gap: 7px !important;
+  }
+
+  .gc-bar {
+    border-radius: 16px !important;
+  }
+
+  .gc-bar span {
+    font-size: 12px;
+  }
+
+  .gc-bar button {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .gc-confirm-actions {
+    flex-direction: column;
+  }
+}
