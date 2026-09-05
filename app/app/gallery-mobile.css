@@ -22,9 +22,16 @@
   .gc-brand {
     width: 100%;
     min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    margin-inline: auto !important;
   }
 
   .gc-brand img {
+    display: block !important;
+    margin-inline: auto !important;
     max-width: min(72vw, 220px) !important;
     max-height: 96px !important;
     object-fit: contain;
