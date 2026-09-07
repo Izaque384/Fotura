@@ -20,6 +20,7 @@ export type PlanoFotura = {
     brandingPersonalizado: boolean;
     heroEstudio: boolean;
     heroPremiumTech: boolean;
+    heroFotoGaleria: boolean;
     notificacoesPush: boolean;
   };
 };
@@ -45,6 +46,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
       brandingPersonalizado: false,
       heroEstudio: false,
       heroPremiumTech: false,
+      heroFotoGaleria: false,
       notificacoesPush: false,
     },
   },
@@ -68,6 +70,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
       brandingPersonalizado: true,
       heroEstudio: true,
       heroPremiumTech: true,
+      heroFotoGaleria: true,
       notificacoesPush: true,
     },
   },
@@ -91,6 +94,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
       brandingPersonalizado: true,
       heroEstudio: true,
       heroPremiumTech: false,
+      heroFotoGaleria: false,
       notificacoesPush: true,
     },
   },
@@ -114,6 +118,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
       brandingPersonalizado: true,
       heroEstudio: true,
       heroPremiumTech: true,
+      heroFotoGaleria: true,
       notificacoesPush: true,
     },
   },
@@ -137,6 +142,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
       brandingPersonalizado: true,
       heroEstudio: true,
       heroPremiumTech: true,
+      heroFotoGaleria: true,
       notificacoesPush: true,
     },
   },
