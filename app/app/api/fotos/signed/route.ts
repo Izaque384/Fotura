@@ -4,12 +4,14 @@ import { temAcessoGaleria } from "../../../../lib/gallery-access";
 import { registrarErro } from "../../../../lib/observability";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { uuidValido } from "../../../../lib/validation";
+import { planoFotura } from "../../../../lib/billing-plans";
 
 export const dynamic = "force-dynamic";
 const EXPIRA_SEG = 3600;
 const LISTA_LOTE = 1000;
 const ASSINATURA_LOTE = 200;
 const CONCORRENCIA_ASSINATURA = 3;
+const STATUS_COM_ACESSO = new Set(["active", "trialing", "past_due"]);
 
 function json(data: unknown, status = 200, retryAfter?: number) {
   const headers: Record<string, string> = { "Cache-Control": "no-store, private" };
@@ -115,7 +117,6 @@ function heroSvg(corBase: string, estilo: string) {
         <circle cx="800" cy="350" r="345" stroke-width="1.1" opacity=".22"/>
         <circle cx="800" cy="350" r="270" stroke-width="1.05" opacity=".17"/>
         <circle cx="800" cy="350" r="194" stroke-width="1" opacity=".11" stroke-dasharray="7 12"/>
-
         <path d="M0 378H128l72-72h182l58 58h160M1600 378h-128l-72-72h-182l-58 58H1000" stroke-width="1.25" opacity=".42"/>
         <path d="M0 512H235l44-44h208M1600 512h-235l-44-44h-208" stroke-width="1.1" opacity=".25"/>
         <path d="M0 228h188l38 38h154M1600 228h-188l-38 38h-154" stroke-width="1.1" opacity=".22"/>
@@ -123,7 +124,6 @@ function heroSvg(corBase: string, estilo: string) {
         <path d="M800 72v54M800 574v54M522 350h54M1024 350h54" stroke-width="1.05" opacity=".32"/>
         <circle cx="800" cy="350" r="5" opacity=".46"/>
       </g>
-
       <path d="M120 116h92v1h-92zM1388 116h92v1h-92zM120 584h92v1h-92zM1388 584h92v1h-92z" fill="${paleta.detalhe}" opacity=".43"/>
       <rect x="300" y="286" width="1000" height="1.2" fill="url(#line)" opacity=".86"/>
       <rect x="425" y="426" width="750" height="1" fill="url(#line)" opacity=".56"/>
@@ -151,7 +151,6 @@ function heroSvg(corBase: string, estilo: string) {
       <rect width="1600" height="700" fill="url(#bg)"/>
       <rect width="1600" height="700" fill="url(#leftGlow)"/>
       <rect width="1600" height="700" fill="url(#vignette)"/>
-
       <g fill="${paleta.brilho}" filter="url(#bokehBlur)">
         <circle cx="158" cy="126" r="28" opacity=".055"/>
         <circle cx="330" cy="555" r="38" opacity=".045"/>
@@ -171,6 +170,13 @@ function heroSvg(corBase: string, estilo: string) {
   return `data:image/svg+xml,${encodeURIComponent(svg)}#fotura-hero-${preset}`;
 }
 
+function estiloHeroEfetivo(estilo: string, premiumTechLiberado: boolean) {
+  if (estilo === "minimal") return "minimal";
+  if (premiumTechLiberado && estilo === "tech") return "tech";
+  if (premiumTechLiberado && estilo === "premium") return "premium";
+  return "minimal";
+}
+
 export async function GET(req: NextRequest) {
   const galeria = req.nextUrl.searchParams.get("galeria")?.trim();
   if (!uuidValido(galeria)) return json({ error: "galeria inválida." }, 400);
@@ -181,7 +187,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galleryError } = await supabase
     .from("galerias")
-    .select("user_id,capa,link_ate,tem_senha,etapa,prova")
+    .select("user_id,capa,hero_fundo_foto,link_ate,tem_senha,etapa,prova")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -195,18 +201,23 @@ export async function GET(req: NextRequest) {
   if (g.tem_senha && !temAcessoGaleria(req, galeria)) return json({ error: "Acesso à galeria necessário." }, 401);
 
   const dono = g.user_id as string;
-  const { data: perfil, error: profileError } = await supabase
-    .from("perfis")
-    .select("hero_galeria_ativo,hero_galeria_estilo,cor_hero")
-    .eq("id", dono)
-    .maybeSingle();
-  if (profileError) {
-    registrarErro("gallery.signed.profile", req, profileError, { galeria });
+  const [{ data: perfil, error: profileError }, { data: assinatura, error: billingError }] = await Promise.all([
+    supabase.from("perfis").select("hero_galeria_ativo,hero_galeria_estilo,cor_hero").eq("id", dono).maybeSingle(),
+    supabase.from("assinaturas").select("plano_codigo,status").eq("user_id", dono).maybeSingle(),
+  ]);
+  if (profileError || billingError) {
+    registrarErro("gallery.signed.identity", req, profileError || billingError, { galeria });
     return json({ error: "Não foi possível carregar a identidade da galeria." }, 500);
   }
-  const usarHeroEstudio = Boolean(perfil?.hero_galeria_ativo);
-  const heroEstilo = (perfil?.hero_galeria_estilo as string | null) ?? "premium";
+
+  const status = (assinatura?.status as string | null) ?? "active";
+  const plano = STATUS_COM_ACESSO.has(status)
+    ? planoFotura((assinatura?.plano_codigo as string | null) ?? "sem_plano")
+    : planoFotura("sem_plano");
+  const usarHeroEstudio = Boolean(perfil?.hero_galeria_ativo) && plano.recursos.heroEstudio;
+  const heroEstilo = estiloHeroEfetivo((perfil?.hero_galeria_estilo as string | null) ?? "premium", plano.recursos.heroPremiumTech);
   const heroCor = (perfil?.cor_hero as string | null) ?? "#0b0b1a";
+  const usarFotoHero = Boolean(g.hero_fundo_foto) && plano.recursos.heroFotoGaleria;
 
   const etapa = (g.etapa as string | null) || (g.prova ? "prova" : "entrega");
   const entregaFinalDeProva = etapa === "entrega" && Boolean(g.prova);
@@ -229,7 +240,9 @@ export async function GET(req: NextRequest) {
     offset += LISTA_LOTE;
   }
 
-  if (lista.length === 0) return json({ fotos: [], capaUrl: usarHeroEstudio ? heroSvg(heroCor, heroEstilo) : null, etapa });
+  if (lista.length === 0) {
+    return json({ fotos: [], capaUrl: usarHeroEstudio ? heroSvg(heroCor, heroEstilo) : null, etapa });
+  }
 
   const caminhos: string[] = [];
   for (const f of lista) {
@@ -265,6 +278,12 @@ export async function GET(req: NextRequest) {
     return { nome: f.name, url, thumb };
   });
   const capaNome = capaFile && lista.some((f) => f.name === capaFile) ? capaFile : lista[0]?.name;
-  const capaUrl = usarHeroEstudio ? heroSvg(heroCor, heroEstilo) : (capaNome ? (mapa[`${base}/${capaNome}`] ?? null) : null);
+  const fotoCapaUrl = capaNome ? (mapa[`${base}/${capaNome}`] ?? null) : null;
+  const marcadorPreset = usarHeroEstudio ? `#fotura-hero-${heroEstilo}` : "";
+  const capaUrl = usarFotoHero && fotoCapaUrl
+    ? `${fotoCapaUrl}${marcadorPreset}`
+    : usarHeroEstudio
+      ? heroSvg(heroCor, heroEstilo)
+      : null;
   return json({ fotos, capaUrl, etapa });
 }
