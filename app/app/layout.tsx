@@ -5,6 +5,7 @@ import "./premium.css";
 import "./premium-tuning.css";
 import "./ux-refinements.css";
 import "./gallery-hero-presets.css";
+import "./gallery-hero-legibility.css";
 import "./gallery-mobile.css";
 import ClientShortcuts from "./components/ClientShortcuts";
 import BellOutsideDismiss from "./components/BellOutsideDismiss";
