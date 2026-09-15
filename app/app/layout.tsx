@@ -10,6 +10,7 @@ import "./gallery-mobile.css";
 import ClientShortcuts from "./components/ClientShortcuts";
 import BellOutsideDismiss from "./components/BellOutsideDismiss";
 import LegacyLoadingBridge from "./components/LegacyLoadingBridge";
+import LandingPlanStorageSync from "./components/LandingPlanStorageSync";
 
 const sora = Sora({
   variable: "--font-sora",
@@ -45,7 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${sora.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}<LegacyLoadingBridge/><ClientShortcuts/><BellOutsideDismiss/></body>
+      <body className="min-h-full flex flex-col">{children}<LandingPlanStorageSync/><LegacyLoadingBridge/><ClientShortcuts/><BellOutsideDismiss/></body>
     </html>
   );
 }
