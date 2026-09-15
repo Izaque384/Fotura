@@ -81,7 +81,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     precoMensalCentavos: 1490,
     limites: {
       galeriasAtivas: 10,
-      armazenamentoGb: 20,
+      armazenamentoGb: 10,
       clientes: 250,
       fotosPorGaleria: 1000,
     },
@@ -105,7 +105,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     precoMensalCentavos: 2990,
     limites: {
       galeriasAtivas: 50,
-      armazenamentoGb: 100,
+      armazenamentoGb: 50,
       clientes: 2000,
       fotosPorGaleria: 3000,
     },
@@ -129,7 +129,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     precoMensalCentavos: 5990,
     limites: {
       galeriasAtivas: null,
-      armazenamentoGb: 500,
+      armazenamentoGb: 100,
       clientes: null,
       fotosPorGaleria: 5000,
     },
