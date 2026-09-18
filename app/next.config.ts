@@ -14,6 +14,11 @@ const securityHeaders = [
   { key: "Content-Security-Policy", value: CONTENT_SECURITY_POLICY },
 ];
 
+const noIndexHeader = {
+  key: "X-Robots-Tag",
+  value: "noindex, nofollow, noarchive",
+};
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
@@ -22,6 +27,16 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: securityHeaders,
       },
+      { source: "/dashboard/:path*", headers: [noIndexHeader] },
+      { source: "/admin/:path*", headers: [noIndexHeader] },
+      { source: "/api/:path*", headers: [noIndexHeader] },
+      { source: "/g/:path*", headers: [noIndexHeader] },
+      { source: "/upload", headers: [noIndexHeader] },
+      { source: "/perfil", headers: [noIndexHeader] },
+      { source: "/configuracoes", headers: [noIndexHeader] },
+      { source: "/login", headers: [noIndexHeader] },
+      { source: "/esqueci-senha", headers: [noIndexHeader] },
+      { source: "/redefinir-senha", headers: [noIndexHeader] },
     ];
   },
 };

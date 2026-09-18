@@ -24,9 +24,15 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Fotura — Galerias profissionais para fotógrafos",
+  metadataBase: new URL("https://foturax.com.br"),
+  title: {
+    default: "Fotura — Galeria de fotos e prova online para fotógrafos",
+    template: "%s | Fotura",
+  },
   description:
-    "Crie galerias profissionais, envie fotos, receba seleções e entregue aos seus clientes com uma experiência premium e com a sua marca.",
+    "Crie galerias profissionais para entregar fotos, receber seleções e comentários dos clientes e organizar provas online com a identidade do seu estúdio.",
+  applicationName: "Fotura",
+  category: "photography",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
