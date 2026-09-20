@@ -112,16 +112,6 @@ export default function Home() {
                 <div className="hero-proof-icon">♡</div>
                 <div><strong>18 fotos selecionadas</strong><span>O cliente finalizou a prova.</span></div>
               </div>
-
-              <div className="hero-delivery-card">
-                <div className="hero-delivery-mark">✓</div>
-                <div><span>ENTREGA FINAL</span><strong>Pronta para o cliente</strong></div>
-              </div>
-
-              <div className="hero-floating-brand">
-                <Logo/>
-                <div><strong>FOTURA</strong><span>Seu estúdio em primeiro plano.</span></div>
-              </div>
             </div>
           </div>
 
