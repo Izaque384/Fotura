@@ -3,8 +3,8 @@
    Keeps the Fotura blue→purple gradient as the primary brand signature. */
 
 :root{
-  --ft-bg:#F5F3FB;
-  --ft-bg-2:#EEEAF8;
+  --ft-bg:#F0EDF7;
+  --ft-bg-2:#E9E4F3;
   --ft-surface:#FAF8FD;
   --ft-surface-2:#F3EFF9;
   --ft-surface-3:#ECE7F6;
@@ -27,7 +27,7 @@
   background:
     radial-gradient(720px 360px at 96% -8%,rgba(93,13,250,.055),transparent 72%),
     radial-gradient(620px 320px at 22% 0%,rgba(17,150,252,.045),transparent 72%),
-    linear-gradient(180deg,var(--ft-bg) 0%,#F1EFF8 100%) !important;
+    linear-gradient(180deg,var(--ft-bg) 0%,#ECE8F4 100%) !important;
   color:var(--ft-text) !important;
 }
 
@@ -36,7 +36,7 @@
   background:
     radial-gradient(720px 360px at 96% -8%,rgba(93,13,250,.055),transparent 72%),
     radial-gradient(620px 320px at 22% 0%,rgba(17,150,252,.045),transparent 72%),
-    linear-gradient(180deg,var(--ft-bg) 0%,#F1EFF8 100%) !important;
+    linear-gradient(180deg,var(--ft-bg) 0%,#ECE8F4 100%) !important;
   color:var(--ft-text) !important;
 }
 
@@ -303,7 +303,7 @@
   background:
     radial-gradient(620px 300px at 30% 20%,rgba(17,150,252,.07),transparent 72%),
     radial-gradient(620px 300px at 74% 72%,rgba(93,13,250,.08),transparent 72%),
-    linear-gradient(180deg,#F5F3FB,#EEEAF8) !important;
+    linear-gradient(180deg,#F0EDF7,#E9E4F3) !important;
   color:var(--ft-text) !important;
 }
 .fotura-loading__brand{color:#272B43 !important}
@@ -322,7 +322,7 @@
   background:
     radial-gradient(760px 430px at 72% 5%,rgba(93,13,250,.09),transparent 70%),
     radial-gradient(620px 340px at 15% 6%,rgba(17,150,252,.065),transparent 72%),
-    linear-gradient(180deg,#F7F5FC 0%,#F1EEF8 48%,#F7F5FC 100%) !important;
+    linear-gradient(180deg,#F2EFF8 0%,#ECE8F4 48%,#F2EFF8 100%) !important;
 }
 .lp:before{
   opacity:.38 !important;
@@ -402,7 +402,7 @@
   background:
     radial-gradient(620px 320px at 20% 10%,rgba(17,150,252,.055),transparent 72%),
     radial-gradient(620px 320px at 85% 85%,rgba(93,13,250,.07),transparent 72%),
-    linear-gradient(180deg,#F5F3FB,#EEEAF8) !important;
+    linear-gradient(180deg,#F0EDF7,#E9E4F3) !important;
   color:var(--ft-text) !important;
 }
 .auth-card{
@@ -423,9 +423,9 @@
 }
 
 @media(max-width:640px){
-  .mf-shift{background:#F5F3FB !important}
+  .mf-shift{background:#F0EDF7 !important}
   .mf-side{box-shadow:12px 0 38px rgba(55,44,88,.10) !important}
-  .lp{background:linear-gradient(180deg,#F6F4FB,#F0EDF8) !important}
+  .lp{background:linear-gradient(180deg,#F1EEF8,#EAE6F3) !important}
 }
 
 
@@ -545,7 +545,7 @@ html body .gc-center,
 html body .gc-gate{
   background:
     radial-gradient(680px 340px at 92% 0%,rgba(93,13,250,.055),transparent 72%),
-    linear-gradient(180deg,#F5F3FB 0%,#F0EDF8 100%) !important;
+    linear-gradient(180deg,#F0EDF7 0%,#EAE6F3 100%) !important;
   color:#21253A !important;
 }
 
