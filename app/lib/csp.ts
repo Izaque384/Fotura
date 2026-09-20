@@ -5,7 +5,7 @@ const BASE_DIRECTIVES = [
   "frame-ancestors 'none'",
   "frame-src 'none'",
   "form-action 'self'",
-  "img-src 'self' data: blob: https://*.supabase.co",
+  "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com",
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
   "script-src-attr 'none'",
