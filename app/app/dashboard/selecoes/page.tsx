@@ -77,13 +77,12 @@ export default function SelecoesPage() {
     else setCarregando(true);
     setErro("");
 
-    const { data: auth } = await supabase.auth.getSession();
-    const user = auth.session?.user;
-    if (!user) {
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) {
       router.replace("/login");
       return;
     }
-    const meuId = user.id;
+    const meuId = auth.user.id;
     setUid(meuId);
 
     const [{ data: galerias, error: eGal }, { data: clientes, error: eCli }, { data: resumos }] = await Promise.all([
