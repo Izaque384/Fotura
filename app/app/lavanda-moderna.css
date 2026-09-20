@@ -427,3 +427,249 @@
   .mf-side{box-shadow:12px 0 38px rgba(55,44,88,.10) !important}
   .lp{background:linear-gradient(180deg,#F6F4FB,#F0EDF8) !important}
 }
+
+
+/* =========================================================
+   Lavanda Moderna — authoritative product surfaces
+   These selectors intentionally outrank legacy premium rules.
+   ========================================================= */
+
+html body .mf-shift{
+  --fx-surface:#FAF8FD;
+  --fx-surface-deep:#EEEAF8;
+  --fx-surface-soft:#F3EFF9;
+  --fx-border:#DCD6EE;
+  --fx-border-strong:#CFC6E6;
+  --fx-text:#21253A;
+  --fx-muted:#73758D;
+}
+
+html body .mf-shift :is(.card,.panel,.kpi,.stat,.client-card,.sel-card,.sel-row,.list-row),
+html body .mf-shift.dash .row,
+html body .dash.mf-shift .row,
+html body .cfg.mf-shift .card,
+html body .profile.mf-shift .card,
+html body .bill-page.mf-shift .card,
+html body .up-page.mf-shift .up-card,
+html body .delivery-page.mf-shift .delivery-step{
+  background:#FAF8FD !important;
+  background-image:none !important;
+  border-color:#DCD6EE !important;
+  color:#21253A !important;
+  box-shadow:0 8px 26px rgba(65,52,111,.055) !important;
+}
+
+html body .mf-shift :is(.account,.switch,.newc,.action-summary,.action-group,.send-client,.send-option,.gallery-block,.bell-pop),
+html body .dash.mf-shift :is(.tabs,.sel-tabs),
+html body .mf-shift :is(.up-file,.review-gate,.review-ok,.done-note){
+  background:#F3EFF9 !important;
+  background-image:none !important;
+  border-color:#DCD6EE !important;
+  color:#424860 !important;
+  box-shadow:none !important;
+}
+
+html body .mf-shift :is(.input,.select),
+html body .dash.mf-shift :is(.search-input,.sel-search),
+html body .up-page :is(.up-input,.up-select),
+html body .profile.mf-shift :is(.input,.hex),
+html body .mf-shift input,
+html body .mf-shift select,
+html body .mf-shift textarea{
+  background-color:#F3EFF9 !important;
+  color:#21253A !important;
+  border-color:#D7D0E7 !important;
+  box-shadow:none !important;
+}
+
+html body .dash.mf-shift :is(.tab,.sel-tab){
+  color:#73758D !important;
+  background:transparent !important;
+  border-color:transparent !important;
+}
+html body .dash.mf-shift :is(.tab,.sel-tab):hover{
+  color:#424860 !important;
+  background:rgba(255,255,255,.46) !important;
+}
+html body .dash.mf-shift :is(.tab.on,.sel-tab.on){
+  color:#343A5C !important;
+  border-color:#CFC6E6 !important;
+  background:linear-gradient(135deg,rgba(17,150,252,.10),rgba(93,13,250,.075)) !important;
+}
+
+html body .dash.mf-shift .sel-refresh,
+html body .mf-shift :is(.act,.mini,.filter,.card-action,.bell,.manage-btn,.up-mini){
+  background:#F3EFF9 !important;
+  color:#596079 !important;
+  border-color:#DCD6EE !important;
+}
+html body .dash.mf-shift .sel-refresh:hover:not(:disabled),
+html body .mf-shift :is(.act,.mini,.filter,.card-action,.bell,.manage-btn,.up-mini):hover{
+  background:#FAF8FD !important;
+  color:#31364D !important;
+  border-color:#CFC6E6 !important;
+}
+
+html body .mf-shift .mf-side{
+  background:linear-gradient(180deg,#EEEAF8 0%,#E9E4F4 100%) !important;
+  border-right-color:#D9D2E8 !important;
+  box-shadow:8px 0 28px rgba(65,52,111,.035) !important;
+}
+html body .mf-shift .mf-brand-tx{color:#252A41 !important}
+html body .mf-shift .mf-item,
+html body .mf-shift .mf-sair{color:#6F7088 !important}
+html body .mf-shift .mf-item:hover{
+  background:#F7F4FB !important;
+  color:#33384F !important;
+}
+html body .mf-shift .mf-item.ativo{
+  color:#343A58 !important;
+  background:linear-gradient(90deg,rgba(17,150,252,.11),rgba(93,13,250,.08)) !important;
+  border-color:#C9C0E3 !important;
+  box-shadow:inset 3px 0 0 #4E78E4 !important;
+}
+html body .mf-shift .mf-user{
+  background:rgba(250,248,253,.68) !important;
+  color:#31364D !important;
+  border-color:#D8D1E7 !important;
+}
+html body .mf-shift .mf-user:hover,
+html body .mf-shift .mf-user.ativo{
+  background:#FAF8FD !important;
+  border-color:#C8BEE2 !important;
+}
+
+/* ---------- Public/client galleries ---------- */
+html body .gc-page,
+html body .gc-center,
+html body .gc-gate{
+  background:
+    radial-gradient(680px 340px at 92% 0%,rgba(93,13,250,.055),transparent 72%),
+    linear-gradient(180deg,#F5F3FB 0%,#F0EDF8 100%) !important;
+  color:#21253A !important;
+}
+
+html body .gc-body{
+  color:#21253A !important;
+}
+html body .gc-head{
+  border-bottom-color:#DDD7E8 !important;
+}
+html body .gc-head h2{
+  color:#21253A !important;
+}
+
+html body .gc-secondary{
+  background:#F0ECF8 !important;
+  border-color:#D1C8E6 !important;
+  color:#4D5570 !important;
+  box-shadow:none !important;
+}
+html body .gc-secondary:hover{
+  background:#FAF8FD !important;
+  border-color:#C0B5DC !important;
+  color:#30364D !important;
+}
+
+html body .gc-prazo,
+html body .gc-hint{
+  background:#F0ECF8 !important;
+  border-color:#DCD6EE !important;
+  color:#62677D !important;
+}
+
+html body .gc-card{
+  background:#FAF8FD !important;
+  border-color:#DCD6EE !important;
+  box-shadow:0 7px 20px rgba(65,52,111,.055) !important;
+}
+html body .gc-card.sel{
+  border-color:#6177E8 !important;
+  box-shadow:0 0 0 2px rgba(93,13,250,.14),0 7px 20px rgba(65,52,111,.06) !important;
+}
+
+html body .gc-notice,
+html body .gc-empty{
+  color:#73758D !important;
+}
+
+html body .gc-page footer{
+  color:#8A8CA1 !important;
+}
+
+html body .gc-bar{
+  background:rgba(250,248,253,.95) !important;
+  border-color:#D4CDE6 !important;
+  color:#333950 !important;
+  box-shadow:0 14px 36px rgba(57,46,91,.13) !important;
+  backdrop-filter:blur(14px);
+}
+html body .gc-bar.done{
+  color:#3D7556 !important;
+  background:rgba(237,247,241,.96) !important;
+  border-color:#CBE3D4 !important;
+}
+
+html body .gc-gate-card{
+  background:#FAF8FD !important;
+  color:#21253A !important;
+  border-color:#DCD6EE !important;
+  box-shadow:0 20px 60px rgba(57,46,91,.12) !important;
+}
+html body .gc-gate-card h1{color:#21253A !important}
+html body .gc-gate-card p,
+html body .gc-gate-card small{color:#73758D !important}
+html body .gc-input{
+  background:#F3EFF9 !important;
+  color:#21253A !important;
+  border-color:#D7D0E7 !important;
+}
+html body .gc-input::placeholder{color:#9A98AA !important}
+
+html body .gc-confirm{
+  background:rgba(39,35,56,.28) !important;
+}
+html body .gc-confirm-card{
+  background:#FAF8FD !important;
+  color:#21253A !important;
+  border-color:#DCD6EE !important;
+  box-shadow:0 24px 70px rgba(52,42,83,.17) !important;
+}
+html body .gc-confirm-card h2{color:#21253A !important}
+html body .gc-confirm-card p{color:#73758D !important}
+html body .gc-confirm-cancel{
+  background:#F3EFF9 !important;
+  color:#555C74 !important;
+  border-color:#D7D0E7 !important;
+}
+
+/* Photo controls stay dark/translucent because they sit directly over photographs. */
+html body .gc-select,
+html body .gc-close,
+html body .gc-nav,
+html body .gc-lightbox-download{
+  color:#fff !important;
+}
+html body .gc-lightbox{
+  background:rgba(8,8,16,.96) !important;
+}
+
+/* Gallery comment composer lives inside the dark lightbox. */
+html body .gc-lightbox .gc-com{
+  background:rgba(20,20,36,.92) !important;
+  border-color:rgba(255,255,255,.16) !important;
+  color:#fff !important;
+}
+html body .gc-lightbox .gc-com textarea{color:#fff !important}
+
+/* ---------- Make text readable on every light SaaS surface ---------- */
+html body .mf-shift :is(.kpi-val,.card-t,.list-title,.sel-title,.name,.value,.title,.current-name,.usage-title){
+  color:#21253A !important;
+}
+html body .mf-shift :is(.kpi-lab,.kpi-sub,.card-sub,.list-meta,.sel-meta,.meta,.desc,.sub,.hint,.fine){
+  color:#73758D !important;
+}
+html body .dash.mf-shift .donut::after{background:#FAF8FD !important}
+html body .dash.mf-shift .donut-center strong{color:#21253A !important}
+html body .dash.mf-shift .donut-center span{color:#73758D !important}
+html body .dash.mf-shift .legend-row{color:#596079 !important}
