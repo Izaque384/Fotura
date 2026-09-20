@@ -8,6 +8,7 @@ import "./gallery-hero-presets.css";
 import "./gallery-hero-legibility.css";
 import "./gallery-mobile.css";
 import "./mobile-density.css";
+import "./lavanda-moderna.css";
 import ClientShortcuts from "./components/ClientShortcuts";
 import BellOutsideDismiss from "./components/BellOutsideDismiss";
 import LandingPlanStorageSync from "./components/LandingPlanStorageSync";
@@ -18,7 +19,7 @@ const sora = Sora({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#4a6cf7",
+  themeColor: "#F5F3FB",
   width: "device-width",
   initialScale: 1,
 };
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "Fotura",
   },
   icons: {
