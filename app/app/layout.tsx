@@ -40,7 +40,8 @@ export const metadata: Metadata = {
     title: "Fotura",
   },
   icons: {
-    icon: "/icon-192.png",
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    shortcut: "/favicon.svg",
     apple: "/apple-touch-icon.png",
   },
 };
