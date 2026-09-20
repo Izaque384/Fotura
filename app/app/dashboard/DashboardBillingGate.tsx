@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
+import FoturaLoadingScreen from "../components/FoturaLoadingScreen";
 
 type BillingStatus = {
   plano?: { codigo?: string };
@@ -11,6 +12,7 @@ type BillingStatus = {
 };
 
 const ROTAS_SEM_PLANO = ["/dashboard/assinatura", "/dashboard/onboarding"];
+const GATE_TIMEOUT_MS = 5000;
 
 export default function DashboardBillingGate({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
@@ -22,36 +24,61 @@ export default function DashboardBillingGate({ children }: Readonly<{ children: 
 
   useEffect(() => {
     let ativo = true;
+    const watchdog = window.setTimeout(() => {
+      if (!ativo) return;
+      // As operações sensíveis continuam protegidas no backend.
+      // O gate visual nunca deve bloquear o SaaS indefinidamente.
+      setFalhaConsulta(true);
+      setConsultando(false);
+    }, GATE_TIMEOUT_MS);
 
     void (async () => {
-      const { data } = await supabase.auth.getSession();
-      const session = data.session;
-      if (!session) {
-        router.replace("/login");
-        return;
-      }
-
       try {
-        const resposta = await fetch("/api/billing/status", {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          cache: "no-store",
-        });
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
 
-        if (!resposta.ok) {
-          if (ativo) setFalhaConsulta(true);
+        const session = data.session;
+        if (!session) {
+          if (ativo) {
+            setFalhaConsulta(true);
+            setConsultando(false);
+          }
+          router.replace("/login");
           return;
         }
 
-        const resultado = await resposta.json() as BillingStatus;
-        if (ativo) setBilling(resultado);
+        const controller = new AbortController();
+        const requestTimeout = window.setTimeout(() => controller.abort(), 4000);
+
+        try {
+          const resposta = await fetch("/api/billing/status", {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+            cache: "no-store",
+            signal: controller.signal,
+          });
+
+          if (!resposta.ok) {
+            if (ativo) setFalhaConsulta(true);
+            return;
+          }
+
+          const resultado = await resposta.json() as BillingStatus;
+          if (ativo) setBilling(resultado);
+        } finally {
+          window.clearTimeout(requestTimeout);
+        }
       } catch {
         if (ativo) setFalhaConsulta(true);
       } finally {
+        window.clearTimeout(watchdog);
         if (ativo) setConsultando(false);
       }
     })();
 
-    return () => { ativo = false; };
+    return () => {
+      ativo = false;
+      window.clearTimeout(watchdog);
+    };
   }, [router, supabase]);
 
   const rotaLiberadaSemPlano = ROTAS_SEM_PLANO.some((rota) => pathname === rota || pathname.startsWith(`${rota}/`));
@@ -78,10 +105,10 @@ export default function DashboardBillingGate({ children }: Readonly<{ children: 
     </div>;
   }
 
-  if (consultando || precisaOnboarding) {
-    return <div style={{ minHeight: "100vh", background: "#090917", display: "grid", placeItems: "center", color: "#7a7f9a", fontFamily: "Sora, sans-serif" }}>Verificando seu plano…</div>;
-  }
+  if (consultando || precisaOnboarding) return <FoturaLoadingScreen />;
 
+  // Em falha de rede/sessão, não bloqueamos o painel para sempre.
+  // RLS e APIs continuam sendo a camada de autorização real.
   if (falhaConsulta) return children;
   return children;
 }
