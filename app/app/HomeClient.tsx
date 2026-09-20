@@ -72,7 +72,7 @@ export default function Home() {
           <div className="hero-showcase-main">
             <div className="hero-showcase-copy">
               <div className="hero-showcase-badge">PARA FOTÓGRAFOS PROFISSIONAIS</div>
-              <h1>Entregue galerias com uma apresentação impecável.</h1>
+              <h1>Entregue galerias com uma apresentação <span className="grad">impecável.</span></h1>
               <p>Compartilhe, receba seleções, encante seus clientes e transforme cada entrega em uma experiência à altura da sua fotografia.</p>
 
               <div className="hero-showcase-actions">
