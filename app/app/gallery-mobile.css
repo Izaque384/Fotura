@@ -59,8 +59,16 @@
 
   .gc-body {
     width: 100%;
+    max-width: none !important;
     box-sizing: border-box;
-    padding: 30px 12px 112px !important;
+    padding: 24px 0 112px !important;
+  }
+
+  .gc-head,
+  .gc-prazo,
+  .gc-hint {
+    margin-left: 10px !important;
+    margin-right: 10px !important;
   }
 
   .gc-head {
@@ -104,15 +112,19 @@
     width: 100%;
     display: block !important;
     columns: 2 !important;
-    column-gap: 8px !important;
+    column-gap: 1px !important;
+    background: #dcd6ee !important;
+    line-height: 0 !important;
   }
 
   .gc-card {
     width: 100%;
     min-width: 0;
-    margin: 0 0 8px !important;
+    margin: 0 0 1px !important;
     break-inside: avoid;
-    border-radius: 12px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: inset 0 0 0 1px rgba(33,37,58,.12) !important;
   }
 
   .gc-card > img {
@@ -285,7 +297,7 @@
   }
 
   .gc-grid {
-    gap: 7px !important;
+    column-gap: 1px !important;
   }
 
   .gc-bar {
