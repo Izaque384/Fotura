@@ -1420,3 +1420,47 @@ html body .cfg.mf-shift .btn:disabled{
   transform:none !important;
   box-shadow:none !important;
 }
+
+
+/* ---------- Selections light surfaces ---------- */
+html body .dash.mf-shift .sel-mini,
+html body .dash.mf-shift .sel-empty,
+html body .dash.mf-shift .sel-error,
+html body .dash.mf-shift .sel-row{
+  background:#FAF8FD !important;
+  background-image:none !important;
+  border-color:#DCD6EE !important;
+  color:#21253A !important;
+  box-shadow:0 8px 24px rgba(65,52,111,.05) !important;
+}
+
+html body .dash.mf-shift .sel-mini strong{
+  color:#21253A !important;
+  font-weight:750 !important;
+}
+
+html body .dash.mf-shift .sel-mini span,
+html body .dash.mf-shift .sel-empty{
+  color:#73758D !important;
+}
+
+html body .dash.mf-shift .sel-error{
+  background:#FFF0F1 !important;
+  border-color:#F0C7CC !important;
+  color:#B95C66 !important;
+}
+
+html body .dash.mf-shift .sel-row{
+  background:#FAF8FD !important;
+}
+
+html body .dash.mf-shift .sel-title,
+html body .dash.mf-shift .sel-v{
+  color:#21253A !important;
+}
+
+html body .dash.mf-shift .sel-meta,
+html body .dash.mf-shift .sel-client,
+html body .dash.mf-shift .sel-k{
+  color:#73758D !important;
+}
