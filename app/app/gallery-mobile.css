@@ -102,13 +102,24 @@
 
   .gc-grid {
     width: 100%;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 8px !important;
+    display: block !important;
+    columns: 2 !important;
+    column-gap: 8px !important;
   }
 
   .gc-card {
+    width: 100%;
     min-width: 0;
+    margin: 0 0 8px !important;
+    break-inside: avoid;
     border-radius: 12px !important;
+  }
+
+  .gc-card > img {
+    display: block;
+    width: 100%;
+    height: auto !important;
+    object-fit: initial !important;
   }
 
   .gc-select,
