@@ -1464,3 +1464,78 @@ html body .dash.mf-shift .sel-client,
 html body .dash.mf-shift .sel-k{
   color:#73758D !important;
 }
+
+
+/* ---------- Gallery footer toolbar ---------- */
+html body .gc-body{
+  padding-top:0 !important;
+  padding-bottom:30px !important;
+}
+
+html body .gc-head.gc-head-bottom{
+  min-height:58px !important;
+  margin:0 !important;
+  padding:0 clamp(14px,2vw,30px) !important;
+  border-top:1px solid #DCD6EE !important;
+  border-bottom:0 !important;
+  background:transparent !important;
+}
+
+html body .gc-head.gc-head-bottom h2{
+  margin:0 !important;
+  color:#21253A !important;
+  font-size:14px !important;
+  line-height:1.2 !important;
+  font-weight:750 !important;
+}
+
+html body .gc-head.gc-head-bottom h2 span{
+  color:#85879A !important;
+  font-weight:650 !important;
+}
+
+html body .gc-head.gc-head-bottom .gc-secondary{
+  min-height:38px !important;
+  padding:7px 12px !important;
+  border-radius:9px !important;
+  font-size:12px !important;
+}
+
+html body .gc-prazo,
+html body .gc-hint{
+  margin-top:16px !important;
+  margin-bottom:16px !important;
+}
+
+@media(max-width:700px){
+  html body .gc-body{
+    padding-top:0 !important;
+    padding-bottom:22px !important;
+  }
+
+  html body .gc-head.gc-head-bottom{
+    min-height:54px !important;
+    padding:0 10px !important;
+    gap:8px !important;
+    flex-wrap:nowrap !important;
+  }
+
+  html body .gc-head.gc-head-bottom h2{
+    flex:1 1 auto !important;
+    min-width:0 !important;
+    font-size:12.5px !important;
+    white-space:nowrap !important;
+  }
+
+  html body .gc-head.gc-head-bottom .gc-download-all{
+    flex:0 0 auto !important;
+    width:auto !important;
+  }
+
+  html body .gc-head.gc-head-bottom .gc-secondary{
+    width:auto !important;
+    min-height:36px !important;
+    padding:6px 9px !important;
+    font-size:11.5px !important;
+  }
+}
