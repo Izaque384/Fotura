@@ -1372,3 +1372,51 @@ html body .mf-top-role{
     box-shadow:0 7px 20px rgba(55,45,88,.08) !important;
   }
 }
+
+
+/* ---------- Settings action buttons ---------- */
+html body .cfg.mf-shift .btn:not(.danger){
+  background:linear-gradient(90deg,#1196FC 0%,#5D0DFA 100%) !important;
+  border-color:transparent !important;
+  color:#FFFFFF !important;
+  box-shadow:0 8px 20px rgba(93,13,250,.14) !important;
+  font-weight:700 !important;
+}
+
+html body .cfg.mf-shift .btn:not(.danger):hover:not(:disabled){
+  filter:brightness(1.04);
+  box-shadow:0 10px 24px rgba(93,13,250,.18) !important;
+  transform:translateY(-1px);
+}
+
+html body .cfg.mf-shift .btn:not(.danger):active:not(:disabled){
+  transform:translateY(0);
+}
+
+html body .cfg.mf-shift .btn.off:not(.danger){
+  background:linear-gradient(90deg,#1196FC 0%,#5D0DFA 100%) !important;
+  border-color:transparent !important;
+  color:#FFFFFF !important;
+}
+
+html body .cfg.mf-shift .btn.danger{
+  background:#FFF0F1 !important;
+  border:1px solid #F0C7CC !important;
+  color:#C6535F !important;
+  box-shadow:none !important;
+  font-weight:700 !important;
+}
+
+html body .cfg.mf-shift .btn.danger:hover:not(:disabled){
+  background:#FBE5E7 !important;
+  border-color:#E7B7BD !important;
+  color:#B94551 !important;
+}
+
+html body .cfg.mf-shift .btn:disabled{
+  opacity:.52 !important;
+  filter:saturate(.72);
+  cursor:default !important;
+  transform:none !important;
+  box-shadow:none !important;
+}
