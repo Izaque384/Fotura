@@ -8,6 +8,7 @@ import "./gallery-hero-presets.css";
 import "./gallery-hero-legibility.css";
 import "./gallery-mobile.css";
 import "./mobile-density.css";
+import "./authenticated-light.css";
 import ClientShortcuts from "./components/ClientShortcuts";
 import BellOutsideDismiss from "./components/BellOutsideDismiss";
 import LandingPlanStorageSync from "./components/LandingPlanStorageSync";
