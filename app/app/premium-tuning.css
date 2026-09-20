@@ -18,7 +18,7 @@
 .mf-shift .panel,
 .mf-shift .kpi,
 .mf-shift .stat {
-  background: linear-gradient(180deg,#111120 0%,#0e0e1d 100%) !important;
+  background: linear-gradient(180deg,#FAF8FD 0%,#F3EFF9 100%) !important;
 }
 
 /* Gallery primary actions */
@@ -144,27 +144,27 @@
 /* Configurações: superfície plana, sem halo claro ao redor dos cards. */
 .cfg.mf-shift .card,
 .mf-shift .cfg .card {
-  background: linear-gradient(180deg,#10101f 0%,#0d0d1a 100%) !important;
-  border-color: #1b1e30 !important;
+  background: linear-gradient(180deg,#FAF8FD 0%,#EEEAF8 100%) !important;
+  border-color: #DCD6EE !important;
   box-shadow: none !important;
 }
 
 .cfg.mf-shift .card:hover,
 .mf-shift .cfg .card:hover {
-  border-color: #20243a !important;
+  border-color: #D9D3E8 !important;
   box-shadow: none !important;
 }
 
 .cfg.mf-shift .row,
 .mf-shift .cfg .row {
-  border-top-color: #1b1e2f !important;
+  border-top-color: #DDD7E8 !important;
   background: transparent !important;
   box-shadow: none !important;
 }
 
 .cfg.mf-shift .account,
 .mf-shift .cfg .account {
-  border-color: #1d2032 !important;
+  border-color: #DAD4E8 !important;
   box-shadow: none !important;
 }
 
@@ -173,8 +173,8 @@
 .mf-shift .cfg .btn:not(.primary):not(.off):not(.danger),
 .cfg.mf-shift .links .btn,
 .mf-shift .cfg .links .btn {
-  background: #0f0f1c !important;
-  border-color: #25283a !important;
+  background: #F3EFF9 !important;
+  border-color: #D6D0E4 !important;
   box-shadow: none !important;
   filter: none !important;
   text-shadow: none !important;
@@ -184,8 +184,8 @@
 .mf-shift .cfg .btn:not(.primary):not(.off):not(.danger):hover,
 .cfg.mf-shift .links .btn:hover,
 .mf-shift .cfg .links .btn:hover {
-  background: #11111f !important;
-  border-color: #303448 !important;
+  background: #F8F5FC !important;
+  border-color: #CFC7DF !important;
   box-shadow: none !important;
   filter: none !important;
   text-shadow: none !important;
@@ -201,8 +201,8 @@
 }
 
 .mf-shift .google-icon {
-  background: #10101d !important;
-  border-color: #24283b !important;
+  background: #F3EFF9 !important;
+  border-color: #D9D3E8 !important;
   box-shadow: none !important;
 }
 
@@ -246,7 +246,7 @@
   background:
     radial-gradient(circle at 58% 9%,rgba(93,13,250,.08),transparent 27%),
     radial-gradient(circle at 42% 0%,rgba(17,150,252,.055),transparent 24%),
-    linear-gradient(180deg,#090917 0%,#0d0d1c 100%) !important;
+    linear-gradient(180deg,#F5F3FB 0%,#EEEAF8 100%) !important;
 }
 .up-page .up-wrap {
   width: 100% !important;
@@ -263,10 +263,10 @@
   width: min(680px,100%) !important;
   max-width: 680px !important;
   padding: 34px 38px 38px !important;
-  background: linear-gradient(180deg,rgba(18,18,35,.98),rgba(13,13,27,.99)) !important;
-  border: 1px solid #252940 !important;
+  background: linear-gradient(180deg,rgba(250,248,253,.98),rgba(243,239,249,.99)) !important;
+  border: 1px solid #DCD6EE !important;
   border-radius: 19px !important;
-  box-shadow: 0 24px 70px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.025) !important;
+  box-shadow: 0 24px 70px rgba(0,0,0,.24),inset 0 1px 0 rgba(65,52,111,.025) !important;
   overflow: hidden !important;
 }
 .up-page .up-card::before {
@@ -289,11 +289,11 @@
   margin-top: 7px !important;
   margin-bottom: 30px !important;
   font-size: 12px !important;
-  color: #78809d !important;
+  color: #73758D !important;
 }
 .up-page .up-label {
   margin-bottom: 8px !important;
-  color: #9da6c5 !important;
+  color: #5F657D !important;
   font-size: 11px !important;
   font-weight: 650 !important;
   letter-spacing: .25px !important;
@@ -301,43 +301,43 @@
 .up-page :is(.up-input,.up-select) {
   min-height: 48px !important;
   padding: 0 14px !important;
-  background: #0b0b16 !important;
-  border: 1px solid #252a41 !important;
+  background: #F3EFF9 !important;
+  border: 1px solid #D7D0E7 !important;
   border-radius: 11px !important;
-  color: #eef1f7 !important;
+  color: #21253A !important;
   box-shadow: none !important;
   transition: border-color .16s,box-shadow .16s,background .16s !important;
 }
 .up-page :is(.up-input,.up-select):focus {
   border-color: #425680 !important;
-  background: #0d0d1a !important;
+  background: #EEEAF8 !important;
   box-shadow: 0 0 0 3px rgba(17,150,252,.07) !important;
 }
 .up-page .up-file {
   min-height: 62px !important;
-  border: 1px dashed #38405f !important;
+  border: 1px dashed #BDB4D6 !important;
   border-radius: 13px !important;
-  background: linear-gradient(180deg,rgba(21,24,44,.86),rgba(16,18,34,.9)) !important;
-  color: #d9deef !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.018) !important;
+  background: linear-gradient(180deg,rgba(243,239,249,.88),rgba(238,234,248,.92)) !important;
+  color: #424860 !important;
+  box-shadow: inset 0 1px 0 rgba(65,52,111,.018) !important;
 }
 .up-page .up-file:hover:not(:disabled) {
-  border-color: #536394 !important;
-  background: linear-gradient(180deg,rgba(25,29,53,.9),rgba(18,21,40,.94)) !important;
+  border-color: #AFA5CF !important;
+  background: linear-gradient(180deg,rgba(248,245,252,.92),rgba(243,239,249,.95)) !important;
 }
 .up-page .up-mini {
-  color: #8eb7ff !important;
+  color: #4E68B6 !important;
   font-size: 11px !important;
 }
 .up-page .up-new {
   padding: 17px !important;
-  border-color: #252a40 !important;
+  border-color: #D7D0E7 !important;
   background: #0d0e1c !important;
 }
 .up-page .up-note,
 .up-page .up-rules,
 .up-page .up-file-status {
-  color: #6f7898 !important;
+  color: #8A8CA1 !important;
 }
 .up-page .up-file-status.tem {
   color: #8fe3b0 !important;
@@ -355,7 +355,7 @@
 .up-page .up-progress-track {
   height: 6px !important;
   border: 0 !important;
-  background: #171a2a !important;
+  background: #E2DDED !important;
 }
 .up-page .up-msg {
   margin: 17px 0 0 !important;
