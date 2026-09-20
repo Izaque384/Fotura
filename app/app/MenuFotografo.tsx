@@ -39,18 +39,22 @@ export default function MenuFotografo() {
 
   useEffect(() => {
     let ativo = true;
-    void (async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user || !ativo) return;
-      const e = data.user.email ?? "";
-      setUid(data.user.id);
-      setEmail(e);
-      const { data: perfil } = await supabase.from("perfis").select("nome_estudio,logo_url").eq("id", data.user.id).maybeSingle();
-      if (!ativo) return;
-      setNome((perfil?.nome_estudio as string | null)?.trim() || e.split("@")[0] || "Fotógrafo");
-      setLogo((perfil?.logo_url as string | null) || null);
-    })();
-    return () => { ativo = false; };
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const { data } = await supabase.auth.getUser();
+          if (!data.user || !ativo) return;
+          const e = data.user.email ?? "";
+          setUid(data.user.id);
+          setEmail(e);
+          const { data: perfil } = await supabase.from("perfis").select("nome_estudio,logo_url").eq("id", data.user.id).maybeSingle();
+          if (!ativo) return;
+          setNome((perfil?.nome_estudio as string | null)?.trim() || e.split("@")[0] || "Fotógrafo");
+          setLogo((perfil?.logo_url as string | null) || null);
+        } catch {}
+      })();
+    }, 300);
+    return () => { ativo = false; window.clearTimeout(timer); };
   }, [supabase]);
 
   useEffect(() => {
