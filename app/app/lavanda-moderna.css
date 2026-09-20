@@ -673,3 +673,185 @@ html body .dash.mf-shift .donut::after{background:#FAF8FD !important}
 html body .dash.mf-shift .donut-center strong{color:#21253A !important}
 html body .dash.mf-shift .donut-center span{color:#73758D !important}
 html body .dash.mf-shift .legend-row{color:#596079 !important}
+
+
+/* =========================================================
+   Global typographic contrast
+   Improves readability without changing any text color.
+   ========================================================= */
+
+/* Product / SaaS base */
+html body .mf-shift{
+  font-weight:500;
+}
+
+html body .mf-shift :where(
+  h1,h2,h3,h4,
+  .h1,.dash-h1,.bill-h1,.delivery-title,
+  .card-t,.title,.name,.value,.plan-name,.current-name,
+  .usage-title,.sel-title,.client-name,.list-title,.kpi-val
+){
+  font-weight:700 !important;
+}
+
+html body .mf-shift :where(
+  .ey,.dash-eyebrow,.bill-ey,.delivery-ey,
+  .label,.field-label,.up-label,
+  .kpi-lab,.card-sub,.list-meta,.sel-meta,.meta,
+  .plan-desc,.month,.time,.actor,.hint,.fine,.sub,.dash-sub,.bill-sub,.delivery-sub
+){
+  font-weight:600 !important;
+}
+
+html body .mf-shift :where(
+  p,small,.empty,.dash-sync,.loading,.muted,.delivery-muted,
+  .kpi-sub,.bell-meta,.up-note,.plan-note,.desc
+){
+  font-weight:550 !important;
+}
+
+html body .mf-shift :where(
+  button,.btn,.dash-btn,.act,.mini,.tab,.filter,.card-action,
+  .manage-btn,.sel-refresh,.up-mini,.delivery-btn,.card-link
+){
+  font-weight:700 !important;
+}
+
+html body .mf-shift :where(input,select,textarea,.input,.select,.search,.sel-search,.up-input,.up-select,.hex){
+  font-weight:550 !important;
+}
+
+/* Sidebar */
+html body .mf-side .mf-brand-tx{
+  font-weight:800 !important;
+}
+
+html body .mf-side :where(.mf-item,.mf-sair,.mf-admin){
+  font-weight:650 !important;
+}
+
+html body .mf-side .mf-item.ativo{
+  font-weight:750 !important;
+}
+
+html body .mf-side .mf-user-name{
+  font-weight:700 !important;
+}
+
+html body .mf-side .mf-user-email{
+  font-weight:550 !important;
+}
+
+html body .mf-side .mf-badge{
+  font-weight:800 !important;
+}
+
+/* Dashboard charts / states */
+html body .dash.mf-shift :where(.vbar-num,.legend-row strong,.donut-center strong){
+  font-weight:750 !important;
+}
+
+html body .dash.mf-shift :where(.vbar-lab,.legend-row,.donut-center span,.status-pill,.mode){
+  font-weight:600 !important;
+}
+
+/* Landing page */
+html body .lp{
+  font-weight:500;
+}
+
+html body .lp :where(.brand strong,.hero h1,.section h2,.faq-intro h2,.final-card h2,.plan h3,.price){
+  font-weight:800 !important;
+}
+
+html body .lp :where(.nav a,.eyebrow,.section-label,.strip-kicker,.flow-n,.popular){
+  font-weight:700 !important;
+}
+
+html body .lp :where(.hero-copy,.section-head p,.strip-item p,.flow-card p,.faq-intro p,.faq p,.final-card p){
+  font-weight:550 !important;
+}
+
+html body .lp :where(.micro,.plan li,.price small,.per,.footer-links a,.copy){
+  font-weight:600 !important;
+}
+
+html body .lp :where(.btn,.new){
+  font-weight:750 !important;
+}
+
+/* Dashboard preview inside landing */
+html body .lp :where(.app-logo,.app-title,.mini-title,.stat b){
+  font-weight:750 !important;
+}
+
+html body .lp :where(.app-item,.app-eyebrow,.app-sub,.stat span,.mini-sub,.bar span,.empty-stage,.empty-list,.mini-link){
+  font-weight:600 !important;
+}
+
+/* Public client galleries */
+html body :where(.gc-page,.gc-gate,.gc-center){
+  font-weight:500;
+}
+
+html body .gc-info h1,
+html body .gc-head h2,
+html body .gc-gate-card h1,
+html body .gc-confirm-card h2{
+  font-weight:750 !important;
+}
+
+html body :where(.gc-brand,.gc-info>div,.gc-info>p,.gc-prazo,.gc-hint,.gc-notice,.gc-empty,.gc-page footer){
+  font-weight:600 !important;
+}
+
+html body :where(.gc-primary,.gc-secondary,.gc-bar,.gc-bar button,.gc-confirm-submit,.gc-confirm-cancel,.gc-com button){
+  font-weight:700 !important;
+}
+
+html body :where(.gc-gate-card p,.gc-gate-card small,.gc-confirm-card p,.gc-com p,.gc-com textarea,.gc-input){
+  font-weight:550 !important;
+}
+
+/* Authentication */
+html body .auth-shell{
+  font-weight:500;
+}
+
+html body .auth-card :where(h1,h2,h3,strong){
+  font-weight:750 !important;
+}
+
+html body .auth-card :where(p,label,a,small,span){
+  font-weight:600 !important;
+}
+
+html body .auth-card :where(input,button){
+  font-weight:650 !important;
+}
+
+/* Admin */
+html body :where(.adm,.aa,.ac,.lr,.hs){
+  font-weight:500;
+}
+
+html body :where(.adm,.aa,.ac,.lr,.hs) :where(h1,h2,h3,.title,.val,.name,.email){
+  font-weight:700 !important;
+}
+
+html body :where(.adm,.aa,.ac,.lr,.hs) :where(.ey,.sub,.lab,.muted,.detail,.note,.auditMeta,th,td){
+  font-weight:600 !important;
+}
+
+html body :where(.adm,.aa,.ac,.lr,.hs) :where(button,.btn,.audit-btn,.back,.details){
+  font-weight:700 !important;
+}
+
+/* Smaller screens keep the same contrast hierarchy */
+@media(max-width:640px){
+  html body .mf-shift :where(.dash-sub,.sub,.muted,.card-sub,.list-meta,.kpi-sub),
+  html body .gc-page :where(.gc-prazo,.gc-hint,.gc-page footer),
+  html body .lp :where(.hero-copy,.section-head p){
+    font-weight:600 !important;
+  }
+}
