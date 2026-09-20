@@ -1332,6 +1332,7 @@ html body .lp .hero-benefit small{
 }
 
 html body .mf-top-user{
+  position:absolute !important;
   color:#2D3249 !important;
   background:transparent !important;
 }
