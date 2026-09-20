@@ -40,18 +40,19 @@ export default function MenuFotografo() {
   useEffect(() => {
     let ativo = true;
     void (async () => {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user || !ativo) return;
-      const e = data.user.email ?? "";
-      setUid(data.user.id);
+      const { data } = await supabase.auth.getSession();
+      const user = data.session?.user;
+      if (!user || !ativo) return;
+      const e = user.email ?? "";
+      setUid(user.id);
       setEmail(e);
-      const { data: perfil } = await supabase.from("perfis").select("nome_estudio,logo_url").eq("id", data.user.id).maybeSingle();
+      const { data: perfil } = await supabase.from("perfis").select("nome_estudio,logo_url").eq("id", user.id).maybeSingle();
       if (!ativo) return;
       setNome((perfil?.nome_estudio as string | null)?.trim() || e.split("@")[0] || "Fotógrafo");
       setLogo((perfil?.logo_url as string | null) || null);
     })();
     return () => { ativo = false; };
-  }, [supabase, pathname]);
+  }, [supabase]);
 
   useEffect(() => {
     if (!uid) { setAdmin(false); return; }
@@ -95,7 +96,7 @@ export default function MenuFotografo() {
     const aoVisivel = () => { if (document.visibilityState === "visible") void atualizarNaoLidas(); };
     document.addEventListener("visibilitychange", aoVisivel);
     return () => { ativo = false; window.clearInterval(intervalo); document.removeEventListener("visibilitychange", aoVisivel); };
-  }, [supabase, uid, pathname]);
+  }, [supabase, uid]);
 
   useEffect(() => {
     const media = window.matchMedia("(max-width: 640px)");
@@ -106,6 +107,10 @@ export default function MenuFotografo() {
   }, []);
 
   useEffect(() => setDrawer(false), [pathname]);
+
+  useEffect(() => {
+    ["/dashboard", "/dashboard/galerias", "/dashboard/selecoes", "/dashboard/clientes", "/dashboard/assinatura", "/configuracoes", "/perfil", "/upload"].forEach((rota) => router.prefetch(rota));
+  }, [router]);
 
   useEffect(() => {
     if (!drawer || !mobile) return;
@@ -141,12 +146,13 @@ export default function MenuFotografo() {
     { rota: "/configuracoes", label: "Configurações", tipo: "config", exato: true },
   ];
 
-  async function navegar(item: { rota: string; tipo: T }) {
+  function navegar(item: { rota: string; tipo: T }) {
     if (item.tipo === "selecoes" && uid && selecoesNaoLidas > 0) {
       const anterior = selecoesNaoLidas;
       setSelecoesNaoLidas(0);
-      const { error } = await supabase.from("perfis").upsert({ id: uid, notif_visto_em: new Date().toISOString() });
-      if (error) setSelecoesNaoLidas(anterior);
+      void supabase.from("perfis").upsert({ id: uid, notif_visto_em: new Date().toISOString() }).then(({ error }) => {
+        if (error) setSelecoesNaoLidas(anterior);
+      });
     }
     router.push(item.rota);
   }
