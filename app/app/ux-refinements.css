@@ -5,7 +5,7 @@
   appearance: none !important;
   -webkit-appearance: none !important;
   padding-right: 48px !important;
-  background-color: #0b0b16 !important;
+  background-color: #F3EFF9 !important;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239aa4c4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important;
   background-position: calc(100% - 21px) center !important;
@@ -118,28 +118,28 @@ svg.channel-icon:has(path[fill="#4285F4"]) {
 .dash.mf-shift .sel-search {
   height: 42px !important;
   min-height: 42px !important;
-  border: 1px solid #293049 !important;
+  border: 1px solid #D8D2E9 !important;
   border-radius: 12px !important;
-  background-color: #0c0d19 !important;
-  color: #eef2fb !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.018) !important;
+  background-color: #F3EFF9 !important;
+  color: #21253A !important;
+  box-shadow: inset 0 1px 0 rgba(65,52,111,.018) !important;
   transition: border-color .16s ease, background .16s ease, box-shadow .16s ease !important;
 }
 .dash.mf-shift .search-input:hover,
 .dash.mf-shift .sel-search:hover {
-  border-color: #37415f !important;
-  background-color: #0e0f1d !important;
+  border-color: #C4BADB !important;
+  background-color: #F8F5FC !important;
 }
 .dash.mf-shift .search-input:focus,
 .dash.mf-shift .sel-search:focus {
-  border-color: #5369a1 !important;
-  background-color: #0f1020 !important;
-  box-shadow: 0 0 0 3px rgba(17,150,252,.065), inset 0 1px 0 rgba(255,255,255,.02) !important;
+  border-color: #9A90C8 !important;
+  background-color: #F8F5FC !important;
+  box-shadow: 0 0 0 3px rgba(17,150,252,.065), inset 0 1px 0 rgba(65,52,111,.02) !important;
   outline: none !important;
 }
 .dash.mf-shift .search-input::placeholder,
 .dash.mf-shift .sel-search::placeholder {
-  color: #69738f !important;
+  color: #9795A8 !important;
 }
 
 .dash.mf-shift .tabs,
@@ -148,10 +148,10 @@ svg.channel-icon:has(path[fill="#4285F4"]) {
   box-sizing: border-box !important;
   padding: 4px !important;
   gap: 4px !important;
-  border: 1px solid #242a40 !important;
+  border: 1px solid #DCD6EE !important;
   border-radius: 12px !important;
-  background: linear-gradient(180deg,#10111f,#0c0d18) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.018) !important;
+  background: linear-gradient(180deg,#F3EFF9,#EEEAF8) !important;
+  box-shadow: inset 0 1px 0 rgba(65,52,111,.018) !important;
 }
 .dash.mf-shift .tab,
 .dash.mf-shift .sel-tab {
@@ -160,35 +160,35 @@ svg.channel-icon:has(path[fill="#4285F4"]) {
   border: 1px solid transparent !important;
   border-radius: 8px !important;
   background: transparent !important;
-  color: #7f89a7 !important;
+  color: #73758D !important;
   font-size: 11px !important;
   font-weight: 650 !important;
   transition: color .15s ease, border-color .15s ease, background .15s ease, transform .15s ease !important;
 }
 .dash.mf-shift .tab:hover,
 .dash.mf-shift .sel-tab:hover {
-  color: #c6cee2 !important;
-  background: rgba(255,255,255,.025) !important;
+  color: #424860 !important;
+  background: rgba(65,52,111,.025) !important;
 }
 .dash.mf-shift .tab.on,
 .dash.mf-shift .sel-tab.on {
-  color: #f4f7ff !important;
+  color: #30364D !important;
   border-color: rgba(82,111,184,.38) !important;
   background: linear-gradient(180deg,rgba(30,57,105,.68),rgba(24,35,72,.64)) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.04) !important;
+  box-shadow: inset 0 1px 0 rgba(65,52,111,.04) !important;
 }
 .dash.mf-shift .sel-refresh {
   height: 42px !important;
   border-radius: 11px !important;
-  border-color: #293049 !important;
-  background: #0d0e1b !important;
-  color: #9ca8c8 !important;
+  border-color: #D8D2E9 !important;
+  background: #F3EFF9 !important;
+  color: #626980 !important;
   box-shadow: none !important;
 }
 .dash.mf-shift .sel-refresh:hover:not(:disabled) {
-  border-color: #3b4667 !important;
-  color: #d2d9eb !important;
-  background: #111321 !important;
+  border-color: #C5BCDC !important;
+  color: #353B53 !important;
+  background: #F8F5FC !important;
 }
 
 /* Seleções: a mesma semântica visual usada em Galerias. */
