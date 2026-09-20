@@ -1,0 +1,281 @@
+/* Fotura authenticated UI — light theme.
+   Scoped to internal photographer surfaces so landing/public galleries stay untouched. */
+
+.mf-shift {
+  --fx-bg: #f4f6fb;
+  --fx-bg-soft: #eef2f8;
+  --fx-surface: #ffffff;
+  --fx-surface-soft: #f8f9fd;
+  --fx-border: #dde3ef;
+  --fx-border-strong: #cbd4e4;
+  --fx-text: #17182a;
+  --fx-text-soft: #2d3148;
+  --fx-muted: #69708a;
+  --fx-muted-2: #9096aa;
+  --fx-accent-a: #1196fc;
+  --fx-accent-b: #5d0dfa;
+  min-height: 100vh;
+  background: linear-gradient(180deg,#f7f8fc 0%,#f1f4fa 100%) !important;
+  color: var(--fx-text) !important;
+}
+
+:where(.dash,.cfg,.profile,.up-page,.bill-page).mf-shift,
+.mf-shift:where(.dash,.cfg,.profile,.up-page,.bill-page) {
+  background: linear-gradient(180deg,#f7f8fc 0%,#f1f4fa 100%) !important;
+  color: var(--fx-text) !important;
+}
+
+.mf-shift :where(h1,h2,h3,h4,.h1,.dash-h1,.bill-h1,.title,.card-t,.list-title,.name,.value,.plan-name,.current-name,.usage-title,.sel-title,.client-name,.up-title) {
+  color: var(--fx-text) !important;
+}
+
+.mf-shift :where(.sub,.dash-sub,.bill-sub,.desc,.meta,.card-sub,.kpi-lab,.kpi-sub,.list-meta,.hint,.fine,.plan-desc,.month,.ey,.dash-eyebrow,.bill-ey,.label,.up-label,.up-note,.plan-note,.bell-meta) {
+  color: var(--fx-muted) !important;
+}
+
+.mf-shift :where(.empty,.dash-sync,.loading) {
+  color: var(--fx-muted-2) !important;
+}
+
+.mf-shift :where(.card,.panel,.kpi,.stat,.client-card,.sel-card,.current,.usage,.formcard,.up-card,.hero-box,.photo-feature,.sample,.gallery-block,.action-summary,.action-group,.account,.switch,.newc,.send-client,.send-option) {
+  background: #fff !important;
+  border-color: var(--fx-border) !important;
+  color: var(--fx-text) !important;
+  box-shadow: 0 8px 28px rgba(48,61,98,.06) !important;
+}
+
+.mf-shift :where(.row,.list-row,.sel-row,.client-row) {
+  background: #fff !important;
+  background-image: none !important;
+  border-color: var(--fx-border) !important;
+  color: var(--fx-text) !important;
+  box-shadow: none !important;
+}
+
+.mf-shift :where(.row,.list-row,.sel-card,.client-card):hover {
+  border-color: var(--fx-border-strong) !important;
+  box-shadow: 0 10px 24px rgba(48,61,98,.08) !important;
+}
+
+.mf-shift :where(input,select,textarea,.input,.select,.up-input,.up-select,.hex) {
+  background-color: #fff !important;
+  color: var(--fx-text) !important;
+  border-color: #d6deeb !important;
+  box-shadow: none !important;
+}
+
+.mf-shift :where(input,textarea,.input,.up-input)::placeholder {
+  color: #9aa2b6 !important;
+}
+
+.mf-shift :where(input,select,textarea,.input,.select,.up-input,.up-select,.hex):focus {
+  border-color: rgba(63,95,235,.65) !important;
+  box-shadow: 0 0 0 3px rgba(74,108,247,.10) !important;
+  outline: none !important;
+}
+
+.up-page .up-select,
+.dash.mf-shift .modal .field .select {
+  background-color: #fff !important;
+}
+
+.mf-shift :where(.act,.mini,.tab,.filter,.card-action,.bell,.manage-btn,.sel-refresh,.btn.secondary,.btn.ghost,.up-mini) {
+  background: #fff !important;
+  color: #505874 !important;
+  border-color: #d7deea !important;
+  box-shadow: none !important;
+}
+
+.mf-shift :where(.act,.mini,.tab,.filter,.card-action,.bell,.manage-btn,.sel-refresh,.btn.secondary,.btn.ghost,.up-mini):hover {
+  background: #f7f9fd !important;
+  color: #20243a !important;
+  border-color: #c5cfdf !important;
+}
+
+.mf-shift :where(.dash-btn,.btn.save,.btn:not(.secondary):not(.ghost):not(.danger),.up-enviar,.up-concluir) {
+  color: #fff !important;
+}
+
+.mf-shift :where(.toolbar,.filters,.tabs,.plans-head,.current-head,.meter,.meter-head,.up-client-head) {
+  color: var(--fx-text-soft) !important;
+}
+
+.mf-shift :where(.track,.up-progress-track) {
+  background: #e7ebf3 !important;
+}
+
+.dash.mf-shift .bell-pop {
+  background: #fff !important;
+  border-color: var(--fx-border) !important;
+  box-shadow: 0 18px 48px rgba(35,43,72,.14) !important;
+}
+
+.dash.mf-shift .bell-head {
+  border-color: #e5e9f1 !important;
+  color: var(--fx-text) !important;
+}
+
+.dash.mf-shift .bell-item {
+  color: var(--fx-text) !important;
+}
+
+.dash.mf-shift .bell-item:hover {
+  background: #f4f6fb !important;
+}
+
+.dash.mf-shift .donut::after {
+  background: #fff !important;
+}
+
+.dash.mf-shift .vbar-lab,
+.dash.mf-shift .legend-row {
+  color: var(--fx-muted) !important;
+}
+
+.dash.mf-shift .alert {
+  background: #fff9e8 !important;
+  border-color: #f2dfac !important;
+}
+
+.dash.mf-shift .alert span {
+  color: #8b7650 !important;
+}
+
+.mf-shift .storage-usage {
+  background: #fff !important;
+  border-color: #d8dfeb !important;
+  color: var(--fx-text) !important;
+  box-shadow: 0 5px 16px rgba(48,61,98,.05) !important;
+}
+
+.mf-shift .storage-usage__head span,
+.mf-shift .storage-usage__meta {
+  color: var(--fx-muted) !important;
+}
+
+.mf-shift .storage-usage__head strong,
+.mf-shift .storage-usage__meta span:first-child {
+  color: var(--fx-text-soft) !important;
+}
+
+.mf-shift .storage-usage__track {
+  background: #e7ebf3 !important;
+}
+
+.mf-shift :where(.modal,.modal-card,.cap-panel,.action-panel,.confirm-card) {
+  background: #fff !important;
+  color: var(--fx-text) !important;
+  border-color: var(--fx-border) !important;
+  box-shadow: 0 24px 70px rgba(36,45,75,.18) !important;
+}
+
+.mf-shift :where(.modal-backdrop,.backdrop) {
+  background: rgba(29,35,56,.34) !important;
+}
+
+.bill-page.mf-shift .plans .card {
+  background: #fff !important;
+}
+
+.bill-page.mf-shift .recommended {
+  border-color: rgba(74,108,247,.62) !important;
+  box-shadow: 0 12px 34px rgba(74,108,247,.10) !important;
+}
+
+.bill-page.mf-shift .tag {
+  background: #eef0ff !important;
+  color: #5b55c9 !important;
+}
+
+.profile.mf-shift :where(.preview,.sample),
+.cfg.mf-shift :where(.account,.switch) {
+  background: #f8f9fd !important;
+  border-color: var(--fx-border) !important;
+}
+
+.mf-shift :where(.sk,.skeleton) {
+  background: linear-gradient(90deg,#edf1f7,#f7f9fc,#edf1f7) !important;
+}
+
+.mf-side {
+  background: linear-gradient(180deg,#f0f2f8 0%,#e9edf5 100%) !important;
+  border-right-color: #d8dfeb !important;
+  box-shadow: 8px 0 32px rgba(42,54,88,.035);
+}
+
+.mf-brand-tx {
+  color: #17182a !important;
+}
+
+.mf-item,
+.mf-sair {
+  color: #69708a !important;
+}
+
+.mf-item:hover {
+  background: rgba(255,255,255,.72) !important;
+  color: #242840 !important;
+}
+
+.mf-item.ativo {
+  color: #242840 !important;
+  background: linear-gradient(90deg,rgba(17,150,252,.10),rgba(93,13,250,.07)) !important;
+  border-color: rgba(74,108,247,.24) !important;
+  box-shadow: inset 3px 0 0 #3c78ef;
+}
+
+.mf-admin {
+  color: #66708f !important;
+}
+
+.mf-user {
+  background: rgba(255,255,255,.55) !important;
+  color: #22263c !important;
+  border-color: #d9e0ec !important;
+}
+
+.mf-user:hover,
+.mf-user.ativo {
+  background: #fff !important;
+  border-color: rgba(74,108,247,.35) !important;
+}
+
+.mf-user-name {
+  color: #262a40 !important;
+}
+
+.mf-user-email {
+  color: #7c849d !important;
+}
+
+.mf-avatar img {
+  background: #fff !important;
+}
+
+.mf-sair {
+  color: #a15f66 !important;
+}
+
+.mf-mobile-btn {
+  background: #fff !important;
+  border-color: #d8dfeb !important;
+  color: #353b57 !important;
+  box-shadow: 0 8px 24px rgba(40,48,76,.10);
+}
+
+.mf-backdrop {
+  background: rgba(31,38,61,.35) !important;
+}
+
+.mf-shift {
+  scrollbar-color: #cbd3e1 #eef2f8;
+}
+
+@media (max-width:640px) {
+  .mf-shift {
+    background: #f4f6fb !important;
+  }
+  .mf-side {
+    box-shadow: 14px 0 42px rgba(34,43,70,.12);
+  }
+}
