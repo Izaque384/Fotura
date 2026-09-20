@@ -4,8 +4,8 @@
   "description": "Plataforma simples e bonita para fotógrafos entregarem suas fotos.",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#F5F3FB",
-  "theme_color": "#F5F3FB",
+  "background_color": "#F0EDF7",
+  "theme_color": "#F0EDF7",
   "orientation": "any",
   "icons": [
     {
