@@ -168,28 +168,30 @@
   box-shadow: none !important;
 }
 
-/* Configurações: botões neutros totalmente planos, sem qualquer glow. */
-.cfg.mf-shift .btn:not(.primary):not(.off):not(.danger),
-.mf-shift .cfg .btn:not(.primary):not(.off):not(.danger),
-.cfg.mf-shift .links .btn,
-.mf-shift .cfg .links .btn {
-  background: #F3EFF9 !important;
-  border-color: #D6D0E4 !important;
-  box-shadow: none !important;
+/* Configurações: todas as ações usam a identidade Fotura; danger permanece destrutivo. */
+.cfg.mf-shift .btn:not(.danger),
+.mf-shift .cfg .btn:not(.danger),
+.cfg.mf-shift .links .btn:not(.danger),
+.mf-shift .cfg .links .btn:not(.danger) {
+  background: linear-gradient(90deg,#1196FC 0%,#5D0DFA 100%) !important;
+  border-color: transparent !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 8px 20px rgba(93,13,250,.14) !important;
   filter: none !important;
   text-shadow: none !important;
+  font-weight: 700 !important;
 }
 
-.cfg.mf-shift .btn:not(.primary):not(.off):not(.danger):hover,
-.mf-shift .cfg .btn:not(.primary):not(.off):not(.danger):hover,
-.cfg.mf-shift .links .btn:hover,
-.mf-shift .cfg .links .btn:hover {
-  background: #F8F5FC !important;
-  border-color: #CFC7DF !important;
-  box-shadow: none !important;
-  filter: none !important;
+.cfg.mf-shift .btn:not(.danger):hover:not(:disabled),
+.mf-shift .cfg .btn:not(.danger):hover:not(:disabled),
+.cfg.mf-shift .links .btn:not(.danger):hover:not(:disabled),
+.mf-shift .cfg .links .btn:not(.danger):hover:not(:disabled) {
+  background: linear-gradient(90deg,#1196FC 0%,#5D0DFA 100%) !important;
+  border-color: transparent !important;
+  box-shadow: 0 10px 24px rgba(93,13,250,.18) !important;
+  filter: brightness(1.04) !important;
   text-shadow: none !important;
-  transform: none !important;
+  transform: translateY(-1px) !important;
 }
 
 .cfg.mf-shift .btn::before,
