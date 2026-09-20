@@ -71,13 +71,13 @@
   }
 
   .gc-head {
-    min-height: 54px !important;
+    min-height: 60px !important;
     margin: 0 !important;
-    padding: 0 10px !important;
+    padding: 0 12px !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
     gap: 8px !important;
-    border-top: 1px solid #dcd6ee !important;
+    border-top: 2px solid #d3cbe5 !important;
     border-bottom: 0 !important;
   }
 
