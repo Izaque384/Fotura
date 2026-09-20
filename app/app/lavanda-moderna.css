@@ -1322,3 +1322,52 @@ html body .lp .hero-benefit small{
   html body .lp .hero-benefit strong{font-size:9px}
   html body .lp .hero-benefit small{font-size:6.5px}
 }
+
+
+/* ---------- Top user profile ---------- */
+@media(min-width:641px){
+  html body .mf-shift{
+    padding-top:38px;
+  }
+}
+
+html body .mf-top-user{
+  color:#2D3249 !important;
+  background:transparent !important;
+}
+
+html body .mf-top-user:hover,
+html body .mf-top-user.ativo{
+  background:rgba(250,248,253,.72) !important;
+}
+
+html body .mf-top-avatar{
+  background:linear-gradient(135deg,#1196FC,#5D0DFA) !important;
+  color:#fff !important;
+  box-shadow:0 0 0 1px rgba(93,13,250,.10),0 5px 16px rgba(65,52,111,.08) !important;
+}
+
+html body .mf-top-avatar img{
+  background:#F3EFF9 !important;
+}
+
+html body .mf-top-greeting{
+  color:#2B3047 !important;
+  font-weight:750 !important;
+}
+
+html body .mf-top-role{
+  color:#73758D !important;
+  font-weight:600 !important;
+}
+
+@media(max-width:640px){
+  html body .mf-shift{
+    padding-top:0;
+  }
+  html body .mf-top-user{
+    background:#F7F4FB !important;
+    border:1px solid #D8D1E7 !important;
+    box-shadow:0 7px 20px rgba(55,45,88,.08) !important;
+  }
+}
