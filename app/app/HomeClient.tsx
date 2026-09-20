@@ -68,81 +68,85 @@ export default function Home() {
       </header>
 
       <main>
-        <section className="shell hero" id="produto">
-          <div>
-            <div className="eyebrow"><span className="pulse"/>Galerias profissionais para fotógrafos</div>
-            <h1>Seu trabalho merece uma <span className="grad">entrega premium.</span></h1>
-            <p className="hero-copy">Crie galerias, envie fotos, receba seleções e entregue ao cliente com uma experiência elegante, rápida e com a sua marca.</p>
-            <div className="hero-actions"><a className="btn primary" href={destinoPrincipal}>{logado ? "Ir para o painel" : "Começar agora"}<span>→</span></a><a className="btn" href="#fluxo">Ver como funciona</a></div>
-            <div className="micro"><span>●</span> A partir de R$ 14,90/mês · cancele quando quiser</div>
-          </div>
+        <section className="shell hero-showcase" id="produto">
+          <div className="hero-showcase-main">
+            <div className="hero-showcase-copy">
+              <div className="hero-showcase-badge">PARA FOTÓGRAFOS PROFISSIONAIS</div>
+              <h1>Entregue galerias com uma apresentação impecável.</h1>
+              <p>Compartilhe, receba seleções, encante seus clientes e transforme cada entrega em uma experiência à altura da sua fotografia.</p>
 
-          <div className="preview-wrap" aria-label="Prévia de uma conta recém-criada no Fotura">
-            <div className="preview">
-              <div className="preview-in">
-                <div className="window"><i/><i/><i/></div>
-                <div className="app">
-                  <aside className="app-side">
-                    <div className="app-logo">FOTURA</div>
-                    <div className="app-item on">Painel</div>
-                    <div className="app-item">Galerias</div>
-                    <div className="app-item">Seleções</div>
-                    <div className="app-item">Clientes</div>
-                    <div className="app-item">Configurações</div>
-                  </aside>
-                  <div className="app-main">
-                    <div className="app-head">
-                      <div>
-                        <div className="app-eyebrow">Painel</div>
-                        <div className="app-title">Sua visão geral</div>
-                        <div className="app-sub">Comece criando sua primeira galeria.</div>
-                      </div>
-                      <div className="app-actions"><span className="app-bell">⌁</span><span className="new">+ Nova galeria</span></div>
-                    </div>
+              <div className="hero-showcase-actions">
+                <a className="btn primary" href={destinoPrincipal}>
+                  {logado ? "Ir para o painel" : "Começar agora"}<span>→</span>
+                </a>
+                <a className="btn hero-showcase-secondary" href="#fluxo">Ver como funciona</a>
+              </div>
 
-                    <div className="stats">
-                      <div className="stat"><b>0</b><span>Total de galerias</span></div>
-                      <div className="stat"><b>0</b><span>Seleções aguardando conclusão</span></div>
-                      <div className="stat"><b>0</b><span>Seleções finalizadas</span></div>
-                      <div className="stat"><b>0</b><span>Galerias expirando em 7 dias</span></div>
-                    </div>
+              <div className="hero-showcase-micro">
+                <span>●</span> A partir de R$ 14,90/mês · cancele quando quiser
+              </div>
+            </div>
 
-                    <div className="dash-charts">
-                      <div className="chart-card">
-                        <div className="mini-title">Galerias por mês</div>
-                        <div className="mini-sub">0 criadas nos últimos 6 meses</div>
-                        <div className="bars">
-                          <div className="bar"><span>abr</span></div><div className="bar"><span>mai</span></div><div className="bar"><span>jun</span></div><div className="bar"><span>jul</span></div><div className="bar"><span>ago</span></div><div className="bar"><span>set</span></div>
-                        </div>
-                      </div>
-                      <div className="chart-card">
-                        <div className="mini-title">Etapas das galerias</div>
-                        <div className="mini-sub">Da prova à entrega final</div>
-                        <div className="empty-stage">Nenhuma galeria<br/>criada ainda.</div>
-                      </div>
-                    </div>
+            <div className="hero-showcase-visual" aria-label="Prévia visual da experiência Fotura">
+              <div className="hero-showcase-glow hero-showcase-glow-a"/>
+              <div className="hero-showcase-glow hero-showcase-glow-b"/>
 
-                    <div className="dash-lists">
-                      <div className="mini">
-                        <div className="mini-head"><div className="mini-title">Seleções aguardando cliente</div><span className="mini-link">Ver todas</span></div>
-                        <div className="empty-list">Nenhuma seleção em andamento.</div>
-                      </div>
-                      <div className="mini">
-                        <div className="mini-head"><div className="mini-title">Últimas galerias</div><span className="mini-link">Ver todas</span></div>
-                        <div className="empty-list">Nenhuma galeria criada ainda.</div>
-                      </div>
-                    </div>
+              <div className="hero-gallery-card">
+                <div className="hero-gallery-head">
+                  <div>
+                    <span className="hero-gallery-kicker">GALERIA DO CLIENTE</span>
+                    <strong>Momentos que merecem destaque</strong>
                   </div>
+                  <span className="hero-gallery-count">128 fotos</span>
                 </div>
+                <div className="hero-gallery-grid">
+                  <span className="hero-shot shot-a"/>
+                  <span className="hero-shot shot-b"/>
+                  <span className="hero-shot shot-c"/>
+                  <span className="hero-shot shot-d"/>
+                  <span className="hero-shot shot-e"/>
+                </div>
+              </div>
+
+              <div className="hero-proof-card">
+                <div className="hero-proof-icon">♡</div>
+                <div><strong>18 fotos selecionadas</strong><span>O cliente finalizou a prova.</span></div>
+              </div>
+
+              <div className="hero-delivery-card">
+                <div className="hero-delivery-mark">✓</div>
+                <div><span>ENTREGA FINAL</span><strong>Pronta para o cliente</strong></div>
+              </div>
+
+              <div className="hero-floating-brand">
+                <Logo/>
+                <div><strong>FOTURA</strong><span>Seu estúdio em primeiro plano.</span></div>
               </div>
             </div>
           </div>
-        </section>
 
-        <section className="shell strip" aria-label="Principais benefícios">
-          <div className="strip-item"><span className="strip-kicker">01 · Prova</span><b>Seleção sem confusão</b><p>Favoritas e comentários direto na galeria.</p></div>
-          <div className="strip-item"><span className="strip-kicker">02 · Marca</span><b>Sua identidade na entrega</b><p>Uma experiência profissional, não uma pasta genérica.</p></div>
-          <div className="strip-item"><span className="strip-kicker">03 · Gestão</span><b>Tudo no mesmo painel</b><p>Galerias, clientes e seleções organizados.</p></div>
+          <div className="hero-showcase-benefits" aria-label="Principais benefícios">
+            <div className="hero-benefit">
+              <span className="hero-benefit-icon">▣</span>
+              <strong>Apresentação elegante</strong>
+              <small>Uma entrega à altura do seu trabalho.</small>
+            </div>
+            <div className="hero-benefit">
+              <span className="hero-benefit-icon">♡</span>
+              <strong>Experiência sem complicação</strong>
+              <small>Seu cliente entende o fluxo de primeira.</small>
+            </div>
+            <div className="hero-benefit">
+              <span className="hero-benefit-icon">◷</span>
+              <strong>Mais tempo para o que importa</strong>
+              <small>Menos mensagens e tarefas repetitivas.</small>
+            </div>
+            <div className="hero-benefit">
+              <span className="hero-benefit-icon">↗</span>
+              <strong>Clientes mais felizes</strong>
+              <small>Uma experiência que valoriza sua marca.</small>
+            </div>
+          </div>
         </section>
 
         <section className="section" id="fluxo"><div className="shell"><div className="section-head"><div><div className="section-label">Fluxo Fotura</div><h2>Do upload à entrega.<br/>Sem ruído.</h2></div><p>Menos mensagens soltas, links improvisados e confirmações manuais. O cliente sabe o que fazer e você acompanha tudo.</p></div><div className="flow"><article className="flow-card"><div className="flow-n">01 / CRIAR</div><b>Monte a galeria</b><p>Defina cliente, prova, limite, prazo e proteção.</p></article><article className="flow-card"><div className="flow-n">02 / COMPARTILHAR</div><b>Envie um único link</b><p>O cliente visualiza, seleciona e comenta sem cadastro.</p></article><article className="flow-card"><div className="flow-n">03 / ENTREGAR</div><b>Finalize com clareza</b><p>Receba a seleção e disponibilize o trabalho final.</p></article></div></div></section>
