@@ -7,6 +7,7 @@ import "./ux-refinements.css";
 import "./gallery-hero-presets.css";
 import "./gallery-hero-legibility.css";
 import "./gallery-mobile.css";
+import "./mobile-density.css";
 import ClientShortcuts from "./components/ClientShortcuts";
 import BellOutsideDismiss from "./components/BellOutsideDismiss";
 import LegacyLoadingBridge from "./components/LegacyLoadingBridge";
