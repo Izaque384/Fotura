@@ -1,0 +1,40 @@
+/* Compact mobile density for Fotura app surfaces. */
+@media (max-width: 640px) {
+  .mf-mobile-btn{left:10px!important;top:10px!important;width:40px!important;height:40px!important;border-radius:10px!important}
+  .mf-side{width:min(270px,82vw)!important;padding:16px 12px!important}
+  .mf-brand{padding-bottom:12px!important}.mf-brand-tx{font-size:16px!important}
+  .mf-item,.mf-sair{min-height:40px!important;padding:9px 10px!important;font-size:12px!important}
+  .mf-avatar{width:32px!important;height:32px!important}.mf-user{padding:8px!important}
+  .mf-user-name{font-size:11px!important}.mf-user-email{font-size:9px!important}
+
+  .mf-shift{font-size:13px}
+  .mf-shift :where(h1,.dash-h1){font-size:23px!important;line-height:1.15!important}
+  .mf-shift h2{font-size:17px!important;line-height:1.2!important}.mf-shift h3{font-size:14px!important}
+  .mf-shift :where(.dash-eyebrow,.eyebrow){font-size:9px!important;letter-spacing:1.5px!important}
+  .mf-shift :where(.dash-sub,.sub,.muted,.card-sub,.list-meta,.kpi-sub){font-size:9.5px!important;line-height:1.45!important}
+  .mf-shift :where(.card-t,.kpi-lab,.list-title){font-size:11px!important}
+  .mf-shift .kpi-val{font-size:25px!important}
+  .mf-shift :where(.card,.kpi,.panel,.client-card,.sel-card){border-radius:12px!important}
+  .mf-shift :where(.card,.kpi){padding:14px!important}
+  .mf-shift :where(.row,.list-row,.sel-card){padding:9px!important}
+  .mf-shift :where(button,.btn,.dash-btn){font-size:11px!important}
+  .mf-shift :where(.dash-btn,.btn,button:not(.bell):not(.mf-mobile-btn)){border-radius:9px}
+  .mf-shift :where(input,select,textarea){font-size:16px!important}
+  .mf-shift :where(.modal,.modal-card,.panel,.action-panel,.cap-panel){padding:16px!important}
+
+  .gc-hero-wrap{padding:28px 14px 24px!important;gap:12px!important}
+  .gc-brand img{max-width:min(62vw,180px)!important;max-height:78px!important}
+  .gc-brand span{font-size:clamp(25px,9vw,34px)!important}
+  .gc-info>div,.gc-info>p{font-size:10px!important}
+  .gc-info h1{font-size:clamp(21px,6.8vw,29px)!important;margin:6px 0!important}
+  .gc-body{padding:24px 10px 96px!important}
+  .gc-head{margin-bottom:14px!important;padding-bottom:11px!important;gap:8px!important}.gc-head h2{font-size:16px!important}
+  .gc-secondary,.gc-prazo,.gc-hint,.gc-page footer{font-size:10px!important}
+  .gc-prazo,.gc-hint{padding:9px 11px!important}
+  .gc-select{width:38px!important;height:38px!important}
+  .gc-close,.gc-lightbox-download{width:40px!important;height:40px!important}.gc-lightbox-download{right:58px!important}
+  .gc-nav{width:42px!important;height:42px!important;font-size:29px!important}
+  .gc-bar{padding:7px 7px 7px 12px!important}.gc-bar span,.gc-bar button{font-size:10px!important}
+  .gc-confirm-card{padding:20px 16px!important}.gc-confirm-card h2{font-size:18px!important}
+  .gc-confirm-card p,.gc-com,.gc-com button{font-size:11px!important}
+}
