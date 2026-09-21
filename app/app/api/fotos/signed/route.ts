@@ -179,9 +179,12 @@ function estiloHeroEfetivo(estilo: string, premiumTechLiberado: boolean) {
 
 export async function GET(req: NextRequest) {
   const galeria = req.nextUrl.searchParams.get("galeria")?.trim();
+  const modoParam = req.nextUrl.searchParams.get("modo")?.trim();
+  const modo = modoParam === "grade" || modoParam === "originais" ? modoParam : "completo";
+  const arquivo = req.nextUrl.searchParams.get("arquivo")?.trim() || null;
   if (!uuidValido(galeria)) return json({ error: "galeria inválida." }, 400);
 
-  const permitido = await consumirRateLimit(req, "signed_gallery_urls", galeria, 60, 40);
+  const permitido = await consumirRateLimit(req, arquivo ? "signed_gallery_file" : "signed_gallery_urls", galeria, 60, arquivo ? 120 : 40);
   if (!permitido) return json({ error: "Muitas solicitações. Aguarde um minuto." }, 429, 60);
 
   const supabase = createServiceClient();
@@ -244,46 +247,91 @@ export async function GET(req: NextRequest) {
     return json({ fotos: [], capaUrl: usarHeroEstudio ? heroSvg(heroCor, heroEstilo) : null, etapa });
   }
 
-  const caminhos: string[] = [];
-  for (const f of lista) {
-    caminhos.push(`${base}/${f.name}`);
-    caminhos.push(`${base}/thumbs/${f.name}`);
-  }
   const capaFile = (g.capa as string | null) ?? null;
-  if (capaFile && lista.some((f) => f.name === capaFile) && !caminhos.includes(`${base}/${capaFile}`)) caminhos.push(`${base}/${capaFile}`);
+  const capaNome = capaFile && lista.some((f) => f.name === capaFile) ? capaFile : lista[0]?.name;
 
-  const lotes: string[][] = [];
-  for (let i = 0; i < caminhos.length; i += ASSINATURA_LOTE) lotes.push(caminhos.slice(i, i + ASSINATURA_LOTE));
-  const mapa: Record<string, string> = {};
-  let cursor = 0;
-  let erroAssinatura: unknown = null;
-  const worker = async () => {
-    while (true) {
-      const i = cursor++;
-      if (i >= lotes.length || erroAssinatura) return;
-      const { data, error } = await supabase.storage.from("fotos").createSignedUrls(lotes[i], EXPIRA_SEG);
-      if (error) { erroAssinatura = error; return; }
-      for (const s of data ?? []) if (s.signedUrl && s.path) mapa[s.path] = s.signedUrl;
-    }
+  const assinar = async (entrada: string[]) => {
+    const caminhos = [...new Set(entrada)];
+    const lotes: string[][] = [];
+    for (let i = 0; i < caminhos.length; i += ASSINATURA_LOTE) lotes.push(caminhos.slice(i, i + ASSINATURA_LOTE));
+    const mapa: Record<string, string> = {};
+    let cursor = 0;
+    let erroAssinatura: unknown = null;
+    const worker = async () => {
+      while (true) {
+        const i = cursor++;
+        if (i >= lotes.length || erroAssinatura) return;
+        const { data, error } = await supabase.storage.from("fotos").createSignedUrls(lotes[i], EXPIRA_SEG);
+        if (error) { erroAssinatura = error; return; }
+        for (const s of data ?? []) if (s.signedUrl && s.path) mapa[s.path] = s.signedUrl;
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(CONCORRENCIA_ASSINATURA, Math.max(1, lotes.length)) }, () => worker()));
+    return { mapa, erroAssinatura };
   };
-  await Promise.all(Array.from({ length: Math.min(CONCORRENCIA_ASSINATURA, lotes.length) }, () => worker()));
-  if (erroAssinatura) {
-    registrarErro("gallery.signed.sign_urls", req, erroAssinatura, { galeria });
+
+  if (arquivo) {
+    if (!lista.some((f) => f.name === arquivo)) return json({ error: "Arquivo não encontrado." }, 404);
+    const caminho = `${base}/${arquivo}`;
+    const { mapa, erroAssinatura } = await assinar([caminho]);
+    if (erroAssinatura || !mapa[caminho]) {
+      registrarErro("gallery.signed.single", req, erroAssinatura || new Error("signed url missing"), { galeria, arquivo });
+      return json({ error: "Não foi possível assinar o arquivo." }, 500);
+    }
+    return json({ nome: arquivo, url: mapa[caminho], etapa });
+  }
+
+  let caminhos: string[] = [];
+  if (modo === "grade") {
+    caminhos = lista.map((f) => `${base}/thumbs/${f.name}`);
+    if (usarFotoHero && capaNome) caminhos.push(`${base}/${capaNome}`);
+  } else if (modo === "originais") {
+    caminhos = lista.map((f) => `${base}/${f.name}`);
+  } else {
+    for (const f of lista) {
+      caminhos.push(`${base}/${f.name}`);
+      caminhos.push(`${base}/thumbs/${f.name}`);
+    }
+  }
+
+  const assinaturaInicial = await assinar(caminhos);
+  if (assinaturaInicial.erroAssinatura) {
+    registrarErro("gallery.signed.sign_urls", req, assinaturaInicial.erroAssinatura, { galeria, modo });
     return json({ error: "Não foi possível assinar os arquivos." }, 500);
+  }
+  const mapa = assinaturaInicial.mapa;
+
+  if (modo === "grade") {
+    const semThumb = lista
+      .filter((f) => !mapa[`${base}/thumbs/${f.name}`])
+      .map((f) => `${base}/${f.name}`);
+    if (semThumb.length) {
+      const fallback = await assinar(semThumb);
+      if (fallback.erroAssinatura) {
+        registrarErro("gallery.signed.thumb_fallback", req, fallback.erroAssinatura, { galeria });
+      } else {
+        Object.assign(mapa, fallback.mapa);
+      }
+    }
   }
 
   const fotos = lista.map((f) => {
-    const url = mapa[`${base}/${f.name}`] ?? "";
-    const thumb = mapa[`${base}/thumbs/${f.name}`] || url;
-    return { nome: f.name, url, thumb };
+    const original = mapa[`${base}/${f.name}`] ?? "";
+    const thumbAssinada = mapa[`${base}/thumbs/${f.name}`] ?? "";
+    if (modo === "grade") {
+      const preview = thumbAssinada || original;
+      return { nome: f.name, url: preview, thumb: preview };
+    }
+    if (modo === "originais") return { nome: f.name, url: original, thumb: original };
+    return { nome: f.name, url: original, thumb: thumbAssinada || original };
   });
-  const capaNome = capaFile && lista.some((f) => f.name === capaFile) ? capaFile : lista[0]?.name;
-  const fotoCapaUrl = capaNome ? (mapa[`${base}/${capaNome}`] ?? null) : null;
+
+  const fotoCapaUrl = usarFotoHero && capaNome ? (mapa[`${base}/${capaNome}`] ?? null) : null;
   const marcadorPreset = usarHeroEstudio ? `#fotura-hero-${heroEstilo}` : "";
   const capaUrl = usarFotoHero && fotoCapaUrl
     ? `${fotoCapaUrl}${marcadorPreset}`
     : usarHeroEstudio
       ? heroSvg(heroCor, heroEstilo)
       : null;
-  return json({ fotos, capaUrl, etapa });
+  return json({ fotos, capaUrl, etapa, modo });
 }
