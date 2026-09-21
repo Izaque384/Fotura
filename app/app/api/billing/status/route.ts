@@ -35,7 +35,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Assinatura não encontrada." }, { status: 404 });
     }
 
-    const plano = planoFotura(assinatura.plano_codigo as string | null);
+    const statusAtual = assinatura.status as string;
+    const plano = ["active", "trialing", "past_due"].includes(statusAtual)
+      ? planoFotura(assinatura.plano_codigo as string | null)
+      : planoFotura("gratis");
     const temAssinatura = assinatura.provedor === "stripe" && Boolean(assinatura.provedor_assinatura_id);
 
     return NextResponse.json({

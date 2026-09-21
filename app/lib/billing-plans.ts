@@ -1,4 +1,4 @@
-export type PlanoCodigo = "sem_plano" | "legacy" | "essencial" | "profissional" | "studio";
+export type PlanoCodigo = "sem_plano" | "gratis" | "legacy" | "essencial" | "profissional" | "studio";
 
 export type PlanoFotura = {
   codigo: PlanoCodigo;
@@ -50,6 +50,30 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
       notificacoesPush: false,
     },
   },
+  gratis: {
+    codigo: "gratis",
+    nome: "Grátis",
+    descricao: "Para conhecer o Fotura, criar galerias reais e começar sem custo.",
+    precoMensalCentavos: 0,
+    limites: {
+      galeriasAtivas: null,
+      armazenamentoGb: 1,
+      clientes: null,
+      fotosPorGaleria: null,
+    },
+    recursos: {
+      selecaoProva: true,
+      comentarios: true,
+      senhaGaleria: true,
+      entregaFinal: true,
+      envioEmail: false,
+      brandingPersonalizado: true,
+      heroEstudio: true,
+      heroPremiumTech: false,
+      heroFotoGaleria: false,
+      notificacoesPush: true,
+    },
+  },
   legacy: {
     codigo: "legacy",
     nome: "Legacy",
@@ -77,13 +101,13 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
   essencial: {
     codigo: "essencial",
     nome: "Essencial",
-    descricao: "Para fotógrafos que estão organizando e profissionalizando a entrega aos clientes.",
+    descricao: "Para fotógrafos que querem uma entrega profissional com baixo volume de armazenamento.",
     precoMensalCentavos: 1490,
     limites: {
-      galeriasAtivas: 10,
+      galeriasAtivas: null,
       armazenamentoGb: 10,
-      clientes: 250,
-      fotosPorGaleria: 1000,
+      clientes: null,
+      fotosPorGaleria: null,
     },
     recursos: {
       selecaoProva: true,
@@ -101,13 +125,13 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
   profissional: {
     codigo: "profissional",
     nome: "Profissional",
-    descricao: "Para fotógrafos com volume recorrente de trabalhos e maior necessidade de apresentação.",
+    descricao: "Para fotógrafos com rotina recorrente e uma experiência de apresentação mais avançada.",
     precoMensalCentavos: 2990,
     limites: {
-      galeriasAtivas: 50,
+      galeriasAtivas: null,
       armazenamentoGb: 50,
-      clientes: 2000,
-      fotosPorGaleria: 3000,
+      clientes: null,
+      fotosPorGaleria: null,
     },
     recursos: {
       selecaoProva: true,
@@ -125,13 +149,13 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
   studio: {
     codigo: "studio",
     nome: "Studio",
-    descricao: "Para estúdios e operações com grande volume de clientes e galerias.",
+    descricao: "Para estúdios e operações com alto volume de armazenamento e entregas.",
     precoMensalCentavos: 5990,
     limites: {
       galeriasAtivas: null,
       armazenamentoGb: 100,
       clientes: null,
-      fotosPorGaleria: 5000,
+      fotosPorGaleria: null,
     },
     recursos: {
       selecaoProva: true,

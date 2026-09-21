@@ -77,7 +77,7 @@ export async function contextoPlano(supabase: SupabaseClient, userId: string) {
 
   const status = (assinatura?.status as string | null) ?? "active";
   const codigoPersistido = (assinatura?.plano_codigo as string | null) ?? "sem_plano";
-  const plano = STATUS_COM_ACESSO.has(status) ? planoFotura(codigoPersistido) : planoFotura("sem_plano");
+  const plano = STATUS_COM_ACESSO.has(status) ? planoFotura(codigoPersistido) : planoFotura("gratis");
   const uso = await obterUsoPlano(supabase, userId);
 
   return {

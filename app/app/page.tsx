@@ -85,6 +85,12 @@ const structuredData = {
       offers: [
         {
           "@type": "Offer",
+          name: "Grátis",
+          price: "0.00",
+          priceCurrency: "BRL",
+        },
+        {
+          "@type": "Offer",
           name: "Essencial",
           price: "14.90",
           priceCurrency: "BRL",

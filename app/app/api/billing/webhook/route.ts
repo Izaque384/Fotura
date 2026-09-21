@@ -39,6 +39,23 @@ async function atualizarPorSubscription(req: NextRequest, subscription: StripeSu
   else if (subscription.id) filtro = { coluna: "provedor_assinatura_id", valor: subscription.id };
   if (!filtro) throw new Error("Subscription Stripe sem vínculo com usuário Fotura");
 
+  if (subscription.status === "canceled") {
+    const { data, error } = await supabase.from("assinaturas").update({
+      plano_codigo: "gratis",
+      status: "active",
+      provedor: "stripe",
+      provedor_cliente_id: subscription.customer,
+      provedor_assinatura_id: null,
+      periodo_inicio: null,
+      periodo_fim: null,
+      cancelar_no_fim: false,
+      atualizado_em: new Date().toISOString(),
+    }).eq(filtro.coluna, filtro.valor).select("user_id").maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error("Assinatura Fotura não encontrada para downgrade ao plano grátis");
+    return;
+  }
+
   const patch: Record<string, unknown> = {
     provedor: "stripe",
     provedor_cliente_id: subscription.customer,
