@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galeriaError } = await supabase
     .from("galerias")
-    .select("user_id,titulo,capa,prova,limite,prazo,link_ate,tem_senha")
+    .select("user_id,titulo,capa,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
   const { data: perfil, error: perfilError } = await supabase
     .from("perfis")
-    .select("nome_estudio,logo_url,cor_hero,hero_galeria_ativo,hero_galeria_estilo")
+    .select("nome_estudio,logo_url,cor_hero,hero_galeria_ativo,hero_galeria_estilo,stripe_recebimentos_ativo")
     .eq("id", g.user_id)
     .maybeSingle();
 
@@ -53,6 +53,24 @@ export async function GET(req: NextRequest) {
     });
     return json({ error: "Não foi possível carregar a galeria." }, 500);
   }
+
+  const { data: assinatura } = await supabase
+    .from("assinaturas")
+    .select("plano_codigo,status")
+    .eq("user_id", g.user_id)
+    .maybeSingle();
+  const planoPago = Boolean(
+    assinatura &&
+    ["active","trialing","past_due"].includes(String(assinatura.status)) &&
+    ["legacy","essencial","profissional","studio"].includes(String(assinatura.plano_codigo))
+  );
+  const precoExtra = Number(g.preco_foto_extra_centavos ?? 0);
+  const vendaExtrasAtiva = Boolean(
+    g.venda_extras_ativa &&
+    precoExtra >= 100 &&
+    perfil?.stripe_recebimentos_ativo &&
+    planoPago
+  );
 
   let selecao: { fotos: string[]; finalizada: boolean; comentarios: Record<string, string> } | null = null;
   if (desbloqueada && !linkExpirado) {
@@ -88,6 +106,8 @@ export async function GET(req: NextRequest) {
       temSenha: protegida,
       desbloqueada,
       linkExpirado,
+      vendaExtrasAtiva,
+      precoFotoExtraCentavos: vendaExtrasAtiva ? precoExtra : null,
     },
     perfil: perfil ? {
       nome: (perfil.nome_estudio as string | null) ?? null,

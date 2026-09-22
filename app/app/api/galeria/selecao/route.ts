@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
   if (!comentarios) return NextResponse.json({ error: "Comentários inválidos." }, { status: 400 });
 
   const supabase = createServiceClient();
-  const { data: g } = await supabase.from("galerias").select("user_id,titulo,prova,limite,prazo,link_ate,tem_senha").eq("id", galeria).maybeSingle();
+  const { data: g } = await supabase.from("galerias").select("user_id,titulo,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos").eq("id", galeria).maybeSingle();
   if (!g) return NextResponse.json({ error: "Galeria não encontrada." }, { status: 404 });
 
   const permitido = await consumirRateLimit(req, "gallery_selection_write", galeria, 10 * 60, 180);
@@ -121,7 +121,9 @@ export async function POST(req: NextRequest) {
   const prazo = (g.prazo as string | null) ?? null;
   if (prazo && Date.now() > new Date(`${prazo}T23:59:59`).getTime()) return NextResponse.json({ error: "Prazo da seleção encerrado." }, { status: 403 });
   const limite = (g.limite as number) ?? 0;
-  if (limite > 0 && fotos.length > limite) return NextResponse.json({ error: "Limite de seleção excedido." }, { status: 400 });
+  const vendaExtrasAtiva = Boolean(g.venda_extras_ativa && Number(g.preco_foto_extra_centavos ?? 0) >= 100);
+  if (limite > 0 && fotos.length > limite && !vendaExtrasAtiva) return NextResponse.json({ error: "Limite de seleção excedido." }, { status: 400 });
+  if (finalizada && limite > 0 && fotos.length > limite && vendaExtrasAtiva) return NextResponse.json({ error: "As fotos extras precisam ser pagas antes da finalização.", pagamentoNecessario: true }, { status: 402 });
   if (finalizada && fotos.length === 0) return NextResponse.json({ error: "Selecione ao menos uma foto." }, { status: 400 });
 
   const { data: anterior } = await supabase.from("selecoes").select("finalizada").eq("galeria", galeria).maybeSingle();
