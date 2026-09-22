@@ -49,6 +49,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: link.url });
   } catch (error) {
     console.error("[sales-connect] onboarding failed", error);
+    const message = error instanceof Error ? error.message : "";
+    if (message.includes("signed up for Connect")) {
+      return NextResponse.json({
+        error: "O Stripe Connect ainda não está ativado na conta do Fotura. Ative o Connect no Dashboard da Stripe e tente novamente.",
+        code: "stripe_connect_not_enabled"
+      }, { status: 409 });
+    }
     return NextResponse.json({ error: "Não foi possível iniciar a configuração de recebimentos." }, { status: 502 });
   }
 }
