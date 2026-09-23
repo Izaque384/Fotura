@@ -58,6 +58,7 @@ export async function criarContaFotografo(email: string | null, nome: string | n
       "controller[requirement_collection]": "stripe",
       "controller[stripe_dashboard][type]": "full",
       "capabilities[card_payments][requested]": "true",
+      "capabilities[transfers][requested]": "true",
     }),
     cache: "no-store",
   }));

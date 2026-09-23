@@ -1555,3 +1555,81 @@ html body .gc-card > img{
 html body .gc-card{
   contain:layout paint;
 }
+
+
+/* gallery-management-modal-lavanda-final */
+html body .dash.mf-shift .modal .action-panel{
+  background:#FAF8FD !important;
+  background-image:none !important;
+  border:1px solid #DCD6EE !important;
+  color:#21253A !important;
+  box-shadow:0 26px 74px rgba(54,42,91,.16) !important;
+}
+html body .dash.mf-shift .action-panel .mhead h2,
+html body .dash.mf-shift .action-panel .name{
+  color:#21253A !important;
+  font-weight:800 !important;
+}
+html body .dash.mf-shift .action-panel .sub,
+html body .dash.mf-shift .action-panel .meta{
+  color:#73758D !important;
+  font-weight:650 !important;
+}
+html body .dash.mf-shift .action-panel .action-summary{
+  background:#F3EFF9 !important;
+  background-image:none !important;
+  border:1px solid #DCD6EE !important;
+  color:#21253A !important;
+  box-shadow:0 5px 18px rgba(57,46,91,.04) !important;
+}
+html body .dash.mf-shift .action-panel .action-group{
+  background:#F6F3FA !important;
+  background-image:none !important;
+  border:1px solid #DDD7EB !important;
+  color:#21253A !important;
+  box-shadow:0 6px 20px rgba(57,46,91,.035) !important;
+}
+html body .dash.mf-shift .action-panel .action-title{
+  color:#666C89 !important;
+  font-weight:800 !important;
+}
+html body .dash.mf-shift .action-panel .action-btn{
+  background:#FEFDFE !important;
+  background-image:none !important;
+  border:1px solid #DDD7EB !important;
+  color:#292E43 !important;
+  box-shadow:0 2px 8px rgba(57,46,91,.025) !important;
+}
+html body .dash.mf-shift .action-panel .action-btn:hover{
+  background:#EEE9F7 !important;
+  border-color:#C9BFE0 !important;
+  box-shadow:0 6px 18px rgba(57,46,91,.07) !important;
+}
+html body .dash.mf-shift .action-panel .action-btn strong{
+  color:#282D42 !important;
+  font-weight:800 !important;
+}
+html body .dash.mf-shift .action-panel .action-btn span{
+  color:#6F748B !important;
+  font-weight:650 !important;
+}
+html body .dash.mf-shift .action-panel .action-btn.danger{
+  background:#FFF7F8 !important;
+  border-color:#EFCBD2 !important;
+}
+html body .dash.mf-shift .action-panel .action-btn.danger strong{
+  color:#B42335 !important;
+}
+html body .dash.mf-shift .action-panel .action-btn.danger span{
+  color:#96636D !important;
+}
+html body .dash.mf-shift .action-panel .act{
+  background:#F2EEF8 !important;
+  border-color:#DCD6EE !important;
+  color:#555B73 !important;
+  font-weight:800 !important;
+}
+html body .dash.mf-shift .action-panel .action-thumb{
+  background:#E9E4F3 !important;
+  border-color:#D8D1E7 !important;
+}
