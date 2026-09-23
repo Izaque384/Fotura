@@ -1666,3 +1666,31 @@ html body .dash.mf-shift .action-panel .action-btn.danger:active{
   background:#FFF0F3 !important;
   border-color:#E5AEB9 !important;
 }
+
+
+/* gallery-copy-link-and-password-final */
+html body .dash.mf-shift .action-panel button.action-btn.copy-link-btn,
+html body .dash.mf-shift .action-panel button.action-btn.copy-link-btn:hover,
+html body .dash.mf-shift .action-panel button.action-btn.copy-link-btn:focus,
+html body .dash.mf-shift .action-panel button.action-btn.copy-link-btn:focus-visible,
+html body .dash.mf-shift .action-panel button.action-btn.copy-link-btn:active{
+  background:#FEFDFE !important;
+  background-color:#FEFDFE !important;
+  background-image:none !important;
+  border-color:#DDD7EB !important;
+  color:#292E43 !important;
+  box-shadow:0 2px 8px rgba(57,46,91,.025) !important;
+  filter:none !important;
+  opacity:1 !important;
+  outline:none !important;
+  color-scheme:light !important;
+}
+html body .dash.mf-shift .action-panel button.action-btn.copy-link-btn strong{
+  color:#282D42 !important;
+}
+html body .dash.mf-shift .action-panel button.action-btn.copy-link-btn span{
+  color:#6F748B !important;
+}
+html body .dash.mf-shift .gallery-new-password{
+  color-scheme:light !important;
+}
