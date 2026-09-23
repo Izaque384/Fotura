@@ -26,17 +26,22 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const [{ data: g }, { data: venda }] = await Promise.all([
     supabase.from("galerias").select("id,user_id,titulo,tem_senha").eq("id", galeria).maybeSingle(),
-    supabase.from("vendas_fotos").select("*").eq("id", pedido).eq("galeria", galeria).maybeSingle(),
+    supabase.from("vendas_fotos").select("id,galeria,fotos,qtd_extras,valor_total_centavos,status,stripe_conta_id,stripe_checkout_session_id").eq("id", pedido).eq("galeria", galeria).maybeSingle(),
   ]);
   if (!g || !venda) return NextResponse.json({ error: "Pedido não encontrado." }, { status: 404 });
   if (g.tem_senha && !temAcessoGaleria(req, galeria)) return NextResponse.json({ error: "Acesso à galeria necessário." }, { status: 401 });
   if (venda.status === "pago") {
     return NextResponse.json({ ok:true, pago:true, fotos:venda.fotos, extras:venda.qtd_extras, totalCentavos:venda.valor_total_centavos });
   }
-  if (venda.stripe_checkout_session_id !== sessionId) return NextResponse.json({ error: "Sessão de pagamento inválida." }, { status: 400 });
+  if (venda.stripe_checkout_session_id !== sessionId) {
+    return NextResponse.json({ error: "Sessão de pagamento inválida." }, { status: 400 });
+  }
 
   try {
-    const session = await stripeConnectedGet<StripeSaleCheckout>(String(venda.stripe_conta_id), `/checkout/sessions/${encodeURIComponent(sessionId)}`);
+    const session = await stripeConnectedGet<StripeSaleCheckout>(
+      String(venda.stripe_conta_id),
+      `/checkout/sessions/${encodeURIComponent(sessionId)}`
+    );
     if (session.metadata?.pedido_id !== pedido || session.metadata?.galeria_id !== galeria) {
       return NextResponse.json({ error: "Pagamento não corresponde a este pedido." }, { status: 400 });
     }
@@ -44,36 +49,22 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ ok:true, pago:false, status:session.payment_status ?? "unpaid" });
     }
 
-    const fotos = (venda.fotos as string[]) ?? [];
-    const { data: atual } = await supabase.from("selecoes").select("comentarios,finalizada").eq("galeria", galeria).maybeSingle();
-    const comentarios = (atual?.comentarios as Record<string,string> | null) ?? {};
-    const agora = new Date().toISOString();
-
-    const { error: selError } = await supabase.from("selecoes").upsert({
-      galeria,
-      fotos,
-      finalizada:true,
-      comentarios,
-      atualizado_em:agora,
+    const { data: resultado, error } = await supabase.rpc("finalizar_venda_fotos_server", {
+      p_venda: pedido,
+      p_session_id: sessionId,
+      p_payment_intent_id: paymentIntentId(session.payment_intent),
+      p_event_id: null,
+      p_metodo_pagamento: null,
     });
-    if (selError) throw selError;
+    if (error) throw error;
 
-    await Promise.all([
-      supabase.from("vendas_fotos").update({
-        status:"pago",
-        stripe_payment_intent_id:paymentIntentId(session.payment_intent),
-        pago_em:agora,
-        atualizado_em:agora,
-      }).eq("id", pedido),
-      supabase.from("galerias").update({ etapa:"selecao_finalizada" }).eq("id", galeria).eq("user_id", g.user_id),
-    ]);
-
+    const linha = Array.isArray(resultado) ? resultado[0] : null;
     return NextResponse.json({
       ok:true,
       pago:true,
-      fotos,
-      extras:venda.qtd_extras,
-      totalCentavos:venda.valor_total_centavos,
+      fotos:linha?.fotos ?? venda.fotos,
+      extras:linha?.qtd_extras ?? venda.qtd_extras,
+      totalCentavos:linha?.valor_total_centavos ?? venda.valor_total_centavos,
     });
   } catch (error) {
     console.error("[sales-confirm] failed", error);

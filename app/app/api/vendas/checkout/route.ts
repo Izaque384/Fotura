@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     const cancelar = `${req.nextUrl.origin}/g/${galeria}?compra=cancelada`;
     const session = await stripeConnectedPost<StripeSaleCheckout>(accountId, "/checkout/sessions", {
       mode: "payment",
-      "payment_method_types[0]": "card",
+      "automatic_payment_methods[enabled]": "true",
       locale: "pt-BR",
       "line_items[0][price_data][currency]": "brl",
       "line_items[0][price_data][product_data][name]": `Fotos adicionais — ${String(g.titulo || "Galeria")}`,
