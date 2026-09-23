@@ -1633,3 +1633,36 @@ html body .dash.mf-shift .action-panel .action-thumb{
   background:#E9E4F3 !important;
   border-color:#D8D1E7 !important;
 }
+
+
+/* gallery-action-focus-lavanda */
+html body .dash.mf-shift .action-panel .action-btn{
+  appearance:none !important;
+  -webkit-appearance:none !important;
+}
+html body .dash.mf-shift .action-panel .action-btn:focus,
+html body .dash.mf-shift .action-panel .action-btn:focus-visible,
+html body .dash.mf-shift .action-panel .action-btn:active{
+  background:#F4F0FA !important;
+  background-image:none !important;
+  border-color:#BFB5DB !important;
+  color:#292E43 !important;
+  box-shadow:0 0 0 3px rgba(93,13,250,.08),0 4px 14px rgba(57,46,91,.05) !important;
+  outline:none !important;
+}
+html body .dash.mf-shift .action-panel .action-btn:focus strong,
+html body .dash.mf-shift .action-panel .action-btn:focus-visible strong,
+html body .dash.mf-shift .action-panel .action-btn:active strong{
+  color:#282D42 !important;
+}
+html body .dash.mf-shift .action-panel .action-btn:focus span,
+html body .dash.mf-shift .action-panel .action-btn:focus-visible span,
+html body .dash.mf-shift .action-panel .action-btn:active span{
+  color:#6F748B !important;
+}
+html body .dash.mf-shift .action-panel .action-btn.danger:focus,
+html body .dash.mf-shift .action-panel .action-btn.danger:focus-visible,
+html body .dash.mf-shift .action-panel .action-btn.danger:active{
+  background:#FFF0F3 !important;
+  border-color:#E5AEB9 !important;
+}

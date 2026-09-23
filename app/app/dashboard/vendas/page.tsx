@@ -70,7 +70,7 @@ export default function VendasPage(){
   return <main className="sales-page mf-shift">
     <MenuFotografo/>
     <style>{`
-      .sales-page{min-height:100vh;box-sizing:border-box;padding:54px 5vw 84px;background:linear-gradient(180deg,#F0EDF7 0%,#ECE8F4 100%);color:#21253A}
+      .sales-page{min-height:100vh;box-sizing:border-box;padding:54px 5vw 84px calc(236px + 5vw);background:linear-gradient(180deg,#F0EDF7 0%,#ECE8F4 100%);color:#21253A}
       .sales-wrap{max-width:1180px;margin:auto}
       .sales-ey{font-size:11px;font-weight:800;letter-spacing:2px;color:#6B5BAE}
       .sales-h1{margin:7px 0 4px;font-size:29px;line-height:1.15;font-weight:800;letter-spacing:-.5px}
@@ -91,7 +91,7 @@ export default function VendasPage(){
       .sales-pill.pago{color:#3F7C5B;background:#E9F5EF;border-color:#C9E4D5}.sales-pill.pendente{color:#97702D;background:#FBF2DB;border-color:#E8D4A0}.sales-pill.cancelado,.sales-pill.falhou{color:#945D64;background:#F8EDEE;border-color:#EACFD2}
       .sales-empty{padding:46px 20px;text-align:center;color:#7A7D92;font-size:12px;font-weight:600}
       .sales-error{margin:16px 0;padding:10px 12px;border:1px solid #EACFD2;border-radius:10px;background:#F8EDEE;color:#945D64;font-size:11px;font-weight:700}
-      @media(max-width:900px){.sales-stats{grid-template-columns:1fr 1fr}.sales-head{display:none}.sales-row{grid-template-columns:1fr 1fr}.sales-row>div:first-child{grid-column:1/-1}.sales-toolbar{align-items:flex-start;flex-direction:column}}
+      @media(min-width:641px) and (max-width:980px){.sales-page{padding-left:calc(72px + 5vw)}}@media(max-width:900px){.sales-stats{grid-template-columns:1fr 1fr}.sales-head{display:none}.sales-row{grid-template-columns:1fr 1fr}.sales-row>div:first-child{grid-column:1/-1}.sales-toolbar{align-items:flex-start;flex-direction:column}}
       @media(max-width:640px){.sales-page{padding:78px 14px 60px}.sales-h1{font-size:24px}.sales-stats{grid-template-columns:1fr 1fr}.sales-row{grid-template-columns:1fr}.sales-row>div:first-child{grid-column:auto}.sales-note{line-height:1.5}}
     `}</style>
     <div className="sales-wrap">
