@@ -116,6 +116,16 @@ export async function POST(req: NextRequest) {
     }).eq("id", pedido.id);
     if (updateError) throw updateError;
 
+    const { error: analyticsError } = await supabase.from("produto_eventos").insert({
+      user_id: String(g.user_id),
+      evento: "extra_sale_checkout_started",
+      rota: `/g/${galeria}`,
+      entidade: "galeria",
+      entidade_id: galeria,
+      detalhes: { extras, total_centavos: total },
+    });
+    if (analyticsError) console.error("[sales-checkout] analytics failed", { code: analyticsError.code });
+
     return NextResponse.json({ url: session.url, pedido: pedido.id, extras, totalCentavos: total });
   } catch (error) {
     console.error("[sales-checkout] failed", error);
