@@ -38,3 +38,73 @@
   .gc-confirm-card{padding:20px 16px!important}.gc-confirm-card h2{font-size:18px!important}
   .gc-confirm-card p,.gc-com,.gc-com button{font-size:11px!important}
 }
+
+
+/* Product flow mobile refinements — keep primary actions thumb-friendly. */
+@media (max-width: 640px) {
+  html body .mf-shift{overflow-x:clip}
+  html body .mf-shift :where(.dash-btn,.sel-btn,.sales-filter,.sales-action,.plan-btn,.manage-btn){
+    min-height:44px!important;
+  }
+
+  html body .dash .dash-actions{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) 44px;
+    width:100%;
+    gap:8px!important;
+  }
+  html body .dash .dash-actions .storage-usage{
+    grid-column:1/-1;
+    width:100%!important;
+  }
+  html body .dash .dash-actions .dash-btn{
+    grid-column:1/2;
+    width:100%;
+  }
+  html body .dash .dash-actions .bell{
+    grid-column:2/3;
+    grid-row:2;
+    width:44px;
+    height:44px;
+  }
+
+  html body .sales-page .sales-wrap,
+  html body .bill-page .bill-wrap,
+  html body .dash .dash-body{
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+
+  html body .sales-page .sales-toolbar{
+    gap:10px;
+  }
+  html body .sales-page .sales-filters{
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  html body .sales-page .sales-filter{
+    width:100%;
+  }
+
+  html body .bill-page .current-head{
+    align-items:flex-start;
+  }
+  html body .bill-page .plan-desc{
+    min-height:0!important;
+  }
+  html body .bill-page .manage-btn,
+  html body .bill-page .plan-btn{
+    width:100%;
+  }
+
+  html body .dash .sel-tabs{
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+  }
+  html body .dash .sel-tab{
+    min-height:40px;
+    scroll-snap-align:start;
+  }
+}
