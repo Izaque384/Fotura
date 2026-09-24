@@ -65,7 +65,7 @@ export default function StorageUsageIndicator() {
         .storage-usage{width:184px;box-sizing:border-box;padding:7px 10px;border:1px solid rgba(74,81,126,.42);border-radius:11px;background:linear-gradient(180deg,rgba(20,20,43,.96),rgba(14,14,31,.96));font-family:var(--font-sora),Sora,sans-serif;color:#f0f0f5;flex:none}
         .storage-usage__head,.storage-usage__meta{display:flex;align-items:center;justify-content:space-between;gap:8px}
         .storage-usage__head{font-size:9px;font-weight:650;line-height:1.2}.storage-usage__head span{color:#a4a9bf}.storage-usage__head strong{font-size:9px;color:#dfe3f5}
-        .storage-usage__track{height:3px;margin:5px 0;overflow:hidden;border-radius:999px;background:#090916}.storage-usage__track span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#1196fc,#5d0dfa);transition:width .35s ease}
+        .storage-usage__track{height:3px;margin:5px 0;overflow:hidden;border-radius:999px;background:#F3EFF9}.storage-usage__track span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#1196fc,#5d0dfa);transition:width .35s ease}
         .storage-usage__meta{font-size:8px;line-height:1.2;color:#737a9b}.storage-usage__meta span:first-child{color:#b9bfd5}
         .storage-usage--alert{border-color:rgba(246,196,69,.35)}.storage-usage--alert .storage-usage__head strong{color:#f6c445}.storage-usage--alert .storage-usage__track span{background:linear-gradient(90deg,#f6c445,#ff9d6c)}
         @media(max-width:640px){.storage-usage{width:154px;padding:6px 8px}.storage-usage__head{font-size:8px}.storage-usage__meta{font-size:7.5px}}
