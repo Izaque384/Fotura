@@ -101,8 +101,8 @@ export default function ConfirmDialog({
         aria-describedby={descriptionId}
         style={{
           width: "min(440px, 100%)",
-          background: "linear-gradient(180deg,#14142b,#101023)",
-          border: "1px solid #292b43",
+          background: "linear-gradient(180deg,#FAF8FD,#F3EFF9)",
+          border: "1px solid #D7D0E7",
           borderRadius: 16,
           padding: "clamp(18px, 5vw, 22px)",
           boxShadow: "0 24px 70px rgba(0,0,0,.45)",
@@ -127,11 +127,11 @@ export default function ConfirmDialog({
             disabled={loading}
             style={{
               minHeight: 44,
-              border: "1px solid #2a2d40",
+              border: "1px solid #D7D0E7",
               borderRadius: 10,
               padding: "10px 14px",
               color: "#c6cad8",
-              background: "#17172d",
+              background: "#EEEAF8",
               font: "600 13px inherit",
               cursor: loading ? "default" : "pointer",
               opacity: loading ? 0.65 : 1,
