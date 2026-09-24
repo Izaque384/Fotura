@@ -12,7 +12,7 @@ type Analytics = {
     signupClicks: number;
     usuariosNoPainel: number;
     criadoresDeGaleria: number;
-    clientesQueFinalizaramSelecao: number;
+    contasComSelecaoFinalizada: number;
     contasPagasAtivas: number;
     checkoutsDePlano: number;
     compartilhamentos: number;
@@ -95,7 +95,7 @@ export default function ProdutoAnalyticsPage() {
             <div className="pa-card"><strong>{dados.volumes.usuariosNoPainel}</strong><span>Usuários únicos no painel</span></div>
             <div className="pa-card"><strong>{dados.volumes.contasPagasAtivas}</strong><span>Contas pagas atualmente ativas</span></div>
             <div className="pa-card"><strong>{dados.volumes.criadoresDeGaleria}</strong><span>Fotógrafos que criaram galeria</span></div>
-            <div className="pa-card"><strong>{dados.volumes.clientesQueFinalizaramSelecao}</strong><span>Contas com seleção finalizada por cliente</span></div>
+            <div className="pa-card"><strong>{dados.volumes.contasComSelecaoFinalizada}</strong><span>Contas com seleção finalizada por cliente</span></div>
             <div className="pa-card"><strong>{dados.volumes.compartilhamentos}</strong><span>Compartilhamentos instrumentados</span></div>
             <div className="pa-card"><strong>{dados.volumes.visualizacoesGaleriaPublica}</strong><span>Aberturas de galerias públicas</span></div>
           </section>
