@@ -163,8 +163,13 @@ export default function SelecoesPage() {
     setAtualizando(false);
 
     if (!silencioso) {
-      const foco = new URLSearchParams(window.location.search).get("galeria");
+      const params = new URLSearchParams(window.location.search);
+      const foco = params.get("galeria");
       if (foco && lista.some((x) => x.id === foco && x.selecao)) setModal(foco);
+      const filtroInicial = params.get("filtro");
+      if (["sem_interacao","andamento","finalizada","preparando_entrega"].includes(filtroInicial ?? "")) {
+        setFiltro(filtroInicial as Filtro);
+      }
     }
   }, [router, supabase]);
 

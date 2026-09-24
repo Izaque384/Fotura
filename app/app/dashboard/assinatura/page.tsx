@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import MenuFotografo from "../../MenuFotografo";
 import { PLANOS_FOTURA, type PlanoCodigo } from "../../../lib/billing-plans";
 import { createClient } from "../../../lib/supabase-client";
+import { registrarEventoProduto } from "../../../lib/product-analytics";
 
 type StatusBilling = {
   plano: { codigo: PlanoCodigo; nome: string; descricao: string };
@@ -87,8 +88,20 @@ export default function AssinaturaPage() {
         if (!rStatus.ok || !rUsage.ok) throw new Error("billing_load_failed");
         const [s, u] = await Promise.all([rStatus.json(), rUsage.json()]);
         if (!ativo) return;
-        setStatus(s as StatusBilling);
-        setUsage(u as UsageBilling);
+        const statusCarregado = s as StatusBilling;
+        const usageCarregado = u as UsageBilling;
+        setStatus(statusCarregado);
+        setUsage(usageCarregado);
+        const limiteGb = usageCarregado.limites?.armazenamento?.limiteGb ?? null;
+        const usoGb = usageCarregado.uso?.armazenamentoGb ?? 0;
+        registrarEventoProduto("plan_page_view", {
+          token: session.access_token,
+          rota: "/dashboard/assinatura",
+          detalhes: {
+            plano: statusCarregado.plano.codigo,
+            armazenamento_percentual: limiteGb && limiteGb > 0 ? Math.min(100, Math.round((usoGb / limiteGb) * 100)) : 0,
+          },
+        });
       } catch {
         if (ativo) setErro("Não foi possível carregar os dados da assinatura agora.");
       } finally {
@@ -116,6 +129,15 @@ export default function AssinaturaPage() {
       });
       const dados = await resposta.json().catch(() => ({})) as { url?: string; error?: string };
       if (!resposta.ok || !dados.url) throw new Error(dados.error || "Não foi possível iniciar o checkout.");
+      registrarEventoProduto("plan_checkout_started", {
+        token,
+        rota: "/dashboard/assinatura",
+        detalhes: {
+          plano,
+          plano_atual: status?.plano.codigo ?? "sem_plano",
+          origem: "pagina_plano",
+        },
+      });
       window.location.assign(dados.url);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Não foi possível iniciar o checkout.");
