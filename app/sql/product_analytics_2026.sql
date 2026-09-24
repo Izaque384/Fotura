@@ -25,3 +25,10 @@ create index if not exists produto_eventos_user_id_criado_em_idx
 create index if not exists produto_eventos_sessao_id_criado_em_idx
   on public.produto_eventos (sessao_id, criado_em desc)
   where sessao_id is not null;
+
+
+create unique index if not exists produto_eventos_pagamento_venda_unico_idx
+  on public.produto_eventos (evento, entidade_id)
+  where evento = 'extra_sale_payment_confirmed'
+    and entidade = 'venda'
+    and entidade_id is not null;
