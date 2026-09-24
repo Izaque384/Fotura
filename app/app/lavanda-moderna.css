@@ -989,7 +989,7 @@ html body .lp .hero-showcase-actions{
 html body .lp .hero-showcase-actions .btn{
   min-height:50px;
   padding:0 22px;
-  border-radius:14px;
+  border-radius:12px;
   font-size:11px;
 }
 
@@ -1202,7 +1202,7 @@ html body .lp .hero-benefit-icon{
   display:grid;
   place-items:center;
   margin-bottom:2px;
-  border-radius:12px;
+  border-radius:14px;
   color:#6A60C7;
   background:linear-gradient(135deg,#EEEAFB,#E7F3FC);
   box-shadow:0 7px 18px rgba(84,69,136,.06);
