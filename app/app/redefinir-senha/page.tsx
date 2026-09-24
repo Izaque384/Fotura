@@ -73,8 +73,8 @@ export default function RedefinirSenhaPage() {
   }
 
   const container: React.CSSProperties = { minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(180deg,#F5F3FB 0%,#EEEAF8 100%)",fontFamily:"sans-serif",padding:24 };
-  const card: React.CSSProperties = { background:"#FAF8FD",borderRadius:16,padding:40,width:"100%",maxWidth:400,border:"1px solid #2a2d40" };
-  const inputStyle: React.CSSProperties = { width:"100%",padding:"12px 14px",fontSize:14,border:"1.5px solid #2a2d40",borderRadius:10,background:"#F3EFF9",color:"#21253A",outline:"none",marginBottom:20,boxSizing:"border-box" };
+  const card: React.CSSProperties = { background:"#FAF8FD",borderRadius:16,padding:40,width:"100%",maxWidth:400,border:"1px solid #D7D0E7" };
+  const inputStyle: React.CSSProperties = { width:"100%",padding:"12px 14px",fontSize:14,border:"1.5px solid #D7D0E7",borderRadius:10,background:"#F3EFF9",color:"#21253A",outline:"none",marginBottom:20,boxSizing:"border-box" };
 
   if (verificando) return <div className="auth-shell" style={container}><div className="auth-card" style={card}><div style={{fontSize:28,fontWeight:700,letterSpacing:4,color:"#21253A",textAlign:"center",marginBottom:8}}>FOTURA</div><p style={{fontSize:14,color:"#73758D",textAlign:"center"}}>Verificando link de recuperação…</p></div></div>;
 

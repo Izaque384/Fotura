@@ -79,16 +79,16 @@ export default function LoginPage() {
 
   return (
     <main className="auth-shell" style={{ minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(180deg,#F5F3FB 0%,#EEEAF8 100%)",fontFamily:"sans-serif",padding:24 }}>
-      <section className="auth-card" aria-labelledby="login-title" style={{ background:"#FAF8FD",borderRadius:16,padding:"clamp(24px, 7vw, 40px)",width:"100%",maxWidth:400,border:"1px solid #2a2d40",boxSizing:"border-box" }}>
+      <section className="auth-card" aria-labelledby="login-title" style={{ background:"#FAF8FD",borderRadius:16,padding:"clamp(24px, 7vw, 40px)",width:"100%",maxWidth:400,border:"1px solid #D7D0E7",boxSizing:"border-box" }}>
         <div aria-hidden="true" style={{ fontSize:28,fontWeight:700,letterSpacing:4,color:"#21253A",textAlign:"center",marginBottom:8 }}>FOTURA</div>
         <h1 id="login-title" style={{ fontSize:14,fontWeight:400,color:"#73758D",textAlign:"center",margin:"0 0 32px" }}>{modo === "login" ? "Entre na sua conta" : "Crie sua conta"}</h1>
 
         <form onSubmit={(event) => { event.preventDefault(); void handleSubmit(); }} noValidate>
           <label htmlFor="login-email" style={{ fontSize:13,color:"#5F657D",display:"block",marginBottom:6 }}>E-mail</label>
-          <input id="login-email" name="email" type="email" autoComplete="email" inputMode="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="seu@email.com" aria-invalid={mensagemErro && !email.trim() ? true : undefined} style={{ width:"100%",padding:"12px 14px",fontSize:14,border:"1.5px solid #2a2d40",borderRadius:10,background:"#F3EFF9",color:"#21253A",outline:"none",marginBottom:20,boxSizing:"border-box" }} />
+          <input id="login-email" name="email" type="email" autoComplete="email" inputMode="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="seu@email.com" aria-invalid={mensagemErro && !email.trim() ? true : undefined} style={{ width:"100%",padding:"12px 14px",fontSize:14,border:"1.5px solid #D7D0E7",borderRadius:10,background:"#F3EFF9",color:"#21253A",outline:"none",marginBottom:20,boxSizing:"border-box" }} />
 
           <label htmlFor="login-senha" style={{ fontSize:13,color:"#5F657D",display:"block",marginBottom:6 }}>Senha</label>
-          <input id="login-senha" name="senha" type="password" autoComplete={modo === "login" ? "current-password" : "new-password"} value={senha} onChange={(e)=>setSenha(e.target.value)} placeholder="••••••••" maxLength={128} aria-describedby={modo === "cadastro" ? "senha-ajuda" : undefined} aria-invalid={mensagemErro && !senha ? true : undefined} style={{ width:"100%",padding:"12px 14px",fontSize:14,border:"1.5px solid #2a2d40",borderRadius:10,background:"#F3EFF9",color:"#21253A",outline:"none",marginBottom:12,boxSizing:"border-box" }} />
+          <input id="login-senha" name="senha" type="password" autoComplete={modo === "login" ? "current-password" : "new-password"} value={senha} onChange={(e)=>setSenha(e.target.value)} placeholder="••••••••" maxLength={128} aria-describedby={modo === "cadastro" ? "senha-ajuda" : undefined} aria-invalid={mensagemErro && !senha ? true : undefined} style={{ width:"100%",padding:"12px 14px",fontSize:14,border:"1.5px solid #D7D0E7",borderRadius:10,background:"#F3EFF9",color:"#21253A",outline:"none",marginBottom:12,boxSizing:"border-box" }} />
           {modo === "cadastro" && <p id="senha-ajuda" style={{fontSize:11,color:"#8A8CA1",margin:"0 0 18px"}}>Mínimo de 6 caracteres.</p>}
 
           {modo === "login" && <div style={{textAlign:"right",marginBottom:24}}><Link href="/esqueci-senha" style={{fontSize:12,color:"#4a6cf7",textDecoration:"none"}}>Esqueci minha senha</Link></div>}
