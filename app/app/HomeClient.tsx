@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "../lib/supabase-client";
+import { registrarEventoProduto, utmAtual } from "../lib/product-analytics";
 
 const planos = [
   {
@@ -48,7 +49,7 @@ function Logo() {
 }
 
 export default function Home() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [logado, setLogado] = useState(false);
 
   useEffect(() => {
@@ -58,6 +59,25 @@ export default function Home() {
     });
     return () => { ativo = false; };
   }, [supabase]);
+
+  useEffect(() => {
+    registrarEventoProduto("landing_view", {
+      rota: "/",
+      detalhes: utmAtual(),
+    });
+  }, []);
+
+  function rastrearCriacao(origem: string, plano?: string) {
+    if (logado) return;
+    registrarEventoProduto("landing_signup_clicked", {
+      rota: "/",
+      detalhes: {
+        ...utmAtual(),
+        origem,
+        ...(plano ? { plano } : {}),
+      },
+    });
+  }
 
   const destinoPrincipal = logado ? "/dashboard" : "/login?modo=cadastro";
 
@@ -70,7 +90,7 @@ export default function Home() {
       <header className="shell top">
         <a className="brand" href="/" aria-label="Fotura"><Logo/><strong>FOTURA</strong></a>
         <nav className="nav"><a href="#produto">Produto</a><a href="#fluxo">Como funciona</a><a href="#planos">Planos</a><a href="#faq">Dúvidas</a></nav>
-        <div className="actions"><a className="btn" href={logado ? "/dashboard" : "/login"}>{logado ? "Painel" : "Entrar"}</a><a className="btn primary" href={destinoPrincipal}>{logado ? "Abrir Fotura" : "Criar conta"}</a></div>
+        <div className="actions"><a className="btn" href={logado ? "/dashboard" : "/login"}>{logado ? "Painel" : "Entrar"}</a><a className="btn primary" href={destinoPrincipal} onClick={()=>rastrearCriacao("header")}>{logado ? "Abrir Fotura" : "Criar conta"}</a></div>
       </header>
 
       <main>
@@ -82,7 +102,7 @@ export default function Home() {
               <p>Compartilhe, receba seleções, encante seus clientes e transforme cada entrega em uma experiência à altura da sua fotografia.</p>
 
               <div className="hero-showcase-actions">
-                <a className="btn primary" href={destinoPrincipal}>
+                <a className="btn primary" href={destinoPrincipal} onClick={()=>rastrearCriacao("hero")}>
                   {logado ? "Ir para o painel" : "Começar agora"}<span>→</span>
                 </a>
                 <a className="btn hero-showcase-secondary" href="#fluxo">Ver como funciona</a>
@@ -147,11 +167,11 @@ export default function Home() {
 
         <section className="section" id="fluxo"><div className="shell"><div className="section-head"><div><div className="section-label">Fluxo Fotura</div><h2>Do upload à entrega.<br/>Sem ruído.</h2></div><p>Menos mensagens soltas, links improvisados e confirmações manuais. O cliente sabe o que fazer e você acompanha tudo.</p></div><div className="flow"><article className="flow-card"><div className="flow-n">01 / CRIAR</div><b>Monte a galeria</b><p>Defina cliente, prova, limite, prazo e proteção.</p></article><article className="flow-card"><div className="flow-n">02 / COMPARTILHAR</div><b>Envie um único link</b><p>O cliente visualiza, seleciona e comenta sem cadastro.</p></article><article className="flow-card"><div className="flow-n">03 / ENTREGAR</div><b>Finalize com clareza</b><p>Receba a seleção e disponibilize o trabalho final.</p></article></div></div></section>
 
-        <section className="section" id="planos"><div className="shell"><div className="section-head"><div><div className="section-label">Planos</div><h2>Comece leve.<br/>Escale quando precisar.</h2></div><p>Galerias, clientes e fotos por galeria são ilimitados. Você escolhe o plano pelo armazenamento e pelo nível de apresentação.</p></div><div className="pricing">{planos.map((p)=><article className={`plan${p.destaque?" hot":""}`} key={p.nome}>{p.destaque&&<span className="popular">Mais indicado</span>}<h3>{p.nome}</h3><div className="price"><small>R$ </small>{p.preco}</div><div className="per">por mês</div><ul>{p.itens.map(item=><li key={item}>{item}</li>)}</ul><a className={`btn${p.destaque?" primary":""}`} href={destinoPrincipal}>{p.nome==="Grátis"?"Começar grátis":`Escolher ${p.nome}`}</a></article>)}</div></div></section>
+        <section className="section" id="planos"><div className="shell"><div className="section-head"><div><div className="section-label">Planos</div><h2>Comece leve.<br/>Escale quando precisar.</h2></div><p>Galerias, clientes e fotos por galeria são ilimitados. Você escolhe o plano pelo armazenamento e pelo nível de apresentação.</p></div><div className="pricing">{planos.map((p)=><article className={`plan${p.destaque?" hot":""}`} key={p.nome}>{p.destaque&&<span className="popular">Mais indicado</span>}<h3>{p.nome}</h3><div className="price"><small>R$ </small>{p.preco}</div><div className="per">por mês</div><ul>{p.itens.map(item=><li key={item}>{item}</li>)}</ul><a className={`btn${p.destaque?" primary":""}`} href={destinoPrincipal} onClick={()=>rastrearCriacao("planos",p.nome.toLowerCase())}>{p.nome==="Grátis"?"Começar grátis":`Escolher ${p.nome}`}</a></article>)}</div></div></section>
 
         <section className="section" id="faq"><div className="shell faq-wrap"><div className="faq-intro"><div className="section-label">Dúvidas</div><h2>O essencial, antes de começar.</h2><p>Sem letras miúdas no fluxo principal.</p></div><div className="faq"><details><summary>Meu cliente precisa criar uma conta?</summary><p>Não. Ele acessa a galeria pelo link enviado por você e, quando necessário, informa apenas a senha da galeria.</p></details><details><summary>Posso usar o Fotura para prova de fotos?</summary><p>Sim. Você pode habilitar seleção, definir limite de favoritas e receber comentários por foto.</p></details><details><summary>Minha marca aparece na experiência?</summary><p>Sim. O Fotura permite personalizar a apresentação do estúdio e manter sua identidade no centro da entrega.</p></details><details><summary>Posso cancelar quando quiser?</summary><p>Sim. A assinatura é gerenciada pelo portal de cobrança e pode ser cancelada para o fim do período vigente.</p></details></div></div></section>
 
-        <section className="shell final"><div className="final-card"><div><h2>Sua fotografia é profissional.<br/>Sua entrega também pode ser.</h2><p>Organize o fluxo e eleve a experiência de quem recebe seu trabalho.</p></div><a className="btn primary" href={destinoPrincipal}>{logado ? "Abrir meu painel" : "Criar minha conta"}<span>→</span></a></div></section>
+        <section className="shell final"><div className="final-card"><div><h2>Sua fotografia é profissional.<br/>Sua entrega também pode ser.</h2><p>Organize o fluxo e eleve a experiência de quem recebe seu trabalho.</p></div><a className="btn primary" href={destinoPrincipal} onClick={()=>rastrearCriacao("cta_final")}>{logado ? "Abrir meu painel" : "Criar minha conta"}<span>→</span></a></div></section>
       </main>
 
       <footer className="footer"><div className="shell footer-in"><a className="brand" href="/"><Logo/><strong>FOTURA</strong></a><div className="footer-links"><a href="/termos">Termos</a><a href="/privacidade">Privacidade</a><a href="/login">Entrar</a></div><div className="copy">© {new Date().getFullYear()} Fotura</div></div></footer>
