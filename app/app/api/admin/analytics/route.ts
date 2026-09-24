@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
         signupClicks: signup.length,
         usuariosNoPainel: contarUnicos(dashboard.map((e) => e.user_id)),
         criadoresDeGaleria: contarUnicos(galeriasCriadas.map((a) => a.user_id)),
-        clientesQueFinalizaramSelecao: contarUnicos(selecoesFinalizadas.map((a) => a.user_id)),
+        contasComSelecaoFinalizada: contarUnicos(selecoesFinalizadas.map((a) => a.user_id)),
         contasPagasAtivas: contarUnicos(pagos.map((a) => String(a.user_id))),
         checkoutsDePlano: checkoutPlano.length,
         compartilhamentos: compartilhamentos.length,
