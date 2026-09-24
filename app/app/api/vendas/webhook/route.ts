@@ -39,7 +39,7 @@ async function localizarVenda(session:CheckoutSession,accountId:string|null){
   const galeria=session.metadata?.galeria_id?.trim();
   if(!pedido||!galeria||!session.id)return null;
   const supabase=createServiceClient();
-  let query=supabase.from("vendas_fotos").select("id,galeria,stripe_conta_id,stripe_checkout_session_id,status")
+  let query=supabase.from("vendas_fotos").select("id,galeria,fotografo_id,qtd_extras,valor_total_centavos,stripe_conta_id,stripe_checkout_session_id,status")
     .eq("id",pedido).eq("galeria",galeria).eq("stripe_checkout_session_id",session.id);
   if(accountId)query=query.eq("stripe_conta_id",accountId);
   const {data,error}=await query.maybeSingle();
@@ -59,6 +59,21 @@ async function confirmarPagamento(event:StripeEvent,session:CheckoutSession){
     p_metodo_pagamento:null,
   });
   if(error)throw error;
+
+  const {error:analyticsError}=await supabase.from("produto_eventos").insert({
+    user_id:vinculo.venda.fotografo_id,
+    evento:"extra_sale_payment_confirmed",
+    rota:`/g/${vinculo.galeria}`,
+    entidade:"venda",
+    entidade_id:vinculo.pedido,
+    detalhes:{
+      extras:Number(vinculo.venda.qtd_extras??0),
+      total_centavos:Number(vinculo.venda.valor_total_centavos??0),
+    },
+  });
+  if(analyticsError&&analyticsError.code!=="23505"){
+    console.error("[sales-webhook] analytics failed",{code:analyticsError.code,pedido:vinculo.pedido});
+  }
 }
 
 async function marcarStatus(event:StripeEvent,session:CheckoutSession,status:"cancelado"|"falhou"){
