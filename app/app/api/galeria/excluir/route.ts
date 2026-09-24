@@ -70,6 +70,21 @@ export async function DELETE(req: NextRequest) {
 
   const base = `${auth.user.id}/${galeria}`;
 
+  // Remove primeiro o registro transacional. Se a limpeza do Storage falhar depois,
+  // o cron de órfãos consegue concluir a remoção sem deixar uma galeria quebrada visível.
+  const { data: removida, error: dbError } = await supabase.rpc("excluir_dados_galeria_backend", {
+    p_galeria: galeria,
+    p_user_id: auth.user.id,
+  });
+
+  if (dbError || removida !== true) {
+    registrarErro("gallery.delete.database", req, dbError ?? new Error("RPC retornou falso"), { galeria });
+    return NextResponse.json(
+      { error: "Não foi possível concluir a exclusão dos dados da galeria." },
+      { status: 500 }
+    );
+  }
+
   try {
     const [originais, thumbs] = await Promise.all([
       listarArquivos(supabase, base),
@@ -83,22 +98,13 @@ export async function DELETE(req: NextRequest) {
 
     await removerEmLotes(supabase, caminhos);
   } catch (error) {
-    registrarErro("gallery.delete.storage", req, error, { galeria });
-    return NextResponse.json({ error: "Não foi possível excluir todos os arquivos da galeria." }, { status: 500 });
+    registrarErro("gallery.delete.storage_pending", req, error, { galeria });
+    return NextResponse.json({
+      ok: true,
+      limpezaPendente: true,
+      aviso: "A galeria foi excluída. A limpeza residual dos arquivos será concluída automaticamente.",
+    });
   }
 
-  const { data: removida, error: dbError } = await supabase.rpc("excluir_dados_galeria_backend", {
-    p_galeria: galeria,
-    p_user_id: auth.user.id,
-  });
-
-  if (dbError || removida !== true) {
-    registrarErro("gallery.delete.database", req, dbError ?? new Error("RPC retornou falso"), { galeria });
-    return NextResponse.json(
-      { error: "Os arquivos foram removidos, mas não foi possível concluir a exclusão dos dados da galeria." },
-      { status: 500 }
-    );
-  }
-
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, limpezaPendente: false });
 }
