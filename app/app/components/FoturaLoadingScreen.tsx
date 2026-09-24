@@ -32,8 +32,8 @@ export default function FoturaLoadingScreen() {
           overflow: hidden;
           background:
             radial-gradient(circle at 50% 42%, rgba(31, 50, 102, .16), transparent 34%),
-            linear-gradient(180deg, #0b0b1a 0%, #101024 100%);
-          color: #f0f0f5;
+            linear-gradient(180deg, #F0EDF7 0%, #ECE8F4 100%);
+          color: #21253A;
           font-family: var(--font-sora), Sora, system-ui, sans-serif;
         }
 
@@ -109,7 +109,7 @@ export default function FoturaLoadingScreen() {
           font-size: 18px;
           font-weight: 700;
           letter-spacing: .22em;
-          background: linear-gradient(90deg, #d9efff 0%, #f0f0f5 45%, #ded4ff 100%);
+          background: linear-gradient(90deg, #d9efff 0%, #21253A 45%, #ded4ff 100%);
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
