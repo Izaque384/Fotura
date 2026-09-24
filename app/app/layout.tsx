@@ -1,9 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Sora } from "next/font/google";
 import "./globals.css";
-import "./premium.css";
-import "./premium-tuning.css";
-import "./ux-refinements.css";
 import "./gallery-hero-presets.css";
 import "./gallery-hero-legibility.css";
 import "./gallery-mobile.css";
