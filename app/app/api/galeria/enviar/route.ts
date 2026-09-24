@@ -81,5 +81,14 @@ export async function POST(req:NextRequest){
     registrarErro("gallery.send.resend",req,new Error(`Resend respondeu ${response.status}`),{galeria,status:response.status});
     return NextResponse.json({error:"Não foi possível enviar o e-mail agora."},{status:502});
   }
+  const { error: analyticsError } = await supabase.from("produto_eventos").insert({
+    user_id: user.id,
+    evento: "gallery_shared",
+    rota: "/dashboard/galerias",
+    entidade: "galeria",
+    entidade_id: galeria,
+    detalhes: { canal: "email" },
+  });
+  if (analyticsError) console.error("[gallery-send] analytics failed", { code: analyticsError.code });
   return NextResponse.json({ok:true,email:cliente.email});
 }
