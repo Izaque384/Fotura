@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     userId = data.user.id;
   }
 
-  const chave = userId ?? sessaoId ?? evento;
+  const chave = userId ?? `anon:${evento}`;
   const permitido = await consumirRateLimit(req, "product_event", chave, 60, 90);
   if (!permitido) return NextResponse.json({ error: "Muitas requisições." }, { status: 429 });
 
