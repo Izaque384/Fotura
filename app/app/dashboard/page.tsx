@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
 import { inscreverPush } from "../../lib/push-client";
 import MenuFotografo from "../MenuFotografo";
-import StorageUsageIndicator from "./StorageUsageIndicator";\nimport DashboardActionCenter from "./DashboardActionCenter";
+import StorageUsageIndicator from "./StorageUsageIndicator";
+import DashboardActionCenter from "./DashboardActionCenter";
 
 type Etapa="prova"|"selecao_finalizada"|"preparando_entrega"|"entrega";
 type Galeria={id:string;titulo:string;criadoEm:string|null;linkAte:string|null;prova:boolean;etapa:Etapa;capaUrl?:string};
