@@ -1,27 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { registrarErro } from "../../../../lib/observability";
+import { validarAdmin } from "../../../../lib/admin-server";
 
 export const dynamic = "force-dynamic";
-
-async function validarAdmin(req: NextRequest) {
-  const authorization = req.headers.get("authorization") ?? "";
-  const match = authorization.match(/^Bearer\s+(.+)$/i);
-  if (!match) return { error: NextResponse.json({ error: "Não autorizado." }, { status: 401 }) };
-
-  const supabase = createServiceClient();
-  const { data: auth, error: authError } = await supabase.auth.getUser(match[1]);
-  if (authError || !auth.user) return { error: NextResponse.json({ error: "Não autorizado." }, { status: 401 }) };
-
-  const { data: admin, error: adminError } = await supabase.from("admin_usuarios").select("papel").eq("user_id", auth.user.id).maybeSingle();
-  if (adminError) {
-    registrarErro("admin.contas.auth", req, adminError, { userId: auth.user.id });
-    return { error: NextResponse.json({ error: "Não foi possível validar o acesso administrativo." }, { status: 500 }) };
-  }
-  if (!admin) return { error: NextResponse.json({ error: "Acesso administrativo necessário." }, { status: 403 }) };
-
-  return { supabase, userId: auth.user.id, papel: String(admin.papel ?? "admin") };
-}
 
 async function listarTodosUsuariosAuth(supabase: ReturnType<typeof createServiceClient>) {
   const perPage = 100;
@@ -40,9 +22,9 @@ async function listarTodosUsuariosAuth(supabase: ReturnType<typeof createService
 }
 
 export async function GET(req: NextRequest) {
-  const validacao = await validarAdmin(req);
+  const validacao = await validarAdmin(req, "admin.contas.auth");
   if ("error" in validacao) return validacao.error;
-  const { supabase, userId, papel } = validacao;
+  const { supabase, adminUserId: userId, papel } = validacao;
 
   try {
     const users = await listarTodosUsuariosAuth(supabase);

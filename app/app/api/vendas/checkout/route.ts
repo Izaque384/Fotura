@@ -61,6 +61,9 @@ export async function POST(req: NextRequest) {
   const accountId = (perfil?.stripe_conta_id as string | null) ?? null;
   if (!accountId) return NextResponse.json({ error: "O fotógrafo ainda não configurou os recebimentos." }, { status: 409 });
 
+  let pedidoId: string | null = null;
+  let checkoutSessionId: string | null = null;
+
   try {
     const account = await obterContaFotografo(accountId);
     const ativo = recebimentosAtivos(account);
@@ -84,6 +87,7 @@ export async function POST(req: NextRequest) {
       stripe_conta_id: accountId,
     }).select("id").single();
     if (pedidoError || !pedido) throw pedidoError ?? new Error("Pedido não criado");
+    pedidoId = pedido.id;
 
     const sucesso = `${req.nextUrl.origin}/g/${galeria}?compra=sucesso&pedido=${pedido.id}&session_id={CHECKOUT_SESSION_ID}`;
     const cancelar = `${req.nextUrl.origin}/g/${galeria}?compra=cancelada`;
@@ -105,6 +109,7 @@ export async function POST(req: NextRequest) {
     }, `fotura-extra-${pedido.id}`);
 
     if (!session.url) throw new Error("Checkout sem URL");
+    checkoutSessionId = session.id;
     const { error: updateError } = await supabase.from("vendas_fotos").update({
       stripe_checkout_session_id: session.id,
       atualizado_em: new Date().toISOString(),
@@ -114,6 +119,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: session.url, pedido: pedido.id, extras, totalCentavos: total });
   } catch (error) {
     console.error("[sales-checkout] failed", error);
+
+    if (checkoutSessionId) {
+      try {
+        await stripeConnectedPost(accountId, `/checkout/sessions/${encodeURIComponent(checkoutSessionId)}/expire`, {});
+      } catch (expireError) {
+        console.error("[sales-checkout] failed to expire orphan checkout", expireError);
+      }
+    }
+
+    if (pedidoId) {
+      const { error: rollbackError } = await supabase.from("vendas_fotos").update({
+        status: "falhou",
+        ...(checkoutSessionId ? { stripe_checkout_session_id: checkoutSessionId } : {}),
+        atualizado_em: new Date().toISOString(),
+      }).eq("id", pedidoId).neq("status", "pago");
+
+      if (rollbackError) console.error("[sales-checkout] failed to mark order as failed", rollbackError);
+    }
+
     return NextResponse.json({ error: "Não foi possível iniciar o pagamento agora." }, { status: 502 });
   }
 }

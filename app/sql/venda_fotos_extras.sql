@@ -56,7 +56,7 @@ create policy "Fotografo ve proprias vendas"
 on public.vendas_fotos
 for select
 to authenticated
-using (fotografo_id = auth.uid());
+using (fotografo_id = (select auth.uid()));
 
 create or replace function public.configurar_venda_extras_galeria(
   p_galeria uuid,
@@ -65,8 +65,8 @@ create or replace function public.configurar_venda_extras_galeria(
 )
 returns boolean
 language plpgsql
-security definer
-set search_path to 'public'
+security invoker
+set search_path to ''
 as $function$
 declare
   v_uid uuid := auth.uid();
@@ -87,4 +87,5 @@ end;
 $function$;
 
 revoke all on function public.configurar_venda_extras_galeria(uuid,boolean,integer) from public;
+revoke all on function public.configurar_venda_extras_galeria(uuid,boolean,integer) from anon;
 grant execute on function public.configurar_venda_extras_galeria(uuid,boolean,integer) to authenticated;
