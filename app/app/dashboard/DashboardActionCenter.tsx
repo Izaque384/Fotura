@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
+import { diasAteDataCalendario } from "../../lib/date-only";
 import { registrarEventoProduto } from "../../lib/product-analytics";
 
 type Acao = {
