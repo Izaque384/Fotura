@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "../../lib/supabase-client";
+import { useRouter } from "next/navigation";
 
 type UsageResponse = {
   plano?: { codigo?: string; nome?: string };
@@ -18,6 +19,7 @@ function formatarUso(bytes: number) {
 }
 
 export default function StorageUsageIndicator() {
+  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [dados, setDados] = useState<UsageResponse | null>(null);
 
@@ -51,7 +53,7 @@ export default function StorageUsageIndicator() {
   const alerta = !ilimitado && percentual >= 85;
 
   return (
-    <aside className={`storage-usage${alerta ? " storage-usage--alert" : ""}`} aria-label="Uso de armazenamento">
+    <button type="button" className={`storage-usage${alerta ? " storage-usage--alert" : ""}`} aria-label="Abrir central de armazenamento" onClick={() => router.push("/dashboard/armazenamento")}>
       <div className="storage-usage__head">
         <span>Armazenamento</span>
         <strong>{ilimitado ? "Ilimitado" : `${percentual}%`}</strong>
@@ -62,14 +64,14 @@ export default function StorageUsageIndicator() {
         <span>{ilimitado ? dados.plano?.nome ?? "Legacy" : `/ ${limiteGb} GB`}</span>
       </div>
       <style>{`
-        .storage-usage{width:184px;box-sizing:border-box;padding:7px 10px;border:1px solid rgba(74,81,126,.42);border-radius:11px;background:linear-gradient(180deg,rgba(20,20,43,.96),rgba(14,14,31,.96));font-family:var(--font-sora),Sora,sans-serif;color:#f0f0f5;flex:none}
+        .storage-usage{width:184px;box-sizing:border-box;padding:7px 10px;border:1px solid #D7D0E7;border-radius:11px;background:linear-gradient(180deg,#FAF8FD,#F3EFF9);font-family:var(--font-sora),Sora,sans-serif;color:#21253A;flex:none;cursor:pointer;text-align:left}
         .storage-usage__head,.storage-usage__meta{display:flex;align-items:center;justify-content:space-between;gap:8px}
-        .storage-usage__head{font-size:9px;font-weight:650;line-height:1.2}.storage-usage__head span{color:#a4a9bf}.storage-usage__head strong{font-size:9px;color:#dfe3f5}
-        .storage-usage__track{height:3px;margin:5px 0;overflow:hidden;border-radius:999px;background:#F3EFF9}.storage-usage__track span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#1196fc,#5d0dfa);transition:width .35s ease}
-        .storage-usage__meta{font-size:8px;line-height:1.2;color:#737a9b}.storage-usage__meta span:first-child{color:#b9bfd5}
+        .storage-usage__head{font-size:9px;font-weight:650;line-height:1.2}.storage-usage__head span{color:#73758D}.storage-usage__head strong{font-size:9px;color:#4E556D}
+        .storage-usage__track{height:3px;margin:5px 0;overflow:hidden;border-radius:999px;background:#E5DFEE}.storage-usage__track span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#1196fc,#5d0dfa);transition:width .35s ease}
+        .storage-usage__meta{font-size:8px;line-height:1.2;color:#7E8399}.storage-usage__meta span:first-child{color:#596079}
         .storage-usage--alert{border-color:rgba(246,196,69,.35)}.storage-usage--alert .storage-usage__head strong{color:#f6c445}.storage-usage--alert .storage-usage__track span{background:linear-gradient(90deg,#f6c445,#ff9d6c)}
         @media(max-width:640px){.storage-usage{width:154px;padding:6px 8px}.storage-usage__head{font-size:8px}.storage-usage__meta{font-size:7.5px}}
       `}</style>
-    </aside>
+    </button>
   );
 }
