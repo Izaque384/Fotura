@@ -4,6 +4,7 @@ import { temAcessoGaleria } from "../../../../lib/gallery-access";
 import { registrarErro } from "../../../../lib/observability";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { uuidValido } from "../../../../lib/validation";
+import { dataCalendarioExpirada } from "../../../../lib/date-only";
 import { planoFotura } from "../../../../lib/billing-plans";
 
 export const dynamic = "force-dynamic";
@@ -200,7 +201,7 @@ export async function GET(req: NextRequest) {
   }
   if (!g) return json({ error: "Galeria não encontrada." }, 404);
   const linkAte = (g.link_ate as string | null) ?? null;
-  if (linkAte && Date.now() > new Date(`${linkAte}T23:59:59`).getTime()) return json({ error: "Link expirado." }, 403);
+  if (dataCalendarioExpirada(linkAte)) return json({ error: "Link expirado." }, 403);
   if (g.tem_senha && !temAcessoGaleria(req, galeria)) return json({ error: "Acesso à galeria necessário." }, 401);
 
   const dono = g.user_id as string;
