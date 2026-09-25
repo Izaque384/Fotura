@@ -10,6 +10,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <Link href="/admin/saude">Saúde</Link>
       <Link href="/admin/lancamento">Lançamento</Link>
       <Link href="/admin/analytics">Produto</Link>
+      <Link href="/admin/uso">Uso</Link>
       <Link href="/admin/auditoria">Auditoria</Link>
     </nav>
     <style>{`
