@@ -21,6 +21,9 @@ type Analytics = {
     sessoesLandingQueChegaramAoPainel: number;
   };
   porEvento: Record<string, number>;
+  funil: Array<{ etapa: string; total: number }>;
+  conversoes: { lpParaCadastroPct:number; painelParaGaleriaPct:number; galeriaParaSelecaoPct:number; checkoutExtraParaPagamentoPct:number; upgradePromptCtrPct:number; aberturasPorCompartilhamento:number };
+  operacao: { porEtapa: Record<string, number>; entregasPublicadas30d: number };
   fontes: Array<{ fonte: string; total: number }>;
   ultimos14Dias: Array<{ data: string; total: number }>;
 };
@@ -38,6 +41,8 @@ const NOMES_EVENTOS: Record<string, string> = {
   public_gallery_view: "Galerias públicas abertas",
   extra_sale_checkout_started: "Checkouts de fotos extras",
   extra_sale_payment_confirmed: "Compras extras confirmadas",
+  delivery_started: "Entregas iniciadas",
+  delivery_published: "Entregas publicadas",
 };
 
 export default function ProdutoAnalyticsPage() {
@@ -77,10 +82,10 @@ export default function ProdutoAnalyticsPage() {
         .pa-panels{display:grid;grid-template-columns:1.12fr .88fr;gap:14px}.pa-panel{padding:20px}.pa-panel h2{margin:0 0 4px;font-size:15px}.pa-note{margin:0 0 17px;color:#6f7690;font-size:9.5px;line-height:1.5}
         .pa-bars{height:170px;display:flex;align-items:flex-end;gap:7px;padding-top:20px}.pa-bar{height:100%;flex:1;display:flex;align-items:flex-end;justify-content:center;position:relative}.pa-bar i{display:block;width:62%;min-height:3px;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,#1196fc,#5d0dfa)}.pa-bar b{position:absolute;bottom:-20px;color:#626a88;font-size:7px;font-weight:650}
         .pa-rows{display:grid;gap:9px}.pa-row{display:flex;justify-content:space-between;gap:16px;padding-bottom:9px;border-bottom:1px solid #E3DEEB;color:#596079;font-size:10.5px}.pa-row:last-child{border-bottom:0}.pa-row span{min-width:0;overflow:hidden;text-overflow:ellipsis}.pa-row strong{color:#21253A}
-        .pa-wide{margin-top:14px}.pa-events{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.pa-event{padding:11px 12px;border:1px solid #DCD6EE;border-radius:11px;background:#FAF8FD}.pa-event strong{font-size:17px}.pa-event span{display:block;margin-top:4px;color:#777e99;font-size:9px}
+        .pa-wide{margin-top:14px}.pa-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.pa-kpi{padding:12px;border:1px solid #DCD6EE;border-radius:11px;background:#FAF8FD}.pa-kpi strong{font-size:19px}.pa-kpi span{display:block;margin-top:4px;color:#777e99;font-size:9px}.pa-funnel{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.pa-funnel-step{padding:12px;border:1px solid #DCD6EE;border-radius:11px;background:#FAF8FD}.pa-funnel-step strong{font-size:20px}.pa-funnel-step span{display:block;margin-top:4px;color:#777e99;font-size:9px}.pa-wide{margin-top:14px}.pa-events{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.pa-event{padding:11px 12px;border:1px solid #DCD6EE;border-radius:11px;background:#FAF8FD}.pa-event strong{font-size:17px}.pa-event span{display:block;margin-top:4px;color:#777e99;font-size:9px}
         .pa-session{margin-top:14px;padding:13px 14px;border:1px solid rgba(126,162,255,.22);border-radius:11px;background:rgba(74,108,247,.07);color:#596079;font-size:10px;line-height:1.55}.pa-session b{color:#45406E}
         .pa-err{margin-top:22px;color:#B95C66}.pa-updated{margin-top:18px;color:#555d7b;font-size:8.5px}
-        @media(max-width:950px){.pa-grid{grid-template-columns:1fr 1fr}.pa-panels{grid-template-columns:1fr}.pa-events{grid-template-columns:1fr 1fr}}@media(max-width:600px){.pa{padding:34px 14px 90px}.pa-grid{grid-template-columns:1fr 1fr}.pa-card{padding:14px}.pa-card strong{font-size:23px}.pa-events{grid-template-columns:1fr}.pa-bars{height:145px}}
+        @media(max-width:950px){.pa-grid{grid-template-columns:1fr 1fr}.pa-panels{grid-template-columns:1fr}.pa-events{grid-template-columns:1fr 1fr}.pa-funnel{grid-template-columns:1fr 1fr}.pa-kpis{grid-template-columns:1fr 1fr}}@media(max-width:600px){.pa{padding:34px 14px 90px}.pa-grid{grid-template-columns:1fr 1fr}.pa-card{padding:14px}.pa-card strong{font-size:23px}.pa-events{grid-template-columns:1fr}.pa-bars{height:145px}}
       `}</style>
       <div className="pa-wrap">
         <div className="pa-ey">PRODUTO · ÚLTIMOS 30 DIAS</div>
@@ -115,6 +120,25 @@ export default function ProdutoAnalyticsPage() {
                 {dados.fontes.length ? dados.fontes.map((f) => <div className="pa-row" key={f.fonte}><span>{f.fonte}</span><strong>{f.total}</strong></div>) : <div className="pa-note">Ainda não há visitas registradas.</div>}
               </div>
             </div>
+          </section>
+
+          <section className="pa-panel pa-wide">
+            <h2>Funil operacional</h2>
+            <p className="pa-note">Contagens dos últimos 30 dias. São sinais direcionais, não uma coorte fechada de conversão.</p>
+            <div className="pa-funnel">{dados.funil.map((item)=><div className="pa-funnel-step" key={item.etapa}><strong>{item.total}</strong><span>{item.etapa}</span></div>)}</div>
+          </section>
+          <section className="pa-panel pa-wide">
+            <h2>Conversões e operação</h2>
+            <p className="pa-note">Taxas observadas no mesmo intervalo e estado atual das galerias.</p>
+            <div className="pa-kpis">
+              <div className="pa-kpi"><strong>{dados.conversoes.lpParaCadastroPct}%</strong><span>LP → clique em cadastro</span></div>
+              <div className="pa-kpi"><strong>{dados.conversoes.painelParaGaleriaPct}%</strong><span>Painel → criou galeria</span></div>
+              <div className="pa-kpi"><strong>{dados.conversoes.galeriaParaSelecaoPct}%</strong><span>Criou galeria → seleção finalizada</span></div>
+              <div className="pa-kpi"><strong>{dados.conversoes.checkoutExtraParaPagamentoPct}%</strong><span>Checkout extras → pagamento</span></div>
+              <div className="pa-kpi"><strong>{dados.conversoes.upgradePromptCtrPct}%</strong><span>CTR do prompt de upgrade</span></div>
+              <div className="pa-kpi"><strong>{dados.operacao.entregasPublicadas30d}</strong><span>Entregas finais publicadas em 30 dias</span></div>
+            </div>
+            <div className="pa-rows" style={{marginTop:16}}>{Object.entries(dados.operacao.porEtapa).sort((a,b)=>b[1]-a[1]).map(([etapa,total])=><div className="pa-row" key={etapa}><span>{etapa.replaceAll("_"," ")}</span><strong>{total}</strong></div>)}</div>
           </section>
 
           <section className="pa-panel pa-wide">
