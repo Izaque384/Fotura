@@ -154,15 +154,15 @@ export async function POST(req: NextRequest) {
     }
     if (etapa === "preparando_entrega") return NextResponse.json({ ok: true, etapa });
     const { error } = await auth.supabase.from("galerias").update({ etapa: "preparando_entrega", prova: true }).eq("id", galeria).eq("user_id", auth.user.id);
+    if (error) {
+      registrarErro("gallery.delivery.start_update", req, error, { galeria });
+      return NextResponse.json({ error: "Não foi possível iniciar a preparação da entrega." }, { status: 500 });
+    }
     const { error: analyticsError } = await auth.supabase.from("produto_eventos").insert({
       user_id: auth.user.id, evento: "delivery_started", rota: "/dashboard/entrega/" + galeria,
       entidade: "galeria", entidade_id: galeria, detalhes: { canal: "painel" },
     });
     if (analyticsError) console.error("[delivery] start analytics failed", { code: analyticsError.code, galeria });
-    if (error) {
-      registrarErro("gallery.delivery.start_update", req, error, { galeria });
-      return NextResponse.json({ error: "Não foi possível iniciar a preparação da entrega." }, { status: 500 });
-    }
     return NextResponse.json({ ok: true, etapa: "preparando_entrega" });
   }
 
