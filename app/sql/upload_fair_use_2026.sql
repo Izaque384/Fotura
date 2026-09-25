@@ -1,6 +1,6 @@
 -- Proteção interna de uso justo de uploads.
 -- Mantém os limites comerciais como armazenamento simultâneo (1/10/50/100 GB)
--- e adiciona uma barreira mensal ampla contra ciclos artificiais de upload/exclusão.
+-- e adiciona uma barreira mensal de 110% da capacidade do plano contra ciclos artificiais de upload/exclusão.
 
 create table if not exists private.upload_fair_use_planos (
   plano_codigo text primary key,
@@ -10,10 +10,10 @@ create table if not exists private.upload_fair_use_planos (
 
 insert into private.upload_fair_use_planos (plano_codigo, limite_mensal_bytes)
 values
-  ('gratis', 10::bigint * 1024 * 1024 * 1024),
-  ('essencial', 100::bigint * 1024 * 1024 * 1024),
-  ('profissional', 500::bigint * 1024 * 1024 * 1024),
-  ('studio', 1000::bigint * 1024 * 1024 * 1024),
+  ('gratis', (1::bigint * 1024 * 1024 * 1024 * 11) / 10),
+  ('essencial', (10::bigint * 1024 * 1024 * 1024 * 11) / 10),
+  ('profissional', (50::bigint * 1024 * 1024 * 1024 * 11) / 10),
+  ('studio', (100::bigint * 1024 * 1024 * 1024 * 11) / 10),
   ('legacy', 2048::bigint * 1024 * 1024 * 1024)
 on conflict (plano_codigo) do update
 set limite_mensal_bytes = excluded.limite_mensal_bytes,
