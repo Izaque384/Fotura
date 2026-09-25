@@ -14,7 +14,7 @@ test.describe("proteção interna de uso justo de upload", () => {
     expect(sql).toContain("grant execute on function public.status_uso_justo_upload_backend(uuid) to service_role");
   });
 
-  test("usa limites amplos e independentes do armazenamento simultâneo", () => {
+  test("limita o volume mensal a 110% da capacidade do plano", () => {
     const sql = fs.readFileSync(path.join(root, "sql", "upload_fair_use_2026.sql"), "utf8");
     expect(sql).toContain("('gratis', 10::bigint * 1024 * 1024 * 1024)");
     expect(sql).toContain("('essencial', 100::bigint * 1024 * 1024 * 1024)");
