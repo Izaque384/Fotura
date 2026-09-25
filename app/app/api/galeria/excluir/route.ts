@@ -86,14 +86,18 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    const [originais, thumbs] = await Promise.all([
+    const [originais, thumbs, entrega, entregaThumbs] = await Promise.all([
       listarArquivos(supabase, base),
       listarArquivos(supabase, `${base}/thumbs`),
+      listarArquivos(supabase, `${base}/entrega`),
+      listarArquivos(supabase, `${base}/entrega/thumbs`),
     ]);
 
     const caminhos = [
       ...originais.map((nome) => `${base}/${nome}`),
       ...thumbs.map((nome) => `${base}/thumbs/${nome}`),
+      ...entrega.map((nome) => `${base}/entrega/${nome}`),
+      ...entregaThumbs.map((nome) => `${base}/entrega/thumbs/${nome}`),
     ];
 
     await removerEmLotes(supabase, caminhos);

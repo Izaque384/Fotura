@@ -4,12 +4,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "../lib/supabase-client";
 
-type T = "painel" | "galerias" | "selecoes" | "vendas" | "clientes" | "assinatura" | "config" | "admin" | "sair" | "menu" | "fechar";
+type T = "painel" | "galerias" | "storage" | "selecoes" | "vendas" | "clientes" | "assinatura" | "config" | "admin" | "sair" | "menu" | "fechar";
 
 function Icone({ tipo }: { tipo: T }) {
   const common = { "aria-hidden": true as const };
   if (tipo === "painel") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/></svg>;
   if (tipo === "galerias") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 15 3-3 3 3 2-2 4 3"/></svg>;
+  if (tipo === "storage") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 7c0-2 3.6-3.6 8-3.6S20 5 20 7s-3.6 3.6-8 3.6S4 9 4 7Z"/><path d="M4 7v5c0 2 3.6 3.6 8 3.6S20 14 20 12V7M4 12v5c0 2 3.6 3.6 8 3.6s8-1.6 8-3.6v-5"/></svg>;
   if (tipo === "selecoes") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 6h12M8 12h12M8 18h12M3 6l1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/></svg>;
   if (tipo === "vendas") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 7h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M8 12h8M12 9v6"/></svg>;
   if (tipo === "clientes") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3.5 2.3-5.3 5.5-5.3s5 1.8 5.5 5.3M16 8.5a2.5 2.5 0 1 1 0 5M17 14.5c2.2.4 3.3 1.8 3.5 4.5"/></svg>;
@@ -113,7 +114,7 @@ export default function MenuFotografo() {
   useEffect(() => setDrawer(false), [pathname]);
 
   useEffect(() => {
-    ["/dashboard", "/dashboard/galerias", "/dashboard/selecoes", "/dashboard/vendas", "/dashboard/clientes", "/dashboard/assinatura", "/configuracoes", "/perfil", "/upload"].forEach((rota) => router.prefetch(rota));
+    ["/dashboard", "/dashboard/galerias", "/dashboard/armazenamento", "/dashboard/selecoes", "/dashboard/vendas", "/dashboard/clientes", "/dashboard/assinatura", "/configuracoes", "/perfil", "/upload"].forEach((rota) => router.prefetch(rota));
   }, [router]);
 
   useEffect(() => {
@@ -144,6 +145,7 @@ export default function MenuFotografo() {
   const itens: { rota: string; label: string; tipo: T; exato?: boolean }[] = [
     { rota: "/dashboard", label: "Painel", tipo: "painel", exato: true },
     { rota: "/dashboard/galerias", label: "Galerias", tipo: "galerias" },
+    { rota: "/dashboard/armazenamento", label: "Armazenamento", tipo: "storage" },
     { rota: "/dashboard/selecoes", label: "Seleções", tipo: "selecoes" },
     { rota: "/dashboard/vendas", label: "Vendas", tipo: "vendas" },
     { rota: "/dashboard/clientes", label: "Clientes", tipo: "clientes" },

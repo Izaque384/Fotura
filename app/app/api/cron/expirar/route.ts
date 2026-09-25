@@ -50,26 +50,39 @@ async function removerEmLotes(supabase: ServiceClient, caminhos: string[]) {
 
 async function limparGaleria(supabase: ServiceClient, dono: string, gid: string) {
   const raiz = `${dono}/${gid}`;
-  const [originais, thumbs] = await Promise.all([
+  const [originais, thumbs, entrega, entregaThumbs] = await Promise.all([
     listarTodosArquivos(supabase, raiz),
     listarTodosArquivos(supabase, `${raiz}/thumbs`),
+    listarTodosArquivos(supabase, `${raiz}/entrega`),
+    listarTodosArquivos(supabase, `${raiz}/entrega/thumbs`),
   ]);
 
-  if (originais.erro || thumbs.erro) return false;
+  if (originais.erro || thumbs.erro || entrega.erro || entregaThumbs.erro) return false;
 
-  const caminhos = [...originais.caminhos, ...thumbs.caminhos];
+  const caminhos = [
+    ...originais.caminhos,
+    ...thumbs.caminhos,
+    ...entrega.caminhos,
+    ...entregaThumbs.caminhos,
+  ];
   if (!(await removerEmLotes(supabase, caminhos))) return false;
 
   // A remoção é idempotente, mas confirmamos o estado final antes de marcar o banco.
-  const [restantesOriginais, restantesThumbs] = await Promise.all([
+  const [restantesOriginais, restantesThumbs, restantesEntrega, restantesEntregaThumbs] = await Promise.all([
     listarTodosArquivos(supabase, raiz),
     listarTodosArquivos(supabase, `${raiz}/thumbs`),
+    listarTodosArquivos(supabase, `${raiz}/entrega`),
+    listarTodosArquivos(supabase, `${raiz}/entrega/thumbs`),
   ]);
   if (
     restantesOriginais.erro ||
     restantesThumbs.erro ||
+    restantesEntrega.erro ||
+    restantesEntregaThumbs.erro ||
     restantesOriginais.caminhos.length > 0 ||
-    restantesThumbs.caminhos.length > 0
+    restantesThumbs.caminhos.length > 0 ||
+    restantesEntrega.caminhos.length > 0 ||
+    restantesEntregaThumbs.caminhos.length > 0
   ) return false;
 
   const { error } = await supabase

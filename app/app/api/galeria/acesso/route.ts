@@ -5,6 +5,7 @@ import { registrarErro } from "../../../../lib/observability";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
+import { dataCalendarioExpirada } from "../../../../lib/date-only";
 
 const JANELA_SEG = 10 * 60;
 
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
   }
 
   const linkAte = (g.link_ate as string | null) ?? null;
-  if (linkAte && Date.now() > new Date(`${linkAte}T23:59:59`).getTime()) {
+  if (dataCalendarioExpirada(linkAte)) {
     return NextResponse.json({ error: "Link expirado." }, { status: 403 });
   }
   if (!g.tem_senha) return NextResponse.json({ ok: true });

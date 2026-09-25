@@ -5,6 +5,7 @@ import { temAcessoGaleria } from "../../../../lib/gallery-access";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
+import { dataCalendarioExpirada } from "../../../../lib/date-only";
 
 let webPushConfigurado = false;
 function configurarWebPush() {
@@ -115,11 +116,11 @@ export async function POST(req: NextRequest) {
   }
 
   const linkAte = (g.link_ate as string | null) ?? null;
-  if (linkAte && Date.now() > new Date(`${linkAte}T23:59:59`).getTime()) return NextResponse.json({ error: "Link expirado." }, { status: 403 });
+  if (dataCalendarioExpirada(linkAte)) return NextResponse.json({ error: "Link expirado." }, { status: 403 });
   if (g.tem_senha && !temAcessoGaleria(req, galeria)) return NextResponse.json({ error: "Acesso à galeria necessário." }, { status: 401 });
   if (!g.prova) return NextResponse.json({ error: "Esta galeria não está em modo prova." }, { status: 403 });
   const prazo = (g.prazo as string | null) ?? null;
-  if (prazo && Date.now() > new Date(`${prazo}T23:59:59`).getTime()) return NextResponse.json({ error: "Prazo da seleção encerrado." }, { status: 403 });
+  if (dataCalendarioExpirada(prazo)) return NextResponse.json({ error: "Prazo da seleção encerrado." }, { status: 403 });
   const limite = (g.limite as number) ?? 0;
   const vendaExtrasAtiva = Boolean(g.venda_extras_ativa && Number(g.preco_foto_extra_centavos ?? 0) >= 100);
   if (limite > 0 && fotos.length > limite && !vendaExtrasAtiva) return NextResponse.json({ error: "Limite de seleção excedido." }, { status: 400 });

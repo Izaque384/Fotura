@@ -3,6 +3,7 @@ import { createServiceClient } from "../../../../lib/supabase-server";
 import { temAcessoGaleria } from "../../../../lib/gallery-access";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { uuidValido } from "../../../../lib/validation";
+import { dataCalendarioExpirada } from "../../../../lib/date-only";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galeriaError } = await supabase
     .from("galerias")
-    .select("user_id,titulo,capa,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos")
+    .select("user_id,titulo,capa,prova,limite,prazo,link_ate,tem_senha,etapa,entrega_publicada_em,venda_extras_ativa,preco_foto_extra_centavos")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
   if (!g) return json({ error: "Galeria não encontrada." }, 404);
 
   const linkAte = (g.link_ate as string | null) ?? null;
-  const linkExpirado = Boolean(linkAte && Date.now() > new Date(`${linkAte}T23:59:59`).getTime());
+  const linkExpirado = dataCalendarioExpirada(linkAte);
   const protegida = Boolean(g.tem_senha);
   const desbloqueada = !protegida || temAcessoGaleria(req, galeria);
 
@@ -108,6 +109,8 @@ export async function GET(req: NextRequest) {
       linkExpirado,
       vendaExtrasAtiva,
       precoFotoExtraCentavos: vendaExtrasAtiva ? precoExtra : null,
+      etapa: (g.etapa as string | null) ?? (g.prova ? "prova" : "entrega"),
+      entregaPublicadaEm: (g.entrega_publicada_em as string | null) ?? null,
     },
     perfil: perfil ? {
       nome: (perfil.nome_estudio as string | null) ?? null,

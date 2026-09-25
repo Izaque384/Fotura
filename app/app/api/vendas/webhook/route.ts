@@ -39,12 +39,45 @@ async function localizarVenda(session:CheckoutSession,accountId:string|null){
   const galeria=session.metadata?.galeria_id?.trim();
   if(!pedido||!galeria||!session.id)return null;
   const supabase=createServiceClient();
-  let query=supabase.from("vendas_fotos").select("id,galeria,fotografo_id,qtd_extras,valor_total_centavos,stripe_conta_id,stripe_checkout_session_id,status")
-    .eq("id",pedido).eq("galeria",galeria).eq("stripe_checkout_session_id",session.id);
+
+  let query=supabase.from("vendas_fotos")
+    .select("id,galeria,fotografo_id,qtd_extras,valor_total_centavos,stripe_conta_id,stripe_checkout_session_id,status")
+    .eq("id",pedido)
+    .eq("galeria",galeria);
   if(accountId)query=query.eq("stripe_conta_id",accountId);
+
   const {data,error}=await query.maybeSingle();
   if(error)throw error;
-  return data?{pedido,galeria,venda:data}:null;
+  if(!data)return null;
+
+  const sessaoGravada=typeof data.stripe_checkout_session_id==="string"?data.stripe_checkout_session_id:null;
+  if(sessaoGravada&&sessaoGravada!==session.id)return null;
+
+  // O webhook pode chegar nos poucos milissegundos entre a criação do Checkout
+  // e a gravação do session_id no pedido. A metadata assinada pelo Stripe contém
+  // pedido + galeria; nesse caso vinculamos a sessão de forma condicional.
+  if(!sessaoGravada){
+    let update=supabase.from("vendas_fotos")
+      .update({stripe_checkout_session_id:session.id,atualizado_em:new Date().toISOString()})
+      .eq("id",pedido)
+      .eq("galeria",galeria)
+      .is("stripe_checkout_session_id",null);
+    if(accountId)update=update.eq("stripe_conta_id",accountId);
+    const {error:updateError}=await update;
+    if(updateError)throw updateError;
+
+    let confirmar=supabase.from("vendas_fotos")
+      .select("stripe_checkout_session_id")
+      .eq("id",pedido)
+      .eq("galeria",galeria);
+    if(accountId)confirmar=confirmar.eq("stripe_conta_id",accountId);
+    const {data:confirmado,error:confirmError}=await confirmar.maybeSingle();
+    if(confirmError)throw confirmError;
+    if(confirmado?.stripe_checkout_session_id!==session.id)return null;
+    data.stripe_checkout_session_id=session.id;
+  }
+
+  return {pedido,galeria,venda:data};
 }
 
 async function confirmarPagamento(event:StripeEvent,session:CheckoutSession){

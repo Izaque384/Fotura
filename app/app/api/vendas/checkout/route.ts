@@ -5,6 +5,7 @@ import { temAcessoGaleria } from "../../../../lib/gallery-access";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
+import { dataCalendarioExpirada } from "../../../../lib/date-only";
 
 export const dynamic = "force-dynamic";
 
@@ -28,9 +29,9 @@ export async function POST(req: NextRequest) {
   if (!g.prova) return NextResponse.json({ error: "Esta galeria não está em modo prova." }, { status: 403 });
 
   const linkAte = g.link_ate as string | null;
-  if (linkAte && Date.now() > new Date(`${linkAte}T23:59:59`).getTime()) return NextResponse.json({ error: "Link expirado." }, { status: 403 });
+  if (dataCalendarioExpirada(linkAte)) return NextResponse.json({ error: "Link expirado." }, { status: 403 });
   const prazo = g.prazo as string | null;
-  if (prazo && Date.now() > new Date(`${prazo}T23:59:59`).getTime()) return NextResponse.json({ error: "Prazo da seleção encerrado." }, { status: 403 });
+  if (dataCalendarioExpirada(prazo)) return NextResponse.json({ error: "Prazo da seleção encerrado." }, { status: 403 });
   if (g.tem_senha && !temAcessoGaleria(req, galeria)) return NextResponse.json({ error: "Acesso à galeria necessário." }, { status: 401 });
 
   const limite = Number(g.limite ?? 0);
