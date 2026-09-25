@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galeriaError } = await supabase
     .from("galerias")
-    .select("user_id,titulo,capa,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos")
+    .select("user_id,titulo,capa,prova,limite,prazo,link_ate,tem_senha,etapa,entrega_publicada_em,venda_extras_ativa,preco_foto_extra_centavos")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -109,6 +109,8 @@ export async function GET(req: NextRequest) {
       linkExpirado,
       vendaExtrasAtiva,
       precoFotoExtraCentavos: vendaExtrasAtiva ? precoExtra : null,
+      etapa: (g.etapa as string | null) ?? (g.prova ? "prova" : "entrega"),
+      entregaPublicadaEm: (g.entrega_publicada_em as string | null) ?? null,
     },
     perfil: perfil ? {
       nome: (perfil.nome_estudio as string | null) ?? null,
