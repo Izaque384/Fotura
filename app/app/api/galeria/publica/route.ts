@@ -3,6 +3,7 @@ import { createServiceClient } from "../../../../lib/supabase-server";
 import { temAcessoGaleria } from "../../../../lib/gallery-access";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { uuidValido } from "../../../../lib/validation";
+import { dataCalendarioExpirada } from "../../../../lib/date-only";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
   if (!g) return json({ error: "Galeria não encontrada." }, 404);
 
   const linkAte = (g.link_ate as string | null) ?? null;
-  const linkExpirado = Boolean(linkAte && Date.now() > new Date(`${linkAte}T23:59:59`).getTime());
+  const linkExpirado = dataCalendarioExpirada(linkAte);
   const protegida = Boolean(g.tem_senha);
   const desbloqueada = !protegida || temAcessoGaleria(req, galeria);
 
