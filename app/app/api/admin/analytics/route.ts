@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   const desde = new Date(Date.now() - 30 * 86_400_000).toISOString();
 
   try {
-    const [eventosRes, atividadesRes, assinaturasRes] = await Promise.all([
+    const [eventosRes, atividadesRes, assinaturasRes, galeriasRes] = await Promise.all([
       supabase
         .from("produto_eventos")
         .select("evento,user_id,sessao_id,detalhes,criado_em")
@@ -46,10 +46,14 @@ export async function GET(req: NextRequest) {
       supabase
         .from("assinaturas")
         .select("user_id,plano_codigo,status"),
+      supabase
+        .from("galerias")
+        .select("etapa,prova,entrega_publicada_em"),
     ]);
     if (eventosRes.error) throw eventosRes.error;
     if (atividadesRes.error) throw atividadesRes.error;
     if (assinaturasRes.error) throw assinaturasRes.error;
+    if (galeriasRes.error) throw galeriasRes.error;
 
     const eventos = (eventosRes.data ?? []) as ProdutoEvento[];
     const atividades = (atividadesRes.data ?? []) as Atividade[];
@@ -93,15 +97,54 @@ export async function GET(req: NextRequest) {
       if (chave in dias) dias[chave] += 1;
     }
 
+    const usuariosPainel = contarUnicos(dashboard.map((e) => e.user_id));
+    const criadores = contarUnicos(galeriasCriadas.map((a) => a.user_id));
+    const finalizadores = contarUnicos(selecoesFinalizadas.map((a) => a.user_id));
+    const extraCheckouts = porEvento.extra_sale_checkout_started ?? 0;
+    const extraPagos = porEvento.extra_sale_payment_confirmed ?? 0;
+    const promptsVistos = porEvento.upgrade_prompt_view ?? 0;
+    const promptsClicados = porEvento.upgrade_prompt_clicked ?? 0;
+
+    const taxa = (numerador: number, denominador: number) =>
+      denominador > 0 ? Math.round((numerador / denominador) * 1000) / 10 : 0;
+
+    const porEtapa: Record<string, number> = {};
+    for (const g of galeriasRes.data ?? []) {
+      const etapa = String(g.etapa ?? (g.prova ? "prova" : "entrega"));
+      porEtapa[etapa] = (porEtapa[etapa] ?? 0) + 1;
+    }
+    const entregasPublicadas30d = (galeriasRes.data ?? []).filter((g) =>
+      Boolean(g.entrega_publicada_em && String(g.entrega_publicada_em) >= desde)
+    ).length;
+
+    const funil = [
+      { etapa: "Visitas à LP", total: landing.length },
+      { etapa: "Clique em cadastro", total: signup.length },
+      { etapa: "Usuários no painel", total: usuariosPainel },
+      { etapa: "Criaram galeria", total: criadores },
+      { etapa: "Seleção finalizada", total: finalizadores },
+    ];
+
+    const conversoes = {
+      lpParaCadastroPct: taxa(signup.length, landing.length),
+      painelParaGaleriaPct: taxa(criadores, usuariosPainel),
+      galeriaParaSelecaoPct: taxa(finalizadores, criadores),
+      checkoutExtraParaPagamentoPct: taxa(extraPagos, extraCheckouts),
+      upgradePromptCtrPct: taxa(promptsClicados, promptsVistos),
+      aberturasPorCompartilhamento: compartilhamentos.length > 0
+        ? Math.round((galeriasPublicas.length / compartilhamentos.length) * 100) / 100
+        : 0,
+    };
+
     return NextResponse.json({
       janelaDias: 30,
       atualizadoEm: new Date().toISOString(),
       volumes: {
         landingViews: landing.length,
         signupClicks: signup.length,
-        usuariosNoPainel: contarUnicos(dashboard.map((e) => e.user_id)),
-        criadoresDeGaleria: contarUnicos(galeriasCriadas.map((a) => a.user_id)),
-        contasComSelecaoFinalizada: contarUnicos(selecoesFinalizadas.map((a) => a.user_id)),
+        usuariosNoPainel: usuariosPainel,
+        criadoresDeGaleria: criadores,
+        contasComSelecaoFinalizada: finalizadores,
         contasPagasAtivas: contarUnicos(pagos.map((a) => String(a.user_id))),
         checkoutsDePlano: checkoutPlano.length,
         compartilhamentos: compartilhamentos.length,
@@ -110,6 +153,9 @@ export async function GET(req: NextRequest) {
         sessoesLandingQueChegaramAoPainel: mesmaSessaoPainel,
       },
       porEvento,
+      funil,
+      conversoes,
+      operacao: { porEtapa, entregasPublicadas30d },
       fontes: Object.entries(fontes)
         .map(([fonte, total]) => ({ fonte, total }))
         .sort((a, b) => b.total - a.total)
