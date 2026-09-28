@@ -58,6 +58,7 @@ const structuredData = {
         "@type": "ImageObject",
         url: "https://foturax.com.br/icon-512.png",
       },
+      sameAs: ["https://www.producthunt.com/products/fotura"],
     },
     {
       "@type": "WebSite",
