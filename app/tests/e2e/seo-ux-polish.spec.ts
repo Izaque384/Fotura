@@ -37,9 +37,9 @@ test.describe("SEO indexability and UX polish", () => {
 
   test("sitemap stays restricted to intentional public pages", () => {
     const sitemap = read("sitemap.ts");
-    expect(sitemap).toContain('url: BASE');
-    expect(sitemap).toContain('url: `${BASE}/termos`');
-    expect(sitemap).toContain('url: `${BASE}/privacidade`');
+    expect(sitemap).toContain('url: `${BASE_URL}/`');
+    expect(sitemap).toContain('url: `${BASE_URL}/termos`');
+    expect(sitemap).toContain('url: `${BASE_URL}/privacidade`');
     expect(sitemap).not.toContain("/dashboard");
     expect(sitemap).not.toContain("/login");
     expect(sitemap).not.toContain("/g/");
