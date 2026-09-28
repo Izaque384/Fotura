@@ -60,5 +60,16 @@ test.describe("SEO indexability and UX polish", () => {
     const upload = read("upload/page.tsx").toLowerCase();
     expect(upload).not.toContain("color:#c3c7db");
     expect(upload).not.toContain("border:1px solid #25283d");
+
+    const onboarding = read("dashboard/onboarding/page.tsx").toLowerCase();
+    expect(onboarding).not.toContain("color:#8ea7ff");
+    expect(onboarding).not.toContain("color:#a7d9ba");
+
+    const galerias = read("dashboard/galerias/page.tsx").toLowerCase();
+    expect(galerias).not.toContain("color:#dfe6ff");
+    expect(galerias).not.toContain("color:#c9cede");
+
+    const selecoes = read("dashboard/selecoes/page.tsx").toLowerCase();
+    expect(selecoes).not.toContain("color:#a9dcff");
   });
 });
