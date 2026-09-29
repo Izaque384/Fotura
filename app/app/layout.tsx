@@ -8,7 +8,6 @@ import "./mobile-density.css";
 import "./lavanda-moderna.css";
 import ClientShortcuts from "./components/ClientShortcuts";
 import BellOutsideDismiss from "./components/BellOutsideDismiss";
-import LandingPlanStorageSync from "./components/LandingPlanStorageSync";
 
 const sora = Sora({
   variable: "--font-sora",
@@ -51,7 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${sora.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}<LandingPlanStorageSync/><ClientShortcuts/><BellOutsideDismiss/></body>
+      <body className="min-h-full flex flex-col">{children}<ClientShortcuts/><BellOutsideDismiss/></body>
     </html>
   );
 }
