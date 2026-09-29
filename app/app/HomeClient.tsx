@@ -119,6 +119,11 @@ export default function Home() {
             >
               <div className="hero-showcase-photo"/>
             </div>
+
+            <div className="hero-scroll-cue" aria-hidden="true">
+              <span>Role para ver mais</span>
+              <i>↓</i>
+            </div>
           </div>
 
           <div className="hero-showcase-benefits" aria-label="Principais benefícios">
