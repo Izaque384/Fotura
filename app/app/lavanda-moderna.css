@@ -1083,19 +1083,18 @@ html body .lp .hero-showcase-visual:before{
   background:
     linear-gradient(
       90deg,
-      rgba(4,9,27,.97) 0%,
-      rgba(6,15,42,.93) 16%,
-      rgba(16,31,75,.82) 31%,
-      rgba(35,55,112,.56) 46%,
-      rgba(71,91,160,.28) 60%,
-      rgba(128,153,217,.09) 72%,
-      rgba(255,255,255,0) 84%
+      rgba(5,8,17,.91) 0%,
+      rgba(7,12,24,.84) 18%,
+      rgba(12,20,36,.68) 34%,
+      rgba(20,28,43,.42) 49%,
+      rgba(31,35,45,.18) 63%,
+      rgba(255,255,255,0) 80%
     ),
     linear-gradient(
       180deg,
-      rgba(7,14,34,.08) 0%,
-      rgba(7,14,34,.03) 50%,
-      rgba(7,14,34,.22) 100%
+      rgba(28,18,14,.10) 0%,
+      rgba(20,15,13,.02) 52%,
+      rgba(18,12,10,.18) 100%
     );
 }
 
@@ -1107,10 +1106,10 @@ html body .lp .hero-showcase-photo{
   position:absolute;
   inset:0;
   z-index:1;
-  background-image:url("https://images.unsplash.com/photo-1768611264099-adcd915eee3a?auto=format&fit=crop&fm=jpg&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&ixlib=rb-4.1.0&q=72&w=3000");
+  background-image:url("/hero/casamento-por-do-sol.webp");
   background-size:cover;
   background-position:64% center;
-  filter:saturate(.94) brightness(1.02) contrast(.98);
+  filter:brightness(.97) contrast(1.04) saturate(.98);
   transform:scale(1.015);
 }
 
