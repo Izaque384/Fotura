@@ -96,16 +96,118 @@ export default function ConfiguracoesPage() {
 
   if (carregando) return <div className="cfg-loading">Carregando configurações…<style>{`.cfg-loading{min-height:100vh;display:grid;place-items:center;background:linear-gradient(180deg,#F0EDF7,#ECE8F4);color:#7a7f9a}`}</style></div>;
 
-  return <main className="cfg mf-shift"><MenuFotografo/><style>{`
-    .cfg{min-height:100vh;background:linear-gradient(180deg,#F0EDF7,#ECE8F4);color:#21253A}.cfg-body{max-width:980px;margin:auto;padding:46px 40px 80px}.ey{font-size:11px;letter-spacing:2px;color:#6f76a0}.h1{font-size:30px;margin:7px 0}.sub{font-size:13px;color:#7a7f9a;line-height:1.6}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}.card{background:linear-gradient(180deg,#FAF8FD,#F3EFF9);border:1px solid #DCD6EE;border-radius:16px;padding:20px}.card.wide{grid-column:1/-1}.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(74,108,247,.1);border:1px solid rgba(74,108,247,.22);color:#9fb0ff;flex:none}.icon svg{width:19px;height:19px}.icon .google-logo{width:21px;height:21px}.title{font-size:15px;font-weight:650;margin:0}.desc{font-size:12px;color:#7a7f9a;line-height:1.55;margin:5px 0 0}.row{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:14px 0;border-top:1px solid #22243b;margin-top:15px}.label{font-size:12px;color:#cfd3e2}.value{font-size:11px;color:#757b97;margin-top:4px}.btn{border:1px solid #D7D0E7;border-radius:10px;padding:9px 12px;background:#FAF8FD;color:#cfd5ea;font:600 12px inherit;cursor:pointer;white-space:nowrap}.btn.primary{border:0;color:#fff;background:linear-gradient(90deg,#1196fc,#5d0dfa)}.btn.off{background:#EEEAF8;border:1px solid #343750;color:#cfd5ea}.btn.danger{color:#B95C66;border-color:rgba(255,157,157,.22);background:rgba(255,157,157,.05)}.btn:disabled{opacity:.5;cursor:default}.account{display:flex;align-items:center;gap:12px;margin-top:17px;padding:13px;border:1px solid #24263d;border-radius:12px;background:#FAF8FD}.avatar{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#1196fc,#5d0dfa);display:grid;place-items:center;font-weight:700;overflow:hidden;flex:none}.avatar img{width:100%;height:100%;display:block;object-fit:cover}.notice{margin-top:16px;padding:11px 13px;border-radius:10px;font-size:12px;color:#3F7C5B;background:rgba(143,227,176,.06);border:1px solid rgba(143,227,176,.18)}.notice.err{color:#B95C66;background:rgba(255,157,157,.06);border-color:rgba(255,157,157,.18)}.links{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}@media(max-width:760px){.cfg-body{padding:76px 18px 60px}.grid{grid-template-columns:1fr}.card.wide{grid-column:auto}.row{align-items:flex-start;flex-direction:column}.h1{font-size:25px}}`}</style>
-    <div className="cfg-body"><div className="ey">CONFIGURAÇÕES</div><h1 className="h1">Conta e preferências</h1><p className="sub">Segurança, notificações, integrações e informações operacionais da sua conta.</p>
+  return <main className="cfg mf-shift">
+    <MenuFotografo/>
+    <style>{`
+      .cfg{min-height:100vh;background:linear-gradient(180deg,#F0EDF7 0%,#ECE8F4 100%);color:#21253A;box-sizing:border-box}
+      .cfg-body{max-width:1120px;margin:0 auto;padding:46px 5vw 80px}
+      .cfg-head{margin-bottom:22px}.ey{font-size:10px;font-weight:800;letter-spacing:1.8px;color:#6B5BAE}.h1{font-size:29px;letter-spacing:-.6px;margin:6px 0 5px}.sub{font-size:12.5px;color:#73758D;line-height:1.55;margin:0;max-width:680px}
+      .section-label{font-size:9px;font-weight:800;letter-spacing:1.35px;text-transform:uppercase;color:#777D93;margin:0 0 9px 2px}
+      .account-card,.setting-card{background:rgba(250,248,253,.95);border:1px solid #DCD6EE;box-shadow:0 8px 24px rgba(65,52,111,.045)}
+      .account-card{border-radius:16px;padding:17px 18px;margin-bottom:21px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+      .account-main{display:flex;align-items:center;gap:13px;min-width:0}.avatar{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#1196FC,#5D0DFA);display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff;overflow:hidden;flex:none}.avatar img{width:100%;height:100%;display:block;object-fit:cover}
+      .account-copy{min-width:0}.account-title{font-size:13.5px;font-weight:800;color:#292E45}.account-email{font-size:10.5px;color:#777D93;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.account-note{font-size:9.5px;color:#8A8FA3;margin-top:5px}
+      .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:20px}
+      .setting-card{border-radius:15px;padding:16px;display:flex;flex-direction:column;min-height:178px}
+      .setting-top{display:flex;align-items:flex-start;gap:11px}.icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#EEE8FA;border:1px solid #DAD2E9;color:#655C90;flex:none}.icon svg{width:17px;height:17px}.icon .google-logo{width:19px;height:19px}
+      .setting-copy{min-width:0}.title{font-size:13px;font-weight:800;margin:1px 0 0;color:#2A2F46}.desc{font-size:10.5px;color:#777D93;line-height:1.5;margin:4px 0 0}
+      .setting-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:14px;border-top:1px solid #E7E2EE}.setting-info{min-width:0}.label{font-size:10px;font-weight:750;color:#555D75}.value{font-size:9.5px;color:#85899B;margin-top:3px;line-height:1.45}
+      .status-pill{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:4px 7px;border-radius:999px;background:#F2EEF7;border:1px solid #E0DAEB;color:#6A7085;font-size:8.5px;font-weight:750}.status-dot{width:6px;height:6px;border-radius:50%;background:#8D93A6}.status-pill.on{background:#E9F5EF;border-color:#CBE4D6;color:#3F7C5B}.status-pill.on .status-dot{background:#4F9A71}.status-pill.warn{background:#FAF2E5;border-color:#E8D7B8;color:#94703C}.status-pill.warn .status-dot{background:#C89245}
+      .btn{height:34px;border:1px solid #D7D0E7;border-radius:9px;padding:0 11px;background:#FAF8FD;color:#596079;font-family:inherit;font-size:10.5px;font-weight:750;cursor:pointer;white-space:nowrap}.btn:hover:not(:disabled){background:#F0EBF7;border-color:#C8BEE0}.btn.primary{border:0;color:#fff;background:linear-gradient(90deg,#1196FC,#5D0DFA)}.btn.danger{color:#B95C66;border-color:#E7C7CC;background:#FAF0F2}.btn:disabled{opacity:.5;cursor:default}
+      .wide-card{grid-column:1/-1;min-height:0}.links{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
+      .notice{margin-top:4px;padding:10px 12px;border-radius:10px;font-size:10.5px;color:#3F7C5B;background:#EAF5EF;border:1px solid #CBE4D6}.notice.err{color:#A6535E;background:#FAF0F2;border-color:#E7C7CC}
+      @media(max-width:900px){.cfg-body{padding:46px 32px 70px}.grid{grid-template-columns:1fr}.wide-card{grid-column:auto}}
+      @media(max-width:640px){.cfg-body{padding:76px 16px 60px}.h1{font-size:25px}.account-card{align-items:flex-start;flex-direction:column}.setting-bottom{align-items:flex-start;flex-direction:column}.btn{width:100%}.links{width:100%}.links .btn{width:auto}}
+    `}</style>
+
+    <div className="cfg-body">
+      <header className="cfg-head">
+        <div className="ey">CONFIGURAÇÕES</div>
+        <h1 className="h1">Conta e preferências</h1>
+        <p className="sub">Gerencie sua conta, notificações, integrações e segurança em um só lugar.</p>
+      </header>
+
+      <div className="section-label">Conta</div>
+      <section className="account-card">
+        <div className="account-main">
+          <div className="avatar" aria-hidden="true">{avatarConta?<img src={avatarConta} alt=""/>:(email||"F")[0].toUpperCase()}</div>
+          <div className="account-copy">
+            <div className="account-title">Sua conta Fotura</div>
+            <div className="account-email">{email||"E-mail não informado"}</div>
+            <div className="account-note">Nome, logo e identidade visual do estúdio são gerenciados no perfil.</div>
+          </div>
+        </div>
+        <button className="btn" onClick={()=>router.push("/perfil")}>Abrir perfil</button>
+      </section>
+
+      <div className="section-label">Preferências e integrações</div>
       <div className="grid">
-        <section className="card"><div className="card-head"><div><h2 className="title">Conta</h2><p className="desc">Informações usadas para autenticação no Fotura.</p></div><div className="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="8" r="3"/><path d="M5 20c.6-4.2 2.9-6.3 7-6.3s6.4 2.1 7 6.3"/></svg></div></div><div className="account"><div className="avatar" aria-hidden="true">{avatarConta?<img src={avatarConta} alt=""/>:(email||"F")[0].toUpperCase()}</div><div><div className="label">E-mail da conta</div><div className="value">{email||"Não informado"}</div></div></div><div className="row"><div><div className="label">Identidade do estúdio</div><div className="value">Nome, logo e cor ficam separados das configurações da conta.</div></div><button className="btn" onClick={()=>router.push("/perfil")}>Abrir Perfil</button></div></section>
-        <section className="card"><div className="card-head"><div><h2 className="title">Notificações</h2><p className="desc">Receba avisos de seleções finalizadas e eventos importantes.</p></div><div className="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 9a6 6 0 0 1 12 0v4l2 3H4l2-3V9Z"/><path d="M10 19h4"/></svg></div></div><div className="row"><div><div className="label">Notificações push</div><div className="value">{statusPush}</div></div><button className={"btn "+(pushAtivo?"off":"primary")} disabled={alterandoPush||permissao==="unsupported"} onClick={()=>void alternarNotificacoes()}>{alterandoPush?"Salvando…":pushAtivo?"Desativar":"Ativar"}</button></div></section>
-        <section className="card"><div className="card-head"><div><h2 className="title">Google Contacts</h2><p className="desc">Use fotos dos seus Contatos Google nos cards de clientes quando o e-mail corresponder.</p></div><div className="icon google-icon" aria-hidden="true"><GoogleLogo/></div></div><div className="row"><div><div className="label">Conta Google</div><div className="value">{googleConectado?(googleEmail?`Conectada como ${googleEmail}`:"Conectada"):"Não conectada"}</div></div><button className={"btn "+(googleConectado?"off":"primary")} disabled={alterandoGoogle} onClick={()=>void (googleConectado?desconectarGoogle():conectarGoogle())}>{alterandoGoogle?"Processando…":googleConectado?"Desconectar":"Conectar Google"}</button></div></section>
-        <section className="card"><div className="card-head"><div><h2 className="title">Segurança e sessões</h2><p className="desc">Revise acessos e encerre sessões que não estejam neste dispositivo.</p></div><div className="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3 5 6v5c0 4.6 2.8 8.2 7 10 4.2-1.8 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></svg></div></div><div className="row"><div><div className="label">Outras sessões</div><div className="value">Encerra acessos ativos em outros navegadores e dispositivos.</div></div><button className="btn danger" disabled={encerrando} onClick={()=>void encerrarOutrasSessoes()}>{encerrando?"Encerrando…":"Encerrar outras"}</button></div></section>
-        <section className="card"><div className="card-head"><div><h2 className="title">Atividade</h2><p className="desc">Consulte ações importantes da conta, galerias, clientes e seleções.</p></div><div className="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 18V9M10 18V5M16 18v-7M22 18V3"/></svg></div></div><div className="row"><div><div className="label">Histórico de atividades</div><div className="value">Ajuda a acompanhar alterações e eventos relevantes.</div></div><button className="btn" onClick={()=>router.push("/dashboard/atividade")}>Ver histórico</button></div></section>
-        <section className="card"><div className="card-head"><div><h2 className="title">Privacidade e documentos</h2><p className="desc">Acesso rápido aos documentos que regem o uso do Fotura e o tratamento de dados.</p></div><div className="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 3h9l3 3v15H6z"/><path d="M15 3v4h4M9 12h6M9 16h6"/></svg></div></div><div className="links"><button className="btn" onClick={()=>router.push("/termos")}>Termos de Uso</button><button className="btn" onClick={()=>router.push("/privacidade")}>Política de Privacidade</button></div></section>
-      </div>{mensagem&&<div role={erro?"alert":"status"} className={"notice"+(erro?" err":"")}>{mensagem}</div>}
-    </div></main>;
+        <section className="setting-card">
+          <div className="setting-top">
+            <div className="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 9a6 6 0 0 1 12 0v4l2 3H4l2-3V9Z"/><path d="M10 19h4"/></svg></div>
+            <div className="setting-copy"><h2 className="title">Notificações</h2><p className="desc">Receba avisos de seleções finalizadas e eventos importantes no navegador.</p></div>
+          </div>
+          <div className="setting-bottom">
+            <div className="setting-info">
+              <div className="label">Notificações push</div>
+              <div className={"status-pill"+(pushAtivo?" on":permissao==="denied"?" warn":"")}><span className="status-dot"/>{statusPush}</div>
+            </div>
+            <button className={"btn"+(!pushAtivo?" primary":"")} disabled={alterandoPush||permissao==="unsupported"} onClick={()=>void alternarNotificacoes()}>{alterandoPush?"Salvando…":pushAtivo?"Desativar":"Ativar"}</button>
+          </div>
+        </section>
+
+        <section className="setting-card">
+          <div className="setting-top">
+            <div className="icon" aria-hidden="true"><GoogleLogo/></div>
+            <div className="setting-copy"><h2 className="title">Google Contacts</h2><p className="desc">Use fotos dos seus contatos Google nos cards de clientes quando o e-mail corresponder.</p></div>
+          </div>
+          <div className="setting-bottom">
+            <div className="setting-info">
+              <div className="label">Conta Google</div>
+              <div className={"status-pill"+(googleConectado?" on":"")}><span className="status-dot"/>{googleConectado?(googleEmail?googleEmail:"Conectada"):"Não conectada"}</div>
+            </div>
+            <button className={"btn"+(!googleConectado?" primary":"")} disabled={alterandoGoogle} onClick={()=>void (googleConectado?desconectarGoogle():conectarGoogle())}>{alterandoGoogle?"Processando…":googleConectado?"Desconectar":"Conectar Google"}</button>
+          </div>
+        </section>
+      </div>
+
+      <div className="section-label">Segurança e conta</div>
+      <div className="grid">
+        <section className="setting-card">
+          <div className="setting-top">
+            <div className="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3 5 6v5c0 4.6 2.8 8.2 7 10 4.2-1.8 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5"/></svg></div>
+            <div className="setting-copy"><h2 className="title">Segurança e sessões</h2><p className="desc">Encerre acessos ativos em outros navegadores e dispositivos sem sair deste.</p></div>
+          </div>
+          <div className="setting-bottom">
+            <div className="setting-info"><div className="label">Outras sessões</div><div className="value">Mantém apenas este dispositivo conectado.</div></div>
+            <button className="btn danger" disabled={encerrando} onClick={()=>void encerrarOutrasSessoes()}>{encerrando?"Encerrando…":"Encerrar outras"}</button>
+          </div>
+        </section>
+
+        <section className="setting-card">
+          <div className="setting-top">
+            <div className="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 18V9M10 18V5M16 18v-7M22 18V3"/></svg></div>
+            <div className="setting-copy"><h2 className="title">Atividade da conta</h2><p className="desc">Consulte ações e eventos importantes relacionados à conta, galerias, clientes e seleções.</p></div>
+          </div>
+          <div className="setting-bottom">
+            <div className="setting-info"><div className="label">Histórico de atividades</div><div className="value">Acompanhe alterações e eventos relevantes.</div></div>
+            <button className="btn" onClick={()=>router.push("/dashboard/atividade")}>Ver histórico</button>
+          </div>
+        </section>
+
+        <section className="setting-card wide-card">
+          <div className="setting-top">
+            <div className="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 3h9l3 3v15H6z"/><path d="M15 3v4h4M9 12h6M9 16h6"/></svg></div>
+            <div className="setting-copy"><h2 className="title">Privacidade e documentos</h2><p className="desc">Consulte os documentos que regem o uso do Fotura e o tratamento dos dados da plataforma.</p></div>
+          </div>
+          <div className="links">
+            <button className="btn" onClick={()=>router.push("/termos")}>Termos de Uso</button>
+            <button className="btn" onClick={()=>router.push("/privacidade")}>Política de Privacidade</button>
+          </div>
+        </section>
+      </div>
+
+      {mensagem&&<div role={erro?"alert":"status"} className={"notice"+(erro?" err":"")}>{mensagem}</div>}
+    </div>
+  </main>;
 }
