@@ -191,7 +191,7 @@ export default function AssinaturaPage() {
       @media(max-width:640px){.bill-page{padding:78px 16px 60px}.bill-h1{font-size:25px}.plans-head{align-items:flex-start;flex-direction:column}.subscription,.usage,.plan{padding:16px}.subscription-top{align-items:flex-start}.subscription-meta{gap:6px}.plan-desc{min-height:0}}
     `}</style>
     <div className="bill-wrap">
-      <div className="bill-top"><div><div className="bill-ey">Conta e cobrança</div><h1 className="bill-h1">Plano e assinatura</h1><p className="bill-sub">Veja seu plano atual, acompanhe o uso da conta e compare as opções disponíveis de forma simples.</p></div></div>
+      <div className="bill-top"><div><div className="bill-ey">Conta e cobrança</div><h1 className="bill-h1">Planos e assinaturas</h1><p className="bill-sub">Veja seu plano atual, acompanhe o uso da conta e compare as opções disponíveis de forma simples.</p></div></div>
       {aviso && <div className="bill-notice">{aviso}</div>}
       {erro && <div className="bill-notice err">{erro}</div>}
       {carregando ? <div className="loading">Carregando assinatura…</div> : <>
