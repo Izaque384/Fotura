@@ -97,9 +97,8 @@ export default function Home() {
         <section className="shell hero-showcase" id="produto">
           <div className="hero-showcase-main">
             <div className="hero-showcase-copy">
-              <div className="hero-showcase-badge">PARA FOTÓGRAFOS PROFISSIONAIS</div>
-              <h1>Entregue galerias com uma apresentação <span className="grad">impecável.</span></h1>
-              <p>Compartilhe, receba seleções, encante seus clientes e transforme cada entrega em uma experiência à altura da sua fotografia.</p>
+              <h1>Entregue galerias com uma <span className="grad">experiência</span> à altura do seu trabalho</h1>
+              <p>Compartilhe galerias, receba seleções e apresente suas fotos de forma profissional, simples e inesquecível.</p>
 
               <div className="hero-showcase-actions">
                 <a className="btn primary" href={destinoPrincipal} onClick={()=>rastrearCriacao("hero")}>
@@ -116,7 +115,7 @@ export default function Home() {
             <div
               className="hero-showcase-visual"
               role="img"
-              aria-label="Sessão fotográfica profissional em estúdio claro"
+              aria-label="Fotógrafa registrando uma paisagem de montanha"
             >
               <div className="hero-showcase-photo"/>
             </div>
