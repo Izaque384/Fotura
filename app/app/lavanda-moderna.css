@@ -1016,14 +1016,12 @@ html body .lp .hero-showcase-micro span{
 
 html body .lp .hero-showcase-visual{
   position:relative;
-  min-height:540px;
+  min-height:560px;
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.78);
-  border-radius:34px;
-  background:#EAE4F1;
-  box-shadow:
-    0 34px 80px rgba(52,43,86,.14),
-    0 8px 24px rgba(52,43,86,.08);
+  border:0 !important;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
   isolation:isolate;
 }
 
@@ -1034,18 +1032,19 @@ html body .lp .hero-showcase-visual:before{
   z-index:2;
   pointer-events:none;
   background:
-    linear-gradient(180deg,rgba(21,20,31,.02),rgba(21,20,31,.12)),
-    linear-gradient(90deg,rgba(248,246,251,.16),transparent 30%);
+    linear-gradient(135deg,rgba(17,150,252,.10),transparent 36%),
+    linear-gradient(315deg,rgba(93,13,250,.08),transparent 42%);
 }
 
 html body .lp .hero-showcase-photo{
   position:absolute;
   inset:0;
   z-index:1;
-  background-image:url("https://images.unsplash.com/photo-1747221722650-3dc08fe87c38?auto=format&fit=crop&q=86&w=1800");
+  background-image:url("https://images.unsplash.com/photo-1758613654806-fa787b741bba?auto=format&fit=crop&q=88&w=1800");
   background-size:cover;
-  background-position:center 46%;
-  transform:scale(1.015);
+  background-position:center 50%;
+  filter:saturate(.9) brightness(1.04) contrast(.97);
+  transform:none;
 }
 
 html body .lp .hero-showcase-benefits{
@@ -1114,7 +1113,7 @@ html body .lp .hero-benefit small{
     width:min(760px,100%);
     min-height:470px;
     margin:0 auto;
-    border-radius:28px;
+    border-radius:0;
   }
 
   html body .lp .hero-showcase-benefits{
@@ -1159,7 +1158,7 @@ html body .lp .hero-benefit small{
   html body .lp .hero-showcase-visual{
     min-height:330px;
     margin-top:8px;
-    border-radius:22px;
+    border-radius:0;
   }
 
   html body .lp .hero-showcase-photo{
