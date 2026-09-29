@@ -10,6 +10,12 @@ test.describe("contrato de planos e armazenamento", () => {
     expect(PLANOS_FOTURA.profissional.limites.armazenamentoGb).toBe(50);
     expect(PLANOS_FOTURA.studio.limites.armazenamentoGb).toBe(100);
 
+    const landing = fs.readFileSync(
+      path.join(process.cwd(), "app", "HomeClient.tsx"),
+      "utf8",
+    );
+    expect(landing).toContain('\"100 GB de armazenamento\"');
+
     for (const codigo of ["gratis", "essencial", "profissional", "studio"] as const) {
       expect(PLANOS_FOTURA[codigo].limites.galeriasAtivas).toBeNull();
       expect(PLANOS_FOTURA[codigo].limites.clientes).toBeNull();
