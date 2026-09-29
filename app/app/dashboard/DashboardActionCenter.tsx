@@ -100,8 +100,8 @@ export default function DashboardActionCenter() {
         if (finalizadas.length) {
           proximas.push({
             id: "selecoes-finalizadas",
-            titulo: `${finalizadas.length} seleção${finalizadas.length === 1 ? "" : "ões"} pronta${finalizadas.length === 1 ? "" : "s"} para entrega`,
-            descricao: "O cliente já terminou a escolha. Prepare e publique os arquivos finais.",
+            titulo: `Preparar ${finalizadas.length} entrega${finalizadas.length === 1 ? "" : "s"}`,
+            descricao: `${finalizadas.length} seleção${finalizadas.length === 1 ? "" : "ões"} concluída${finalizadas.length === 1 ? "" : "s"} aguardando os arquivos finais.`,
             botao: finalizadas.length === 1 ? "Preparar entrega" : "Ver seleções",
             rota: "/dashboard/selecoes?filtro=finalizada",
             tom: "purple",
@@ -110,8 +110,8 @@ export default function DashboardActionCenter() {
         if (preparando.length) {
           proximas.push({
             id: "entregas",
-            titulo: `${preparando.length} entrega${preparando.length === 1 ? "" : "s"} em preparação`,
-            descricao: "Há galerias com a etapa final iniciada e ainda não publicada.",
+            titulo: `Finalizar ${preparando.length} entrega${preparando.length === 1 ? "" : "s"} em preparação`,
+            descricao: "A etapa final já foi iniciada, mas ainda falta publicar a entrega.",
             botao: "Continuar entrega",
             rota: "/dashboard/selecoes?filtro=preparando_entrega",
             tom: "blue",
@@ -120,8 +120,8 @@ export default function DashboardActionCenter() {
         if (expirando.length) {
           proximas.push({
             id: "expirando",
-            titulo: `${expirando.length} galeria${expirando.length === 1 ? "" : "s"} expira${expirando.length === 1 ? "" : "m"} em até 7 dias`,
-            descricao: "Revise a validade dos links para evitar interrupções para seus clientes.",
+            titulo: `Revisar validade de ${expirando.length} galeria${expirando.length === 1 ? "" : "s"}`,
+            descricao: `${expirando.length} link${expirando.length === 1 ? "" : "s"} vence${expirando.length === 1 ? "" : "m"} em até 7 dias.`,
             botao: "Revisar galerias",
             rota: "/dashboard/galerias",
             tom: "amber",
@@ -130,8 +130,8 @@ export default function DashboardActionCenter() {
         if (pendentes) {
           proximas.push({
             id: "pagamentos",
-            titulo: `${pendentes} pagamento${pendentes === 1 ? "" : "s"} aguardando confirmação`,
-            descricao: "Acompanhe compras de fotos extras que ainda não foram concluídas.",
+            titulo: `Acompanhar ${pendentes} pagamento${pendentes === 1 ? "" : "s"} pendente${pendentes === 1 ? "" : "s"}`,
+            descricao: "Há compras de fotos extras que ainda precisam de confirmação.",
             botao: "Ver vendas",
             rota: "/dashboard/vendas?filtro=pendente",
             tom: "green",
@@ -204,9 +204,9 @@ export default function DashboardActionCenter() {
       <div className="action-center-head">
         <div>
           <div className="action-center-eyebrow">PRÓXIMAS AÇÕES</div>
-          <h2>O que merece sua atenção</h2>
+          <h2>O que você precisa fazer</h2>
         </div>
-        {!carregando && <span>{acoes.length ? `${acoes.length} prioridade${acoes.length === 1 ? "" : "s"}` : "Tudo em dia"}</span>}
+        {!carregando && <span>{acoes.length ? `${acoes.length} ação${acoes.length === 1 ? "" : "ões"} pendente${acoes.length === 1 ? "" : "s"}` : "Tudo em dia"}</span>}
       </div>
 
       {carregando ? (
