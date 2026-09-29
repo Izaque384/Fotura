@@ -210,7 +210,7 @@ export default function DashboardActionCenter() {
       </div>
 
       {carregando ? (
-        <div className="action-center-loading">Organizando suas prioridades…</div>
+        <div className="action-center-loading">Organizando suas ações pendentes…</div>
       ) : (
         <>
           <div className="action-center-grid">
