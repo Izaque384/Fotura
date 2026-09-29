@@ -116,7 +116,7 @@ export default function Home() {
             <div
               className="hero-showcase-visual"
               role="img"
-              aria-label="Casal em um momento íntimo no dia do casamento"
+              aria-label="Sessão fotográfica profissional em estúdio claro"
             >
               <div className="hero-showcase-photo"/>
             </div>
