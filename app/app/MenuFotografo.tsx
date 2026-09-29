@@ -147,7 +147,7 @@ export default function MenuFotografo() {
     { rota: "/dashboard/selecoes", label: "Seleções", tipo: "selecoes" },
     { rota: "/dashboard/vendas", label: "Vendas", tipo: "vendas" },
     { rota: "/dashboard/clientes", label: "Clientes", tipo: "clientes" },
-    { rota: "/dashboard/assinatura", label: "Plano", tipo: "assinatura", exato: true },
+    { rota: "/dashboard/assinatura", label: "Planos", tipo: "assinatura", exato: true },
     { rota: "/configuracoes", label: "Configurações", tipo: "config", exato: true },
   ];
 
