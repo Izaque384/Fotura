@@ -968,14 +968,14 @@ html body .lp .hero-showcase-main{
   width:100%;
   max-width:none;
   margin:0;
-  min-height:680px;
+  min-height:600px;
   display:flex;
   align-items:center;
   overflow:hidden;
   padding:
-    clamp(116px,12vh,142px)
+    clamp(98px,10vh,118px)
     clamp(28px,6.6vw,108px)
-    clamp(58px,8vh,78px);
+    clamp(40px,5.5vh,54px);
   isolation:isolate;
 }
 
@@ -1107,9 +1107,9 @@ html body .lp .hero-showcase-photo{
   position:absolute;
   inset:0;
   z-index:1;
-  background-image:url("https://images.unsplash.com/photo-1759861077718-4858445c8d99?auto=format&fit=crop&fm=jpg&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&ixlib=rb-4.1.0&q=60&w=3000");
+  background-image:url("https://images.unsplash.com/photo-1768611264099-adcd915eee3a?auto=format&fit=crop&fm=jpg&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&ixlib=rb-4.1.0&q=72&w=3000");
   background-size:cover;
-  background-position:68% center;
+  background-position:64% center;
   filter:saturate(.94) brightness(1.02) contrast(.98);
   transform:scale(1.015);
 }
@@ -1170,11 +1170,11 @@ html body .lp .hero-benefit small{
   }
 
   html body .lp .hero-showcase-main{
-    min-height:630px;
+    min-height:560px;
     padding:
-      112px
+      94px
       38px
-      52px;
+      40px;
   }
 
   html body .lp .hero-showcase-copy{
@@ -1217,9 +1217,9 @@ html body .lp .hero-benefit small{
   }
 
   html body .lp .hero-showcase-main{
-    min-height:610px;
+    min-height:520px;
     align-items:flex-end;
-    padding:104px 22px 34px;
+    padding:88px 22px 24px;
   }
 
   html body .lp .hero-showcase-copy{
