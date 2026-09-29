@@ -113,31 +113,12 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="hero-showcase-visual" aria-label="Prévia visual da experiência Fotura">
-              <div className="hero-showcase-glow hero-showcase-glow-a"/>
-              <div className="hero-showcase-glow hero-showcase-glow-b"/>
-
-              <div className="hero-gallery-card">
-                <div className="hero-gallery-head">
-                  <div>
-                    <span className="hero-gallery-kicker">GALERIA DO CLIENTE</span>
-                    <strong>Momentos que merecem destaque</strong>
-                  </div>
-                  <span className="hero-gallery-count">128 fotos</span>
-                </div>
-                <div className="hero-gallery-grid">
-                  <span className="hero-shot shot-a"/>
-                  <span className="hero-shot shot-b"/>
-                  <span className="hero-shot shot-c"/>
-                  <span className="hero-shot shot-d"/>
-                  <span className="hero-shot shot-e"/>
-                </div>
-              </div>
-
-              <div className="hero-proof-card">
-                <div className="hero-proof-icon">♡</div>
-                <div><strong>18 fotos selecionadas</strong><span>O cliente finalizou a prova.</span></div>
-              </div>
+            <div
+              className="hero-showcase-visual"
+              role="img"
+              aria-label="Casal em um momento íntimo no dia do casamento"
+            >
+              <div className="hero-showcase-photo"/>
             </div>
           </div>
 
