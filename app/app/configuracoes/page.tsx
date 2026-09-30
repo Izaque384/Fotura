@@ -50,6 +50,7 @@ export default function ConfiguracoesPage() {
   const [confirmacaoEncerramento,setConfirmacaoEncerramento]=useState("");
   const [processandoEncerramento,setProcessandoEncerramento]=useState(false);
   const [confirmarCancelamento,setConfirmarCancelamento]=useState(false);
+  const [infoEncerramentoAdmin,setInfoEncerramentoAdmin]=useState(false);
   const [mensagem, setMensagem] = useState("");
   const [erro, setErro] = useState(false);
 
@@ -297,9 +298,10 @@ export default function ConfiguracoesPage() {
           </div>
           {encerramentoEstado?.encerramento?.status==="pendente"&&<div className="data-status"><strong>Encerramento solicitado.</strong> Você pode cancelar até a confirmação final. A confirmação fica disponível em {new Date(encerramentoEstado.encerramento.elegivel_em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}.</div>}
           {encerramentoEstado?.encerramento?.status==="confirmado"&&<div className="data-status"><strong>Encerramento confirmado.</strong> O conteúdo público foi bloqueado e a exclusão definitiva segue o fluxo administrativo de segurança.</div>}
+          {encerramentoEstado?.contaAdministrativa&&<div className="data-status"><strong>Conta administrativa.</strong> Para encerrar esta conta, primeiro transfira o controle administrativo para outra conta ou remova o acesso administrativo. Isso evita deixar o Fotura sem um administrador responsável.</div>}
           <div className="data-actions">
             <button className="btn" disabled={exportandoDados} onClick={()=>void exportarDados()}>{exportandoDados?"Preparando…":"Exportar meus dados"}</button>
-            {!encerramentoEstado?.contaAdministrativa&&(!encerramentoEstado?.encerramento||["cancelado"].includes(encerramentoEstado.encerramento.status))&&<button className="btn danger" onClick={()=>setEncerramentoModo("solicitar")}>Solicitar encerramento</button>}
+            {(!encerramentoEstado?.encerramento||["cancelado"].includes(encerramentoEstado.encerramento.status))&&<button className="btn danger" onClick={()=>encerramentoEstado?.contaAdministrativa?setInfoEncerramentoAdmin(true):setEncerramentoModo("solicitar")}>Encerrar conta</button>}
             {encerramentoEstado?.encerramento?.status==="pendente"&&<>
               <button className="btn" onClick={()=>setConfirmarCancelamento(true)}>Cancelar solicitação</button>
               <button className="btn danger-strong" disabled={Date.now()<new Date(encerramentoEstado.encerramento.elegivel_em).getTime()} onClick={()=>{setEmailEncerramento(email);setEncerramentoModo("confirmar")}}>Confirmar encerramento</button>
@@ -349,6 +351,17 @@ export default function ConfiguracoesPage() {
       loading={processandoEncerramento}
       onCancel={()=>setConfirmarCancelamento(false)}
       onConfirm={()=>void acaoEncerramento("cancelar")}
+    />
+
+    <ConfirmDialog
+      open={infoEncerramentoAdmin}
+      title="Esta conta administra o Fotura"
+      description="Antes de encerrar esta conta, transfira o controle administrativo para outra conta ou remova o acesso administrativo. Depois disso, volte aqui e o encerramento poderá ser solicitado normalmente."
+      confirmLabel="Entendi"
+      cancelLabel="Voltar"
+      danger={false}
+      onCancel={()=>setInfoEncerramentoAdmin(false)}
+      onConfirm={()=>setInfoEncerramentoAdmin(false)}
     />
   </main>;
 }
