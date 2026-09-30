@@ -75,6 +75,16 @@ export default function SelecoesPage() {
   const [busca, setBusca] = useState("");
   const [modal, setModal] = useState<string | null>(null);
 
+  useEffect(() => {
+    const inicial = new URLSearchParams(window.location.search).get("filtro");
+    if (
+      inicial === "sem_interacao" ||
+      inicial === "andamento" ||
+      inicial === "finalizada" ||
+      inicial === "preparando_entrega"
+    ) setFiltro(inicial);
+  }, []);
+
   const carregar = useCallback(async (silencioso = false) => {
     if (silencioso) setAtualizando(true);
     else setCarregando(true);
