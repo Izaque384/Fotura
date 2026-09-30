@@ -9,25 +9,25 @@ const planos = [
     nome: "Grátis",
     preco: "0",
     destaque: false,
-    itens: ["1 GB de armazenamento", "Galerias e clientes ilimitados", "Fotos por galeria ilimitadas", "Seleção, comentários, senha e entrega"],
+    itens: ["1 GB de armazenamento", "Galerias, clientes e fotos ilimitados", "Seleção, comentários, senha e entrega", "Identidade básica do estúdio"],
   },
   {
     nome: "Essencial",
     preco: "14,90",
     destaque: false,
-    itens: ["10 GB de armazenamento", "Galerias e clientes ilimitados", "Fotos por galeria ilimitadas", "Prova, comentários e identidade do estúdio"],
+    itens: ["10 GB de armazenamento", "Galerias, clientes e fotos ilimitados", "Hero Minimal com logo, nome e cor", "Prova, comentários, senha e entrega"],
   },
   {
     nome: "Profissional",
     preco: "29,90",
     destaque: true,
-    itens: ["50 GB de armazenamento", "Galerias, clientes e fotos ilimitados", "Heroes Premium e Tech", "Fundo do hero com foto da galeria"],
+    itens: ["50 GB de armazenamento", "Tudo do Essencial", "Heroes Minimal, Premium e Tech", "Foto da galeria no fundo do hero"],
   },
   {
     nome: "Studio",
     preco: "59,90",
     destaque: false,
-    itens: ["100 GB de armazenamento", "Galerias, clientes e fotos ilimitados", "Todos os recursos de apresentação", "Para operações com alto volume"],
+    itens: ["100 GB de armazenamento", "Tudo do Profissional", "Mesmos recursos visuais do Profissional", "Para operações com alto volume"],
   },
 ];
 
