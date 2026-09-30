@@ -68,7 +68,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
       entregaFinal: true,
       envioEmail: false,
       brandingPersonalizado: true,
-      heroEstudio: true,
+      heroEstudio: false,
       heroPremiumTech: false,
       heroFotoGaleria: false,
       notificacoesPush: true,
