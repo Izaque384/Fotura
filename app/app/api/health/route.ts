@@ -5,6 +5,9 @@ export function GET() {
     {
       ok: true,
       service: "fotura",
+      integrations: {
+        emailConfigured: Boolean(process.env.RESEND_API_KEY?.trim()),
+      },
       timestamp: new Date().toISOString(),
     },
     {
