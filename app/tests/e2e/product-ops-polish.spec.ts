@@ -11,13 +11,11 @@ test.describe("product ops polish",()=>{
   expect(dataCalendarioExpirada("2026-09-25",new Date("2026-09-26T02:59:59Z"))).toBe(false);
   expect(dataCalendarioExpirada("2026-09-25",new Date("2026-09-26T03:00:00Z"))).toBe(true);
  });
- test("gallery cleanup includes final delivery trees",()=>{
-  const cron=read("app/api/cron/expirar/route.ts");
+ test("gallery deletion cleanup includes final delivery trees and automatic cleanup stays removed",()=>{
+  expect(fs.existsSync(path.join(root,"app/api/cron/expirar/route.ts"))).toBe(false);
   const del=read("app/api/galeria/excluir/route.ts");
-  for(const source of [cron,del]){
-   expect(source).toContain("/entrega");
-   expect(source).toContain("/entrega/thumbs");
-  }
+  expect(del).toContain("/entrega");
+  expect(del).toContain("/entrega/thumbs");
  });
  test("Stripe photo-sale webhook reconciles a session race safely",()=>{
   const source=read("app/api/vendas/webhook/route.ts");
