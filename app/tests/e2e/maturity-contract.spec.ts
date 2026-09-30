@@ -6,6 +6,12 @@ const root = process.cwd();
 const read = (p: string) => fs.readFileSync(path.join(root, p), "utf8");
 
 test.describe("contratos de maturidade operacional", () => {
+  test("dependências críticas permanecem em versões corrigidas", () => {
+    const pkg = JSON.parse(read("package.json")) as { dependencies?: Record<string,string>; devDependencies?: Record<string,string> };
+    expect(pkg.dependencies?.next).toBe("16.3.8");
+    expect(pkg.devDependencies?.["eslint-config-next"]).toBe("16.3.8");
+  });
+
   test("exportação de dados evita credenciais e segredos operacionais", () => {
     const source = read("app/api/account/export/route.ts");
     expect(source).toContain("fotura-dados-");
