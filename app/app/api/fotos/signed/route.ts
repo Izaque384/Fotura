@@ -13,6 +13,7 @@ const EXPIRA_SEG = 3600;
 const LISTA_LOTE = 1000;
 const ASSINATURA_LOTE = 200;
 const CONCORRENCIA_ASSINATURA = 3;
+const ORIGINAIS_PREASSINADOS_GRADE = 8;
 const STATUS_COM_ACESSO = new Set(["active", "trialing", "past_due"]);
 
 function json(data: unknown, status = 200, retryAfter?: number) {
@@ -48,6 +49,23 @@ export async function GET(req: NextRequest) {
   if (g.tem_senha && !temAcessoGaleria(req, galeria)) return json({ error: "Acesso à galeria necessário." }, 401);
 
   const dono = g.user_id as string;
+  const etapa = (g.etapa as string | null) || (g.prova ? "prova" : "entrega");
+  const entregaFinalDeProva = etapa === "entrega" && Boolean(g.prova);
+  const base = entregaFinalDeProva ? `${dono}/${galeria}/entrega` : `${dono}/${galeria}`;
+
+  if (arquivo) {
+    if (arquivo.includes("/") || arquivo.includes("\\") || arquivo === "." || arquivo === "..") {
+      return json({ error: "Arquivo inválido." }, 400);
+    }
+    const caminho = `${base}/${arquivo}`;
+    const { data, error } = await supabase.storage.from("fotos").createSignedUrl(caminho, EXPIRA_SEG);
+    if (error || !data?.signedUrl) {
+      registrarErro("gallery.signed.single", req, error || new Error("signed url missing"), { galeria, arquivo });
+      return json({ error: "Não foi possível assinar o arquivo." }, 404);
+    }
+    return json({ nome: arquivo, url: data.signedUrl, etapa });
+  }
+
   const [{ data: perfil, error: profileError }, { data: assinatura, error: billingError }] = await Promise.all([
     supabase.from("perfis").select("hero_galeria_ativo,hero_galeria_estilo,hero_foto_capa_ativo,cor_hero").eq("id", dono).maybeSingle(),
     supabase.from("assinaturas").select("plano_codigo,status").eq("user_id", dono).maybeSingle(),
@@ -66,9 +84,6 @@ export async function GET(req: NextRequest) {
   const heroCor = (perfil?.cor_hero as string | null) ?? "#0b0b1a";
   const usarFotoHero = usarHeroEstudio && Boolean(perfil?.hero_foto_capa_ativo) && plano.recursos.heroFotoGaleria;
 
-  const etapa = (g.etapa as string | null) || (g.prova ? "prova" : "entrega");
-  const entregaFinalDeProva = etapa === "entrega" && Boolean(g.prova);
-  const base = entregaFinalDeProva ? `${dono}/${galeria}/entrega` : `${dono}/${galeria}`;
   const lista: Array<{ name: string }> = [];
   let offset = 0;
   while (true) {
@@ -114,20 +129,10 @@ export async function GET(req: NextRequest) {
     return { mapa, erroAssinatura };
   };
 
-  if (arquivo) {
-    if (!lista.some((f) => f.name === arquivo)) return json({ error: "Arquivo não encontrado." }, 404);
-    const caminho = `${base}/${arquivo}`;
-    const { mapa, erroAssinatura } = await assinar([caminho]);
-    if (erroAssinatura || !mapa[caminho]) {
-      registrarErro("gallery.signed.single", req, erroAssinatura || new Error("signed url missing"), { galeria, arquivo });
-      return json({ error: "Não foi possível assinar o arquivo." }, 500);
-    }
-    return json({ nome: arquivo, url: mapa[caminho], etapa });
-  }
-
   let caminhos: string[] = [];
   if (modo === "grade") {
     caminhos = lista.map((f) => `${base}/thumbs/${f.name}`);
+    caminhos.push(...lista.slice(0, ORIGINAIS_PREASSINADOS_GRADE).map((f) => `${base}/${f.name}`));
     if (usarFotoHero && capaNome) caminhos.push(`${base}/${capaNome}`);
   } else if (modo === "originais") {
     caminhos = lista.map((f) => `${base}/${f.name}`);
@@ -164,7 +169,7 @@ export async function GET(req: NextRequest) {
     const thumbAssinada = mapa[`${base}/thumbs/${f.name}`] ?? "";
     if (modo === "grade") {
       const preview = thumbAssinada || original;
-      return { nome: f.name, url: preview, thumb: preview };
+      return { nome: f.name, url: original || preview, thumb: preview };
     }
     if (modo === "originais") return { nome: f.name, url: original, thumb: original };
     return { nome: f.name, url: original, thumb: thumbAssinada || original };
