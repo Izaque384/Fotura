@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
 import MenuFotografo from "../MenuFotografo";
+import { heroPresetDataUrl } from "../../lib/gallery-hero";
 
 const TIPOS_LOGO = new Set(["image/png", "image/jpeg", "image/webp"]);
 const MAX_LOGO = 5 * 1024 * 1024;
+const HERO_PREVIEW_WIDTH = 1120;
+const HERO_PREVIEW_HEIGHT = 492;
 type HeroEstilo = "minimal" | "premium" | "tech";
 type Billing = { plano?: { nome?: string; recursos?: { heroEstudio?: boolean; heroPremiumTech?: boolean; heroFotoGaleria?: boolean } } };
 
@@ -29,6 +32,8 @@ export default function PerfilPage() {
   const [planoNome, setPlanoNome] = useState("Sem plano");
   const [mensagem, setMensagem] = useState("");
   const [erro, setErro] = useState(false);
+  const previewViewportRef = useRef<HTMLDivElement | null>(null);
+  const [previewScale, setPreviewScale] = useState(0.3);
 
   useEffect(() => {
     let ativo = true;
@@ -73,6 +78,16 @@ export default function PerfilPage() {
     })();
     return () => { ativo = false; };
   }, [router, supabase]);
+
+  useEffect(() => {
+    const el = previewViewportRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const atualizar = () => setPreviewScale(Math.max(0.1, el.clientWidth / HERO_PREVIEW_WIDTH));
+    atualizar();
+    const observer = new ResizeObserver(atualizar);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   async function enviarLogo(arquivo: File) {
     setErro(false); setMensagem("");
@@ -156,8 +171,8 @@ export default function PerfilPage() {
       .photo-feature{margin-top:11px;padding:11px;border:1px solid #DED7E9;border-radius:10px;background:#FCFAFE;display:flex;align-items:center;justify-content:space-between;gap:12px}.photo-feature strong{font-size:10.5px;color:#343950}.photo-feature p{font-size:9px;color:#85899B;margin:3px 0 0;line-height:1.4}
       .btn{height:35px;border:1px solid #D7D0E7;border-radius:9px;padding:0 12px;background:#FAF8FD;color:#596079;font-family:inherit;font-size:10.5px;font-weight:750;cursor:pointer}.btn:hover:not(:disabled){background:#F0EBF7}.btn.primary{border:0;color:#fff;background:linear-gradient(90deg,#1196FC,#5D0DFA)}.btn:disabled{opacity:.5;cursor:not-allowed}.editor-actions{display:flex;justify-content:flex-end;margin-top:16px}.save{min-width:142px}
       .notice{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:10.5px;color:#3F7C5B;background:#EAF5EF;border:1px solid #CBE4D6}.notice.err{color:#A6535E;background:#FAF0F2;border-color:#E7C7CC}
-      .preview-panel{position:sticky;top:24px;padding:16px}.preview-panel .panel-head{padding-bottom:12px}.sample{margin-top:14px;border-radius:13px;overflow:hidden;border:1px solid #DDD7E8;background:#F7F4FB}.sample-hero{height:210px;position:relative;overflow:hidden;display:grid;place-items:center;padding:18px;text-align:center}.sample-hero.premium{background:radial-gradient(circle at 18% 12%,color-mix(in srgb,var(--hero) 76%,#5D0DFA 24%) 0%,transparent 40%),linear-gradient(135deg,color-mix(in srgb,var(--hero) 82%,#D7D0E7 18%),#ECE8F4 70%)}.sample-hero.minimal{background:linear-gradient(145deg,color-mix(in srgb,var(--hero) 86%,#DAD3EA 14%),#ECE8F4)}.sample-hero.tech{background:linear-gradient(rgba(80,105,170,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(80,105,170,.08) 1px,transparent 1px),radial-gradient(circle at 75% 24%,color-mix(in srgb,var(--hero) 62%,#1196FC 38%),transparent 34%),#ECE8F4;background-size:24px 24px,24px 24px,auto,auto}.sample-logo{width:66px;height:66px;object-fit:contain}.sample-name{font-size:11.5px;font-weight:750;margin-top:8px;color:#252A41}.sample-gallery{font-size:21px;font-weight:800;margin-top:14px;letter-spacing:-.3px;color:#21253A}.sample-body{padding:14px}.sample-line{height:7px;border-radius:999px;background:#DAD4E6;margin-bottom:7px}.sample-line.short{width:60%}.preview-note{margin-top:10px;padding:9px 10px;border-radius:9px;background:#F7F4FB;border:1px solid #E5E0ED;color:#777D93;font-size:9px;line-height:1.45}
-      @media(max-width:900px){.profile-body{padding:46px 32px 70px}.layout{grid-template-columns:1fr}.preview-panel{position:static}.sample{max-width:520px}}
+      .preview-panel{position:sticky;top:24px;padding:16px}.preview-panel .panel-head{padding-bottom:12px}.sample{margin-top:14px;border-radius:13px;overflow:hidden;border:1px solid #DDD7E8;background:#07110f}.hero-preview-viewport{position:relative;width:100%;overflow:hidden;background:#07110f}.hero-preview-stage.gc-hero{position:absolute;left:0;top:0;width:1120px;height:492px;overflow:hidden;transform-origin:top left}.hero-preview-stage .gc-hero-bg{position:absolute;inset:0;background-size:cover;background-position:center}.hero-preview-stage .gc-hero-bg:after{content:"";position:absolute;inset:0;background:rgba(7,7,16,.58)}.hero-preview-stage .gc-hero-wrap{position:relative;max-width:1120px;min-height:40vh;margin:auto;padding:58px 32px;display:flex;align-items:center;gap:52px}.hero-preview-stage .gc-brand{min-width:260px;text-align:center}.hero-preview-stage .gc-brand img{max-height:160px;max-width:280px}.hero-preview-stage .gc-brand span{font-size:46px;font-weight:800}.hero-preview-stage .gc-info{flex:1}.hero-preview-stage .gc-info h1{font-size:clamp(30px,5vw,58px);margin:12px 0}.preview-note{margin-top:10px;padding:9px 10px;border-radius:9px;background:#F7F4FB;border:1px solid #E5E0ED;color:#777D93;font-size:9px;line-height:1.45}
+      @media(max-width:900px){.profile-body{padding:46px 32px 70px}.layout{grid-template-columns:1fr}.preview-panel{position:static}.sample{max-width:620px}}
       @media(max-width:640px){.profile-body{padding:76px 16px 60px}.h1{font-size:25px}.editor,.preview-panel{padding:15px}.brand-block{grid-template-columns:54px minmax(0,1fr)}.preview{width:54px;height:54px}.styles{grid-template-columns:1fr}.photo-feature{align-items:center}.editor-actions .btn{width:100%}}
     `}</style>
 
@@ -233,18 +248,27 @@ export default function PerfilPage() {
 
         <aside className="panel preview-panel">
           <div className="panel-head">
-            <div><h2 className="panel-title">Prévia do hero</h2><p className="panel-desc">Veja como sua identidade aparece na abertura das galerias.</p></div>
-            <span className="panel-badge">Ao vivo</span>
+            <div><h2 className="panel-title">Prévia do hero</h2><p className="panel-desc">A mesma composição usada na abertura das galerias.</p></div>
           </div>
 
           <div className="sample">
-            <div className={`sample-hero ${heroEstilo}`} style={{"--hero":corHero} as React.CSSProperties}>
-              {logoUrl?<div><img className="sample-logo" src={logoUrl} alt=""/><div className="sample-name">{nomeEstudio||"Seu estúdio"}</div><div className="sample-gallery">Nome da galeria</div></div>:<div><div className="sample-name">{nomeEstudio||"Seu estúdio"}</div><div className="sample-gallery">Nome da galeria</div></div>}
+            <div ref={previewViewportRef} className="hero-preview-viewport" style={{height:HERO_PREVIEW_HEIGHT*previewScale}}>
+              <div className="hero-preview-stage gc-hero" style={{backgroundColor:corHero,transform:`scale(${previewScale})`}}>
+                <div className="gc-hero-bg ready" style={{backgroundImage:`url("${heroPresetDataUrl(corHero,heroEstilo)}")`}}/>
+                <div className="gc-hero-wrap">
+                  <div className="gc-brand gc-brand-hero">
+                    {logoUrl?<img src={logoUrl} alt={nomeEstudio||"Fotura"}/>:<span style={{color:"#fff"}}>{nomeEstudio||"Fotura"}</span>}
+                  </div>
+                  <div className="gc-info">
+                    <div style={{color:"#fff",opacity:.72}}>{nomeEstudio||"GALERIA"}</div>
+                    <h1 style={{color:"#fff"}}>Nome da galeria</h1>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="sample-body"><div className="sample-line"/><div className="sample-line short"/><div className="sample-line"/></div>
           </div>
 
-          <div className="preview-note">{podeFotoHero&&heroFotoCapaAtivo?"Nas galerias, a capa escolhida em “Alterar capa” será usada como fundo do hero. Esta prévia continua mostrando apenas a composição do estilo.":"O nome da galeria continua dinâmico. Logo, cor e estilo são aplicados conforme as configurações salvas aqui."}</div>
+          <div className="preview-note">{podeFotoHero&&heroFotoCapaAtivo?"Nas galerias, a mesma composição será aplicada sobre a capa escolhida em “Alterar capa”.":"A prévia usa o mesmo fundo, posicionamento, tipografia e composição do estilo selecionado na galeria pública."}</div>
         </aside>
       </div>
     </div>
