@@ -191,7 +191,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galleryError } = await supabase
     .from("galerias")
-    .select("user_id,capa,hero_fundo_foto,link_ate,tem_senha,etapa,prova")
+    .select("user_id,capa,link_ate,tem_senha,etapa,prova")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -206,7 +206,7 @@ export async function GET(req: NextRequest) {
 
   const dono = g.user_id as string;
   const [{ data: perfil, error: profileError }, { data: assinatura, error: billingError }] = await Promise.all([
-    supabase.from("perfis").select("hero_galeria_ativo,hero_galeria_estilo,cor_hero").eq("id", dono).maybeSingle(),
+    supabase.from("perfis").select("hero_galeria_ativo,hero_galeria_estilo,hero_foto_capa_ativo,cor_hero").eq("id", dono).maybeSingle(),
     supabase.from("assinaturas").select("plano_codigo,status").eq("user_id", dono).maybeSingle(),
   ]);
   if (profileError || billingError) {
@@ -221,7 +221,7 @@ export async function GET(req: NextRequest) {
   const usarHeroEstudio = Boolean(perfil?.hero_galeria_ativo) && plano.recursos.heroEstudio;
   const heroEstilo = estiloHeroEfetivo((perfil?.hero_galeria_estilo as string | null) ?? "premium", plano.recursos.heroPremiumTech);
   const heroCor = (perfil?.cor_hero as string | null) ?? "#0b0b1a";
-  const usarFotoHero = Boolean(g.hero_fundo_foto) && plano.recursos.heroFotoGaleria;
+  const usarFotoHero = usarHeroEstudio && Boolean(perfil?.hero_foto_capa_ativo) && plano.recursos.heroFotoGaleria;
 
   const etapa = (g.etapa as string | null) || (g.prova ? "prova" : "entrega");
   const entregaFinalDeProva = etapa === "entrega" && Boolean(g.prova);
