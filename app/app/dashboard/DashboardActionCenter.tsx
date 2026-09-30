@@ -50,7 +50,7 @@ export default function DashboardActionCenter() {
 
       const userId = session.user.id;
       try {
-        const [{ data: galerias }, { data: vendas }, usageRes] = await Promise.all([
+        const [{ data: galerias }, { data: vendas }, { data: perfil }, usageRes] = await Promise.all([
           supabase
             .from("galerias")
             .select("id,titulo,etapa,link_ate")
@@ -61,6 +61,11 @@ export default function DashboardActionCenter() {
             .eq("fotografo_id", userId)
             .eq("status", "pendente")
             .limit(50),
+          supabase
+            .from("perfis")
+            .select("nome_estudio")
+            .eq("id", userId)
+            .maybeSingle(),
           fetch("/api/billing/usage", {
             headers: { Authorization: `Bearer ${session.access_token}` },
             cache: "no-store",
@@ -97,6 +102,27 @@ export default function DashboardActionCenter() {
         const pendentes = vendas?.length ?? 0;
 
         const proximas: Acao[] = [];
+        const perfilConfigurado = Boolean((perfil?.nome_estudio as string | null)?.trim());
+        if (!perfilConfigurado) {
+          proximas.push({
+            id: "configurar-identidade",
+            titulo: "Configure a identidade do seu estúdio",
+            descricao: "Defina nome, logo, cor e hero antes de compartilhar sua primeira galeria.",
+            botao: "Configurar perfil",
+            rota: "/perfil",
+            tom: "purple",
+          });
+        }
+        if (lista.length === 0) {
+          proximas.push({
+            id: "primeira-galeria",
+            titulo: "Crie sua primeira galeria",
+            descricao: "Envie as fotos, vincule um cliente e prepare seu primeiro compartilhamento.",
+            botao: "Criar galeria",
+            rota: "/upload",
+            tom: "blue",
+          });
+        }
         if (finalizadas.length) {
           proximas.push({
             id: "selecoes-finalizadas",
