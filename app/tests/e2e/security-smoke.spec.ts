@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-test("rotas sensíveis rejeitam chamadas sem autenticação ou payload", async ({ request }) => {
+test("endpoint de limpeza automática permanece removido", async ({ request }) => {
   const cron = await request.get("/api/cron/expirar");
-  expect(cron.status()).toBe(401);
+  expect(cron.status()).toBe(404);
+});
 
+test("rotas sensíveis rejeitam chamadas sem autenticação ou payload", async ({ request }) => {
   const signed = await request.get("/api/fotos/signed");
   expect(signed.status()).toBe(400);
 
