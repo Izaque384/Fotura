@@ -23,6 +23,16 @@ export default function LoginPage() {
   const supabase = createClient();
 
   useEffect(() => {
+    if (searchParams.get("encerrada") === "1") {
+      setModo("login");
+      setMensagem("Conta encerrada com segurança. O conteúdo público foi bloqueado.");
+      return;
+    }
+    if (searchParams.get("suspensa") === "1") {
+      setModo("login");
+      setMensagem("Erro: Esta conta está suspensa. Entre em contato com o suporte se precisar de ajuda.");
+      return;
+    }
     if (searchParams.get("confirmado") === "1") {
       setModo("login");
       setMensagem("E-mail confirmado. Entre para continuar.");
@@ -72,6 +82,21 @@ export default function LoginPage() {
       if (error || !data.user) {
         setMensagem("Erro: E-mail ou senha inválidos.");
       } else {
+        const token=data.session?.access_token;
+        if(token){
+          try{
+            const status=await fetch("/api/billing/status",{headers:{Authorization:`Bearer ${token}`},cache:"no-store"});
+            if(status.ok){
+              const body=await status.json() as {suspensao?:{ativa?:boolean}};
+              if(body.suspensao?.ativa){
+                await supabase.auth.signOut();
+                setMensagem("Erro: Esta conta está suspensa. Entre em contato com o suporte se precisar de ajuda.");
+                setCarregando(false);
+                return;
+              }
+            }
+          }catch{}
+        }
         const [perfilRes, galeriasRes] = await Promise.all([
           supabase.from("perfis").select("nome_estudio").eq("id", data.user.id).maybeSingle(),
           supabase.from("galerias").select("id", { count: "exact", head: true }).eq("user_id", data.user.id),
