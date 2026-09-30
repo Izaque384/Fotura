@@ -120,6 +120,19 @@ export async function GET(req: NextRequest) {
         : `Snapshot disponível: ${recovery?.database?.galerias ?? 0} galerias, ${recovery?.database?.clientes ?? 0} clientes, ${recovery?.storage?.fotos_objetos ?? 0} objetos de fotos e ${recovery?.storage?.marca_objetos ?? 0} objetos de marca.`,
     });
 
+    const { data: isolamentoData, error: isolamentoError } = await supabase.rpc("tenant_isolation_audit_backend");
+    const isolamento = isolamentoData as { ok?: boolean; checked?: number; issues?: unknown[] } | null;
+    checks.push({
+      id: "tenant_isolation",
+      nome: "Isolamento entre contas",
+      status: isolamentoError || isolamento?.ok !== true ? "error" : "ok",
+      detalhe: isolamentoError
+        ? "Não foi possível auditar as políticas críticas de RLS."
+        : isolamento?.ok
+          ? `${isolamento.checked ?? 0} políticas críticas de isolamento conferidas, incluindo barreiras restritivas para contas suspensas.`
+          : `A auditoria encontrou ${isolamento?.issues?.length ?? 0} divergência(s) nas políticas críticas de RLS.`,
+    });
+
     const [pastDueRes, purgeRes, encerramentoRes, suspensaoRes] = await Promise.all([
       supabase.from("assinaturas").select("user_id", { count: "exact", head: true }).eq("status", "past_due"),
       supabase.from("admin_purges").select("user_id", { count: "exact", head: true }).in("execucao_etapa", ["falhou", "storage", "banco", "auth"]),
