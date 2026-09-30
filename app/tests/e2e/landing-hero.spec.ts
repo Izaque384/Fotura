@@ -11,7 +11,7 @@ test.describe("landing hero", () => {
     const theme = read("lavanda-moderna.css");
 
     expect(home).toContain('className="hero-showcase-photo"');
-    expect(home).toContain('aria-label="Casal em um momento íntimo no dia do casamento"');
+    expect(home).toContain('aria-label="Casal de noivos em um momento íntimo ao pôr do sol"');
     expect(home).not.toContain("hero-gallery-card");
     expect(home).not.toContain("hero-proof-card");
     expect(home).not.toContain("hero-showcase-glow");
