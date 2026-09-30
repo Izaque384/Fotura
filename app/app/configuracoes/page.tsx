@@ -5,8 +5,26 @@ import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
 import { desinscreverPush, definirPreferenciaPush, inscreverPush, notificacoesPushAtivadas } from "../../lib/push-client";
 import MenuFotografo from "../MenuFotografo";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 type Permissao = "granted" | "denied" | "default" | "unsupported";
+type EncerramentoEstado = {
+  encerramento: {
+    status: "pendente" | "confirmado" | "cancelado" | "executado";
+    motivo: string;
+    solicitado_em: string;
+    elegivel_em: string;
+    cancelado_em?: string | null;
+    confirmado_em?: string | null;
+    executado_em?: string | null;
+  } | null;
+  assinaturaAtiva: boolean;
+  cancelarNoFim: boolean;
+  contaAdministrativa: boolean;
+  prazoDias: number;
+  email: string | null;
+};
+type EncerramentoModo = "solicitar" | "confirmar" | null;
 
 function GoogleLogo(){return <svg className="google-logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.04H12v3.86h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.9-1.75 2.98-4.33 2.98-7.35Z"/><path fill="#34A853" d="M12 22c2.7 0 4.97-.9 6.62-2.42l-3.24-2.51c-.9.6-2.05.96-3.38.96-2.61 0-4.82-1.76-5.61-4.13H3.04v2.59A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.39 13.9A6 6 0 0 1 6.08 12c0-.66.11-1.3.31-1.9V7.51H3.04A10 10 0 0 0 2 12c0 1.61.38 3.14 1.04 4.49l3.35-2.59Z"/><path fill="#EA4335" d="M12 5.97c1.47 0 2.79.5 3.83 1.5l2.87-2.88A9.63 9.63 0 0 0 12 2a10 10 0 0 0-8.96 5.51l3.35 2.59C7.18 7.73 9.39 5.97 12 5.97Z"/></svg>}
 
@@ -24,6 +42,14 @@ export default function ConfiguracoesPage() {
   const [googleEmail,setGoogleEmail]=useState<string|null>(null);
   const [alterandoGoogle,setAlterandoGoogle]=useState(false);
   const [encerrando, setEncerrando] = useState(false);
+  const [exportandoDados,setExportandoDados]=useState(false);
+  const [encerramentoEstado,setEncerramentoEstado]=useState<EncerramentoEstado|null>(null);
+  const [encerramentoModo,setEncerramentoModo]=useState<EncerramentoModo>(null);
+  const [motivoEncerramento,setMotivoEncerramento]=useState("");
+  const [emailEncerramento,setEmailEncerramento]=useState("");
+  const [confirmacaoEncerramento,setConfirmacaoEncerramento]=useState("");
+  const [processandoEncerramento,setProcessandoEncerramento]=useState(false);
+  const [confirmarCancelamento,setConfirmarCancelamento]=useState(false);
   const [mensagem, setMensagem] = useState("");
   const [erro, setErro] = useState(false);
 
@@ -41,7 +67,21 @@ export default function ConfiguracoesPage() {
       setPermissao(p);
       setPushAtivo(p==="granted"&&notificacoesPushAtivadas());
       const {data:{session}}=await supabase.auth.getSession();
-      if(session?.access_token){try{const r=await fetch("/api/google/integration",{headers:{Authorization:`Bearer ${session.access_token}`},cache:"no-store"});if(r.ok){const g=await r.json() as {conectado?:boolean;email?:string|null;avatar?:string|null};if(ativo){setGoogleConectado(Boolean(g.conectado));setGoogleEmail(g.email??null);if(g.avatar)setAvatarConta(g.avatar)}}}catch{}}
+      if(session?.access_token){
+        const headers={Authorization:`Bearer ${session.access_token}`};
+        const [googleRes,encerramentoRes]=await Promise.allSettled([
+          fetch("/api/google/integration",{headers,cache:"no-store"}),
+          fetch("/api/account/closure",{headers,cache:"no-store"}),
+        ]);
+        if(googleRes.status==="fulfilled"&&googleRes.value.ok){
+          const g=await googleRes.value.json() as {conectado?:boolean;email?:string|null;avatar?:string|null};
+          if(ativo){setGoogleConectado(Boolean(g.conectado));setGoogleEmail(g.email??null);if(g.avatar)setAvatarConta(g.avatar)}
+        }
+        if(encerramentoRes.status==="fulfilled"&&encerramentoRes.value.ok){
+          const encerramento=await encerramentoRes.value.json() as EncerramentoEstado;
+          if(ativo)setEncerramentoEstado(encerramento);
+        }
+      }
       const param=new URLSearchParams(window.location.search).get("google");
       if(param==="conectado"){setErro(false);setMensagem("Google Contacts conectado. As fotos disponíveis nos seus contatos poderão aparecer nos cards de clientes.");}
       else if(param==="erro"){setErro(true);setMensagem("Não foi possível concluir a conexão com o Google.");}
@@ -83,6 +123,59 @@ export default function ConfiguracoesPage() {
     setGoogleConectado(false);setGoogleEmail(null);setMensagem("Google Contacts desconectado.");
   }
 
+  async function tokenAtual(){
+    const {data:{session}}=await supabase.auth.getSession();
+    return session?.access_token??null;
+  }
+
+  async function exportarDados(){
+    if(exportandoDados)return;
+    setExportandoDados(true);setMensagem("");setErro(false);
+    const token=await tokenAtual();
+    if(!token){setExportandoDados(false);setErro(true);setMensagem("Sua sessão expirou.");return}
+    try{
+      const r=await fetch("/api/account/export",{headers:{Authorization:`Bearer ${token}`},cache:"no-store"});
+      if(!r.ok){const d=await r.json().catch(()=>({error:"Não foi possível exportar seus dados."}));throw new Error(d.error||"Não foi possível exportar seus dados.")}
+      const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement("a");
+      const disposition=r.headers.get("content-disposition")||"";
+      const nome=disposition.match(/filename="([^"]+)"/)?.[1]||"fotura-dados.json";
+      a.href=url;a.download=nome;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+      setMensagem("Exportação preparada e baixada com sucesso.");
+    }catch(error){setErro(true);setMensagem(error instanceof Error?error.message:"Não foi possível exportar seus dados.")}
+    finally{setExportandoDados(false)}
+  }
+
+  async function recarregarEncerramento(){
+    const token=await tokenAtual();if(!token)return;
+    const r=await fetch("/api/account/closure",{headers:{Authorization:`Bearer ${token}`},cache:"no-store"});
+    if(r.ok)setEncerramentoEstado(await r.json() as EncerramentoEstado);
+  }
+
+  async function acaoEncerramento(acao:"solicitar"|"cancelar"|"confirmar"){
+    if(processandoEncerramento)return;
+    setProcessandoEncerramento(true);setMensagem("");setErro(false);
+    const token=await tokenAtual();
+    if(!token){setProcessandoEncerramento(false);setErro(true);setMensagem("Sua sessão expirou.");return}
+    const body:Record<string,string>={acao};
+    if(acao==="solicitar")body.motivo=motivoEncerramento.trim();
+    if(acao==="cancelar")body.motivo="Cancelamento solicitado pelo titular";
+    if(acao==="confirmar"){body.confirmacao=confirmacaoEncerramento.trim();body.emailConfirmacao=emailEncerramento.trim()}
+    try{
+      const r=await fetch("/api/account/closure",{method:"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify(body)});
+      const d=await r.json().catch(()=>({error:"Não foi possível concluir a ação."}));
+      if(!r.ok)throw new Error(d.error||"Não foi possível concluir a ação.");
+      if(acao==="confirmar"){
+        await supabase.auth.signOut();
+        router.replace("/login?encerrada=1");
+        return;
+      }
+      setMensagem(d.mensagem||"Alteração salva.");
+      setEncerramentoModo(null);setConfirmarCancelamento(false);setMotivoEncerramento("");setConfirmacaoEncerramento("");setEmailEncerramento("");
+      await recarregarEncerramento();
+    }catch(error){setErro(true);setMensagem(error instanceof Error?error.message:"Não foi possível concluir a ação.")}
+    finally{setProcessandoEncerramento(false)}
+  }
+
   async function encerrarOutrasSessoes() {
     if (encerrando) return;
     setEncerrando(true); setMensagem(""); setErro(false);
@@ -116,8 +209,10 @@ export default function ConfiguracoesPage() {
       .btn{height:34px;border:1px solid #D7D0E7;border-radius:9px;padding:0 11px;background:#FAF8FD;color:#596079;font-family:inherit;font-size:10.5px;font-weight:750;cursor:pointer;white-space:nowrap}.btn:hover:not(:disabled){background:#F0EBF7;border-color:#C8BEE0}.btn.primary{border:0;color:#fff;background:linear-gradient(90deg,#1196FC,#5D0DFA)}.btn.danger{color:#B95C66;border-color:#E7C7CC;background:#FAF0F2}.btn:disabled{opacity:.5;cursor:default}
       .wide-card{grid-column:1/-1;min-height:0}.links{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
       .notice{margin-top:4px;padding:10px 12px;border-radius:10px;font-size:10.5px;color:#3F7C5B;background:#EAF5EF;border:1px solid #CBE4D6}.notice.err{color:#A6535E;background:#FAF0F2;border-color:#E7C7CC}
+      .data-card{grid-column:1/-1;min-height:0}.data-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.data-status{margin-top:10px;padding:10px 11px;border-radius:10px;background:#F3EFF9;border:1px solid #E1DAEB;color:#666D84;font-size:10px;line-height:1.5}.data-status strong{color:#33394F}.btn.danger-strong{background:#B84B58;color:#fff;border-color:#B84B58}.btn.danger-strong:hover{background:#A94450}
+      .closure-modal{position:fixed;inset:0;z-index:170;display:grid;place-items:center;padding:18px;background:rgba(3,3,12,.76)}.closure-box{width:min(460px,100%);box-sizing:border-box;padding:20px;border:1px solid #D7D0E7;border-radius:16px;background:#FAF8FD;box-shadow:0 24px 70px rgba(0,0,0,.28)}.closure-box h2{margin:0;color:#292E45;font-size:17px}.closure-box p{margin:8px 0 14px;color:#73758D;font-size:10.5px;line-height:1.55}.closure-field{display:grid;gap:5px;margin-top:10px}.closure-field span{font-size:9px;font-weight:750;color:#596079}.closure-field input,.closure-field textarea{width:100%;box-sizing:border-box;border:1px solid #D7D0E7;border-radius:10px;background:#F3EFF9;color:#292E45;padding:10px 11px;font:500 11px inherit;outline:0}.closure-field textarea{min-height:84px;resize:vertical}.closure-field input:focus,.closure-field textarea:focus{border-color:#8D7BC1;box-shadow:0 0 0 3px rgba(93,13,250,.08)}.closure-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
       @media(max-width:900px){.cfg-body{padding:46px 32px 70px}.grid{grid-template-columns:1fr}.wide-card{grid-column:auto}}
-      @media(max-width:640px){.cfg-body{padding:76px 16px 60px}.h1{font-size:25px}.account-card{align-items:flex-start;flex-direction:column}.setting-bottom{align-items:flex-start;flex-direction:column}.btn{width:100%}.links{width:100%}.links .btn{width:auto}}
+      @media(max-width:640px){.cfg-body{padding:76px 16px 60px}.h1{font-size:25px}.account-card{align-items:flex-start;flex-direction:column}.setting-bottom{align-items:flex-start;flex-direction:column}.btn{width:100%}.links{width:100%}.links .btn{width:auto}.data-actions{width:100%}.closure-actions{flex-direction:column-reverse}.closure-actions .btn{width:100%}}
     `}</style>
 
     <div className="cfg-body">
@@ -195,6 +290,23 @@ export default function ConfiguracoesPage() {
           </div>
         </section>
 
+        <section className="setting-card data-card">
+          <div className="setting-top">
+            <div className="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M5 19h14"/></svg></div>
+            <div className="setting-copy"><h2 className="title">Seus dados e encerramento</h2><p className="desc">Baixe uma cópia estruturada dos dados da sua conta ou inicie um encerramento com período de segurança.</p></div>
+          </div>
+          {encerramentoEstado?.encerramento?.status==="pendente"&&<div className="data-status"><strong>Encerramento solicitado.</strong> Você pode cancelar até a confirmação final. A confirmação fica disponível em {new Date(encerramentoEstado.encerramento.elegivel_em).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}.</div>}
+          {encerramentoEstado?.encerramento?.status==="confirmado"&&<div className="data-status"><strong>Encerramento confirmado.</strong> O conteúdo público foi bloqueado e a exclusão definitiva segue o fluxo administrativo de segurança.</div>}
+          <div className="data-actions">
+            <button className="btn" disabled={exportandoDados} onClick={()=>void exportarDados()}>{exportandoDados?"Preparando…":"Exportar meus dados"}</button>
+            {!encerramentoEstado?.contaAdministrativa&&(!encerramentoEstado?.encerramento||["cancelado"].includes(encerramentoEstado.encerramento.status))&&<button className="btn danger" onClick={()=>setEncerramentoModo("solicitar")}>Solicitar encerramento</button>}
+            {encerramentoEstado?.encerramento?.status==="pendente"&&<>
+              <button className="btn" onClick={()=>setConfirmarCancelamento(true)}>Cancelar solicitação</button>
+              <button className="btn danger-strong" disabled={Date.now()<new Date(encerramentoEstado.encerramento.elegivel_em).getTime()} onClick={()=>{setEmailEncerramento(email);setEncerramentoModo("confirmar")}}>Confirmar encerramento</button>
+            </>}
+          </div>
+        </section>
+
         <section className="setting-card wide-card">
           <div className="setting-top">
             <div className="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 3h9l3 3v15H6z"/><path d="M15 3v4h4M9 12h6M9 16h6"/></svg></div>
@@ -209,5 +321,34 @@ export default function ConfiguracoesPage() {
 
       {mensagem&&<div role={erro?"alert":"status"} className={"notice"+(erro?" err":"")}>{mensagem}</div>}
     </div>
+
+    {encerramentoModo&&<div className="closure-modal" onMouseDown={e=>{if(e.target===e.currentTarget&&!processandoEncerramento)setEncerramentoModo(null)}}>
+      <section className="closure-box" role="dialog" aria-modal="true" aria-label={encerramentoModo==="solicitar"?"Solicitar encerramento da conta":"Confirmar encerramento da conta"}>
+        <h2>{encerramentoModo==="solicitar"?"Solicitar encerramento":"Confirmar encerramento"}</h2>
+        {encerramentoModo==="solicitar"?<>
+          <p>O pedido fica em período de segurança por 7 dias e pode ser cancelado. Nenhum dado é apagado nesta etapa.</p>
+          <label className="closure-field"><span>Motivo</span><textarea value={motivoEncerramento} onChange={e=>setMotivoEncerramento(e.target.value)} maxLength={500} placeholder="Conte brevemente por que deseja encerrar a conta."/></label>
+        </>:<>
+          <p>Antes de continuar, exporte seus dados. A confirmação bloqueia o acesso e as galerias públicas. A exclusão física só ocorre depois pelo fluxo administrativo de segurança.</p>
+          <label className="closure-field"><span>E-mail da conta</span><input value={emailEncerramento} onChange={e=>setEmailEncerramento(e.target.value)} autoComplete="email"/></label>
+          <label className="closure-field"><span>Digite ENCERRAR</span><input value={confirmacaoEncerramento} onChange={e=>setConfirmacaoEncerramento(e.target.value)} autoComplete="off"/></label>
+        </>}
+        <div className="closure-actions">
+          <button className="btn" disabled={processandoEncerramento} onClick={()=>setEncerramentoModo(null)}>Voltar</button>
+          <button className="btn danger-strong" disabled={processandoEncerramento||(encerramentoModo==="solicitar"&&motivoEncerramento.trim().length<8)||(encerramentoModo==="confirmar"&&(confirmacaoEncerramento.trim().toUpperCase()!=="ENCERRAR"||emailEncerramento.trim().toLowerCase()!==email.trim().toLowerCase()))} onClick={()=>void acaoEncerramento(encerramentoModo)}>{processandoEncerramento?"Aguarde…":encerramentoModo==="solicitar"?"Solicitar":"Confirmar encerramento"}</button>
+        </div>
+      </section>
+    </div>}
+
+    <ConfirmDialog
+      open={confirmarCancelamento}
+      title="Cancelar solicitação de encerramento?"
+      description="A conta continuará ativa e nenhum dado será removido."
+      confirmLabel="Cancelar solicitação"
+      danger={false}
+      loading={processandoEncerramento}
+      onCancel={()=>setConfirmarCancelamento(false)}
+      onConfirm={()=>void acaoEncerramento("cancelar")}
+    />
   </main>;
 }
