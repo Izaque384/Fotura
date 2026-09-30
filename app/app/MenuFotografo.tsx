@@ -60,6 +60,29 @@ export default function MenuFotografo() {
   }, [supabase]);
 
   useEffect(() => {
+    if (!uid) return;
+    let ativo = true;
+    void (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
+        if (!token) return;
+        const resposta = await fetch("/api/billing/status", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        if (!resposta.ok) return;
+        const body = await resposta.json() as { suspensao?: { ativa?: boolean } };
+        if (ativo && body.suspensao?.ativa) {
+          await supabase.auth.signOut();
+          router.replace("/login?suspensa=1");
+        }
+      } catch {}
+    })();
+    return () => { ativo = false; };
+  }, [router, supabase, uid]);
+
+  useEffect(() => {
     if (!uid) { setAdmin(false); return; }
     let ativo = true;
     void (async () => {
