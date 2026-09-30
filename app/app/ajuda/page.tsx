@@ -123,9 +123,9 @@ export default function AjudaPage() {
 
   return <>
     <MenuFotografo />
-    <main className="mf-shift help">
+    <main className="help">
       <style>{`
-        .help{min-height:100vh;background:linear-gradient(180deg,#F5F3FB,#EEEAF8);color:#21253A;padding:68px 42px 70px;box-sizing:border-box;font-family:Sora,sans-serif}
+        .help{min-height:100vh;margin-left:236px;background:linear-gradient(180deg,#F5F3FB,#EEEAF8);color:#21253A;padding:68px 42px 70px;box-sizing:border-box;font-family:Sora,sans-serif}
         .help-wrap{max-width:1120px;margin:0 auto}.ey{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#7B7399}.help h1{font-size:30px;margin:7px 0 8px;letter-spacing:-.7px}.intro{max-width:650px;margin:0;color:#73758D;font-size:12px;line-height:1.65}
         .layout{display:grid;grid-template-columns:minmax(0,.9fr) minmax(360px,1.1fr);gap:18px;margin-top:25px}.panel{background:#FAF8FD;border:1px solid #DCD6EE;border-radius:17px;padding:20px;box-shadow:0 12px 34px rgba(50,35,86,.035)}
         .panel h2{font-size:16px;margin:0 0 5px}.small{font-size:10.5px;color:#7B7E93;line-height:1.55;margin:0}
@@ -137,7 +137,7 @@ export default function AjudaPage() {
         .rating{display:flex;gap:6px}.rate{width:35px;height:34px;border:1px solid #D8D1E5;border-radius:9px;background:#F4F0F8;color:#666D84;font:700 11px inherit;cursor:pointer}.rate.on{border-color:#7C68BC;background:#EEE8FA;color:#493C73}
         .submit-line{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:2px}.submit{border:0;border-radius:10px;background:linear-gradient(135deg,#1196fc,#5d0dfa);color:#fff;padding:10px 15px;font:700 10.5px inherit;cursor:pointer}.submit:disabled{opacity:.55;cursor:not-allowed}.origin{font-size:9px;color:#9495A5;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .notice{margin-top:12px;padding:10px 12px;border-radius:10px;border:1px solid #CBE4D6;background:#EAF5EF;color:#3F7C5B;font-size:10.5px}.notice.err{border-color:#E7C7CC;background:#FAF0F2;color:#A6535E}
-        @media(max-width:850px){.help{padding:72px 24px 60px}.layout{grid-template-columns:1fr}.panel.form-panel{order:-1}}@media(max-width:640px){.help{padding:76px 16px 50px}.help h1{font-size:25px}.row2{grid-template-columns:1fr}.tabs{grid-template-columns:1fr}.submit-line{align-items:stretch;flex-direction:column}.origin{max-width:100%}.submit{width:100%}}
+        @media(min-width:641px) and (max-width:980px){.help{margin-left:72px}}@media(max-width:850px){.help{padding:72px 24px 60px}.layout{grid-template-columns:1fr}.panel.form-panel{order:-1}}@media(max-width:640px){.help{margin-left:0;padding:76px 16px 50px}.help h1{font-size:25px}.row2{grid-template-columns:1fr}.tabs{grid-template-columns:1fr}.submit-line{align-items:stretch;flex-direction:column}.origin{max-width:100%}.submit{width:100%}}
       `}</style>
       <div className="help-wrap">
         <div className="ey">Suporte do Fotura</div>
