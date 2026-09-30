@@ -72,6 +72,16 @@ export default function SelecoesPage() {
   const [itens, setItens] = useState<Item[]>([]);
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [filtroAberto, setFiltroAberto] = useState(false);
+  useEffect(() => {
+    const fora = (e: PointerEvent) => {
+      const alvo = e.target;
+      if (!(alvo instanceof Element) || !alvo.closest(".filter-wrap")) setFiltroAberto(false);
+    };
+    const tecla = (e: KeyboardEvent) => { if (e.key === "Escape") setFiltroAberto(false); };
+    document.addEventListener("pointerdown", fora);
+    window.addEventListener("keydown", tecla);
+    return () => { document.removeEventListener("pointerdown", fora); window.removeEventListener("keydown", tecla); };
+  }, []);
   const [busca, setBusca] = useState("");
   const [modal, setModal] = useState<string | null>(null);
 
