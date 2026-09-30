@@ -50,6 +50,8 @@ test("cliente seleciona, comenta e finaliza uma prova", async ({ page }) => {
   await page.goto("/g/galeria-e2e");
   await expect(page.getByRole("heading", { name: "Ensaio E2E" })).toBeVisible();
   await expect(page.getByText("2 fotos")).toBeVisible();
+  await expect(page.locator(".gc-grid-col")).toHaveCount(4);
+  await expect(page.locator(".gc-grid-img").first()).toHaveAttribute("loading", "eager");
 
   const cards = page.locator(".gc-card");
   await cards.nth(0).getByRole("button", { name: "Selecionar" }).click();
