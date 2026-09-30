@@ -47,7 +47,7 @@ test("cliente seleciona, comenta e finaliza uma prova", async ({ page }) => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) });
   });
 
-  await page.goto("/g/galeria-e2e");
+  await page.goto("/g/00000000-0000-4000-8000-000000000001");
   await expect(page.getByRole("heading", { name: "Ensaio E2E" })).toBeVisible();
   await expect(page.getByText("2 fotos")).toBeVisible();
   await expect(page.locator(".gc-grid-col")).toHaveCount(4);
@@ -119,7 +119,7 @@ test("lightbox de entrega carrega a foto original antes de exibir", async ({ pag
     });
   });
 
-  await page.goto("/g/entrega-alta-e2e");
+  await page.goto("/g/00000000-0000-4000-8000-000000000002");
   await page.locator(".gc-card img").click();
   await expect(page.getByRole("dialog", { name: "Foto 1 de 1" })).toBeVisible();
   await expect(page.locator(".gc-photo img")).toHaveAttribute("src", /Original%20em%20alta/);
@@ -169,7 +169,7 @@ test("senha incorreta não libera a galeria e senha correta libera", async ({ pa
     });
   });
 
-  await page.goto("/g/protegida-e2e");
+  await page.goto("/g/00000000-0000-4000-8000-000000000003");
   await expect(page.getByRole("heading", { name: "Galeria protegida" })).toBeVisible();
 
   const senha = page.getByPlaceholder("Senha");
@@ -206,7 +206,7 @@ test("link expirado mostra estado bloqueado", async ({ page }) => {
     });
   });
 
-  await page.goto("/g/expirada-e2e");
+  await page.goto("/g/00000000-0000-4000-8000-000000000004");
   await expect(page.getByRole("heading", { name: "Este link expirou" })).toBeVisible();
   await expect(page.getByText("O prazo de acesso a esta galeria terminou.")).toBeVisible();
 });
