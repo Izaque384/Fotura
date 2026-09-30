@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { registrarErro } from "../../../../lib/observability";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
+import { consumirRateLimit } from "../../../../lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -69,6 +70,8 @@ export async function POST(req: NextRequest) {
   const auth = await autenticar(req);
   if (!auth) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   const { supabase, user } = auth;
+  const permitido = await consumirRateLimit(req, "account_closure", user.id, 10 * 60, 10);
+  if (!permitido) return NextResponse.json({ error: "Muitas tentativas em pouco tempo. Aguarde alguns minutos." }, { status: 429, headers: { "Retry-After": "600" } });
   const body = await req.json().catch(() => null) as Body | null;
   const acao = body?.acao;
   if (!acao || !["solicitar", "cancelar", "confirmar"].includes(acao)) {
