@@ -10,6 +10,21 @@ test.describe("contrato de planos e armazenamento", () => {
     expect(PLANOS_FOTURA.profissional.limites.armazenamentoGb).toBe(50);
     expect(PLANOS_FOTURA.studio.limites.armazenamentoGb).toBe(100);
 
+
+    expect(PLANOS_FOTURA.gratis.recursos.heroEstudio).toBe(false);
+    expect(PLANOS_FOTURA.gratis.recursos.heroPremiumTech).toBe(false);
+    expect(PLANOS_FOTURA.gratis.recursos.heroFotoGaleria).toBe(false);
+
+    expect(PLANOS_FOTURA.essencial.recursos.heroEstudio).toBe(true);
+    expect(PLANOS_FOTURA.essencial.recursos.heroPremiumTech).toBe(false);
+    expect(PLANOS_FOTURA.essencial.recursos.heroFotoGaleria).toBe(false);
+
+    for (const codigo of ["profissional", "studio"] as const) {
+      expect(PLANOS_FOTURA[codigo].recursos.heroEstudio).toBe(true);
+      expect(PLANOS_FOTURA[codigo].recursos.heroPremiumTech).toBe(true);
+      expect(PLANOS_FOTURA[codigo].recursos.heroFotoGaleria).toBe(true);
+    }
+
     const landing = fs.readFileSync(
       path.join(process.cwd(), "app", "HomeClient.tsx"),
       "utf8",
