@@ -72,9 +72,58 @@ export async function POST(req:NextRequest){
   const titulo=escapeHtml(g.titulo||"Sua galeria");
   const nome=escapeHtml(cliente.nome||"cliente");
   const estudio=escapeHtml(studio);
-  const prazo=g.prova&&g.prazo?`<p style="margin:0 0 18px;color:#70748a;font-size:14px">Prazo para seleção: <strong>${escapeHtml(String(g.prazo))}</strong></p>`:"";
-  const validade=g.link_ate?`<p style="margin:0 0 18px;color:#70748a;font-size:14px">Link disponível até: <strong>${escapeHtml(String(g.link_ate))}</strong></p>`:"";
-  const html=`<!doctype html><html><body style="margin:0;background:#0b0b1a;font-family:Arial,sans-serif;color:#f0f0f5"><div style="max-width:620px;margin:0 auto;padding:42px 20px"><div style="font-weight:800;letter-spacing:3px;margin-bottom:28px">FOTURA</div><div style="background:#14142b;border:1px solid #23233c;border-radius:18px;padding:30px"><p style="margin:0 0 8px;color:#8c91aa;font-size:14px">Olá, ${nome}.</p><h1 style="font-size:25px;margin:0 0 12px">Sua galeria está disponível</h1><p style="color:#9ba0b8;line-height:1.6;margin:0 0 22px">${estudio} compartilhou a galeria <strong style="color:#fff">${titulo}</strong> com você.</p>${prazo}${validade}<a href="${link}" style="display:inline-block;background:linear-gradient(90deg,#1196fc,#5d0dfa);color:#fff;text-decoration:none;font-weight:700;padding:13px 20px;border-radius:11px">Ver galeria</a><p style="margin:24px 0 0;color:#666c86;font-size:12px;line-height:1.5">Se o botão não abrir, copie este endereço:<br>${link}</p></div></div></body></html>`;
+  const prazo=g.prova&&g.prazo?`<p style="margin:0 0 18px;color:#73758D;font-size:14px">Prazo para seleção: <strong style="color:#2A2F46">${escapeHtml(String(g.prazo))}</strong></p>`:"";
+  const validade=g.link_ate?`<p style="margin:0 0 18px;color:#73758D;font-size:14px">Link disponível até: <strong style="color:#2A2F46">${escapeHtml(String(g.link_ate))}</strong></p>`:"";
+  const logoUrl=`${origin}/icon-192.png`;
+  const html=`<!doctype html>
+<html lang="pt-BR">
+  <body style="margin:0;padding:0;background:#F0EDF7;font-family:Arial,Helvetica,sans-serif;color:#21253A">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#F0EDF7">
+      <tr>
+        <td align="center" style="padding:36px 16px">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:620px">
+            <tr>
+              <td style="padding:0 4px 18px">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td style="vertical-align:middle;padding-right:10px">
+                      <img src="${logoUrl}" width="34" height="34" alt="Fotura" style="display:block;width:34px;height:34px;border:0;border-radius:8px">
+                    </td>
+                    <td style="vertical-align:middle;font-size:18px;font-weight:800;letter-spacing:3px;color:#21253A">FOTURA</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#FAF8FD;border:1px solid #DCD6EE;border-radius:18px;padding:32px 30px;box-shadow:0 10px 30px rgba(65,52,111,.06)">
+                <p style="margin:0 0 8px;color:#777D93;font-size:14px;line-height:1.5">Olá, ${nome}.</p>
+                <h1 style="margin:0 0 12px;color:#21253A;font-size:27px;line-height:1.18;letter-spacing:-.4px">Sua galeria está disponível</h1>
+                <p style="margin:0 0 22px;color:#73758D;font-size:15px;line-height:1.65">${estudio} compartilhou a galeria <strong style="color:#2A2F46">${titulo}</strong> com você.</p>
+                ${prazo}
+                ${validade}
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 24px">
+                  <tr>
+                    <td style="border-radius:10px;background:#5D0DFA;background-image:linear-gradient(90deg,#1196FC,#5D0DFA)">
+                      <a href="${link}" style="display:inline-block;padding:13px 20px;color:#FFFFFF;text-decoration:none;font-size:14px;font-weight:700;line-height:1">Ver galeria</a>
+                    </td>
+                  </tr>
+                </table>
+                <div style="height:1px;background:#E5E0EC;margin:0 0 18px"></div>
+                <p style="margin:0;color:#8A8FA3;font-size:12px;line-height:1.55">Se o botão não abrir, copie este endereço:</p>
+                <p style="margin:5px 0 0;font-size:12px;line-height:1.55;word-break:break-all"><a href="${link}" style="color:#5D55A0;text-decoration:underline">${link}</a></p>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:18px 20px 0;color:#989AAC;font-size:11px;line-height:1.5">
+                Entrega realizada com Fotura
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
 
   let response:Response;
   try{
