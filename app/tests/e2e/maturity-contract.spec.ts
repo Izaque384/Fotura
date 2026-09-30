@@ -40,7 +40,9 @@ test.describe("contratos de maturidade operacional", () => {
   test("configurações expõem portabilidade e encerramento reversível", () => {
     const source = read("app/configuracoes/page.tsx");
     expect(source).toContain("Exportar meus dados");
-    expect(source).toContain("Solicitar encerramento");
+    expect(source).toContain("Encerrar conta");
+    expect(source).toContain("Conta administrativa.");
+    expect(source).toContain("transfira o controle administrativo");
     expect(source).toContain("Cancelar solicitação");
     expect(source).toContain("Digite ENCERRAR");
   });
