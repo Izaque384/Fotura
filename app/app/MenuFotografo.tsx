@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "../lib/supabase-client";
 
-type T = "painel" | "galerias" | "selecoes" | "vendas" | "clientes" | "assinatura" | "config" | "admin" | "sair" | "menu" | "fechar";
+type T = "painel" | "galerias" | "selecoes" | "vendas" | "clientes" | "assinatura" | "ajuda" | "config" | "admin" | "sair" | "menu" | "fechar";
 
 function Icone({ tipo }: { tipo: T }) {
   const common = { "aria-hidden": true as const };
@@ -14,6 +14,7 @@ function Icone({ tipo }: { tipo: T }) {
   if (tipo === "vendas") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 7h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M8 12h8M12 9v6"/></svg>;
   if (tipo === "clientes") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3.5 2.3-5.3 5.5-5.3s5 1.8 5.5 5.3M16 8.5a2.5 2.5 0 1 1 0 5M17 14.5c2.2.4 3.3 1.8 3.5 4.5"/></svg>;
   if (tipo === "assinatura") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M7 14h4"/></svg>;
+  if (tipo === "ajuda") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.3 2.3 0 1 1 3.7 1.8c-.9.6-1.5 1-1.5 2.2"/><path d="M12 17h.01"/></svg>;
   if (tipo === "config") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 7h16M4 17h16"/><circle cx="10" cy="7" r="2"/><circle cx="15" cy="17" r="2"/></svg>;
   if (tipo === "admin") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3 20 6v5c0 5-3.2 8.3-8 10-4.8-1.7-8-5-8-10V6l8-3Z"/><path d="M9 12h6M12 9v6"/></svg>;
   if (tipo === "sair") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M15 12H4M8 8l-4 4 4 4M13 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"/></svg>;
@@ -215,7 +216,7 @@ export default function MenuFotografo() {
   useEffect(() => { setDrawer(false); setDragProgress(null); }, [pathname]);
 
   useEffect(() => {
-    ["/dashboard", "/dashboard/galerias", "/dashboard/selecoes", "/dashboard/vendas", "/dashboard/clientes", "/dashboard/assinatura", "/configuracoes", "/perfil", "/upload"].forEach((rota) => router.prefetch(rota));
+    ["/dashboard", "/dashboard/galerias", "/dashboard/selecoes", "/dashboard/vendas", "/dashboard/clientes", "/dashboard/assinatura", "/ajuda", "/configuracoes", "/perfil", "/upload"].forEach((rota) => router.prefetch(rota));
   }, [router]);
 
   useEffect(() => {
@@ -250,10 +251,15 @@ export default function MenuFotografo() {
     { rota: "/dashboard/vendas", label: "Vendas", tipo: "vendas" },
     { rota: "/dashboard/clientes", label: "Clientes", tipo: "clientes" },
     { rota: "/dashboard/assinatura", label: "Planos", tipo: "assinatura", exato: true },
+    { rota: "/ajuda", label: "Ajuda e feedback", tipo: "ajuda", exato: true },
     { rota: "/configuracoes", label: "Configurações", tipo: "config", exato: true },
   ];
 
   function navegar(item: { rota: string; tipo: T }) {
+    if (item.tipo === "ajuda") {
+      router.push(`/ajuda?origem=${encodeURIComponent(pathname || "/dashboard")}`);
+      return;
+    }
     if (item.tipo === "selecoes" && uid && selecoesNaoLidas > 0) {
       const anterior = selecoesNaoLidas;
       setSelecoesNaoLidas(0);
