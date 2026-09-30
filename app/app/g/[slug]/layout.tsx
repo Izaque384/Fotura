@@ -42,13 +42,11 @@ export async function generateMetadata({
       url,
       siteName: "Fotura",
       type: "website",
-      images: [],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title,
       description,
-      images: [],
     },
     robots: {
       index: false,
