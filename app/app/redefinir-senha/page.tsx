@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createClient } from "../../lib/supabase-client";
 
 function senhaValida(senha: string) {
-  return senha.length >= 6 && senha.length <= 128;
+  return senha.length >= 8 && senha.length <= 128;
 }
 
 export default function RedefinirSenhaPage() {
@@ -50,7 +50,7 @@ export default function RedefinirSenhaPage() {
     setMensagem("");
 
     if (!senhaValida(novaSenha)) {
-      setErro("Use pelo menos 6 caracteres.");
+      setErro("Use pelo menos 8 caracteres.");
       return;
     }
     if (novaSenha !== confirmar) {
@@ -91,7 +91,7 @@ export default function RedefinirSenhaPage() {
           <>
             <label style={{fontSize:13,color:"#5F657D",display:"block",marginBottom:6}}>Nova senha</label>
             <input type="password" autoComplete="new-password" maxLength={128} value={novaSenha} onChange={(e)=>setNovaSenha(e.target.value)} placeholder="••••••••" style={inputStyle} />
-            <p style={{fontSize:11,color:"#8A8CA1",margin:"-10px 0 18px"}}>Mínimo de 6 caracteres.</p>
+            <p style={{fontSize:11,color:"#8A8CA1",margin:"-10px 0 18px"}}>Mínimo de 8 caracteres.</p>
             <label style={{fontSize:13,color:"#5F657D",display:"block",marginBottom:6}}>Confirmar nova senha</label>
             <input type="password" autoComplete="new-password" maxLength={128} value={confirmar} onChange={(e)=>setConfirmar(e.target.value)} onKeyDown={(e)=>e.key === "Enter" && handleRedefinir()} placeholder="••••••••" style={{...inputStyle,marginBottom:24}} />
             <button onClick={handleRedefinir} disabled={carregando} style={{width:"100%",padding:"13px",fontSize:14,fontWeight:600,color:"#fff",background:carregando?"#7D83C8":"linear-gradient(90deg,#1196fc,#5d0dfa)",border:"none",borderRadius:10,cursor:carregando?"default":"pointer"}}>{carregando?"Salvando...":"Redefinir senha"}</button>
