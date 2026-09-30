@@ -106,7 +106,7 @@ export default function ConfirmDialog({
           borderRadius: 16,
           padding: "clamp(18px, 5vw, 22px)",
           boxShadow: "0 24px 70px rgba(0,0,0,.45)",
-          color: "#f0f0f5",
+          color: "#21253A",
           boxSizing: "border-box",
         }}
       >
@@ -115,7 +115,7 @@ export default function ConfirmDialog({
         </h2>
         <p
           id={descriptionId}
-          style={{ margin: "10px 0 20px", color: "#8d92aa", fontSize: 13, lineHeight: 1.6 }}
+          style={{ margin: "10px 0 20px", color: "#73758D", fontSize: 13, lineHeight: 1.6 }}
         >
           {description}
         </p>
@@ -130,8 +130,8 @@ export default function ConfirmDialog({
               border: "1px solid #D7D0E7",
               borderRadius: 10,
               padding: "10px 14px",
-              color: "#c6cad8",
-              background: "#EEEAF8",
+              color: "#596079",
+              background: "#F3EFF9",
               font: "600 13px inherit",
               cursor: loading ? "default" : "pointer",
               opacity: loading ? 0.65 : 1,
