@@ -53,7 +53,7 @@ export default function StorageUsageIndicator() {
   const alerta = !ilimitado && percentual >= 85;
 
   return (
-    <button type="button" className={`storage-usage${alerta ? " storage-usage--alert" : ""}`} aria-label="Abrir central de armazenamento" onClick={() => router.push("/dashboard/armazenamento")}>
+    <button type="button" className={`storage-usage${alerta ? " storage-usage--alert" : ""}`} aria-label="Ver plano e armazenamento" onClick={() => router.push("/dashboard/assinatura")}>
       <div className="storage-usage__head">
         <span>Armazenamento</span>
         <strong>{ilimitado ? "Ilimitado" : `${percentual}%`}</strong>
