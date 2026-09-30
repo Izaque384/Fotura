@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { registrarErro } from "../../../../lib/observability";
+import { consumirRateLimit } from "../../../../lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -19,6 +20,8 @@ export async function GET(req: NextRequest) {
   const auth = await autenticar(req);
   if (!auth) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   const { supabase, user } = auth;
+  const permitido = await consumirRateLimit(req, "account_export", user.id, 10 * 60, 3);
+  if (!permitido) return NextResponse.json({ error: "Muitas exportações em pouco tempo. Aguarde alguns minutos." }, { status: 429, headers: { "Retry-After": "600" } });
 
   try {
     const [
