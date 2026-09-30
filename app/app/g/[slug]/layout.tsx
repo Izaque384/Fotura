@@ -10,6 +10,13 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const podeResolver = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  if (!podeResolver) {
+    return {
+      title: "Galeria — Fotura",
+      robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
+    };
+  }
   const galeria = await resolvePublicGalleryRef(slug);
   if (!galeria) {
     return {
@@ -64,7 +71,8 @@ export default async function GalleryLayout({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const galeria = await resolvePublicGalleryRef(slug);
+  const podeResolver = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const galeria = podeResolver ? await resolvePublicGalleryRef(slug) : null;
   return (
     <>
       <GalleryAnalytics galeriaId={galeria?.id ?? slug} />
