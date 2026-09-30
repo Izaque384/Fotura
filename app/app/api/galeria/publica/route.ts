@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
+import { publicGalleryRef } from "../../../../lib/gallery-links";
 import { temAcessoGaleria } from "../../../../lib/gallery-access";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { uuidValido } from "../../../../lib/validation";
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galeriaError } = await supabase
     .from("galerias")
-    .select("user_id,titulo,capa,prova,limite,prazo,link_ate,tem_senha,etapa,entrega_publicada_em,venda_extras_ativa,preco_foto_extra_centavos")
+    .select("id,user_id,slug,titulo,capa,prova,limite,prazo,link_ate,tem_senha,etapa,entrega_publicada_em,venda_extras_ativa,preco_foto_extra_centavos")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -111,6 +112,7 @@ export async function GET(req: NextRequest) {
       precoFotoExtraCentavos: vendaExtrasAtiva ? precoExtra : null,
       etapa: (g.etapa as string | null) ?? (g.prova ? "prova" : "entrega"),
       entregaPublicadaEm: (g.entrega_publicada_em as string | null) ?? null,
+      publicRef: publicGalleryRef(String(g.slug || "galeria"), String(g.id)),
     },
     perfil: perfil ? {
       nome: (perfil.nome_estudio as string | null) ?? null,
