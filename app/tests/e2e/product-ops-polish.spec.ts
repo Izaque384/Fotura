@@ -11,13 +11,12 @@ test.describe("product ops polish",()=>{
   expect(dataCalendarioExpirada("2026-09-25",new Date("2026-09-26T02:59:59Z"))).toBe(false);
   expect(dataCalendarioExpirada("2026-09-25",new Date("2026-09-26T03:00:00Z"))).toBe(true);
  });
- test("gallery cleanup includes final delivery trees",()=>{
-  const cron=read("app/api/cron/expirar/route.ts");
+ test("manual gallery deletion includes final delivery trees and auto-delete stays disabled",()=>{
   const del=read("app/api/galeria/excluir/route.ts");
-  for(const source of [cron,del]){
-   expect(source).toContain("/entrega");
-   expect(source).toContain("/entrega/thumbs");
-  }
+  const vercel=read("vercel.json");
+  expect(del).toContain("/entrega");
+  expect(del).toContain("/entrega/thumbs");
+  expect(vercel).not.toContain("/api/cron/expirar");
  });
  test("Stripe photo-sale webhook reconciles a session race safely",()=>{
   const source=read("app/api/vendas/webhook/route.ts");
@@ -34,7 +33,7 @@ test.describe("product ops polish",()=>{
  });
  test("storage indicator no longer uses the legacy dark card",()=>{
   const source=read("app/dashboard/StorageUsageIndicator.tsx");
-  expect(source).toContain("/dashboard/armazenamento");
+  expect(source).toContain("/dashboard/assinatura");
   expect(source).not.toContain("rgba(20,20,43,.96)");
   expect(source).not.toContain("rgba(14,14,31,.96)");
  });
