@@ -56,8 +56,8 @@ test.describe("contrato de planos e armazenamento", () => {
     expect(signed).toContain("plano.recursos.heroFotoGaleria");
     expect(signed).not.toContain("Boolean(g.hero_fundo_foto)");
 
-    expect(galerias).toContain("Uma capa, dois usos");
-    expect(galerias).toContain("Profissional e Studio");
+    expect(galerias).toContain("Define a imagem de identificação da galeria");
+    expect(galerias).toContain("Profissional ou Studio");
     expect(perfil).toContain("Usar a capa da galeria como fundo do hero");
     expect(perfil).not.toContain('router.push("/dashboard/heros")');
   });
