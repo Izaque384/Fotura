@@ -23,6 +23,11 @@ export default function LoginPage() {
   const supabase = createClient();
 
   useEffect(() => {
+    if (searchParams.get("confirmado") === "1") {
+      setModo("login");
+      setMensagem("E-mail confirmado. Entre para continuar.");
+      return;
+    }
     if (searchParams.get("modo") === "cadastro") setModo("cadastro");
   }, [searchParams]);
 
@@ -63,12 +68,17 @@ export default function LoginPage() {
         setMensagem("Conta criada! Verifique seu e-mail para confirmar.");
       }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email: emailNormalizado, password: senha });
-      if (error) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email: emailNormalizado, password: senha });
+      if (error || !data.user) {
         setMensagem("Erro: E-mail ou senha inválidos.");
       } else {
-        setMensagem("Login feito com sucesso!");
-        router.push("/dashboard");
+        const [perfilRes, galeriasRes] = await Promise.all([
+          supabase.from("perfis").select("nome_estudio").eq("id", data.user.id).maybeSingle(),
+          supabase.from("galerias").select("id", { count: "exact", head: true }).eq("user_id", data.user.id),
+        ]);
+        const perfilConfigurado = Boolean((perfilRes.data?.nome_estudio as string | null)?.trim());
+        const temGaleria = (galeriasRes.count ?? 0) > 0;
+        router.push(!perfilConfigurado && !temGaleria ? "/dashboard/onboarding" : "/dashboard");
       }
     }
 
