@@ -8,7 +8,7 @@ import { createClient } from "../../lib/supabase-client";
 const ORIGEM_PRODUCAO = "https://foturax.com.br";
 
 function senhaCadastroValida(senha: string) {
-  return senha.length >= 6 && senha.length <= 128;
+  return senha.length >= 8 && senha.length <= 128;
 }
 
 export default function LoginPage() {
@@ -59,7 +59,7 @@ export default function LoginPage() {
         return;
       }
       if (!senhaCadastroValida(senha)) {
-        setMensagem("Erro: Use uma senha com pelo menos 6 caracteres.");
+        setMensagem("Erro: Use uma senha com pelo menos 8 caracteres.");
         setCarregando(false);
         return;
       }
@@ -124,7 +124,7 @@ export default function LoginPage() {
 
           <label htmlFor="login-senha" style={{ fontSize:13,color:"#5F657D",display:"block",marginBottom:6 }}>Senha</label>
           <input id="login-senha" name="senha" type="password" autoComplete={modo === "login" ? "current-password" : "new-password"} value={senha} onChange={(e)=>setSenha(e.target.value)} placeholder="••••••••" maxLength={128} aria-describedby={modo === "cadastro" ? "senha-ajuda" : undefined} aria-invalid={mensagemErro && !senha ? true : undefined} style={{ width:"100%",padding:"12px 14px",fontSize:14,border:"1.5px solid #D7D0E7",borderRadius:10,background:"#F3EFF9",color:"#21253A",outline:"none",marginBottom:12,boxSizing:"border-box" }} />
-          {modo === "cadastro" && <p id="senha-ajuda" style={{fontSize:11,color:"#8A8CA1",margin:"0 0 18px"}}>Mínimo de 6 caracteres.</p>}
+          {modo === "cadastro" && <p id="senha-ajuda" style={{fontSize:11,color:"#8A8CA1",margin:"0 0 18px"}}>Mínimo de 8 caracteres.</p>}
 
           {modo === "login" && <div style={{textAlign:"right",marginBottom:24}}><Link href="/esqueci-senha" style={{fontSize:12,color:"#4a6cf7",textDecoration:"none"}}>Esqueci minha senha</Link></div>}
 
