@@ -16,7 +16,7 @@ test.describe("landing hero", () => {
     expect(home).not.toContain("hero-proof-card");
     expect(home).not.toContain("hero-showcase-glow");
 
-    expect(theme).toContain("photo-1747221722650-3dc08fe87c38");
+    expect(theme).toContain("landing/fotura-wedding-sunset-generated.png");
     expect(theme).not.toContain(".hero-gallery-card");
     expect(theme).not.toContain(".hero-proof-card");
     expect(theme).not.toContain(".hero-showcase-glow");
