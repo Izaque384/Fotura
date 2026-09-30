@@ -226,7 +226,8 @@ export default function AssinaturaPage() {
               <li>Fotos por galeria ilimitadas</li>
               <li>Clientes ilimitados</li>
               <li>Prova, comentários, senha e entrega final</li>
-              <li>{p.recursos.heroPremiumTech?"Heroes Premium e Tech":"Hero do estúdio"}</li>
+              <li>{codigo==="essencial"?"Hero Minimal com logo, nome e cor":"Heroes Minimal, Premium e Tech"}</li>
+              {p.recursos.heroFotoGaleria&&<li>Foto da galeria no fundo do hero</li>}
             </ul>
             <button disabled={ehAtual||ocupado} className={`plan-btn${codigo==="profissional"&&!ehAtual?" primary":""}${ehAtual?" current":""}`} onClick={()=>void escolher(codigo)}>{ehAtual?"Plano atual":processando===codigo?"Abrindo checkout…":"Escolher plano"}</button>
           </article>; })}
