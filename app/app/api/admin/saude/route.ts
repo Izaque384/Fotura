@@ -12,6 +12,16 @@ type Check = {
   detalhe: string;
 };
 
+async function verificarHttp(url: string, init: RequestInit) {
+  const inicio = Date.now();
+  try {
+    const resposta = await fetch(url, { ...init, cache: "no-store", signal: AbortSignal.timeout(4500) });
+    return { ok: resposta.ok, status: resposta.status, ms: Date.now() - inicio };
+  } catch {
+    return { ok: false, status: 0, ms: Date.now() - inicio };
+  }
+}
+
 export async function GET(req: NextRequest) {
   const validacao = await validarAdmin(req, "admin.saude.auth");
   if ("error" in validacao) return validacao.error;
@@ -61,6 +71,53 @@ export async function GET(req: NextRequest) {
       nome: "Configuração crítica",
       status: ausentes.length ? "error" : "ok",
       detalhe: ausentes.length ? `Variáveis ausentes: ${ausentes.join(", ")}.` : "Supabase server-side e Stripe configurados.",
+    });
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY?.trim();
+    if (stripeKey) {
+      const stripe = await verificarHttp("https://api.stripe.com/v1/account", {
+        headers: { Authorization: `Bearer ${stripeKey}` },
+      });
+      checks.push({
+        id: "stripe_api",
+        nome: "Stripe API",
+        status: stripe.ok ? "ok" : "error",
+        detalhe: stripe.ok ? `Credenciais e conectividade validadas · ${stripe.ms} ms.` : `Falha ao consultar a Stripe (HTTP ${stripe.status || "rede"}).`,
+      });
+    }
+
+    const resendKey = process.env.RESEND_API_KEY?.trim();
+    if (!resendKey) {
+      checks.push({
+        id: "resend",
+        nome: "Resend",
+        status: "warn",
+        detalhe: "RESEND_API_KEY ausente; compartilhamento por e-mail fica indisponível.",
+      });
+    } else {
+      const resend = await verificarHttp("https://api.resend.com/domains", {
+        headers: { Authorization: `Bearer ${resendKey}` },
+      });
+      checks.push({
+        id: "resend",
+        nome: "Resend",
+        status: resend.ok ? "ok" : "error",
+        detalhe: resend.ok ? `Credenciais e conectividade validadas · ${resend.ms} ms.` : `Falha ao consultar a Resend (HTTP ${resend.status || "rede"}).`,
+      });
+    }
+
+    const { data: recoverySnapshot, error: recoveryError } = await supabase.rpc("operational_recovery_snapshot_backend");
+    const recovery = recoverySnapshot as {
+      database?: { galerias?: number; clientes?: number };
+      storage?: { fotos_objetos?: number; marca_objetos?: number };
+    } | null;
+    checks.push({
+      id: "recovery_snapshot",
+      nome: "Snapshot de recuperação",
+      status: recoveryError ? "error" : "ok",
+      detalhe: recoveryError
+        ? "Não foi possível gerar o snapshot usado para validar restores."
+        : `Snapshot disponível: ${recovery?.database?.galerias ?? 0} galerias, ${recovery?.database?.clientes ?? 0} clientes, ${recovery?.storage?.fotos_objetos ?? 0} objetos de fotos e ${recovery?.storage?.marca_objetos ?? 0} objetos de marca.`,
     });
 
     const [pastDueRes, purgeRes, encerramentoRes, suspensaoRes] = await Promise.all([
