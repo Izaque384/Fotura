@@ -76,6 +76,56 @@ test("cliente seleciona, comenta e finaliza uma prova", async ({ page }) => {
   expect(salvamentos.at(-1)?.comentarios["foto-1.jpg"]).toBe("Minha favorita");
 });
 
+test("lightbox de entrega carrega a foto original antes de exibir", async ({ page }) => {
+  await page.route("**/api/galeria/publica**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        galeria: {
+          titulo: "Entrega em alta",
+          capa: null,
+          prova: false,
+          limite: 0,
+          prazo: null,
+          linkAte: null,
+          temSenha: false,
+          desbloqueada: true,
+          linkExpirado: false,
+        },
+        perfil: { nome: "Estúdio Teste", logo: null, cor: "#0b0b1a" },
+        selecao: null,
+      }),
+    });
+  });
+
+  await page.route("**/api/fotos/signed**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.searchParams.get("arquivo")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ nome: "foto.jpg", url: foto("Original em alta") }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        fotos: [{ nome: "foto.jpg", url: foto("Miniatura"), thumb: foto("Miniatura") }],
+        capaUrl: null,
+      }),
+    });
+  });
+
+  await page.goto("/g/entrega-alta-e2e");
+  await page.locator(".gc-card img").click();
+  await expect(page.getByRole("dialog", { name: "Foto 1 de 1" })).toBeVisible();
+  await expect(page.locator(".gc-photo img")).toHaveAttribute("src", /Original%20em%20alta/);
+  await expect(page.getByRole("button", { name: "Baixar foto original" })).toBeVisible();
+});
+
 test("senha incorreta não libera a galeria e senha correta libera", async ({ page }) => {
   let desbloqueada = false;
 
