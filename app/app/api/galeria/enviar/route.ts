@@ -4,6 +4,7 @@ import { registrarErro } from "../../../../lib/observability";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
+import { publicGalleryRef } from "../../../../lib/gallery-links";
 
 type Body={galeria?:unknown};
 
@@ -34,7 +35,7 @@ export async function POST(req:NextRequest){
 
   const {supabase,user}=auth;
   const {data:g,error:galleryError}=await supabase.from("galerias")
-    .select("id,titulo,cliente_id,prova,prazo,link_ate,config_revisada_em,perfis:user_id(nome_estudio)")
+    .select("id,slug,titulo,cliente_id,prova,prazo,link_ate,config_revisada_em,perfis:user_id(nome_estudio)")
     .eq("id",galeria).eq("user_id",user.id).maybeSingle();
   if(galleryError){
     registrarErro("gallery.send.lookup",req,galleryError,{galeria});
@@ -56,7 +57,7 @@ export async function POST(req:NextRequest){
   if(!apiKey)return NextResponse.json({error:"O envio de e-mail ainda precisa ser ativado no Fotura."},{status:503});
 
   const origin=(process.env.NEXT_PUBLIC_SITE_URL||"https://foturax.com.br").replace(/\/$/,"");
-  const link=`${origin}/g/${g.id}`;
+  const link=`${origin}/g/${publicGalleryRef(String(g.slug||"galeria"),String(g.id))}`;
   const studio=((g as unknown as {perfis?:{nome_estudio?:string}|{nome_estudio?:string}[]}).perfis as {nome_estudio?:string}|undefined)?.nome_estudio||"Fotura";
   const titulo=escapeHtml(g.titulo||"Sua galeria");
   const nome=escapeHtml(cliente.nome||"cliente");
