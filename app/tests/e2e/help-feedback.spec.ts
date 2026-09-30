@@ -8,12 +8,12 @@ const read = (p: string) => fs.readFileSync(path.join(root, p), "utf8");
 test.describe("ajuda e feedback", () => {
   test("área voluntária reúne ajuda, problemas, sugestões e feedback sem pop-ups", () => {
     const page = read("app/ajuda/page.tsx");
-    expect(page).toContain("Ajuda e feedback");
+    expect(page).toContain("AJUDA E FEEDBACK");
     expect(page).toContain("Reportar problema");
     expect(page).toContain("Enviar sugestão");
     expect(page).toContain("Dar feedback");
     expect(page).toContain("Screenshot opcional");
-    expect(page).toContain("Esta área é voluntária");
+    expect(page).toContain("Canal voluntário");
     expect(page).not.toContain("window.alert");
     expect(page).not.toContain("setTimeout(() => set");
   });
