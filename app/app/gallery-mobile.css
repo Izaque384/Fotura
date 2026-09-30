@@ -125,18 +125,25 @@
 
   .gc-grid {
     width: 100%;
-    display: block !important;
-    columns: 2 !important;
-    column-gap: 1px !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1px !important;
+    columns: auto !important;
     background: #dcd6ee !important;
     line-height: 0 !important;
+  }
+
+  .gc-grid-col {
+    display: flex !important;
+    min-width: 0;
+    flex-direction: column;
+    gap: 1px;
   }
 
   .gc-card {
     width: 100%;
     min-width: 0;
-    margin: 0 0 1px !important;
-    break-inside: avoid;
+    margin: 0 !important;
     border: 0 !important;
     border-radius: 0 !important;
     box-shadow: inset 0 0 0 1px rgba(33,37,58,.12) !important;
