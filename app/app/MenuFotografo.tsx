@@ -37,7 +37,7 @@ export default function MenuFotografo() {
   const [mobile, setMobile] = useState(false);
   const [dragProgress, setDragProgress] = useState<number | null>(null);
   const sidebarRef = useRef<HTMLElement>(null);
-  const gestureRef = useRef<{ x: number; y: number; aberto: boolean; width: number; ativo: boolean } | null>(null);
+  const gestureRef = useRef<{ x: number; y: number; aberto: boolean; width: number; ativo: boolean; progresso: number } | null>(null);
 
   useEffect(() => {
     let ativo = true;
@@ -136,6 +136,7 @@ export default function MenuFotografo() {
         aberto: drawer,
         width,
         ativo: true,
+        progresso: drawer ? 1 : 0,
       };
       setDragProgress(drawer ? 1 : 0);
     }
@@ -160,13 +161,14 @@ export default function MenuFotografo() {
       const progresso = gesto.aberto
         ? Math.max(0, Math.min(1, 1 + dx / gesto.width))
         : Math.max(0, Math.min(1, dx / gesto.width));
+      gesto.progresso = progresso;
       setDragProgress(progresso);
     }
 
     function fim() {
       const gesto = gestureRef.current;
       if (!gesto) return;
-      const progresso = dragProgress ?? (gesto.aberto ? 1 : 0);
+      const progresso = gesto.progresso;
       if (gesto.ativo) {
         if (gesto.aberto) setDrawer(progresso > 1 - LIMIAR);
         else setDrawer(progresso >= LIMIAR);
@@ -185,7 +187,7 @@ export default function MenuFotografo() {
       window.removeEventListener("touchend", fim);
       window.removeEventListener("touchcancel", fim);
     };
-  }, [mobile, drawer, dragProgress]);
+  }, [mobile, drawer]);
 
   useEffect(() => { setDrawer(false); setDragProgress(null); }, [pathname]);
 
