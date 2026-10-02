@@ -87,11 +87,23 @@ body:has(.mf-side) :is(
   .profile,
   .help,
   .bill-page,
-  .up-page
+  .up-page,
+  .delivery-page,
+  .onb
 ),
-body:has(.admin-global-nav) .adm {
-  background: #e7e8ea !important;
-  background-image: none !important;
+body:has(.admin-global-nav) :is(.adm,.aa,.af,.au,.pa,.ac) {
+  background: linear-gradient(
+    135deg,
+    #c6d0de 0%,
+    #dde3eb 46%,
+    #d5cfdf 100%
+  ) !important;
+  background-image: linear-gradient(
+    135deg,
+    #c6d0de 0%,
+    #dde3eb 46%,
+    #d5cfdf 100%
+  ) !important;
   color: #21253A !important;
 }
 
@@ -102,7 +114,9 @@ body:has(.mf-side) :is(
   .profile,
   .help,
   .bill-page,
-  .up-page
+  .up-page,
+  .delivery-page,
+  .onb
 )::before,
 body:has(.mf-side) :is(
   .dash,
@@ -111,7 +125,9 @@ body:has(.mf-side) :is(
   .profile,
   .help,
   .bill-page,
-  .up-page
+  .up-page,
+  .delivery-page,
+  .onb
 )::after,
 body:has(.admin-global-nav) .adm::before,
 body:has(.admin-global-nav) .adm::after {
@@ -600,4 +616,16 @@ body:has(.mf-side) :is(
   .delivery-card
 ) {
   min-width: 0;
+}
+
+
+/* Canvas-base behind fixed glass surfaces (sidebar/profile). */
+body:has(.mf-side),
+body:has(.admin-global-nav) {
+  background: linear-gradient(
+    135deg,
+    #c6d0de 0%,
+    #dde3eb 46%,
+    #d5cfdf 100%
+  ) !important;
 }
