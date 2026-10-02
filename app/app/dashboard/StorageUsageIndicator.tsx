@@ -64,7 +64,7 @@ export default function StorageUsageIndicator() {
         <span>{ilimitado ? dados.plano?.nome ?? "Legacy" : `/ ${limiteGb} GB`}</span>
       </div>
       <style>{`
-        .storage-usage{width:184px;box-sizing:border-box;padding:7px 10px;border:1px solid rgba(255,255,255,.72);border-radius:11px;background:linear-gradient(135deg,rgba(255,255,255,.58),rgba(248,245,255,.36));box-shadow:0 8px 24px rgba(65,52,111,.05),inset 0 1px 0 rgba(255,255,255,.5);backdrop-filter:blur(16px) saturate(125%);-webkit-backdrop-filter:blur(16px) saturate(125%);font-family:var(--font-sora),Sora,sans-serif;color:#21253A;flex:none;cursor:pointer;text-align:left}
+        .storage-usage{width:184px;box-sizing:border-box;padding:7px 10px;border:1px solid rgba(255,255,255,.66);border-radius:11px;background:linear-gradient(135deg,rgba(255,255,255,.26),rgba(255,255,255,.12));box-shadow:0 10px 28px rgba(55,41,105,.09),inset 0 1px 0 rgba(255,255,255,.78);backdrop-filter:blur(24px) saturate(145%);-webkit-backdrop-filter:blur(24px) saturate(145%);font-family:var(--font-sora),Sora,sans-serif;color:#21253A;flex:none;cursor:pointer;text-align:left}
         .storage-usage__head,.storage-usage__meta{display:flex;align-items:center;justify-content:space-between;gap:8px}
         .storage-usage__head{font-size:9px;font-weight:650;line-height:1.2}.storage-usage__head span{color:#73758D}.storage-usage__head strong{font-size:9px;color:#4E556D}
         .storage-usage__track{height:3px;margin:5px 0;overflow:hidden;border-radius:999px;background:rgba(99,88,138,.12)}.storage-usage__track span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#1196fc,#5d0dfa);transition:width .35s ease}
