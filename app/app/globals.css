@@ -90,9 +90,9 @@ body:has(.mf-side) :is(
   .up-page
 ),
 body:has(.admin-global-nav) .adm {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: #ffffff !important;
+  background: #e7e8ea !important;
+  background-image: none !important;
+  color: #21253A !important;
 }
 
 body:has(.mf-side) :is(
@@ -313,7 +313,7 @@ body:has(.mf-side) :is(
   .mf-brand-tx,
   .mf-top-greeting
 ) {
-  color: #ffffff !important;
+  color: #21253A !important;
 }
 
 body:has(.mf-side) :is(
@@ -328,11 +328,11 @@ body:has(.mf-side) :is(
   .mf-sair,
   .mf-top-role
 ) {
-  color: rgba(255, 255, 255, .76) !important;
+  color: #676d87 !important;
 }
 
 body:has(.mf-side) :is(.card-link, .bell-read, .bell-all) {
-  color: #ffffff !important;
+  color: #514780 !important;
 }
 
 /* Mobile mantém exatamente o mesmo blur do código enviado. */
