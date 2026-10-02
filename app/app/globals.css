@@ -145,6 +145,8 @@ body:has(.mf-side) :is(
   .hero-section,
   .brand-block,
   .support-strip,
+  .type-btn,
+  .upload,
   .closure-box,
   .sales-box,
   .sample,
@@ -181,6 +183,7 @@ body:has(.mf-side) :is(
   .review-gate,
   .meta-chip,
   .gallery-block,
+  .capitem,
   .data-status,
   .upgrade-context,
   .current-plan,
@@ -375,7 +378,6 @@ body:has(.mf-side) :is(
   .card,
   .panel,
   .action-center,
-  .action-center-grid,
   .action-center-clear,
   .action-item,
   .action-panel,
@@ -461,16 +463,13 @@ body:has(.admin-global-nav) :is(
   .accounts,
   .audit-btn,
   .row,
-  .rows,
   .pa-card,
   .pa-kpi,
   .pa-panel,
   .pa-row,
-  .feedback,
   .item,
   .summary,
   .metric,
-  .detail,
   .audit,
   .auditItem,
   .aa-card,
@@ -670,4 +669,60 @@ body:has(.mf-side) :is(
   ) {
     width: 100% !important;
   }
+}
+
+
+/* Mesma proteção de conteúdo para cards administrativos. */
+body:has(.admin-global-nav) :is(
+  .card,
+  .table-wrap,
+  .tablewrap,
+  .tablecard,
+  .accounts,
+  .pa-card,
+  .pa-kpi,
+  .pa-panel,
+  .pa-row,
+  .summary,
+  .metric,
+  .audit,
+  .auditItem,
+  .aa-card,
+  .aa-state,
+  .cl-card,
+  .cl-state,
+  .pg-card,
+  .pg-metric,
+  .pg-preview,
+  .pg-state,
+  .panel
+) > * {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+body:has(.admin-global-nav) :is(
+  .card,
+  .table-wrap,
+  .tablewrap,
+  .tablecard,
+  .accounts,
+  .pa-card,
+  .pa-kpi,
+  .pa-panel,
+  .summary,
+  .metric,
+  .audit,
+  .auditItem,
+  .aa-card,
+  .cl-card,
+  .pg-card,
+  .pg-preview,
+  .panel
+) :is(h1,h2,h3,h4,p,span,small,strong,label,button,a) {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
