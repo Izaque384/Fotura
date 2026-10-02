@@ -357,3 +357,247 @@ body:has(.mf-side) :is(.card-link, .bell-read, .bell-all) {
     -webkit-backdrop-filter: blur(15px) !important;
   }
 }
+
+
+/* Profile glass surfaces v2 ---------------------------------------------------
+   Material-base: aparência efetiva do botão .mf-top-user em produção.
+   Importante: esta camada altera somente o material das superfícies.
+   Dimensões, padding, grids, tipografia e hierarquia permanecem dos componentes. */
+:is(body:has(.mf-side), body:has(.admin-global-nav)) {
+  --profile-glass-bg: rgba(255, 255, 255, 0.10);
+  --profile-glass-border: rgba(255, 255, 255, 0.25);
+  --profile-glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+  --profile-glass-radius: 14px;
+}
+
+/* Cards e painéis reais do app do fotógrafo. */
+body:has(.mf-side) :is(
+  .card,
+  .panel,
+  .alert,
+  .notice,
+  .action-center,
+  .action-center-clear,
+  .action-item,
+  .upgrade-context,
+  .storage-usage,
+  .list-row,
+  .capitem,
+  .action-panel,
+  .action-summary,
+  .send-panel,
+  .send-client,
+  .send-contact-item,
+  .send-option,
+  .sales-box,
+  .review-gate,
+  .modal,
+  .sel-summary,
+  .sel-row,
+  .sel-mini,
+  .sales-card,
+  .sales-stat,
+  .sales-row,
+  .sales-note,
+  .sales-info-pop,
+  .stat,
+  .client-card,
+  .formcard,
+  .listcard,
+  .gallery-block,
+  .bill-card,
+  .bill-notice,
+  .overview,
+  .plan,
+  .current-plan,
+  .subscription,
+  .subscription-meta,
+  .storage-size,
+  .meta-chip,
+  .account-card,
+  .setting-card,
+  .data-card,
+  .wide-card,
+  .closure-box,
+  .closure-modal,
+  .brand-block,
+  .hero-section,
+  .photo-feature,
+  .preview-panel,
+  .sample,
+  .faq-item,
+  .form-card,
+  .support-strip,
+  .type-btn,
+  .upload,
+  .up-card,
+  .up-mini,
+  .up-file,
+  .up-note,
+  .up-network,
+  .up-progress,
+  .delivery-card,
+  .delivery-file,
+  .delivery-notice,
+  .delivery-stage,
+  .bell,
+  .bell-pop
+) {
+  background: var(--profile-glass-bg) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  box-shadow: var(--profile-glass-shadow) !important;
+  border-radius: var(--profile-glass-radius) !important;
+  box-sizing: border-box;
+}
+
+/* Busca, filtros, toolbars e campos — tratados como pequenos cards de vidro. */
+body:has(.mf-side) :is(
+  .toolbar,
+  .sales-toolbar,
+  .selection-toolbar,
+  .faq-toolbar,
+  .search-box,
+  .sales-search-box,
+  .sel-search,
+  .filter-trigger,
+  .filter-menu,
+  .filter-option,
+  .style-btn,
+  .sel-btn,
+  input,
+  select,
+  textarea
+) {
+  background: var(--profile-glass-bg) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  box-shadow: var(--profile-glass-shadow) !important;
+  border-radius: var(--profile-glass-radius) !important;
+  box-sizing: border-box;
+}
+
+/* O próprio perfil fica explicitamente como referência do sistema. */
+body:has(.mf-side) .mf-top-user {
+  background: var(--profile-glass-bg) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  box-shadow: var(--profile-glass-shadow) !important;
+  border-radius: var(--profile-glass-radius) !important;
+}
+
+/* Atividade e telas de entrega usam nomes próprios de componentes. */
+body:has(.mf-side) :is(
+  .dash .row,
+  .dash .tab,
+  .dash .search,
+  .delivery-page .delivery-btn.secondary
+) {
+  background: var(--profile-glass-bg) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  box-shadow: var(--profile-glass-shadow) !important;
+  border-radius: var(--profile-glass-radius) !important;
+}
+
+/* Administração: somente superfícies visuais, nunca wrappers de layout. */
+body:has(.admin-global-nav) :is(
+  .card,
+  .table-wrap,
+  .tablewrap,
+  .tablecard,
+  .accounts,
+  .audit-btn,
+  .pa-card,
+  .pa-kpi,
+  .pa-panel,
+  .pa-row,
+  .feedback,
+  .item,
+  .summary,
+  .metric,
+  .hero,
+  .check,
+  .audit,
+  .auditItem,
+  .aa-card,
+  .aa-state,
+  .cl-card,
+  .cl-state,
+  .pg-card,
+  .pg-metric,
+  .pg-preview,
+  .pg-state,
+  .panel
+) {
+  background: var(--profile-glass-bg) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  box-shadow: var(--profile-glass-shadow) !important;
+  border-radius: var(--profile-glass-radius) !important;
+  box-sizing: border-box;
+}
+
+body:has(.admin-global-nav) :is(
+  .search,
+  input,
+  select,
+  textarea
+) {
+  background: var(--profile-glass-bg) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  box-shadow: var(--profile-glass-shadow) !important;
+  border-radius: var(--profile-glass-radius) !important;
+  box-sizing: border-box;
+}
+
+/* Modais de seleção também fazem parte da experiência interna. */
+body:has(.mf-side) :is(
+  .ms-panel,
+  .ms-section,
+  .ms-comment,
+  .ms-photo
+) {
+  background: var(--profile-glass-bg) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid var(--profile-glass-border) !important;
+  box-shadow: var(--profile-glass-shadow) !important;
+  border-radius: var(--profile-glass-radius) !important;
+  box-sizing: border-box;
+}
+
+/* Não alteramos overflow dos cards: conteúdo continua visível e cada componente
+   conserva suas próprias regras de layout. Apenas impedimos sizing inesperado. */
+:is(body:has(.mf-side), body:has(.admin-global-nav)) :is(
+  .card,
+  .panel,
+  .client-card,
+  .plan,
+  .setting-card,
+  .account-card,
+  .data-card,
+  .form-card,
+  .formcard,
+  .listcard,
+  .sales-card,
+  .bill-card,
+  .up-card,
+  .delivery-card
+) {
+  min-width: 0;
+}
