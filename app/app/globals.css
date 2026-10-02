@@ -73,9 +73,9 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
 /* Fotura glass system — código de referência aplicado literalmente ------------
    Base visual enviada pelo usuário: fundo colorido + vidro translúcido simples. */
 :is(body:has(.mf-side), body:has(.admin-global-nav)) {
-  --fotura-glass-bg: rgba(255, 255, 255, 0.16);
-  --fotura-glass-border: rgba(255, 255, 255, 0.34);
-  --fotura-glass-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.10);
+  --fotura-glass-bg: rgba(255, 255, 255, 0.26);
+  --fotura-glass-border: rgba(255, 255, 255, 0.52);
+  --fotura-glass-shadow: 0 12px 36px rgba(5, 12, 28, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 /* O efeito precisa de contraste atrás do vidro: usa exatamente o gradiente-base
@@ -91,20 +91,20 @@ body:has(.mf-side) :is(
   .delivery-page,
   .onb
 ),
-body:has(.admin-global-nav) :is(.adm,.aa,.af,.au,.pa,.ac) {
+body:has(.admin-global-nav) :is(.adm,.aa,.af,.au,.pa,.ac,.lr,.hs) {
   background: linear-gradient(
     135deg,
-    #d8cfea 0%,
-    #e3ddef 50%,
-    #ece8f4 100%
+    #12182d 0%,
+    #1b2644 48%,
+    #23365d 100%
   ) !important;
   background-image: linear-gradient(
     135deg,
-    #d8cfea 0%,
-    #e3ddef 50%,
-    #ece8f4 100%
+    #12182d 0%,
+    #1b2644 48%,
+    #23365d 100%
   ) !important;
-  color: #21253A !important;
+  color: #f7f9ff !important;
 }
 
 body:has(.mf-side) :is(
@@ -176,8 +176,8 @@ body:has(.admin-global-nav) :is(
 ) {
   background: var(--fotura-glass-bg) !important;
   background-image: none !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
   border: 1px solid var(--fotura-glass-border) !important;
   box-shadow: var(--fotura-glass-shadow) !important;
   border-radius: 16px !important;
@@ -215,8 +215,8 @@ body:has(.mf-side) :is(
 body:has(.admin-global-nav) :is(.row, .rows) {
   background: var(--fotura-glass-bg) !important;
   background-image: none !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
   border: 1px solid var(--fotura-glass-border) !important;
   box-shadow: var(--fotura-glass-shadow) !important;
   border-radius: 16px !important;
@@ -243,8 +243,8 @@ body:has(.mf-side) :is(
 ) {
   background: var(--fotura-glass-bg) !important;
   background-image: none !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
   border: 1px solid var(--fotura-glass-border) !important;
   box-shadow: var(--fotura-glass-shadow) !important;
 }
@@ -253,8 +253,8 @@ body:has(.mf-side) :is(
 body:has(.mf-side) :is(.mf-side, .mf-drawer-close) {
   background: var(--fotura-glass-bg) !important;
   background-image: none !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
   border-color: var(--fotura-glass-border) !important;
   box-shadow: var(--fotura-glass-shadow) !important;
 }
@@ -270,22 +270,22 @@ body:has(.mf-side) :is(.mf-item, .mf-sair) {
 
 body:has(.mf-side) .mf-item:hover,
 body:has(.mf-side) .mf-item.ativo {
-  background: rgba(255, 255, 255, 0.16) !important;
+  background: rgba(255, 255, 255, 0.26) !important;
   background-image: none !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.34) !important;
-  box-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.10) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  border: 1px solid rgba(255, 255, 255, 0.52) !important;
+  box-shadow: 0 12px 36px rgba(5, 12, 28, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
 }
 
 /* Inputs seguem o mesmo vidro. */
 body:has(.mf-side) :is(input, select, textarea) {
-  background: rgba(255, 255, 255, 0.16) !important;
+  background: rgba(255, 255, 255, 0.26) !important;
   background-image: none !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.34) !important;
-  box-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.10) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  border: 1px solid rgba(255, 255, 255, 0.52) !important;
+  box-shadow: 0 12px 36px rgba(5, 12, 28, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
 }
 
 /* Menus e modais: ainda o mesmo material, sem versão "premium" diferente. */
@@ -298,22 +298,22 @@ body:has(.mf-side) :is(
   .send-panel,
   .action-panel
 ) {
-  background: rgba(255, 255, 255, 0.16) !important;
+  background: rgba(255, 255, 255, 0.26) !important;
   background-image: none !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.34) !important;
-  box-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.10) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  border: 1px solid rgba(255, 255, 255, 0.52) !important;
+  box-shadow: 0 12px 36px rgba(5, 12, 28, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
   border-radius: 16px !important;
 }
 
 /* Utilitário literal do exemplo para novos componentes. */
 :is(body:has(.mf-side), body:has(.admin-global-nav)) .glass-card {
-  background: rgba(255, 255, 255, 0.16) !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.34) !important;
-  box-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.10) !important;
+  background: rgba(255, 255, 255, 0.26) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  border: 1px solid rgba(255, 255, 255, 0.52) !important;
+  box-shadow: 0 12px 36px rgba(5, 12, 28, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
   border-radius: 16px !important;
 }
 
@@ -329,7 +329,7 @@ body:has(.mf-side) :is(
   .mf-brand-tx,
   .mf-top-greeting
 ) {
-  color: #21253A !important;
+  color: #f7f9ff !important;
 }
 
 body:has(.mf-side) :is(
@@ -369,8 +369,8 @@ body:has(.mf-side) :is(.card-link, .bell-read, .bell-all) {
     .listcard,
     .up-card
   ) {
-    backdrop-filter: blur(15px) !important;
-    -webkit-backdrop-filter: blur(15px) !important;
+    backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+    -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
   }
 }
 
@@ -380,9 +380,9 @@ body:has(.mf-side) :is(.card-link, .bell-read, .bell-all) {
    Importante: esta camada altera somente o material das superfícies.
    Dimensões, padding, grids, tipografia e hierarquia permanecem dos componentes. */
 :is(body:has(.mf-side), body:has(.admin-global-nav)) {
-  --profile-glass-bg: rgba(255, 255, 255, 0.16);
-  --profile-glass-border: rgba(255, 255, 255, 0.34);
-  --profile-glass-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.10);
+  --profile-glass-bg: rgba(255, 255, 255, 0.26);
+  --profile-glass-border: rgba(255, 255, 255, 0.52);
+  --profile-glass-shadow: 0 12px 36px rgba(5, 12, 28, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 0 0 1px rgba(255, 255, 255, 0.06);
   --profile-glass-radius: 14px;
 }
 
@@ -461,8 +461,8 @@ body:has(.mf-side) :is(
 ) {
   background: var(--profile-glass-bg) !important;
   background-image: none !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
   border: 1px solid var(--profile-glass-border) !important;
   box-shadow: var(--profile-glass-shadow) !important;
   border-radius: var(--profile-glass-radius) !important;
@@ -489,8 +489,8 @@ body:has(.mf-side) :is(
 ) {
   background: var(--profile-glass-bg) !important;
   background-image: none !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
   border: 1px solid var(--profile-glass-border) !important;
   box-shadow: var(--profile-glass-shadow) !important;
   border-radius: var(--profile-glass-radius) !important;
@@ -501,8 +501,8 @@ body:has(.mf-side) :is(
 body:has(.mf-side) .mf-top-user {
   background: var(--profile-glass-bg) !important;
   background-image: none !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
   border: 1px solid var(--profile-glass-border) !important;
   box-shadow: var(--profile-glass-shadow) !important;
   border-radius: var(--profile-glass-radius) !important;
@@ -517,8 +517,8 @@ body:has(.mf-side) :is(
 ) {
   background: var(--profile-glass-bg) !important;
   background-image: none !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
   border: 1px solid var(--profile-glass-border) !important;
   box-shadow: var(--profile-glass-shadow) !important;
   border-radius: var(--profile-glass-radius) !important;
@@ -556,8 +556,8 @@ body:has(.admin-global-nav) :is(
 ) {
   background: var(--profile-glass-bg) !important;
   background-image: none !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
   border: 1px solid var(--profile-glass-border) !important;
   box-shadow: var(--profile-glass-shadow) !important;
   border-radius: var(--profile-glass-radius) !important;
@@ -572,8 +572,8 @@ body:has(.admin-global-nav) :is(
 ) {
   background: var(--profile-glass-bg) !important;
   background-image: none !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
   border: 1px solid var(--profile-glass-border) !important;
   box-shadow: var(--profile-glass-shadow) !important;
   border-radius: var(--profile-glass-radius) !important;
@@ -589,8 +589,8 @@ body:has(.mf-side) :is(
 ) {
   background: var(--profile-glass-bg) !important;
   background-image: none !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
   border: 1px solid var(--profile-glass-border) !important;
   box-shadow: var(--profile-glass-shadow) !important;
   border-radius: var(--profile-glass-radius) !important;
@@ -624,8 +624,111 @@ body:has(.mf-side),
 body:has(.admin-global-nav) {
   background: linear-gradient(
     135deg,
-    #d8cfea 0%,
-    #e3ddef 50%,
-    #ece8f4 100%
+    #12182d 0%,
+    #1b2644 48%,
+    #23365d 100%
   ) !important;
+}
+
+
+/* Dark Fotura canvas + bright neutral glass ---------------------------------- */
+body:has(.mf-side),
+body:has(.admin-global-nav) {
+  background: linear-gradient(135deg,#12182d 0%,#1b2644 48%,#23365d 100%) !important;
+}
+
+body:has(.mf-side) :is(
+  .dash-h1,.sales-h1,.bill-h1,.h1,.delivery-title,.onb h1,
+  .dash-eyebrow,.sales-ey,.bill-ey,.ey,.delivery-ey
+) {
+  color: #f8faff !important;
+}
+
+body:has(.mf-side) :is(
+  .dash-sub,.sales-sub,.bill-sub,.sub,.delivery-sub,.dash-sync
+) {
+  color: rgba(235,240,255,.76) !important;
+}
+
+/* All bright glass surfaces keep neutral dark content; the navy belongs only
+   to the canvas behind them. */
+body:has(.mf-side) :is(
+  .card,.panel,.alert,.notice,.action-center,.action-center-clear,.action-item,
+  .upgrade-context,.storage-usage,.list-row,.capitem,.action-panel,.action-summary,
+  .send-panel,.send-client,.send-contact-item,.send-option,.sales-box,.review-gate,
+  .modal,.sel-summary,.sel-row,.sel-mini,.sales-card,.sales-stat,.sales-row,
+  .sales-note,.sales-info-pop,.stat,.client-card,.formcard,.listcard,.gallery-block,
+  .bill-card,.bill-notice,.overview,.plan,.current-plan,.subscription,
+  .subscription-meta,.storage-size,.meta-chip,.account-card,.setting-card,.data-card,
+  .wide-card,.closure-box,.closure-modal,.brand-block,.hero-section,.photo-feature,
+  .preview-panel,.sample,.faq-item,.form-card,.support-strip,.type-btn,.upload,
+  .up-card,.up-mini,.up-file,.up-note,.up-network,.up-progress,.delivery-card,
+  .delivery-file,.delivery-notice,.delivery-stage,.bell,.bell-pop,.toolbar,
+  .sales-toolbar,.selection-toolbar,.faq-toolbar,.search-box,.sales-search-box,
+  .sel-search,.filter-trigger,.filter-menu,.filter-option,.style-btn,.sel-btn,
+  .mf-top-user,.mf-side
+),
+body:has(.admin-global-nav) :is(
+  .card,.table-wrap,.tablewrap,.tablecard,.accounts,.audit-btn,.pa-card,.pa-kpi,
+  .pa-panel,.pa-row,.feedback,.item,.summary,.metric,.hero,.check,.audit,.auditItem,
+  .aa-card,.aa-state,.cl-card,.cl-state,.pg-card,.pg-metric,.pg-preview,.pg-state,
+  .panel
+) {
+  color: #21253a !important;
+}
+
+/* Stronger neutral highlight without introducing any blue into the card fill. */
+body:has(.mf-side) :is(
+  .card,.panel,.alert,.notice,.action-center,.action-center-clear,.action-item,
+  .upgrade-context,.storage-usage,.list-row,.capitem,.action-panel,.action-summary,
+  .send-panel,.send-client,.send-contact-item,.send-option,.sales-box,.review-gate,
+  .modal,.sel-summary,.sel-row,.sel-mini,.sales-card,.sales-stat,.sales-row,
+  .sales-note,.sales-info-pop,.stat,.client-card,.formcard,.listcard,.gallery-block,
+  .bill-card,.bill-notice,.overview,.plan,.current-plan,.subscription,
+  .subscription-meta,.storage-size,.meta-chip,.account-card,.setting-card,.data-card,
+  .wide-card,.closure-box,.closure-modal,.brand-block,.hero-section,.photo-feature,
+  .preview-panel,.sample,.faq-item,.form-card,.support-strip,.type-btn,.upload,
+  .up-card,.up-mini,.up-file,.up-note,.up-network,.up-progress,.delivery-card,
+  .delivery-file,.delivery-notice,.delivery-stage,.bell,.bell-pop,.toolbar,
+  .sales-toolbar,.selection-toolbar,.faq-toolbar,.search-box,.sales-search-box,
+  .sel-search,.filter-trigger,.filter-menu,.filter-option,.style-btn,.sel-btn,
+  .mf-top-user,.mf-side
+),
+body:has(.admin-global-nav) :is(
+  .card,.table-wrap,.tablewrap,.tablecard,.accounts,.audit-btn,.pa-card,.pa-kpi,
+  .pa-panel,.pa-row,.feedback,.item,.summary,.metric,.hero,.check,.audit,.auditItem,
+  .aa-card,.aa-state,.cl-card,.cl-state,.pg-card,.pg-metric,.pg-preview,.pg-state,
+  .panel,.search,input,select,textarea
+) {
+  background: rgba(255,255,255,.26) !important;
+  background-image: none !important;
+  border-color: rgba(255,255,255,.52) !important;
+  box-shadow:
+    0 12px 36px rgba(5,12,28,.22),
+    inset 0 1px 0 rgba(255,255,255,.62),
+    0 0 0 1px rgba(255,255,255,.06) !important;
+  backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+}
+
+
+/* Typography inside luminous glass remains neutral/dark. */
+body:has(.mf-side) :is(
+  .card-t,.list-title,.mf-brand-tx,.mf-top-greeting,
+  .panel-title,.card-title,.account-title,.plan-name,
+  .sales-title,.sel-title,.action-title,.faq-card
+) {
+  color: #21253a !important;
+}
+
+body:has(.mf-side) :is(
+  .card-sub,.list-meta,.mf-item,.mf-sair,.mf-top-role,
+  .panel-desc,.card-desc,.account-copy,.account-email,
+  .account-note,.plan-desc,.sales-meta,.sel-meta
+) {
+  color: #616980 !important;
+}
+
+body:has(.mf-side) :is(.mf-item:hover,.mf-item.ativo) {
+  color: #21253a !important;
 }
