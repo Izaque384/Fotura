@@ -70,39 +70,16 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
   }
 }
 
-/* Fotura glass material — reference card --------------------------------------
-   Material único para os cards internos: branco translúcido, sem pigmento,
-   blur forte, borda clara e brilho neutro. */
+/* Fotura glass system — código de referência aplicado literalmente ------------
+   Base visual enviada pelo usuário: fundo colorido + vidro translúcido simples. */
 :is(body:has(.mf-side), body:has(.admin-global-nav)) {
-  --fotura-canvas: #dde1e5;
-  --fotura-glass-bg:
-    linear-gradient(
-      135deg,
-      rgba(255,255,255,.34) 0%,
-      rgba(255,255,255,.13) 42%,
-      rgba(255,255,255,.08) 66%,
-      rgba(255,255,255,.20) 100%
-    );
-  --fotura-glass-bg-soft:
-    linear-gradient(
-      135deg,
-      rgba(255,255,255,.20) 0%,
-      rgba(255,255,255,.06) 58%,
-      rgba(255,255,255,.12) 100%
-    );
-  --fotura-glass-border: rgba(255,255,255,.72);
-  --fotura-glass-border-soft: rgba(255,255,255,.48);
-  --fotura-glass-shadow:
-    0 18px 44px rgba(32,38,45,.10),
-    0 4px 12px rgba(32,38,45,.045),
-    inset 0 1px 0 rgba(255,255,255,.92),
-    inset 0 -1px 0 rgba(255,255,255,.24);
-  --fotura-glass-shadow-soft:
-    0 10px 28px rgba(32,38,45,.075),
-    inset 0 1px 0 rgba(255,255,255,.76);
+  --fotura-glass-bg: rgba(255, 255, 255, 0.10);
+  --fotura-glass-border: rgba(255, 255, 255, 0.25);
+  --fotura-glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
 }
 
-/* Canvas neutro: sem manchas, sem blobs e sem gradientes coloridos. */
+/* O efeito precisa de contraste atrás do vidro: usa exatamente o gradiente-base
+   do exemplo enviado, sem manchas, blobs ou outras camadas. */
 body:has(.mf-side) :is(
   .dash,
   .sales-page,
@@ -113,9 +90,9 @@ body:has(.mf-side) :is(
   .up-page
 ),
 body:has(.admin-global-nav) .adm {
-  background-color: var(--fotura-canvas) !important;
-  background-image: none !important;
-  color: #20242a !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: #ffffff !important;
 }
 
 body:has(.mf-side) :is(
@@ -140,10 +117,9 @@ body:has(.admin-global-nav) .adm::before,
 body:has(.admin-global-nav) .adm::after {
   display: none !important;
   content: none !important;
-  background: none !important;
 }
 
-/* O mesmo material da referência aplicado às superfícies principais. */
+/* TODOS os cards principais usam exatamente o material .glass-card do exemplo. */
 body:has(.mf-side) :is(
   .card,
   .panel,
@@ -182,16 +158,16 @@ body:has(.admin-global-nav) :is(
   .accounts,
   .audit-btn
 ) {
-  background-color: transparent !important;
-  background-image: var(--fotura-glass-bg) !important;
-  backdrop-filter: blur(26px) brightness(1.055) contrast(1.02) !important;
-  -webkit-backdrop-filter: blur(26px) brightness(1.055) contrast(1.02) !important;
+  background: var(--fotura-glass-bg) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
   border: 1px solid var(--fotura-glass-border) !important;
-  border-radius: 18px !important;
   box-shadow: var(--fotura-glass-shadow) !important;
+  border-radius: 16px !important;
 }
 
-/* Cards/blocos dentro de cards: mesma linguagem, menos densidade. */
+/* Cards e linhas internas seguem o mesmo material, sem uma segunda linguagem. */
 body:has(.mf-side) :is(
   .list-row,
   .action-item,
@@ -220,19 +196,17 @@ body:has(.mf-side) :is(
   .delivery,
   .status-wrap
 ),
-body:has(.admin-global-nav) :is(
-  .row,
-  .rows
-) {
-  background-color: transparent !important;
-  background-image: var(--fotura-glass-bg-soft) !important;
-  backdrop-filter: blur(20px) brightness(1.04) !important;
-  -webkit-backdrop-filter: blur(20px) brightness(1.04) !important;
-  border-color: var(--fotura-glass-border-soft) !important;
-  box-shadow: var(--fotura-glass-shadow-soft) !important;
+body:has(.admin-global-nav) :is(.row, .rows) {
+  background: var(--fotura-glass-bg) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid var(--fotura-glass-border) !important;
+  box-shadow: var(--fotura-glass-shadow) !important;
+  border-radius: 16px !important;
 }
 
-/* Barra superior, filtros, busca, avisos e pequenos painéis também viram vidro. */
+/* Controles que funcionam visualmente como pequenos cards. */
 body:has(.mf-side) :is(
   .storage-usage,
   .bell,
@@ -251,36 +225,26 @@ body:has(.mf-side) :is(
   .data-status,
   .mf-top-user
 ) {
-  background-color: transparent !important;
-  background-image: var(--fotura-glass-bg-soft) !important;
-  backdrop-filter: blur(22px) brightness(1.045) !important;
-  -webkit-backdrop-filter: blur(22px) brightness(1.045) !important;
-  border: 1px solid rgba(255,255,255,.56) !important;
-  box-shadow:
-    0 9px 25px rgba(32,38,45,.07),
-    inset 0 1px 0 rgba(255,255,255,.82) !important;
+  background: var(--fotura-glass-bg) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid var(--fotura-glass-border) !important;
+  box-shadow: var(--fotura-glass-shadow) !important;
 }
 
-/* Sidebar: placa de vidro contínua. */
+/* Sidebar como uma placa do mesmo vidro, sem material próprio. */
 body:has(.mf-side) :is(.mf-side, .mf-drawer-close) {
-  background-color: transparent !important;
-  background-image:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,.25) 0%,
-      rgba(255,255,255,.08) 52%,
-      rgba(255,255,255,.14) 100%
-    ) !important;
-  backdrop-filter: blur(30px) brightness(1.05) !important;
-  -webkit-backdrop-filter: blur(30px) brightness(1.05) !important;
-  border-color: rgba(255,255,255,.58) !important;
-  box-shadow:
-    12px 0 34px rgba(32,38,45,.075),
-    inset -1px 0 0 rgba(255,255,255,.30) !important;
+  background: var(--fotura-glass-bg) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border-color: var(--fotura-glass-border) !important;
+  box-shadow: var(--fotura-glass-shadow) !important;
 }
 
 body:has(.mf-side) .mf-side {
-  border-right: 1px solid rgba(255,255,255,.58) !important;
+  border-right: 1px solid var(--fotura-glass-border) !important;
 }
 
 body:has(.mf-side) :is(.mf-item, .mf-sair) {
@@ -288,47 +252,27 @@ body:has(.mf-side) :is(.mf-item, .mf-sair) {
   border-color: transparent !important;
 }
 
-body:has(.mf-side) .mf-item:hover {
-  background: rgba(255,255,255,.12) !important;
-  border-color: rgba(255,255,255,.34) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-}
-
+body:has(.mf-side) .mf-item:hover,
 body:has(.mf-side) .mf-item.ativo {
-  background-color: transparent !important;
-  background-image:
-    linear-gradient(
-      135deg,
-      rgba(255,255,255,.30),
-      rgba(255,255,255,.10)
-    ) !important;
-  border-color: rgba(255,255,255,.62) !important;
-  box-shadow:
-    0 7px 18px rgba(32,38,45,.055),
-    inset 0 1px 0 rgba(255,255,255,.86) !important;
+  background: rgba(255, 255, 255, 0.10) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important;
 }
 
-/* Campos formam placas de vidro discretas em vez de caixas opacas. */
+/* Inputs seguem o mesmo vidro. */
 body:has(.mf-side) :is(input, select, textarea) {
-  background-color: transparent !important;
-  background-image: var(--fotura-glass-bg-soft) !important;
-  border-color: rgba(255,255,255,.56) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.72),
-    0 5px 14px rgba(32,38,45,.035) !important;
-  backdrop-filter: blur(18px) brightness(1.035) !important;
-  -webkit-backdrop-filter: blur(18px) brightness(1.035) !important;
+  background: rgba(255, 255, 255, 0.10) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important;
 }
 
-body:has(.mf-side) :is(input, select, textarea):focus {
-  border-color: rgba(255,255,255,.88) !important;
-  box-shadow:
-    0 0 0 3px rgba(255,255,255,.24),
-    inset 0 1px 0 rgba(255,255,255,.84) !important;
-}
-
-/* Menus flutuantes e modais: vidro mais denso para manter legibilidade. */
+/* Menus e modais: ainda o mesmo material, sem versão "premium" diferente. */
 body:has(.mf-side) :is(
   .bell-pop,
   .filter-menu,
@@ -338,65 +282,60 @@ body:has(.mf-side) :is(
   .send-panel,
   .action-panel
 ) {
-  background-color: transparent !important;
-  background-image:
-    linear-gradient(
-      135deg,
-      rgba(255,255,255,.42),
-      rgba(255,255,255,.18)
-    ) !important;
-  backdrop-filter: blur(34px) brightness(1.06) !important;
-  -webkit-backdrop-filter: blur(34px) brightness(1.06) !important;
-  border: 1px solid rgba(255,255,255,.76) !important;
-  box-shadow:
-    0 22px 52px rgba(32,38,45,.12),
-    inset 0 1px 0 rgba(255,255,255,.94) !important;
+  background: rgba(255, 255, 255, 0.10) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important;
+  border-radius: 16px !important;
 }
 
-/* Classe reutilizável para qualquer novo card. */
+/* Utilitário literal do exemplo para novos componentes. */
 :is(body:has(.mf-side), body:has(.admin-global-nav)) .glass-card {
-  background-color: transparent !important;
-  background-image: var(--fotura-glass-bg) !important;
-  backdrop-filter: blur(26px) brightness(1.055) contrast(1.02) !important;
-  -webkit-backdrop-filter: blur(26px) brightness(1.055) contrast(1.02) !important;
-  border: 1px solid var(--fotura-glass-border) !important;
-  border-radius: 18px !important;
-  box-shadow: var(--fotura-glass-shadow) !important;
+  background: rgba(255, 255, 255, 0.10) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important;
+  border-radius: 16px !important;
 }
 
-/* Tipografia continua neutra; a cor aparece apenas em ações/status já existentes. */
+/* Tipografia adaptada ao fundo escuro/colorido do exemplo. */
 body:has(.mf-side) :is(
-  .card,
-  .panel,
-  .action-center,
-  .sales-card,
-  .sales-stat,
-  .sel-summary,
-  .bill-card,
-  .account-card,
-  .setting-card,
-  .stat,
-  .client-card,
-  .faq-card,
-  .form-card,
-  .formcard,
-  .listcard,
-  .up-card,
+  .dash-h1,
+  .card-t,
+  .list-title,
+  .sales-h1,
+  .bill-h1,
+  .h1,
+  .profile-head,
   .mf-brand-tx,
   .mf-top-greeting
 ) {
-  color: #20242a !important;
+  color: #ffffff !important;
 }
 
-body:has(.mf-side) :is(.mf-item, .mf-sair, .mf-top-user) {
-  color: #555c66 !important;
+body:has(.mf-side) :is(
+  .dash-sub,
+  .dash-eyebrow,
+  .card-sub,
+  .list-meta,
+  .sales-sub,
+  .bill-sub,
+  .sub,
+  .mf-item,
+  .mf-sair,
+  .mf-top-role
+) {
+  color: rgba(255, 255, 255, .76) !important;
 }
 
-body:has(.mf-side) .mf-top-role {
-  color: #727983 !important;
+body:has(.mf-side) :is(.card-link, .bell-read, .bell-all) {
+  color: #ffffff !important;
 }
 
-/* Mobile mantém o mesmo material, com blur um pouco menor. */
+/* Mobile mantém exatamente o mesmo blur do código enviado. */
 @media (max-width: 640px) {
   body:has(.mf-side) :is(
     .mf-side,
@@ -414,42 +353,7 @@ body:has(.mf-side) .mf-top-role {
     .listcard,
     .up-card
   ) {
-    backdrop-filter: blur(20px) brightness(1.045) !important;
-    -webkit-backdrop-filter: blur(20px) brightness(1.045) !important;
-  }
-}
-
-/* Fallback sem backdrop-filter: ainda translúcido e sem pigmentação. */
-@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  :is(body:has(.mf-side), body:has(.admin-global-nav)) :is(
-    .card,
-    .panel,
-    .action-center,
-    .sales-card,
-    .sales-stat,
-    .sel-summary,
-    .bill-card,
-    .account-card,
-    .setting-card,
-    .stat,
-    .client-card,
-    .faq-card,
-    .form-card,
-    .formcard,
-    .listcard,
-    .data-card,
-    .wide-card,
-    .up-card,
-    .overview,
-    .plan,
-    .subscription,
-    .support-strip,
-    .closure-box,
-    .sales-box,
-    .preview-panel,
-    .table-wrap
-  ) {
-    background-color: rgba(255,255,255,.54) !important;
-    background-image: none !important;
+    backdrop-filter: blur(15px) !important;
+    -webkit-backdrop-filter: blur(15px) !important;
   }
 }
