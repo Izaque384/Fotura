@@ -91,7 +91,7 @@ body:has(.mf-side) :is(
   .delivery-page,
   .onb
 ),
-body:has(.admin-global-nav) :is(.adm,.aa,.af,.au,.pa,.ac) {
+body:has(.admin-global-nav) :is(.adm,.aa,.af,.au,.pa,.ac,.lr,.hs) {
   background: linear-gradient(
     135deg,
     #12182d 0%,
@@ -709,4 +709,26 @@ body:has(.admin-global-nav) :is(
     0 0 0 1px rgba(255,255,255,.06) !important;
   backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
   -webkit-backdrop-filter: blur(18px) brightness(1.12) saturate(.78) !important;
+}
+
+
+/* Typography inside luminous glass remains neutral/dark. */
+body:has(.mf-side) :is(
+  .card-t,.list-title,.mf-brand-tx,.mf-top-greeting,
+  .panel-title,.card-title,.account-title,.plan-name,
+  .sales-title,.sel-title,.action-title,.faq-card
+) {
+  color: #21253a !important;
+}
+
+body:has(.mf-side) :is(
+  .card-sub,.list-meta,.mf-item,.mf-sair,.mf-top-role,
+  .panel-desc,.card-desc,.account-copy,.account-email,
+  .account-note,.plan-desc,.sales-meta,.sel-meta
+) {
+  color: #616980 !important;
+}
+
+body:has(.mf-side) :is(.mf-item:hover,.mf-item.ativo) {
+  color: #21253a !important;
 }
