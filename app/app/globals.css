@@ -73,9 +73,9 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
 /* Fotura glass system — código de referência aplicado literalmente ------------
    Base visual enviada pelo usuário: fundo colorido + vidro translúcido simples. */
 :is(body:has(.mf-side), body:has(.admin-global-nav)) {
-  --fotura-glass-bg: rgba(255, 255, 255, 0.10);
-  --fotura-glass-border: rgba(255, 255, 255, 0.25);
-  --fotura-glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+  --fotura-glass-bg: rgba(88, 94, 104, 0.11);
+  --fotura-glass-border: rgba(76, 84, 96, 0.16);
+  --fotura-glass-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.10);
 }
 
 /* O efeito precisa de contraste atrás do vidro: usa exatamente o gradiente-base
@@ -94,15 +94,15 @@ body:has(.mf-side) :is(
 body:has(.admin-global-nav) :is(.adm,.aa,.af,.au,.pa,.ac) {
   background: linear-gradient(
     135deg,
-    #c6d0de 0%,
-    #dde3eb 46%,
-    #d5cfdf 100%
+    #fbfbfc 0%,
+    #f7f8fa 48%,
+    #f2f4f7 100%
   ) !important;
   background-image: linear-gradient(
     135deg,
-    #c6d0de 0%,
-    #dde3eb 46%,
-    #d5cfdf 100%
+    #fbfbfc 0%,
+    #f7f8fa 48%,
+    #f2f4f7 100%
   ) !important;
   color: #21253A !important;
 }
@@ -270,22 +270,22 @@ body:has(.mf-side) :is(.mf-item, .mf-sair) {
 
 body:has(.mf-side) .mf-item:hover,
 body:has(.mf-side) .mf-item.ativo {
-  background: rgba(255, 255, 255, 0.10) !important;
+  background: rgba(88, 94, 104, 0.11) !important;
   background-image: none !important;
   backdrop-filter: blur(15px) !important;
   -webkit-backdrop-filter: blur(15px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(76, 84, 96, 0.16) !important;
+  box-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.10) !important;
 }
 
 /* Inputs seguem o mesmo vidro. */
 body:has(.mf-side) :is(input, select, textarea) {
-  background: rgba(255, 255, 255, 0.10) !important;
+  background: rgba(88, 94, 104, 0.11) !important;
   background-image: none !important;
   backdrop-filter: blur(15px) !important;
   -webkit-backdrop-filter: blur(15px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(76, 84, 96, 0.16) !important;
+  box-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.10) !important;
 }
 
 /* Menus e modais: ainda o mesmo material, sem versão "premium" diferente. */
@@ -298,22 +298,22 @@ body:has(.mf-side) :is(
   .send-panel,
   .action-panel
 ) {
-  background: rgba(255, 255, 255, 0.10) !important;
+  background: rgba(88, 94, 104, 0.11) !important;
   background-image: none !important;
   backdrop-filter: blur(15px) !important;
   -webkit-backdrop-filter: blur(15px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(76, 84, 96, 0.16) !important;
+  box-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.10) !important;
   border-radius: 16px !important;
 }
 
 /* Utilitário literal do exemplo para novos componentes. */
 :is(body:has(.mf-side), body:has(.admin-global-nav)) .glass-card {
-  background: rgba(255, 255, 255, 0.10) !important;
+  background: rgba(88, 94, 104, 0.11) !important;
   backdrop-filter: blur(15px) !important;
   -webkit-backdrop-filter: blur(15px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(76, 84, 96, 0.16) !important;
+  box-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.10) !important;
   border-radius: 16px !important;
 }
 
@@ -380,9 +380,9 @@ body:has(.mf-side) :is(.card-link, .bell-read, .bell-all) {
    Importante: esta camada altera somente o material das superfícies.
    Dimensões, padding, grids, tipografia e hierarquia permanecem dos componentes. */
 :is(body:has(.mf-side), body:has(.admin-global-nav)) {
-  --profile-glass-bg: rgba(255, 255, 255, 0.10);
-  --profile-glass-border: rgba(255, 255, 255, 0.25);
-  --profile-glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+  --profile-glass-bg: rgba(88, 94, 104, 0.11);
+  --profile-glass-border: rgba(76, 84, 96, 0.16);
+  --profile-glass-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.10);
   --profile-glass-radius: 14px;
 }
 
@@ -624,8 +624,8 @@ body:has(.mf-side),
 body:has(.admin-global-nav) {
   background: linear-gradient(
     135deg,
-    #c6d0de 0%,
-    #dde3eb 46%,
-    #d5cfdf 100%
+    #fbfbfc 0%,
+    #f7f8fa 48%,
+    #f2f4f7 100%
   ) !important;
 }
