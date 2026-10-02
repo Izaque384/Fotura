@@ -357,3 +357,317 @@ body:has(.mf-side) :is(.card-link, .bell-read, .bell-all) {
     -webkit-backdrop-filter: blur(15px) !important;
   }
 }
+
+
+/* Profile-glass parity ---------------------------------------------------------
+   Fonte de verdade: material visual já usado no botão .mf-top-user.
+   Objetivo: toda superfície em formato de card/painel nas áreas internas usa
+   exatamente o mesmo vidro, sem alterar lógica, dados ou conteúdo. */
+:is(body:has(.mf-side), body:has(.admin-global-nav)) {
+  --fotura-profile-glass-bg: rgba(255, 255, 255, 0.10);
+  --fotura-profile-glass-border: rgba(255, 255, 255, 0.25);
+  --fotura-profile-glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+  --fotura-profile-glass-radius: 14px;
+}
+
+/* Superfícies principais e secundárias do app do fotógrafo. */
+body:has(.mf-side) :is(
+  .card,
+  .panel,
+  .action-center,
+  .action-center-grid,
+  .action-center-clear,
+  .action-item,
+  .action-panel,
+  .action-summary,
+  .sales-card,
+  .sales-stat,
+  .sales-row,
+  .sales-box,
+  .sales-info-pop,
+  .sel-summary,
+  .sel-row,
+  .sel-mini,
+  .bill-card,
+  .bill-notice,
+  .overview,
+  .plan,
+  .current-plan,
+  .subscription,
+  .subscription-meta,
+  .storage-size,
+  .account-card,
+  .setting-card,
+  .data-card,
+  .data-status,
+  .wide-card,
+  .closure-box,
+  .closure-modal,
+  .client-card,
+  .formcard,
+  .listcard,
+  .gallery-block,
+  .stat,
+  .faq-card,
+  .faq-item,
+  .form-card,
+  .support-strip,
+  .up-card,
+  .up-file,
+  .up-mini,
+  .up-note,
+  .up-network,
+  .up-progress,
+  .preview-panel,
+  .sample,
+  .photo-feature,
+  .hero-section,
+  .brand-block,
+  .notice,
+  .alert,
+  .toolbar,
+  .sales-toolbar,
+  .selection-toolbar,
+  .search-box,
+  .filter-trigger,
+  .sales-search-box,
+  .sel-search,
+  .send-panel,
+  .send-client,
+  .send-option,
+  .review-gate,
+  .meta-chip,
+  .list-row,
+  .storage-usage
+) {
+  background: var(--fotura-profile-glass-bg) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid var(--fotura-profile-glass-border) !important;
+  box-shadow: var(--fotura-profile-glass-shadow) !important;
+  border-radius: var(--fotura-profile-glass-radius) !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* Superfícies da administração também usam o mesmo material. */
+body:has(.admin-global-nav) :is(
+  .card,
+  .table-wrap,
+  .tablewrap,
+  .tablecard,
+  .accounts,
+  .audit-btn,
+  .row,
+  .rows,
+  .pa-card,
+  .pa-kpi,
+  .pa-panel,
+  .pa-row,
+  .feedback,
+  .item,
+  .summary,
+  .metric,
+  .detail,
+  .audit,
+  .auditItem,
+  .aa-card,
+  .aa-state,
+  .cl-card,
+  .cl-state,
+  .pg-card,
+  .pg-metric,
+  .pg-preview,
+  .pg-state,
+  .panel
+) {
+  background: var(--fotura-profile-glass-bg) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid var(--fotura-profile-glass-border) !important;
+  box-shadow: var(--fotura-profile-glass-shadow) !important;
+  border-radius: var(--fotura-profile-glass-radius) !important;
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* Mantém exatamente o mesmo material também nos pequenos cards funcionais. */
+body:has(.mf-side) :is(
+  .mf-top-user,
+  .bell,
+  .filter-menu,
+  .modal,
+  .sales-info-pop
+) {
+  background: var(--fotura-profile-glass-bg) !important;
+  background-image: none !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid var(--fotura-profile-glass-border) !important;
+  box-shadow: var(--fotura-profile-glass-shadow) !important;
+  border-radius: var(--fotura-profile-glass-radius) !important;
+}
+
+/* Proteção estrutural: cards nunca podem crescer além da própria coluna. */
+body:has(.mf-side) :is(
+  .card,
+  .panel,
+  .action-center,
+  .action-item,
+  .action-panel,
+  .sales-card,
+  .sales-stat,
+  .sales-row,
+  .sales-box,
+  .sel-summary,
+  .sel-row,
+  .bill-card,
+  .overview,
+  .plan,
+  .subscription,
+  .account-card,
+  .setting-card,
+  .data-card,
+  .wide-card,
+  .client-card,
+  .formcard,
+  .listcard,
+  .faq-card,
+  .form-card,
+  .up-card,
+  .preview-panel,
+  .support-strip,
+  .closure-box
+) > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Flex/grid descendants precisam aceitar encolhimento para não vazar texto. */
+body:has(.mf-side) :is(
+  .charts,
+  .lists,
+  .stats,
+  .sales-stats,
+  .plans,
+  .grid,
+  .layout,
+  .action-center-grid,
+  .action-grid,
+  .action-groups,
+  .type-grid,
+  .row2
+) > * {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* Texto: quebra apenas quando necessário; nunca é cortado horizontalmente. */
+body:has(.mf-side) :is(
+  .card-t,
+  .card-sub,
+  .card-title,
+  .card-copy,
+  .card-desc,
+  .list-title,
+  .list-meta,
+  .action-item-copy,
+  .action-title,
+  .sales-title,
+  .sales-meta,
+  .sales-note,
+  .sel-title,
+  .sel-meta,
+  .account-title,
+  .account-copy,
+  .account-email,
+  .account-note,
+  .panel-title,
+  .panel-desc,
+  .faq-answer,
+  .faq-card,
+  .subscription-desc,
+  .subscription-meta,
+  .plan-name,
+  .plan-desc,
+  .usage-title,
+  .usage-caption,
+  .support-copy,
+  .preview-note,
+  .up-note,
+  .up-msg,
+  .data-status,
+  .notice
+) {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+}
+
+/* Elementos de mídia permanecem dentro do card. */
+body:has(.mf-side) :is(
+  .card,
+  .panel,
+  .action-center,
+  .sales-card,
+  .sales-stat,
+  .sel-summary,
+  .bill-card,
+  .account-card,
+  .setting-card,
+  .client-card,
+  .faq-card,
+  .form-card,
+  .up-card,
+  .preview-panel
+) :is(img, video, canvas) {
+  max-width: 100% !important;
+  height: auto;
+}
+
+/* Botões/links podem quebrar texto em telas estreitas em vez de extravasar. */
+body:has(.mf-side) :is(
+  .card,
+  .panel,
+  .action-center,
+  .sales-card,
+  .sel-summary,
+  .bill-card,
+  .account-card,
+  .setting-card,
+  .client-card,
+  .faq-card,
+  .form-card,
+  .up-card
+) :is(button, a) {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* Segurança extra para mobile e colunas estreitas. */
+@media (max-width: 900px) {
+  body:has(.mf-side) :is(
+    .card,
+    .panel,
+    .action-center,
+    .sales-card,
+    .sales-stat,
+    .sel-summary,
+    .bill-card,
+    .account-card,
+    .setting-card,
+    .client-card,
+    .faq-card,
+    .form-card,
+    .up-card
+  ) {
+    width: 100% !important;
+  }
+}
