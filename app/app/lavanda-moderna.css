@@ -2367,3 +2367,82 @@ body:has(.dash.mf-shift) .mf-top-role{
     background:linear-gradient(180deg,#FFFFFF 0%,#F7F8FB 100%) !important;
   }
 }
+
+
+/* =========================================================
+   Sidebar — mesmo tema claro de vidro do Dashboard
+   ========================================================= */
+html body .mf-shift .mf-side,
+body:has(.dash.mf-shift) .mf-side{
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.72) 0%,rgba(232,235,243,.46) 100%) !important;
+  background-image:
+    linear-gradient(180deg,rgba(255,255,255,.72) 0%,rgba(232,235,243,.46) 100%) !important;
+  border-right:1px solid rgba(43,51,72,.14) !important;
+  box-shadow:
+    8px 0 32px rgba(31,41,55,.08),
+    inset -1px 0 0 rgba(255,255,255,.72) !important;
+  -webkit-backdrop-filter:blur(28px) saturate(104%) brightness(1.02) !important;
+  backdrop-filter:blur(28px) saturate(104%) brightness(1.02) !important;
+}
+
+html body .mf-shift .mf-brand-tx,
+body:has(.dash.mf-shift) .mf-brand-tx{
+  color:#171D30 !important;
+}
+
+html body .mf-shift :is(.mf-item,.mf-admin,.mf-sair),
+body:has(.dash.mf-shift) :is(.mf-item,.mf-admin,.mf-sair){
+  color:#4C5670 !important;
+}
+
+html body .mf-shift .mf-item:hover,
+body:has(.dash.mf-shift) .mf-item:hover{
+  background:rgba(255,255,255,.52) !important;
+  color:#1D253A !important;
+  border-color:rgba(43,51,72,.08) !important;
+}
+
+html body .mf-shift .mf-item.ativo,
+body:has(.dash.mf-shift) .mf-item.ativo{
+  color:#1B2338 !important;
+  background:
+    linear-gradient(90deg,rgba(17,150,252,.12),rgba(93,13,250,.07)) !important;
+  border-color:rgba(74,108,247,.18) !important;
+  box-shadow:
+    inset 3px 0 0 #4A6CF7,
+    0 6px 18px rgba(55,68,110,.055) !important;
+}
+
+html body .mf-shift .mf-admin,
+body:has(.dash.mf-shift) .mf-admin{
+  color:#46516B !important;
+  border-color:rgba(43,51,72,.12) !important;
+  background:rgba(255,255,255,.20) !important;
+}
+
+html body .mf-shift .mf-admin:hover,
+body:has(.dash.mf-shift) .mf-admin:hover{
+  color:#20283D !important;
+  border-color:rgba(74,108,247,.20) !important;
+  background:rgba(255,255,255,.46) !important;
+}
+
+html body .mf-shift .mf-sair,
+body:has(.dash.mf-shift) .mf-sair{
+  color:#8B5B65 !important;
+}
+
+html body .mf-shift .mf-sair:hover,
+body:has(.dash.mf-shift) .mf-sair:hover{
+  background:rgba(255,255,255,.42) !important;
+  color:#754751 !important;
+}
+
+@media(max-width:820px){
+  html body .mf-shift .mf-side,
+  body:has(.dash.mf-shift) .mf-side{
+    -webkit-backdrop-filter:blur(22px) saturate(103%) !important;
+    backdrop-filter:blur(22px) saturate(103%) !important;
+  }
+}
