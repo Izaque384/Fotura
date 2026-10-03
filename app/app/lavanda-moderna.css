@@ -1905,3 +1905,34 @@ body:has(.dash.mf-shift) .mf-sair{
       inset 0 1px 0 rgba(255,255,255,.68) !important;
   }
 }
+
+
+/* Ajuste fino — vidro mais transparente no Dashboard */
+.dash.mf-shift :is(
+  .card,
+  .action-center,
+  .storage-usage,
+  .bell,
+  .bell-pop
+),
+body:has(.dash.mf-shift) .mf-top-user{
+  background:linear-gradient(145deg,rgba(255,255,255,.58),rgba(246,248,255,.40)) !important;
+  background-image:linear-gradient(145deg,rgba(255,255,255,.58),rgba(246,248,255,.40)) !important;
+  border-color:rgba(255,255,255,.40) !important;
+}
+
+.dash.mf-shift :is(.card,.storage-usage,.bell):hover,
+body:has(.dash.mf-shift) .mf-top-user:hover{
+  background:linear-gradient(145deg,rgba(255,255,255,.69),rgba(248,249,255,.50)) !important;
+  background-image:linear-gradient(145deg,rgba(255,255,255,.69),rgba(248,249,255,.50)) !important;
+  border-color:rgba(255,255,255,.56) !important;
+}
+
+.dash.mf-shift :is(
+  .action-item,
+  .action-center-clear,
+  .upgrade-context,
+  .list-row
+){
+  background:rgba(255,255,255,.22) !important;
+}
