@@ -2526,10 +2526,8 @@ html body .mf-shift :is(
   .faq-item,
   .form-card,
   .support-strip,
-  .type-btn,
   .upload,
   .up-card,
-  .up-mini,
   .up-network,
   .up-progress,
   .delivery-card,
@@ -2572,7 +2570,9 @@ html body .mf-shift :is(
   .sales-search-box,
   .sel-search,
   .filter-menu,
-  .filter-option
+  .filter-option,
+  .type-btn,
+  .up-mini
 ){
   background:var(--ft-glass-control) !important;
   background-image:none !important;
@@ -2586,7 +2586,7 @@ html body .mf-shift :is(
 
 /* Campos reais, sem alterar tamanhos nem layout. */
 html body .mf-shift :is(
-  input,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
   select,
   textarea,
   .input,
@@ -2598,7 +2598,10 @@ html body .mf-shift :is(
   border-color:rgba(43,51,72,.13) !important;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.60) !important;
 }
-html body .mf-shift :is(input,textarea)::placeholder{
+html body .mf-shift :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+  textarea
+)::placeholder{
   color:#7B8499 !important;
 }
 
@@ -2753,7 +2756,7 @@ html body :is(.adm,.pa,.aa,.af,.lr,.hs,.au,.ac) :is(
 }
 
 html body :is(.adm,.pa,.aa,.af,.lr,.hs,.au,.ac) :is(
-  input,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
   select,
   textarea,
   .search,
