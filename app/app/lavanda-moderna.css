@@ -1737,7 +1737,7 @@ html body .dash.mf-shift .gallery-new-password{
   -webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,.45),transparent 72%);
 }
 
-.dash.mf-shift > *{
+.dash.mf-shift > .dash-body{
   position:relative;
   z-index:1;
 }
