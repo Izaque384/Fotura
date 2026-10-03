@@ -1936,3 +1936,99 @@ body:has(.dash.mf-shift) .mf-top-user:hover{
 ){
   background:rgba(255,255,255,.14) !important;
 }
+
+
+/* Ajuste fino v2 — vidro ultra-transparente + legibilidade reforçada */
+.dash.mf-shift :is(
+  .card,
+  .action-center,
+  .storage-usage,
+  .bell,
+  .bell-pop
+),
+body:has(.dash.mf-shift) .mf-top-user{
+  background:linear-gradient(145deg,rgba(255,255,255,.34),rgba(246,248,255,.22)) !important;
+  background-image:linear-gradient(145deg,rgba(255,255,255,.34),rgba(246,248,255,.22)) !important;
+  border-color:rgba(255,255,255,.34) !important;
+  -webkit-backdrop-filter:blur(24px) saturate(108%) !important;
+  backdrop-filter:blur(24px) saturate(108%) !important;
+}
+
+.dash.mf-shift :is(.card,.storage-usage,.bell):hover,
+body:has(.dash.mf-shift) .mf-top-user:hover{
+  background:linear-gradient(145deg,rgba(255,255,255,.46),rgba(248,249,255,.30)) !important;
+  background-image:linear-gradient(145deg,rgba(255,255,255,.46),rgba(248,249,255,.30)) !important;
+  border-color:rgba(255,255,255,.48) !important;
+}
+
+.dash.mf-shift :is(
+  .action-item,
+  .action-center-clear,
+  .upgrade-context,
+  .list-row
+){
+  background:rgba(255,255,255,.09) !important;
+}
+
+/* Tipografia preparada para vidro mais transparente */
+.dash.mf-shift :is(
+  .card-t,
+  .list-title,
+  .action-center h2,
+  .action-item strong,
+  .action-center-clear strong,
+  .bell-head strong
+){
+  color:#141A2D !important;
+  font-weight:750 !important;
+  text-shadow:0 1px 0 rgba(255,255,255,.18);
+}
+
+.dash.mf-shift :is(
+  .card-sub,
+  .list-meta,
+  .action-item p,
+  .action-center-clear span,
+  .bell-meta
+){
+  color:#46516B !important;
+  font-weight:520 !important;
+}
+
+.dash.mf-shift :is(
+  .card-link,
+  .bell-read,
+  .bell-all
+){
+  color:#313B5B !important;
+  font-weight:750 !important;
+}
+
+.dash.mf-shift :is(
+  .vbar-num,
+  .vbar-lab,
+  .legend-row,
+  .status-pill,
+  .donut-center,
+  .mode
+){
+  color:#27314D !important;
+}
+
+.dash.mf-shift .storage-usage__head span,
+.dash.mf-shift .storage-usage__meta{
+  color:#4C5872 !important;
+}
+.dash.mf-shift .storage-usage__head strong,
+.dash.mf-shift .storage-usage__meta span:first-child{
+  color:#222B45 !important;
+  font-weight:750 !important;
+}
+
+body:has(.dash.mf-shift) .mf-top-greeting{
+  color:#182038 !important;
+  font-weight:750 !important;
+}
+body:has(.dash.mf-shift) .mf-top-role{
+  color:#4B5670 !important;
+}
