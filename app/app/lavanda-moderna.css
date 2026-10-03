@@ -40,6 +40,11 @@
   color:var(--ft-text) !important;
 }
 
+/* Dashboard brand canvas: override the generic .mf-shift lavender background. */
+.dash.mf-shift{
+  background:linear-gradient(135deg,#8FC8FC 0%,#B59AF8 100%) !important;
+}
+
 /* headings and text */
 .mf-shift :where(h1,h2,h3,h4,.h1,.dash-h1,.bill-h1,.delivery-title,.title,.card-t,.list-title,.name,.value,.plan-name,.current-name,.usage-title,.sel-title,.client-name){
   color:var(--ft-text) !important;
