@@ -2201,3 +2201,169 @@ body:has(.dash.mf-shift) .mf-top-role{
     border-radius:14px !important;
   }
 }
+
+
+/* =========================================================
+   Dashboard — canvas branco + vidro claro legível
+   Mantém a arquitetura do card de referência, mas adapta
+   a paleta para leitura escura sobre fundo claro.
+   ========================================================= */
+
+.dash.mf-shift{
+  background:linear-gradient(180deg,#FFFFFF 0%,#F7F8FB 100%) !important;
+}
+
+/* Cabeçalho volta para tipografia escura. */
+.dash.mf-shift .dash-eyebrow{
+  color:#65708A !important;
+}
+.dash.mf-shift .dash-h1{
+  color:#161C2E !important;
+  text-shadow:none !important;
+}
+.dash.mf-shift .dash-sub,
+.dash.mf-shift .dash-sync{
+  color:#68728A !important;
+}
+
+/* Mesmo vidro: raio, blur, reflexo e sombra preservados.
+   Apenas o fumê escuro vira um vidro claro neutro. */
+.dash.mf-shift :is(
+  .card,
+  .action-center,
+  .storage-usage,
+  .bell,
+  .bell-pop
+),
+body:has(.dash.mf-shift) .mf-top-user{
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.54),rgba(226,230,239,.28)) !important;
+  background-image:
+    linear-gradient(135deg,rgba(255,255,255,.54),rgba(226,230,239,.28)) !important;
+  border:1px solid rgba(43,51,72,.16) !important;
+  box-shadow:
+    0 18px 48px rgba(31,41,55,.10),
+    inset 0 1px 0 rgba(255,255,255,.92),
+    inset 0 -1px 0 rgba(255,255,255,.30) !important;
+  -webkit-backdrop-filter:blur(28px) saturate(104%) brightness(1.02) !important;
+  backdrop-filter:blur(28px) saturate(104%) brightness(1.02) !important;
+  color:#151B2D !important;
+}
+
+.dash.mf-shift :is(.card,.storage-usage,.bell):hover,
+body:has(.dash.mf-shift) .mf-top-user:hover{
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.66),rgba(232,235,243,.38)) !important;
+  background-image:
+    linear-gradient(135deg,rgba(255,255,255,.66),rgba(232,235,243,.38)) !important;
+  border-color:rgba(43,51,72,.24) !important;
+  box-shadow:
+    0 20px 54px rgba(31,41,55,.13),
+    inset 0 1px 0 rgba(255,255,255,.98) !important;
+}
+
+/* Camadas internas continuam translúcidas. */
+.dash.mf-shift :is(
+  .action-item,
+  .action-center-clear,
+  .upgrade-context,
+  .list-row
+){
+  background:rgba(255,255,255,.22) !important;
+  background-image:none !important;
+  border:1px solid rgba(43,51,72,.10) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.50) !important;
+}
+
+.dash.mf-shift .action-item:hover{
+  background:rgba(255,255,255,.34) !important;
+  border-color:rgba(43,51,72,.16) !important;
+}
+
+/* Tipografia escura e com hierarquia forte. */
+.dash.mf-shift :is(
+  .card-t,
+  .list-title,
+  .action-center h2,
+  .action-item strong,
+  .action-center-clear strong,
+  .bell-head strong,
+  .storage-usage__head strong,
+  .storage-usage__meta span:first-child,
+  .vbar-num,
+  .donut-center
+){
+  color:#141A2B !important;
+  font-weight:720 !important;
+  text-shadow:none !important;
+}
+
+.dash.mf-shift :is(
+  .card-sub,
+  .list-meta,
+  .action-item p,
+  .action-center-clear span,
+  .bell-meta,
+  .storage-usage__head span,
+  .storage-usage__meta,
+  .vbar-lab,
+  .legend-row,
+  .mode
+){
+  color:#58627A !important;
+  font-weight:500 !important;
+  text-shadow:none !important;
+}
+
+.dash.mf-shift :is(
+  .card-link,
+  .bell-read,
+  .bell-all
+){
+  color:#313B5C !important;
+  font-weight:720 !important;
+}
+
+/* Perfil em texto escuro. */
+body:has(.dash.mf-shift) .mf-top-greeting{
+  color:#171D30 !important;
+  font-weight:720 !important;
+}
+body:has(.dash.mf-shift) .mf-top-role{
+  color:#5E6880 !important;
+}
+
+/* Gráficos e indicadores adequados ao canvas claro. */
+.dash.mf-shift .storage-usage__track{
+  background:rgba(50,60,88,.10) !important;
+}
+.dash.mf-shift .donut::after{
+  background:rgba(249,250,252,.88) !important;
+}
+.dash.mf-shift .status-pill{
+  color:#27314A !important;
+  background:rgba(255,255,255,.38) !important;
+  border-color:rgba(43,51,72,.10) !important;
+}
+
+/* Aviso âmbar claro e translúcido. */
+.dash.mf-shift .alert{
+  background:
+    linear-gradient(135deg,rgba(255,247,220,.68),rgba(247,235,195,.46)) !important;
+  background-image:
+    linear-gradient(135deg,rgba(255,247,220,.68),rgba(247,235,195,.46)) !important;
+  border:1px solid rgba(186,141,46,.28) !important;
+  box-shadow:
+    0 14px 36px rgba(90,67,22,.08),
+    inset 0 1px 0 rgba(255,255,255,.70) !important;
+  color:#73520A !important;
+}
+.dash.mf-shift .alert a{
+  color:#4D3D79 !important;
+}
+
+@media(max-width:820px){
+  .dash.mf-shift{
+    background:linear-gradient(180deg,#FFFFFF 0%,#F7F8FB 100%) !important;
+  }
+}
