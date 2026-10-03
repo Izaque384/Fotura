@@ -969,7 +969,7 @@ html body .lp .top .nav a:hover{
 
 html body .lp .top .actions .btn:not(.primary){
   color:#FFFFFF;
-  border-color:rgba(255,255,255,.22);
+  border-color:rgba(255,255,255,.14);
   background:rgba(8,15,38,.12);
   backdrop-filter:blur(8px);
 }
@@ -1916,15 +1916,15 @@ body:has(.dash.mf-shift) .mf-sair{
   .bell-pop
 ),
 body:has(.dash.mf-shift) .mf-top-user{
-  background:linear-gradient(145deg,rgba(255,255,255,.58),rgba(246,248,255,.40)) !important;
-  background-image:linear-gradient(145deg,rgba(255,255,255,.58),rgba(246,248,255,.40)) !important;
+  background:linear-gradient(145deg,rgba(255,255,255,.42),rgba(246,248,255,.28)) !important;
+  background-image:linear-gradient(145deg,rgba(255,255,255,.42),rgba(246,248,255,.28)) !important;
   border-color:rgba(255,255,255,.40) !important;
 }
 
 .dash.mf-shift :is(.card,.storage-usage,.bell):hover,
 body:has(.dash.mf-shift) .mf-top-user:hover{
-  background:linear-gradient(145deg,rgba(255,255,255,.69),rgba(248,249,255,.50)) !important;
-  background-image:linear-gradient(145deg,rgba(255,255,255,.69),rgba(248,249,255,.50)) !important;
+  background:linear-gradient(145deg,rgba(255,255,255,.54),rgba(248,249,255,.38)) !important;
+  background-image:linear-gradient(145deg,rgba(255,255,255,.54),rgba(248,249,255,.38)) !important;
   border-color:rgba(255,255,255,.56) !important;
 }
 
@@ -1934,5 +1934,5 @@ body:has(.dash.mf-shift) .mf-top-user:hover{
   .upgrade-context,
   .list-row
 ){
-  background:rgba(255,255,255,.22) !important;
+  background:rgba(255,255,255,.14) !important;
 }
