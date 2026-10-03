@@ -1706,3 +1706,202 @@ html body .dash.mf-shift .action-panel button.action-btn.copy-link-btn span{
 html body .dash.mf-shift .gallery-new-password{
   color-scheme:light !important;
 }
+
+
+/* =========================================================
+   Dashboard Fotura — arquitetura visual inspirada no Versora
+   Mesmo princípio: fundo profundo + luz ambiente + vidro claro.
+   Escopo: somente o Dashboard para validação visual.
+   ========================================================= */
+
+.dash.mf-shift{
+  min-height:100vh;
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 88% 6%,rgba(93,13,250,.18),transparent 28%),
+    radial-gradient(circle at 14% 88%,rgba(17,150,252,.20),transparent 34%),
+    linear-gradient(145deg,#0E1A32 0%,#17264A 48%,#2A2452 100%) !important;
+}
+
+.dash.mf-shift::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+  background-size:46px 46px;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.45),transparent 72%);
+  -webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,.45),transparent 72%);
+}
+
+.dash.mf-shift > *{
+  position:relative;
+  z-index:1;
+}
+
+/* Cabeçalho sobre o fundo escuro */
+.dash.mf-shift .dash-eyebrow{
+  color:rgba(180,210,255,.90) !important;
+}
+.dash.mf-shift .dash-h1{
+  color:#FBFCFF !important;
+  text-shadow:0 1px 0 rgba(0,0,0,.08);
+}
+.dash.mf-shift .dash-sub,
+.dash.mf-shift .dash-sync{
+  color:rgba(240,244,255,.68) !important;
+}
+
+/* Vidro claro: o azul/roxo fica atrás, não dentro do conteúdo */
+.dash.mf-shift :is(
+  .card,
+  .action-center,
+  .storage-usage,
+  .bell,
+  .bell-pop
+){
+  background:linear-gradient(145deg,rgba(255,255,255,.70),rgba(246,248,255,.54)) !important;
+  background-image:linear-gradient(145deg,rgba(255,255,255,.70),rgba(246,248,255,.54)) !important;
+  border:1px solid rgba(255,255,255,.42) !important;
+  box-shadow:
+    0 16px 42px rgba(5,10,28,.16),
+    inset 0 1px 0 rgba(255,255,255,.60) !important;
+  -webkit-backdrop-filter:blur(22px) saturate(112%) !important;
+  backdrop-filter:blur(22px) saturate(112%) !important;
+}
+
+/* Hover idêntico em lógica ao Versora: um pouco mais claro e elevado */
+.dash.mf-shift :is(.card,.storage-usage,.bell):hover,
+body:has(.dash.mf-shift) .mf-top-user:hover{
+  background:linear-gradient(145deg,rgba(255,255,255,.79),rgba(248,249,255,.64)) !important;
+  border-color:rgba(255,255,255,.62) !important;
+  box-shadow:
+    0 19px 48px rgba(5,10,28,.20),
+    inset 0 1px 0 rgba(255,255,255,.70) !important;
+}
+
+/* Cards internos mais transparentes, como no Versora */
+.dash.mf-shift :is(
+  .action-item,
+  .action-center-clear,
+  .upgrade-context,
+  .list-row
+){
+  background:rgba(255,255,255,.30) !important;
+  background-image:none !important;
+  border-color:rgba(33,43,82,.10) !important;
+  box-shadow:none !important;
+  -webkit-backdrop-filter:blur(10px) !important;
+  backdrop-filter:blur(10px) !important;
+}
+
+.dash.mf-shift .action-item:hover{
+  background:rgba(255,255,255,.42) !important;
+  border-color:rgba(33,43,82,.14) !important;
+}
+
+.dash.mf-shift .action-center-clear{
+  border-style:dashed !important;
+}
+
+/* Aviso sem perder semântica, mas integrado ao vidro */
+.dash.mf-shift .alert{
+  background:linear-gradient(145deg,rgba(255,248,229,.76),rgba(248,240,217,.58)) !important;
+  border:1px solid rgba(235,211,159,.54) !important;
+  box-shadow:
+    0 12px 32px rgba(5,10,28,.10),
+    inset 0 1px 0 rgba(255,255,255,.60) !important;
+  -webkit-backdrop-filter:blur(18px) saturate(108%) !important;
+  backdrop-filter:blur(18px) saturate(108%) !important;
+}
+
+/* Elementos internos continuam definidos sobre o vidro */
+.dash.mf-shift :is(.card,.action-center,.storage-usage,.bell-pop){
+  color:#21253A !important;
+}
+.dash.mf-shift :is(.card-t,.list-title,.action-center h2,.action-item strong,.action-center-clear strong){
+  color:#252A41 !important;
+}
+.dash.mf-shift :is(.card-sub,.list-meta,.action-item p,.action-center-clear span){
+  color:#73758D !important;
+}
+.dash.mf-shift .donut::after{
+  background:rgba(250,248,253,.82) !important;
+}
+
+/* Perfil: mesma superfície clara do painel */
+body:has(.dash.mf-shift) .mf-top-user{
+  background:linear-gradient(145deg,rgba(255,255,255,.70),rgba(246,248,255,.54)) !important;
+  border:1px solid rgba(255,255,255,.42) !important;
+  box-shadow:
+    0 14px 36px rgba(5,10,28,.15),
+    inset 0 1px 0 rgba(255,255,255,.60) !important;
+  -webkit-backdrop-filter:blur(22px) saturate(112%) !important;
+  backdrop-filter:blur(22px) saturate(112%) !important;
+  color:#21253A !important;
+}
+
+/* Sidebar do Dashboard: equivalente ao verde profundo do Versora */
+body:has(.dash.mf-shift) .mf-side{
+  background:linear-gradient(180deg,#0D1830 0%,#142440 58%,#211C45 100%) !important;
+  border-right:1px solid rgba(255,255,255,.055) !important;
+  box-shadow:8px 0 28px rgba(4,8,24,.12) !important;
+}
+body:has(.dash.mf-shift) .mf-brand-tx{
+  color:#F8FAFF !important;
+}
+body:has(.dash.mf-shift) :is(.mf-item,.mf-sair,.mf-admin){
+  color:rgba(240,244,255,.66) !important;
+}
+body:has(.dash.mf-shift) .mf-item:hover{
+  background:rgba(255,255,255,.075) !important;
+  color:#FFFFFF !important;
+}
+body:has(.dash.mf-shift) .mf-item.ativo{
+  background:rgba(255,255,255,.09) !important;
+  color:#FFFFFF !important;
+  border-color:rgba(255,255,255,.08) !important;
+  box-shadow:inset 2px 0 0 #72B8FF !important;
+}
+body:has(.dash.mf-shift) .mf-admin{
+  border-color:rgba(255,255,255,.10) !important;
+}
+body:has(.dash.mf-shift) .mf-admin:hover{
+  border-color:rgba(255,255,255,.20) !important;
+}
+body:has(.dash.mf-shift) .mf-sair{
+  color:rgba(255,205,214,.68) !important;
+}
+
+/* Controle de armazenamento e sino seguem o vidro, mas mantêm legibilidade */
+.dash.mf-shift .storage-usage__head span,
+.dash.mf-shift .storage-usage__meta{
+  color:#626B86 !important;
+}
+.dash.mf-shift .storage-usage__head strong,
+.dash.mf-shift .storage-usage__meta span:first-child{
+  color:#3B435E !important;
+}
+.dash.mf-shift .storage-usage__track{
+  background:rgba(55,66,104,.12) !important;
+}
+
+/* Mobile: menos blur e sombra, como no Versora */
+@media(max-width:820px){
+  .dash.mf-shift{
+    background:
+      radial-gradient(circle at 86% 3%,rgba(93,13,250,.15),transparent 25%),
+      linear-gradient(150deg,#0E1A32 0%,#17264A 58%,#242149 100%) !important;
+  }
+  .dash.mf-shift :is(.card,.action-center,.storage-usage,.bell,.bell-pop),
+  body:has(.dash.mf-shift) .mf-top-user{
+    -webkit-backdrop-filter:blur(17px) !important;
+    backdrop-filter:blur(17px) !important;
+    box-shadow:
+      0 11px 28px rgba(5,10,28,.14),
+      inset 0 1px 0 rgba(255,255,255,.68) !important;
+  }
+}
