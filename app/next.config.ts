@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: securityHeaders,
       },
-      { source: "/dashboard/:path*", headers: [noIndexHeader] },
+      { source: "/dashboard/:path*", headers: [noIndexHeader, { key: "Cache-Control", value: "no-store, no-cache, must-revalidate, max-age=0" }, { key: "Pragma", value: "no-cache" }, { key: "Expires", value: "0" }] },
       { source: "/admin/:path*", headers: [noIndexHeader] },
       { source: "/api/:path*", headers: [noIndexHeader] },
       { source: "/g/:path*", headers: [noIndexHeader] },
