@@ -3018,3 +3018,31 @@ html body .mf-shift :is(
     scroll-behavior:auto !important;
   }
 }
+
+
+/* Mobile — reserva física do topo para menu + perfil. */
+@media(max-width:640px){
+  html body .mf-mobile-btn{
+    background:linear-gradient(135deg,rgba(255,255,255,.78),rgba(232,235,243,.52)) !important;
+    border-color:rgba(43,51,72,.14) !important;
+    color:#29324A !important;
+    box-shadow:0 10px 28px rgba(31,41,55,.10),inset 0 1px 0 rgba(255,255,255,.92) !important;
+    -webkit-backdrop-filter:blur(18px) saturate(103%) !important;
+    backdrop-filter:blur(18px) saturate(103%) !important;
+  }
+
+  html body .mf-shift > :is(
+    .dash-body,
+    .sales-wrap,
+    .bill-wrap,
+    .cfg-body,
+    .profile-body,
+    .help-wrap,
+    .up-wrap,
+    .delivery-wrap,
+    .onb-wrap,
+    .wrap
+  ){
+    padding-top:max(76px,calc(env(safe-area-inset-top) + 68px)) !important;
+  }
+}
