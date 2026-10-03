@@ -2446,3 +2446,352 @@ body:has(.dash.mf-shift) .mf-sair:hover{
     backdrop-filter:blur(22px) saturate(103%) !important;
   }
 }
+
+
+/* =========================================================
+   FOTURA INTERNAL UI — sistema claro de vidro aprovado
+   Propagação para todas as áreas internas.
+   Páginas públicas/login permanecem fora deste escopo.
+   ========================================================= */
+
+:root{
+  --ft-glass-canvas:linear-gradient(180deg,#FFFFFF 0%,#F7F8FB 100%);
+  --ft-glass-main:linear-gradient(135deg,rgba(255,255,255,.54),rgba(226,230,239,.28));
+  --ft-glass-main-hover:linear-gradient(135deg,rgba(255,255,255,.66),rgba(232,235,243,.38));
+  --ft-glass-inner:rgba(255,255,255,.22);
+  --ft-glass-inner-hover:rgba(255,255,255,.34);
+  --ft-glass-control:rgba(255,255,255,.38);
+  --ft-glass-border:rgba(43,51,72,.16);
+  --ft-glass-border-soft:rgba(43,51,72,.10);
+  --ft-glass-shadow:0 18px 48px rgba(31,41,55,.10),inset 0 1px 0 rgba(255,255,255,.92),inset 0 -1px 0 rgba(255,255,255,.30);
+  --ft-glass-shadow-hover:0 20px 54px rgba(31,41,55,.13),inset 0 1px 0 rgba(255,255,255,.98);
+  --ft-glass-text:#141A2B;
+  --ft-glass-muted:#58627A;
+  --ft-glass-link:#313B5C;
+}
+
+/* Canvas das áreas internas do fotógrafo. */
+html body :is(
+  .dash,
+  .sales-page,
+  .bill-page,
+  .cfg,
+  .profile,
+  .help,
+  .up-page,
+  .delivery-page,
+  .onb
+).mf-shift{
+  background:var(--ft-glass-canvas) !important;
+  color:var(--ft-glass-text) !important;
+}
+
+/* Superfícies principais. */
+html body .mf-shift :is(
+  .card,
+  .panel,
+  .action-panel,
+  .action-summary,
+  .send-panel,
+  .send-client,
+  .sales-box,
+  .review-gate,
+  .modal,
+  .sel-summary,
+  .sel-mini,
+  .sales-card,
+  .sales-stat,
+  .sales-note,
+  .sales-info-pop,
+  .client-card,
+  .formcard,
+  .listcard,
+  .gallery-block,
+  .stat,
+  .bill-card,
+  .overview,
+  .plan,
+  .subscription,
+  .account-card,
+  .setting-card,
+  .data-card,
+  .wide-card,
+  .closure-box,
+  .closure-modal,
+  .brand-block,
+  .hero-section,
+  .photo-feature,
+  .preview-panel,
+  .sample,
+  .faq-item,
+  .form-card,
+  .support-strip,
+  .type-btn,
+  .upload,
+  .up-card,
+  .up-mini,
+  .up-network,
+  .up-progress,
+  .delivery-card,
+  .delivery-stage,
+  .step
+){
+  background:var(--ft-glass-main) !important;
+  background-image:var(--ft-glass-main) !important;
+  border:1px solid var(--ft-glass-border) !important;
+  border-radius:28px !important;
+  box-shadow:var(--ft-glass-shadow) !important;
+  -webkit-backdrop-filter:blur(28px) saturate(104%) brightness(1.02) !important;
+  backdrop-filter:blur(28px) saturate(104%) brightness(1.02) !important;
+  color:var(--ft-glass-text) !important;
+}
+
+/* Hover somente para superfícies interativas. */
+html body .mf-shift :is(
+  .card,
+  .client-card,
+  .gallery-block,
+  .plan,
+  .type-btn,
+  .up-mini,
+  .delivery-card
+):hover{
+  background:var(--ft-glass-main-hover) !important;
+  background-image:var(--ft-glass-main-hover) !important;
+  border-color:rgba(43,51,72,.24) !important;
+  box-shadow:var(--ft-glass-shadow-hover) !important;
+}
+
+/* Containers de navegação, busca e filtros: vidro um pouco mais discreto. */
+html body .mf-shift :is(
+  .toolbar,
+  .selection-toolbar,
+  .sales-toolbar,
+  .faq-toolbar,
+  .search-box,
+  .sales-search-box,
+  .sel-search,
+  .filter-menu,
+  .filter-option
+){
+  background:var(--ft-glass-control) !important;
+  background-image:none !important;
+  border:1px solid var(--ft-glass-border-soft) !important;
+  border-radius:18px !important;
+  box-shadow:0 10px 28px rgba(31,41,55,.06),inset 0 1px 0 rgba(255,255,255,.62) !important;
+  -webkit-backdrop-filter:blur(20px) saturate(103%) !important;
+  backdrop-filter:blur(20px) saturate(103%) !important;
+  color:var(--ft-glass-text) !important;
+}
+
+/* Campos reais, sem alterar tamanhos nem layout. */
+html body .mf-shift :is(
+  input,
+  select,
+  textarea,
+  .input,
+  .search,
+  .sales-search
+){
+  background:rgba(255,255,255,.46) !important;
+  color:#1D2438 !important;
+  border-color:rgba(43,51,72,.13) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.60) !important;
+}
+html body .mf-shift :is(input,textarea)::placeholder{
+  color:#7B8499 !important;
+}
+
+/* Linhas e superfícies internas dos cards. */
+html body .mf-shift :is(
+  .action-item,
+  .action-center-clear,
+  .upgrade-context,
+  .list-row,
+  .send-contact-item,
+  .send-option,
+  .sel-row,
+  .sales-row,
+  .contact,
+  .subscription-meta,
+  .storage-size,
+  .meta-chip,
+  .setting-bottom,
+  .data-status,
+  .up-file,
+  .up-note,
+  .delivery-file,
+  .delivery-step-row,
+  .done-note
+){
+  background:var(--ft-glass-inner) !important;
+  background-image:none !important;
+  border-color:var(--ft-glass-border-soft) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.50) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(102%) !important;
+  backdrop-filter:blur(16px) saturate(102%) !important;
+}
+
+html body .mf-shift :is(
+  .action-item,
+  .send-contact-item,
+  .send-option,
+  .sel-row,
+  .sales-row,
+  .contact,
+  .up-file,
+  .delivery-file
+):hover{
+  background:var(--ft-glass-inner-hover) !important;
+}
+
+/* Avisos mantêm semântica, agora com material translúcido. */
+html body .mf-shift :is(
+  .alert,
+  .notice,
+  .bill-notice,
+  .delivery-notice
+){
+  background:linear-gradient(135deg,rgba(255,247,220,.68),rgba(247,235,195,.46)) !important;
+  background-image:linear-gradient(135deg,rgba(255,247,220,.68),rgba(247,235,195,.46)) !important;
+  border:1px solid rgba(186,141,46,.28) !important;
+  border-radius:20px !important;
+  box-shadow:0 14px 36px rgba(90,67,22,.08),inset 0 1px 0 rgba(255,255,255,.70) !important;
+  -webkit-backdrop-filter:blur(22px) saturate(103%) !important;
+  backdrop-filter:blur(22px) saturate(103%) !important;
+  color:#73520A !important;
+}
+
+/* Hierarquia tipográfica comum às áreas internas. */
+html body .mf-shift :is(
+  h1,h2,h3,
+  .h1,
+  .title,
+  .card-title,
+  .panel-title,
+  .plan-name,
+  .sales-title,
+  .sel-title,
+  .account-title,
+  .upload-title,
+  .delivery-title,
+  .name,
+  .value
+){
+  color:var(--ft-glass-text) !important;
+  text-shadow:none !important;
+}
+
+html body .mf-shift :is(
+  .sub,
+  .desc,
+  .muted,
+  .meta,
+  .card-desc,
+  .panel-desc,
+  .plan-desc,
+  .sales-meta,
+  .sel-meta,
+  .hint,
+  .fine,
+  .note,
+  .delivery-muted
+){
+  color:var(--ft-glass-muted) !important;
+  text-shadow:none !important;
+}
+
+/* Perfil no topo segue o mesmo vidro em TODAS as áreas internas. */
+body:has(.mf-shift) .mf-top-user{
+  background:var(--ft-glass-main) !important;
+  background-image:var(--ft-glass-main) !important;
+  border:1px solid var(--ft-glass-border) !important;
+  box-shadow:0 14px 36px rgba(31,41,55,.09),inset 0 1px 0 rgba(255,255,255,.90) !important;
+  -webkit-backdrop-filter:blur(28px) saturate(104%) brightness(1.02) !important;
+  backdrop-filter:blur(28px) saturate(104%) brightness(1.02) !important;
+  color:#171D30 !important;
+}
+body:has(.mf-shift) .mf-top-user:hover{
+  background:var(--ft-glass-main-hover) !important;
+  background-image:var(--ft-glass-main-hover) !important;
+}
+body:has(.mf-shift) .mf-top-greeting{color:#171D30 !important}
+body:has(.mf-shift) .mf-top-role{color:#5E6880 !important}
+
+/* ---------------- Administração ---------------- */
+html body :is(.adm,.pa,.aa,.af,.lr,.hs,.au,.ac){
+  background:var(--ft-glass-canvas) !important;
+  color:var(--ft-glass-text) !important;
+}
+
+html body :is(.adm,.pa,.aa,.af,.lr,.hs,.au,.ac) :is(
+  .card,
+  .accounts,
+  .table-wrap,
+  .tablewrap,
+  .pa-card,
+  .pa-kpi,
+  .pa-panel,
+  .pa-row,
+  .item,
+  .summary,
+  .metric,
+  .hero,
+  .check,
+  .panel,
+  .edit,
+  .override
+){
+  background:var(--ft-glass-main) !important;
+  background-image:var(--ft-glass-main) !important;
+  border:1px solid var(--ft-glass-border) !important;
+  border-radius:24px !important;
+  box-shadow:var(--ft-glass-shadow) !important;
+  -webkit-backdrop-filter:blur(28px) saturate(104%) brightness(1.02) !important;
+  backdrop-filter:blur(28px) saturate(104%) brightness(1.02) !important;
+  color:var(--ft-glass-text) !important;
+}
+
+html body :is(.adm,.pa,.aa,.af,.lr,.hs,.au,.ac) :is(
+  input,
+  select,
+  textarea,
+  .search,
+  .toolbar,
+  .filters
+){
+  background:rgba(255,255,255,.46) !important;
+  color:#1D2438 !important;
+  border-color:rgba(43,51,72,.13) !important;
+}
+
+html body :is(.adm,.pa,.aa,.af,.lr,.hs,.au,.ac) :is(
+  h1,h2,h3,.heading,.title,.name,.val,.value,.subject
+){
+  color:var(--ft-glass-text) !important;
+}
+html body :is(.adm,.pa,.aa,.af,.lr,.hs,.au,.ac) :is(
+  .sub,.muted,.meta,.detail,.note,.lab
+){
+  color:var(--ft-glass-muted) !important;
+}
+
+/* Mobile: mantém o mesmo sistema com custo menor de blur. */
+@media(max-width:820px){
+  html body .mf-shift :is(
+    .card,.panel,.action-panel,.action-summary,.send-panel,.send-client,
+    .sales-box,.review-gate,.modal,.sel-summary,.sel-mini,.sales-card,
+    .sales-stat,.client-card,.formcard,.listcard,.gallery-block,.bill-card,
+    .overview,.plan,.subscription,.account-card,.setting-card,.data-card,
+    .wide-card,.brand-block,.hero-section,.photo-feature,.preview-panel,
+    .faq-item,.form-card,.support-strip,.up-card,.delivery-card,.delivery-stage
+  ),
+  html body :is(.adm,.pa,.aa,.af,.lr,.hs,.au,.ac) :is(
+    .card,.accounts,.table-wrap,.tablewrap,.pa-card,.pa-kpi,.pa-panel,
+    .pa-row,.item,.summary,.metric,.hero,.check,.panel
+  ){
+    -webkit-backdrop-filter:blur(20px) saturate(102%) !important;
+    backdrop-filter:blur(20px) saturate(102%) !important;
+    border-radius:22px !important;
+  }
+}
