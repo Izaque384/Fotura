@@ -42,7 +42,7 @@
 
 /* Dashboard brand canvas: override the generic .mf-shift lavender background. */
 .dash.mf-shift{
-  background:linear-gradient(135deg,#8FC8FC 0%,#B59AF8 100%) !important;
+  background:linear-gradient(135deg,#8295BF 0%,#9484B8 100%) !important;
 }
 
 /* headings and text */
@@ -242,20 +242,20 @@
 
 /* ---------- Sidebar ---------- */
 .mf-side{
-  background:linear-gradient(180deg,#EEEAF8 0%,#EAE5F5 100%) !important;
-  border-right-color:#DAD3EA !important;
-  box-shadow:7px 0 28px rgba(65,52,111,.035) !important;
+  background:linear-gradient(180deg,#8295BF 0%,#9484B8 100%) !important;
+  border-right-color:rgba(49,55,82,.16) !important;
+  box-shadow:7px 0 28px rgba(45,42,72,.10) !important;
 }
-.mf-brand-tx{color:#252A41 !important}
-.mf-item,.mf-sair{color:#6F7088 !important}
-.mf-item:hover{background:rgba(250,248,253,.72) !important;color:#33384F !important}
+.mf-brand-tx{color:#21253A !important}
+.mf-item,.mf-sair{color:#3E455F !important}
+.mf-item:hover{background:rgba(255,255,255,.16) !important;color:#21253A !important}
 .mf-item.ativo{
-  color:#353A57 !important;
-  background:linear-gradient(90deg,rgba(17,150,252,.10),rgba(93,13,250,.08)) !important;
-  border-color:rgba(93,70,187,.20) !important;
-  box-shadow:inset 3px 0 0 #546CE3 !important;
+  color:#21253A !important;
+  background:rgba(255,255,255,.24) !important;
+  border-color:rgba(255,255,255,.34) !important;
+  box-shadow:inset 3px 0 0 rgba(255,255,255,.72) !important;
 }
-.mf-admin{color:#656A86 !important}
+.mf-admin{color:#3C435F !important}
 .mf-user{
   background:rgba(250,248,253,.56) !important;
   color:#31364D !important;
