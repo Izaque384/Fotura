@@ -9,8 +9,14 @@ export type ProdutoEvento =
   | "plan_checkout_started"
   | "upgrade_prompt_view"
   | "upgrade_prompt_clicked"
+  | "gallery_upload_started"
+  | "gallery_created"
+  | "gallery_share_opened"
   | "gallery_shared"
   | "public_gallery_view"
+  | "selection_finalized"
+  | "delivery_started"
+  | "delivery_published"
   | "extra_sale_checkout_started"
   | "extra_sale_payment_confirmed";
 
