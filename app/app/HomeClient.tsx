@@ -279,7 +279,6 @@ export default function Home() {
   }
 
   const destinoPrincipal = logado ? "/dashboard" : "/login?modo=cadastro";
-  const reel = [...fotos, ...fotos];
 
   return (
     <div className="lp2">
@@ -303,7 +302,7 @@ export default function Home() {
         <section className="lp2-hero" id="experiencia">
           <div className="lp2-hero-copy">
             <div className="lp2-kicker">Galerias de entrega e prova online</div>
-            <h1>Sua fotografia merece uma <span className="lp2-serif">entrega</span> à altura.</h1>
+            <h1>Sua fotografia merece uma <span className="lp2-serif lp2-gradient-word">entrega</span> à altura.</h1>
             <p>
               Um único link para apresentar o ensaio, receber favoritas e comentários e concluir a seleção — com a sua identidade no centro da experiência.
             </p>
@@ -321,27 +320,6 @@ export default function Home() {
             <div className="lp2-photo lp2-hero-tall" style={{ backgroundImage: 'url("' + fotos[1].url + '")' }} />
             <div className="lp2-photo lp2-hero-small" style={{ backgroundImage: 'url("' + fotos[2].url + '")' }} />
             <div className="lp2-hero-tag">Galeria · Marina & Pedro</div>
-          </div>
-        </section>
-
-        <section className="lp2-community" aria-label="Fotógrafos que entregam com o Fotura">
-          <div className="lp2-shell lp2-community-head">
-            <div className="lp2-kicker">Fotografia entregue com Fotura</div>
-            <h2>Fotógrafos de diferentes áreas já entregam seus trabalhos com o Fotura.</h2>
-            <p>Casamentos, retratos, famílias, eventos, trabalhos comerciais e ensaios autorais — cada entrega começa pela fotografia.</p>
-          </div>
-          <div className="lp2-reel" aria-label="Tipos de fotografia entregues pelo Fotura">
-            <div className="lp2-reel-track">
-              {reel.map((foto, index) => (
-                <div
-                  className="lp2-reel-item"
-                  key={foto.label + index}
-                  style={{ backgroundImage: 'url("' + foto.url + '")' }}
-                >
-                  <span className="lp2-reel-label">{foto.label}</span>
-                </div>
-              ))}
-            </div>
           </div>
         </section>
 
