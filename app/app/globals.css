@@ -69,3 +69,96 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Linguagem global de hover para cards internos do Fotura.
+   Mantém o layout estável e aplica elevação apenas em dispositivos com hover real. */
+:where(
+  .dash .card,
+  .dash .client-card,
+  .dash .sel-mini,
+  .dash .sel-row,
+  .sales-page .sales-card,
+  .sales-page .sales-stat,
+  .bill-page .bill-card,
+  .bill-page .plan,
+  .cfg .account-card,
+  .cfg .setting-card,
+  .profile .panel,
+  .help .card,
+  .up-card,
+  .delivery-page .delivery-card,
+  .action-center,
+  .action-item
+) {
+  transition:
+    transform .28s ease,
+    box-shadow .28s ease,
+    border-color .28s ease,
+    background-color .28s ease !important;
+  transform: translateZ(0);
+}
+
+:where(
+  .dash .list-row,
+  .dash .row,
+  .sales-page .sales-row,
+  .help .faq-item
+) {
+  transition:
+    transform .24s ease,
+    box-shadow .24s ease,
+    border-color .24s ease,
+    background-color .24s ease !important;
+  transform: translateZ(0);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :where(
+    .dash .card,
+    .dash .client-card,
+    .dash .sel-mini,
+    .dash .sel-row,
+    .sales-page .sales-card,
+    .sales-page .sales-stat,
+    .bill-page .bill-card,
+    .bill-page .plan,
+    .cfg .account-card,
+    .cfg .setting-card,
+    .profile .panel,
+    .help .card,
+    .up-card,
+    .delivery-page .delivery-card,
+    .action-center,
+    .action-item
+  ):hover {
+    transform: translateY(-5px);
+    border-color: rgba(93, 13, 250, .20) !important;
+    box-shadow:
+      inset 0 2px 0 rgba(93, 13, 250, .10),
+      0 20px 46px rgba(42, 36, 64, .11) !important;
+  }
+
+  :where(
+    .dash .list-row,
+    .dash .row,
+    .sales-page .sales-row,
+    .help .faq-item
+  ):hover {
+    transform: translateY(-2px);
+    border-color: rgba(93, 13, 250, .16) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(93, 13, 250, .08),
+      0 12px 28px rgba(42, 36, 64, .08) !important;
+  }
+
+  .bill-page .plan.featured:hover {
+    transform: translateY(-7px);
+  }
+
+  .delivery-page .delivery-card.locked:hover {
+    transform: translateY(-2px);
+    border-color: #DCD6EE !important;
+    box-shadow: 0 10px 28px rgba(65, 52, 111, .05) !important;
+  }
+}
