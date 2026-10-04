@@ -216,14 +216,19 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
   position: absolute;
   z-index: 4;
   top: 0;
-  left: 12px;
-  right: 12px;
+  left: 0;
+  right: 0;
   height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #1196fc, #5d0dfa);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(93, 13, 250, .42),
+    rgba(17, 150, 252, .48),
+    transparent
+  );
   opacity: 0;
   pointer-events: none;
-  transform: scaleX(.22);
+  transform: scaleX(.25);
   transform-origin: center;
   transition: transform .32s ease, opacity .32s ease;
 }
