@@ -211,7 +211,7 @@ export default function Home() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setInterval(() => {
       setEtapaAtiva((atual) => (atual + 1) % passos.length);
-    }, 2800);
+    }, 5200);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -241,7 +241,7 @@ export default function Home() {
       <header className="lp2-nav">
         <a className="lp2-brand" href="/" aria-label="Fotura"><Logo /><strong>FOTURA</strong></a>
         <nav className="lp2-navlinks">
-          <a href="#experiencia">Experiência</a>
+          <a href="#experiencia">Galeria</a>
           <a href="#fluxo">Como funciona</a>
           <a href="#planos">Planos</a>
           <a href="#faq">Dúvidas</a>
@@ -257,18 +257,18 @@ export default function Home() {
       <main>
         <section className="lp2-hero" id="experiencia">
           <div className="lp2-hero-copy">
-            <div className="lp2-kicker">Galerias e prova online para fotógrafos</div>
-            <h1>Sua fotografia merece uma <span className="lp2-serif">entrega</span> à altura.</h1>
+            <div className="lp2-kicker">Galerias de entrega e prova online</div>
+            <h1>Entregue suas fotos sem tirar o <span className="lp2-serif">foco</span> delas.</h1>
             <p>
-              Apresente ensaios, receba seleções e comentários e transforme a entrega em uma continuação do seu trabalho — não em mais um link perdido na conversa.
+              Um único link para apresentar o ensaio, receber favoritas e comentários e concluir a seleção — com a sua identidade no centro da experiência.
             </p>
             <div className="lp2-hero-actions">
               <a className="lp2-btn lp2-btn-primary" href={destinoPrincipal} onClick={() => rastrearCriacao("hero")}>
-                {logado ? "Ir para o painel" : "Criar minha primeira galeria"} <span>→</span>
+                {logado ? "Ir para o painel" : "Criar galeria grátis"} <span>→</span>
               </a>
-              <a className="lp2-btn" href="#fluxo">Ver o Fotura em movimento</a>
+              <a className="lp2-btn" href="#fluxo">Ver como funciona</a>
             </div>
-            <div className="lp2-micro"><b>●</b> Comece grátis · planos pagos a partir de R$ 14,90/mês</div>
+            <div className="lp2-micro"><b>●</b> Plano grátis disponível · seu cliente não precisa criar conta</div>
           </div>
 
           <div className="lp2-hero-art" aria-label="Seleção editorial de fotografias">
@@ -276,7 +276,16 @@ export default function Home() {
             <div className="lp2-photo lp2-hero-tall" style={{ backgroundImage: 'url("' + fotos[1].url + '")' }} />
             <div className="lp2-photo lp2-hero-small" style={{ backgroundImage: 'url("' + fotos[2].url + '")' }} />
             <div className="lp2-hero-tag">Galeria · Marina & Pedro</div>
-            <div className="lp2-hero-caption">A fotografia continua sendo a protagonista.</div>
+            <div className="lp2-hero-caption">A galeria se adapta. A fotografia permanece no centro.</div>
+          </div>
+        </section>
+
+        <section className="lp2-proof" aria-label="Principais recursos do Fotura">
+          <div className="lp2-shell lp2-proof-grid">
+            <div><span>01</span><strong>Um único link</strong><small>Galeria, prova e entrega no mesmo endereço.</small></div>
+            <div><span>02</span><strong>Seleção por foto</strong><small>Favoritas ficam ligadas à imagem certa.</small></div>
+            <div><span>03</span><strong>Comentários no contexto</strong><small>Menos dúvida sobre qual arquivo está sendo citado.</small></div>
+            <div><span>04</span><strong>Sua identidade</strong><small>A apresentação continua parecendo parte do seu estúdio.</small></div>
           </div>
         </section>
 
@@ -299,10 +308,10 @@ export default function Home() {
             <div className="lp2-section-head">
               <div>
                 <div className="lp2-kicker">Do clique à entrega</div>
-                <h2>O fluxo aparece.<br />O ruído desaparece.</h2>
+                <h2>Do upload à escolha final.<br />No mesmo fluxo.</h2>
               </div>
               <p>
-                Em vez de explicar o produto com uma sequência de cards, o próprio Fotura mostra como a entrega acontece — do upload até a seleção do cliente.
+                Monte a galeria, compartilhe um único link e receba a seleção sem reconstruir o processo em mensagens, planilhas ou listas de nomes de arquivo.
               </p>
             </div>
 
@@ -320,6 +329,7 @@ export default function Home() {
                       <strong>{passo.titulo}</strong>
                       <small>{passo.descricao}</small>
                     </span>
+                    {etapaAtiva === index && <i className="lp2-step-progress" aria-hidden="true" />}
                   </button>
                 ))}
               </div>
@@ -349,9 +359,9 @@ export default function Home() {
           <div className="lp2-shell lp2-gallery">
             <div className="lp2-gallery-copy">
               <div className="lp2-kicker">A experiência do seu cliente</div>
-              <h2>É assim que o seu trabalho chega do outro lado.</h2>
+              <h2>Seu cliente vê o ensaio. Não o sistema.</h2>
               <p>
-                A entrega não termina quando você exporta os arquivos. O cliente recebe uma galeria que valoriza o ensaio e entende, de primeira, como selecionar o que deseja.
+                A experiência foi desenhada para deixar as imagens respirarem. Favoritas e comentários aparecem quando são necessários e saem do caminho quando não são.
               </p>
               <div className="lp2-gallery-stat">
                 <b>{selecionadas.length}</b>
@@ -393,10 +403,10 @@ export default function Home() {
             <div className="lp2-section-head">
               <div>
                 <div className="lp2-kicker">Para diferentes formas de fotografar</div>
-                <h2>Uma moldura.<br />Muitos trabalhos.</h2>
+                <h2>Cada trabalho tem uma linguagem.<br />A galeria não precisa impor outra.</h2>
               </div>
               <p>
-                Casamentos, retratos, famílias, eventos ou trabalhos comerciais: a linguagem da galeria muda menos que a sua fotografia — porque a imagem deve continuar no centro.
+                Casamentos, retratos, famílias, eventos e trabalhos comerciais podem dividir a mesma ferramenta sem parecer a mesma entrega.
               </p>
             </div>
             <div className="lp2-genre-grid">
@@ -475,10 +485,10 @@ export default function Home() {
           style={{ backgroundImage: 'url("' + fotos[6].url + '")' }}
         >
           <div className="lp2-final-inner">
-            <h2>Você cuida das fotografias. O Fotura cuida da entrega.</h2>
-            <p>Uma experiência mais bonita para o cliente e um fluxo mais organizado para quem está por trás da câmera.</p>
+            <h2>A entrega também faz parte da fotografia.</h2>
+            <p>Apresente o trabalho, receba a escolha do cliente e continue o processo sem perder o contexto de cada foto.</p>
             <a className="lp2-btn lp2-btn-primary" href={destinoPrincipal} onClick={() => rastrearCriacao("cta_final")}>
-              {logado ? "Abrir meu painel" : "Criar minha primeira galeria"} <span>→</span>
+              {logado ? "Abrir meu painel" : "Criar galeria grátis"} <span>→</span>
             </a>
           </div>
         </section>
