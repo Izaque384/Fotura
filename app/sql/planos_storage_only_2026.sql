@@ -4,6 +4,13 @@
 alter table public.assinaturas
   alter column plano_codigo set default 'gratis';
 
+alter table public.assinaturas
+  drop constraint if exists assinaturas_plano_codigo_check;
+
+alter table public.assinaturas
+  add constraint assinaturas_plano_codigo_check
+  check (plano_codigo in ('sem_plano','gratis','legacy','essencial','profissional','studio'));
+
 update public.assinaturas
 set plano_codigo = 'gratis',
     status = 'active',
