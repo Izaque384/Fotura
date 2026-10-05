@@ -26,13 +26,9 @@
   align-items:center;
   justify-content:space-between;
   gap:28px;
-  position:sticky;
-  top:0;
-  z-index:40;
-  border-bottom:1px solid rgba(23,25,34,.09);
-  background:rgba(247,244,238,.88);
-  backdrop-filter:blur(18px) saturate(1.08);
-  box-shadow:0 8px 28px rgba(30,27,24,.035);
+  position:relative;
+  z-index:20;
+  border-bottom:1px solid rgba(23,25,34,.1);
 }
 .lp2-brand{display:flex;align-items:center;gap:10px;font-weight:850;letter-spacing:3px;font-size:14px}
 .lp2-brand svg{width:27px;height:24px}
