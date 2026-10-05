@@ -236,6 +236,8 @@ export default function Home() {
   const [logado, setLogado] = useState(false);
   const [etapaAtiva, setEtapaAtiva] = useState(0);
   const [selecionadas, setSelecionadas] = useState<number[]>([0, 3]);
+  const [heroCarousel, setHeroCarousel] = useState({ atual: 0, anterior: 0 });
+  const [heroPausado, setHeroPausado] = useState(false);
 
   useEffect(() => {
     let ativo = true;
@@ -260,6 +262,24 @@ export default function Home() {
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (heroPausado || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(() => {
+      setHeroCarousel(({ atual }) => ({
+        anterior: atual,
+        atual: (atual + 1) % fotos.length,
+      }));
+    }, 4600);
+    return () => window.clearInterval(timer);
+  }, [heroPausado]);
+
+  function moverHero(direcao: -1 | 1) {
+    setHeroCarousel(({ atual }) => ({
+      anterior: atual,
+      atual: (atual + direcao + fotos.length) % fotos.length,
+    }));
+  }
+
   function rastrearCriacao(origem: string, plano?: string) {
     if (logado) return;
     registrarEventoProduto("landing_signup_clicked", {
@@ -279,6 +299,16 @@ export default function Home() {
   }
 
   const destinoPrincipal = logado ? "/dashboard" : "/login?modo=cadastro";
+  const heroAtual = [
+    heroCarousel.atual,
+    (heroCarousel.atual + 2) % fotos.length,
+    (heroCarousel.atual + 4) % fotos.length,
+  ];
+  const heroAnterior = [
+    heroCarousel.anterior,
+    (heroCarousel.anterior + 2) % fotos.length,
+    (heroCarousel.anterior + 4) % fotos.length,
+  ];
 
   return (
     <div className="lp2">
@@ -315,11 +345,41 @@ export default function Home() {
             <div className="lp2-micro"><b>●</b> Plano grátis disponível · seu cliente não precisa criar conta</div>
           </div>
 
-          <div className="lp2-hero-art" aria-label="Seleção editorial de fotografias">
-            <div className="lp2-photo lp2-hero-main" style={{ backgroundImage: 'url("' + fotos[0].url + '")' }} />
-            <div className="lp2-photo lp2-hero-tall" style={{ backgroundImage: 'url("' + fotos[1].url + '")' }} />
-            <div className="lp2-photo lp2-hero-small" style={{ backgroundImage: 'url("' + fotos[2].url + '")' }} />
+          <div
+            className="lp2-hero-art"
+            aria-label={`Seleção editorial de fotografias: ${heroAtual.map((index) => fotos[index].label).join(", ")}`}
+            onMouseEnter={() => setHeroPausado(true)}
+            onMouseLeave={() => setHeroPausado(false)}
+            onFocusCapture={() => setHeroPausado(true)}
+            onBlurCapture={() => setHeroPausado(false)}
+          >
+            <div className="lp2-photo lp2-hero-main" style={{ backgroundImage: 'url("' + fotos[heroAnterior[0]].url + '")' }}>
+              <div
+                key={`hero-main-${heroCarousel.atual}`}
+                className="lp2-hero-photo-layer"
+                style={{ backgroundImage: 'url("' + fotos[heroAtual[0]].url + '")' }}
+              />
+            </div>
+            <div className="lp2-photo lp2-hero-tall" style={{ backgroundImage: 'url("' + fotos[heroAnterior[1]].url + '")' }}>
+              <div
+                key={`hero-tall-${heroCarousel.atual}`}
+                className="lp2-hero-photo-layer"
+                style={{ backgroundImage: 'url("' + fotos[heroAtual[1]].url + '")' }}
+              />
+            </div>
+            <div className="lp2-photo lp2-hero-small" style={{ backgroundImage: 'url("' + fotos[heroAnterior[2]].url + '")' }}>
+              <div
+                key={`hero-small-${heroCarousel.atual}`}
+                className="lp2-hero-photo-layer"
+                style={{ backgroundImage: 'url("' + fotos[heroAtual[2]].url + '")' }}
+              />
+            </div>
             <div className="lp2-hero-tag">Galeria · Marina & Pedro</div>
+            <div className="lp2-hero-carousel" aria-label="Controles do carrossel">
+              <button type="button" onClick={() => moverHero(-1)} aria-label="Fotos anteriores">←</button>
+              <span>{String(heroCarousel.atual + 1).padStart(2, "0")} / {String(fotos.length).padStart(2, "0")}</span>
+              <button type="button" onClick={() => moverHero(1)} aria-label="Próximas fotos">→</button>
+            </div>
           </div>
         </section>
 
