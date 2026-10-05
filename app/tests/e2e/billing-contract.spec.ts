@@ -72,6 +72,8 @@ test.describe("contrato de planos e armazenamento", () => {
     expect(sql).toContain("when 'essencial' then 10");
     expect(sql).toContain("when 'profissional' then 50");
     expect(sql).toContain("when 'studio' then 100");
+    expect(sql).toContain("assinaturas_plano_codigo_check");
+    expect(sql).toContain("'sem_plano','gratis','legacy','essencial','profissional','studio'");
     expect(sql).not.toContain("v_photo_limit");
     expect(sql).not.toContain("v_current_photos");
   });
