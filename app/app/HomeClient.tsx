@@ -362,7 +362,6 @@ export default function Home() {
                 style={{ backgroundImage: 'url("' + fotos[heroAtual[2]].url + '")' }}
               />
             </div>
-            <div className="lp2-hero-tag">Galeria · Marina & Pedro</div>
           </div>
         </section>
 
