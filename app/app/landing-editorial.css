@@ -97,7 +97,7 @@
   text-wrap:balance;
 }
 .lp2-serif{font-family:Georgia,"Times New Roman",serif;font-style:italic;font-weight:500;letter-spacing:-3.2px}
-.lp2-gradient-word{display:inline-block;background:linear-gradient(95deg,var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.lp2-gradient-word{display:inline-block;padding:0 .08em .08em 0;margin:0 -.08em -.08em 0;background:linear-gradient(95deg,var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
 .lp2-hero-copy>p{
   max-width:590px;
   margin:28px 0 0;
