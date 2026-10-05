@@ -237,7 +237,6 @@ export default function Home() {
   const [etapaAtiva, setEtapaAtiva] = useState(0);
   const [selecionadas, setSelecionadas] = useState<number[]>([0, 3]);
   const [heroCarousel, setHeroCarousel] = useState({ atual: 0, anterior: 0 });
-  const [heroPausado, setHeroPausado] = useState(false);
 
   useEffect(() => {
     let ativo = true;
@@ -263,22 +262,15 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (heroPausado || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = window.setInterval(() => {
       setHeroCarousel(({ atual }) => ({
         anterior: atual,
         atual: (atual + 1) % fotos.length,
       }));
-    }, 4600);
+    }, 2600);
     return () => window.clearInterval(timer);
-  }, [heroPausado]);
-
-  function moverHero(direcao: -1 | 1) {
-    setHeroCarousel(({ atual }) => ({
-      anterior: atual,
-      atual: (atual + direcao + fotos.length) % fotos.length,
-    }));
-  }
+  }, []);
 
   function rastrearCriacao(origem: string, plano?: string) {
     if (logado) return;
@@ -348,10 +340,6 @@ export default function Home() {
           <div
             className="lp2-hero-art"
             aria-label={`Seleção editorial de fotografias: ${heroAtual.map((index) => fotos[index].label).join(", ")}`}
-            onMouseEnter={() => setHeroPausado(true)}
-            onMouseLeave={() => setHeroPausado(false)}
-            onFocusCapture={() => setHeroPausado(true)}
-            onBlurCapture={() => setHeroPausado(false)}
           >
             <div className="lp2-photo lp2-hero-main" style={{ backgroundImage: 'url("' + fotos[heroAnterior[0]].url + '")' }}>
               <div
@@ -375,11 +363,6 @@ export default function Home() {
               />
             </div>
             <div className="lp2-hero-tag">Galeria · Marina & Pedro</div>
-            <div className="lp2-hero-carousel" aria-label="Controles do carrossel">
-              <button type="button" onClick={() => moverHero(-1)} aria-label="Fotos anteriores">←</button>
-              <span>{String(heroCarousel.atual + 1).padStart(2, "0")} / {String(fotos.length).padStart(2, "0")}</span>
-              <button type="button" onClick={() => moverHero(1)} aria-label="Próximas fotos">→</button>
-            </div>
           </div>
         </section>
 
