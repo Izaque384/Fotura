@@ -4,6 +4,7 @@
 alter table public.assinaturas
   alter column plano_codigo set default 'gratis';
 
+-- Mantém sem_plano por compatibilidade e inclui gratis, que é o padrão de novos cadastros.
 alter table public.assinaturas
   drop constraint if exists assinaturas_plano_codigo_check;
 
