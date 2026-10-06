@@ -4,6 +4,7 @@ import { registrarErro } from "../../../../lib/observability";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
+import { normalizeLocale, translate, withLocalePath } from "../../../../lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -208,24 +209,34 @@ export async function POST(req: NextRequest) {
     try {
       const [{ data: cliente }, { data: perfil }] = await Promise.all([
         auth.supabase.from("clientes").select("nome,email").eq("id", g.cliente_id).eq("user_id", auth.user.id).maybeSingle(),
-        auth.supabase.from("perfis").select("nome_estudio").eq("id", auth.user.id).maybeSingle(),
+        auth.supabase.from("perfis").select("nome_estudio,configs").eq("id", auth.user.id).maybeSingle(),
       ]);
       const apiKey = process.env.RESEND_API_KEY?.trim();
       const email = cliente?.email ? String(cliente.email) : "";
       if (apiKey && email) {
+        const configs = perfil?.configs && typeof perfil.configs === "object" && !Array.isArray(perfil.configs)
+          ? perfil.configs as Record<string, unknown>
+          : {};
+        const locale = normalizeLocale(configs.idioma ?? auth.user.user_metadata?.language ?? req.headers.get("x-fotura-locale"));
         const origin = (process.env.NEXT_PUBLIC_SITE_URL || "https://foturax.com.br").replace(/\/$/, "");
-        const link = origin + "/g/" + galeria;
+        const link = origin + withLocalePath("/g/" + galeria, locale);
         const estudio = String(perfil?.nome_estudio || "Fotura").replace(/[&<>'"]/g, "");
-        const titulo = String(g.titulo || "Sua galeria").replace(/[&<>'"]/g, "");
-        const nome = String(cliente?.nome || "cliente").replace(/[&<>'"]/g, "");
-        const html = '<!doctype html><html><body style="margin:0;background:#f0edf7;font-family:Arial,sans-serif;color:#21253a"><div style="max-width:620px;margin:0 auto;padding:42px 20px"><div style="font-weight:800;letter-spacing:3px;margin-bottom:28px">FOTURA</div><div style="background:#faf8fd;border:1px solid #dcd6ee;border-radius:18px;padding:30px"><p style="margin:0 0 8px;color:#73758d;font-size:14px">Olá, '+nome+'.</p><h1 style="font-size:25px;margin:0 0 12px">Sua entrega está pronta</h1><p style="color:#596079;line-height:1.6;margin:0 0 22px">'+estudio+' publicou as fotos finais de <strong>'+titulo+'</strong>.</p><a href="'+link+'" style="display:inline-block;background:linear-gradient(90deg,#1196fc,#5d0dfa);color:#fff;text-decoration:none;font-weight:700;padding:13px 20px;border-radius:11px">Ver e baixar fotos</a></div></div></body></html>';
+        const titulo = String(g.titulo || (locale === "en" ? "Your gallery" : locale === "es" ? "Tu galería" : "Sua galeria")).replace(/[&<>'"]/g, "");
+        const nome = String(cliente?.nome || (locale === "en" ? "client" : locale === "es" ? "cliente" : "cliente")).replace(/[&<>'"]/g, "");
+        const greeting = locale === "en" ? "Hello" : locale === "es" ? "Hola" : "Olá";
+        const description = locale === "en"
+          ? estudio + " published the final photos for <strong>" + titulo + "</strong>."
+          : locale === "es"
+            ? estudio + " publicó las fotos finales de <strong>" + titulo + "</strong>."
+            : estudio + " publicou as fotos finais de <strong>" + titulo + "</strong>.";
+        const html = '<!doctype html><html lang="' + (locale === "pt" ? "pt-BR" : locale) + '"><body style="margin:0;background:#f0edf7;font-family:Arial,sans-serif;color:#21253a"><div style="max-width:620px;margin:0 auto;padding:42px 20px"><div style="font-weight:800;letter-spacing:3px;margin-bottom:28px">FOTURA</div><div style="background:#faf8fd;border:1px solid #dcd6ee;border-radius:18px;padding:30px"><p style="margin:0 0 8px;color:#73758d;font-size:14px">' + greeting + ', ' + nome + '.</p><h1 style="font-size:25px;margin:0 0 12px">' + translate(locale,"Sua entrega está pronta") + '</h1><p style="color:#596079;line-height:1.6;margin:0 0 22px">' + description + '</p><a href="' + link + '" style="display:inline-block;background:linear-gradient(90deg,#1196fc,#5d0dfa);color:#fff;text-decoration:none;font-weight:700;padding:13px 20px;border-radius:11px">' + translate(locale,"Ver e baixar fotos") + '</a></div></div></body></html>';
         const response = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: { Authorization: "Bearer " + apiKey, "Content-Type": "application/json" },
           body: JSON.stringify({
             from: process.env.FOTURA_EMAIL_FROM?.trim() || "Fotura <galerias@foturax.com.br>",
             to: [email],
-            subject: "Sua entrega está pronta — " + titulo,
+            subject: (locale === "en" ? "Your delivery is ready" : locale === "es" ? "Tu entrega está lista" : "Sua entrega está pronta") + " — " + titulo,
             html,
           }),
         });
