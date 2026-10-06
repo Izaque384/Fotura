@@ -347,7 +347,7 @@ const messages: Record<string, Pair> = {
   "Não foi possível preparar os arquivos para download.": { en: "We couldn't prepare the files for download.", es: "No pudimos preparar los archivos para descargar." },
   "Download interrompido. Os arquivos já baixados foram mantidos.": { en: "Download interrupted. Files already downloaded were kept.", es: "Descarga interrumpida. Los archivos ya descargados se conservaron." },
   "Link da galeria copiado.": { en: "Gallery link copied.", es: "Enlace de la galería copiado." },
-  "Não foi possível copiar o link.": { en: "We couldn't copy the link.", es: "No pudimos copiar el enlace." }
+  "Não foi possível copiar o link.": { en: "We couldn't copy the link.", es: "No pudimos copiar el enlace." },
   "Última atualização:": { en: "Last updated:", es: "Última actualización:" }
 };
 
