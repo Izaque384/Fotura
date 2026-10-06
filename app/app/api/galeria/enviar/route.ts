@@ -5,6 +5,7 @@ import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
 import { publicGalleryRef } from "../../../../lib/gallery-links";
+import { htmlLang, normalizeLocale, translate, withLocalePath } from "../../../../lib/i18n";
 
 type Body={galeria?:unknown};
 
@@ -58,7 +59,7 @@ export async function POST(req:NextRequest){
 
   const {data:perfil,error:perfilError}=await supabase
     .from("perfis")
-    .select("nome_estudio")
+    .select("nome_estudio,configs")
     .eq("id",user.id)
     .maybeSingle();
   if(perfilError){
@@ -66,17 +67,28 @@ export async function POST(req:NextRequest){
     return NextResponse.json({error:"Não foi possível verificar os dados do estúdio."},{status:500});
   }
 
+  const configs=perfil?.configs&&typeof perfil.configs==="object"&&!Array.isArray(perfil.configs)
+    ? perfil.configs as Record<string,unknown>
+    : {};
+  const locale=normalizeLocale(configs.idioma??user.user_metadata?.language??req.headers.get("x-fotura-locale"));
   const origin=(process.env.NEXT_PUBLIC_SITE_URL||"https://foturax.com.br").replace(/\/$/,"");
-  const link=`${origin}/g/${publicGalleryRef(String(g.slug||"galeria"),String(g.id))}`;
+  const link=`${origin}${withLocalePath(`/g/${publicGalleryRef(String(g.slug||"galeria"),String(g.id))}`,locale)}`;
   const studio=String(perfil?.nome_estudio||"Fotura");
-  const titulo=escapeHtml(g.titulo||"Sua galeria");
-  const nome=escapeHtml(cliente.nome||"cliente");
+  const titulo=escapeHtml(String(g.titulo||translate(locale,"Sua galeria")));
+  const nome=escapeHtml(String(cliente.nome||translate(locale,"cliente")));
   const estudio=escapeHtml(studio);
-  const prazo=g.prova&&g.prazo?`<p style="margin:0 0 18px;color:#73758D;font-size:14px">Prazo para seleção: <strong style="color:#2A2F46">${escapeHtml(String(g.prazo))}</strong></p>`:"";
-  const validade=g.link_ate?`<p style="margin:0 0 18px;color:#73758D;font-size:14px">Link disponível até: <strong style="color:#2A2F46">${escapeHtml(String(g.link_ate))}</strong></p>`:"";
+  const greeting=locale==="en"?"Hello":locale==="es"?"Hola":"Olá";
+  const sharedCopy=locale==="en"
+    ? `${estudio} shared the gallery <strong style="color:#2A2F46">${titulo}</strong> with you.`
+    : locale==="es"
+      ? `${estudio} compartió la galería <strong style="color:#2A2F46">${titulo}</strong> contigo.`
+      : `${estudio} compartilhou a galeria <strong style="color:#2A2F46">${titulo}</strong> com você.`;
+  const prazo=g.prova&&g.prazo?`<p style="margin:0 0 18px;color:#73758D;font-size:14px">${escapeHtml(translate(locale,"Prazo para seleção:"))} <strong style="color:#2A2F46">${escapeHtml(String(g.prazo))}</strong></p>`:"";
+  const validade=g.link_ate?`<p style="margin:0 0 18px;color:#73758D;font-size:14px">${escapeHtml(translate(locale,"Link disponível até:"))} <strong style="color:#2A2F46">${escapeHtml(String(g.link_ate))}</strong></p>`:"";
+  const fallbackCopy=locale==="en"?"If the button does not open, copy this address:":locale==="es"?"Si el botón no se abre, copia esta dirección:":"Se o botão não abrir, copie este endereço:";
   const logoUrl=`${origin}/icon-192.png`;
   const html=`<!doctype html>
-<html lang="pt-BR">
+<html lang="${htmlLang(locale)}">
   <body style="margin:0;padding:0;background:#F0EDF7;font-family:Arial,Helvetica,sans-serif;color:#21253A">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#F0EDF7">
       <tr>
@@ -96,26 +108,26 @@ export async function POST(req:NextRequest){
             </tr>
             <tr>
               <td style="background:#FAF8FD;border:1px solid #DCD6EE;border-radius:18px;padding:32px 30px;box-shadow:0 10px 30px rgba(65,52,111,.06)">
-                <p style="margin:0 0 8px;color:#777D93;font-size:14px;line-height:1.5">Olá, ${nome}.</p>
-                <h1 style="margin:0 0 12px;color:#21253A;font-size:27px;line-height:1.18;letter-spacing:-.4px">Sua galeria está disponível</h1>
-                <p style="margin:0 0 22px;color:#73758D;font-size:15px;line-height:1.65">${estudio} compartilhou a galeria <strong style="color:#2A2F46">${titulo}</strong> com você.</p>
+                <p style="margin:0 0 8px;color:#777D93;font-size:14px;line-height:1.5">${greeting}, ${nome}.</p>
+                <h1 style="margin:0 0 12px;color:#21253A;font-size:27px;line-height:1.18;letter-spacing:-.4px">${escapeHtml(translate(locale,"Sua galeria está disponível"))}</h1>
+                <p style="margin:0 0 22px;color:#73758D;font-size:15px;line-height:1.65">${sharedCopy}</p>
                 ${prazo}
                 ${validade}
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 24px">
                   <tr>
                     <td style="border-radius:10px;background:#5D0DFA;background-image:linear-gradient(90deg,#1196FC,#5D0DFA)">
-                      <a href="${link}" style="display:inline-block;padding:13px 20px;color:#FFFFFF;text-decoration:none;font-size:14px;font-weight:700;line-height:1">Ver galeria</a>
+                      <a href="${link}" style="display:inline-block;padding:13px 20px;color:#FFFFFF;text-decoration:none;font-size:14px;font-weight:700;line-height:1">${escapeHtml(translate(locale,"Ver galeria"))}</a>
                     </td>
                   </tr>
                 </table>
                 <div style="height:1px;background:#E5E0EC;margin:0 0 18px"></div>
-                <p style="margin:0;color:#8A8FA3;font-size:12px;line-height:1.55">Se o botão não abrir, copie este endereço:</p>
+                <p style="margin:0;color:#8A8FA3;font-size:12px;line-height:1.55">${escapeHtml(fallbackCopy)}</p>
                 <p style="margin:5px 0 0;font-size:12px;line-height:1.55;word-break:break-all"><a href="${link}" style="color:#5D55A0;text-decoration:underline">${link}</a></p>
               </td>
             </tr>
             <tr>
               <td align="center" style="padding:18px 20px 0;color:#989AAC;font-size:11px;line-height:1.5">
-                Entrega realizada com Fotura
+                ${escapeHtml(translate(locale,"Entrega realizada com Fotura"))}
               </td>
             </tr>
           </table>
