@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase-client";
 import { useI18n } from "../components/I18nProvider";
-import { withLocalePath } from "../../lib/i18n";
+import { normalizeLocale, withLocalePath } from "../../lib/i18n";
 
 const ORIGEM_PRODUCAO = "https://foturax.com.br";
 
@@ -109,15 +109,18 @@ export default function LoginPage() {
         const configs = perfilRes.data?.configs && typeof perfilRes.data.configs === "object" && !Array.isArray(perfilRes.data.configs)
           ? perfilRes.data.configs as Record<string, unknown>
           : {};
-        void Promise.allSettled([
-          supabase.auth.updateUser({ data: { language: locale } }),
-          supabase.from("perfis").upsert({
-            id: data.user.id,
-            configs: { ...configs, idioma: locale },
-            atualizado_em: new Date().toISOString(),
-          }),
-        ]);
-        router.push(withLocalePath(!perfilConfigurado && !temGaleria ? "/dashboard/onboarding" : "/dashboard", locale));
+        const idiomaConta = normalizeLocale(configs.idioma ?? data.user.user_metadata?.language ?? locale);
+        if (!configs.idioma || !data.user.user_metadata?.language) {
+          void Promise.allSettled([
+            supabase.auth.updateUser({ data: { language: idiomaConta } }),
+            supabase.from("perfis").upsert({
+              id: data.user.id,
+              configs: { ...configs, idioma: idiomaConta },
+              atualizado_em: new Date().toISOString(),
+            }),
+          ]);
+        }
+        router.push(withLocalePath(!perfilConfigurado && !temGaleria ? "/dashboard/onboarding" : "/dashboard", idiomaConta));
       }
     }
 
