@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "../lib/supabase-client";
 import { registrarEventoProduto, utmAtual } from "../lib/product-analytics";
 import "./landing-editorial.css";
+import LanguageSwitcher from "./components/LanguageSwitcher";
+import { useI18n } from "./components/I18nProvider";
+import { withLocalePath } from "../lib/i18n";
 
 const planos = [
   {
@@ -232,6 +235,7 @@ function DemoScreen({ etapa }: { etapa: number }) {
 }
 
 export default function Home() {
+  const { locale, t } = useI18n();
   const supabase = useMemo(() => createClient(), []);
   const [logado, setLogado] = useState(false);
   const [etapaAtiva, setEtapaAtiva] = useState(0);
@@ -290,7 +294,8 @@ export default function Home() {
     );
   }
 
-  const destinoPrincipal = logado ? "/dashboard" : "/login?modo=cadastro";
+  const destinoPrincipal = withLocalePath(logado ? "/dashboard" : "/login?modo=cadastro", locale);
+  const destinoLogin = withLocalePath(logado ? "/dashboard" : "/login", locale);
   const heroAtual = [
     heroCarousel.atual,
     (heroCarousel.atual + 2) % fotos.length,
@@ -305,17 +310,18 @@ export default function Home() {
   return (
     <div className="lp2">
       <header className="lp2-nav">
-        <a className="lp2-brand" href="/" aria-label="Fotura"><Logo /><strong>FOTURA</strong></a>
+        <a className="lp2-brand" href={withLocalePath("/", locale)} aria-label="Fotura"><Logo /><strong>FOTURA</strong></a>
         <nav className="lp2-navlinks">
-          <a href="#experiencia">Galeria</a>
-          <a href="#fluxo">Como funciona</a>
-          <a href="#planos">Planos</a>
-          <a href="#faq">Dúvidas</a>
+          <a href="#experiencia">{t("Galeria")}</a>
+          <a href="#fluxo">{t("Como funciona")}</a>
+          <a href="#planos">{t("Planos")}</a>
+          <a href="#faq">{t("Dúvidas")}</a>
         </nav>
         <div className="lp2-actions">
-          <a className="lp2-btn" href={logado ? "/dashboard" : "/login"}>{logado ? "Painel" : "Entrar"}</a>
+          <LanguageSwitcher compact />
+          <a className="lp2-btn" href={destinoLogin}>{logado ? t("Painel") : t("Entrar")}</a>
           <a className="lp2-btn lp2-btn-primary" href={destinoPrincipal} onClick={() => rastrearCriacao("header")}>
-            {logado ? "Abrir Fotura" : "Criar conta"}
+            {logado ? t("Abrir Fotura") : t("Criar conta")}
           </a>
         </div>
       </header>
@@ -323,23 +329,23 @@ export default function Home() {
       <main>
         <section className="lp2-hero" id="experiencia">
           <div className="lp2-hero-copy">
-            <div className="lp2-kicker">Galerias de entrega e prova online</div>
-            <h1>Sua fotografia merece uma <span className="lp2-serif lp2-gradient-word">entrega</span> à altura.</h1>
+            <div className="lp2-kicker">{t("Galerias de entrega e prova online")}</div>
+            <h1>{t("Sua fotografia merece uma")} <span className="lp2-serif lp2-gradient-word">{t("entrega")}</span> {t("à altura.")}</h1>
             <p>
-              Um único link para apresentar o ensaio, receber favoritas e comentários e concluir a seleção — com a sua identidade no centro da experiência.
+              {t("Um único link para apresentar o ensaio, receber favoritas e comentários e concluir a seleção — com a sua identidade no centro da experiência.")}
             </p>
             <div className="lp2-hero-actions">
               <a className="lp2-btn lp2-btn-primary" href={destinoPrincipal} onClick={() => rastrearCriacao("hero")}>
-                {logado ? "Ir para o painel" : "Criar galeria grátis"} <span>→</span>
+                {logado ? t("Ir para o painel") : t("Criar galeria grátis")} <span>→</span>
               </a>
-              <a className="lp2-btn" href="#fluxo">Ver como funciona</a>
+              <a className="lp2-btn" href="#fluxo">{t("Ver como funciona")}</a>
             </div>
-            <div className="lp2-micro"><b>●</b> Plano grátis disponível · seu cliente não precisa criar conta</div>
+            <div className="lp2-micro"><b>●</b> {t("Plano grátis disponível · seu cliente não precisa criar conta")}</div>
           </div>
 
           <div
             className="lp2-hero-art"
-            aria-label={`Seleção editorial de fotografias: ${heroAtual.map((index) => fotos[index].label).join(", ")}`}
+            aria-label={`${t("Seleção editorial de fotografias")}: ${heroAtual.map((index) => t(fotos[index].label)).join(", ")}`}
           >
             <div className="lp2-photo lp2-hero-main" style={{ backgroundImage: 'url("' + fotos[heroAnterior[0]].url + '")' }}>
               <div
@@ -369,11 +375,11 @@ export default function Home() {
           <div className="lp2-shell">
             <div className="lp2-section-head">
               <div>
-                <div className="lp2-kicker">Do clique à entrega</div>
-                <h2>Do upload à escolha final.<br />No mesmo fluxo.</h2>
+                <div className="lp2-kicker">{t("Do clique à entrega")}</div>
+                <h2>{t("Do upload à escolha final.")}<br />{t("No mesmo fluxo.")}</h2>
               </div>
               <p>
-                Monte a galeria, compartilhe um único link e receba a seleção sem reconstruir o processo em mensagens, planilhas ou listas de nomes de arquivo.
+                {t("Monte a galeria, compartilhe um único link e receba a seleção sem reconstruir o processo em mensagens, planilhas ou listas de nomes de arquivo.")}
               </p>
             </div>
 
@@ -388,8 +394,8 @@ export default function Home() {
                   >
                     <span className="lp2-step-n">0{index + 1}</span>
                     <span>
-                      <strong>{passo.titulo}</strong>
-                      <small>{passo.descricao}</small>
+                      <strong>{t(passo.titulo)}</strong>
+                      <small>{t(passo.descricao)}</small>
                     </span>
                     {etapaAtiva === index && <i className="lp2-step-progress" aria-hidden="true" />}
                   </button>
@@ -411,7 +417,7 @@ export default function Home() {
                             }
                             key={item}
                           >
-                            {item}
+                            {t(item)}
                           </div>
                         ))}
                       </aside>
@@ -429,21 +435,21 @@ export default function Home() {
         <section className="lp2-section">
           <div className="lp2-shell lp2-gallery">
             <div className="lp2-gallery-copy">
-              <div className="lp2-kicker">A experiência do seu cliente</div>
-              <h2>Seu cliente vê o ensaio. Não o sistema.</h2>
+              <div className="lp2-kicker">{t("A experiência do seu cliente")}</div>
+              <h2>{t("Seu cliente vê o ensaio. Não o sistema.")}</h2>
               <p>
-                A experiência foi desenhada para deixar as imagens respirarem. Favoritas e comentários aparecem quando são necessários e saem do caminho quando não são.
+                {t("A experiência foi desenhada para deixar as imagens respirarem. Favoritas e comentários aparecem quando são necessários e saem do caminho quando não são.")}
               </p>
               <div className="lp2-gallery-stat">
                 <b>{selecionadas.length}</b>
-                <span>fotos selecionadas nesta demonstração.<br />Clique nas imagens para testar.</span>
+                <span>{t("fotos selecionadas nesta demonstração.")}<br />{t("Clique nas imagens para testar.")}</span>
               </div>
             </div>
 
             <div className="lp2-client">
               <div className="lp2-client-head">
-                <div><small>Galeria de prova</small><strong>Marina & Pedro</strong></div>
-                <span className="lp2-client-count">{selecionadas.length} selecionadas</span>
+                <div><small>{t("Galeria de prova")}</small><strong>Marina & Pedro</strong></div>
+                <span className="lp2-client-count">{selecionadas.length} {t("selecionadas")}</span>
               </div>
               <div className="lp2-client-grid">
                 {[0, 2, 1, 3, 6, 4].map((fotoIndex, index) => (
@@ -473,11 +479,11 @@ export default function Home() {
           <div className="lp2-shell">
             <div className="lp2-pricing-head">
               <div>
-                <div className="lp2-kicker">Planos</div>
-                <h2>Comece leve.<br />Escale quando precisar.</h2>
+                <div className="lp2-kicker">{t("Planos")}</div>
+                <h2>{t("Comece leve.")}<br />{t("Escale quando precisar.")}</h2>
               </div>
               <p>
-                Galerias, clientes e fotos por galeria são ilimitados. Você escolhe o plano pelo armazenamento e pelo nível de apresentação.
+                {t("Galerias, clientes e fotos por galeria são ilimitados. Você escolhe o plano pelo armazenamento e pelo nível de apresentação.")}
               </p>
             </div>
 
@@ -485,18 +491,18 @@ export default function Home() {
               {planos.map((plano) => (
                 <article className={"lp2-plan" + (plano.destaque ? " hot" : "")} key={plano.nome}>
                   <div className="lp2-plan-top">
-                    <h3>{plano.nome}</h3>
-                    {plano.destaque && <span className="lp2-popular">Mais indicado</span>}
+                    <h3>{t(plano.nome)}</h3>
+                    {plano.destaque && <span className="lp2-popular">{t("Mais indicado")}</span>}
                   </div>
                   <div className="lp2-price"><small>R$ </small>{plano.preco}</div>
-                  <div className="lp2-per">por mês</div>
-                  <ul>{plano.itens.map((item) => <li key={item}>{item}</li>)}</ul>
+                  <div className="lp2-per">{t("por mês")}</div>
+                  <ul>{plano.itens.map((item) => <li key={item}>{t(item)}</li>)}</ul>
                   <a
                     className="lp2-btn"
                     href={destinoPrincipal}
                     onClick={() => rastrearCriacao("planos", plano.nome.toLowerCase())}
                   >
-                    {plano.nome === "Grátis" ? "Começar grátis" : "Escolher " + plano.nome}
+                    {plano.nome === "Grátis" ? t("Começar grátis") : t("Escolher") + " " + t(plano.nome)}
                   </a>
                 </article>
               ))}
@@ -507,15 +513,15 @@ export default function Home() {
         <section className="lp2-faq" id="faq">
           <div className="lp2-shell lp2-faq-grid">
             <div className="lp2-faq-intro">
-              <div className="lp2-kicker">Dúvidas</div>
-              <h2>O essencial, antes de começar.</h2>
-              <p>Sem letras miúdas no fluxo principal.</p>
+              <div className="lp2-kicker">{t("Dúvidas")}</div>
+              <h2>{t("O essencial, antes de começar.")}</h2>
+              <p>{t("Sem letras miúdas no fluxo principal.")}</p>
             </div>
             <div className="lp2-faq-list">
-              <details><summary>Meu cliente precisa criar uma conta?</summary><p>Não. Ele acessa a galeria pelo link enviado por você e, quando necessário, informa apenas a senha da galeria.</p></details>
-              <details><summary>Posso usar o Fotura para prova de fotos?</summary><p>Sim. Você pode habilitar seleção, definir limite de favoritas e receber comentários por foto.</p></details>
-              <details><summary>Minha marca aparece na experiência?</summary><p>Sim. O Fotura permite personalizar a apresentação do estúdio e manter sua identidade no centro da entrega.</p></details>
-              <details><summary>Posso cancelar quando quiser?</summary><p>Sim. A assinatura é gerenciada pelo portal de cobrança e pode ser cancelada para o fim do período vigente.</p></details>
+              <details><summary>{t("Meu cliente precisa criar uma conta?")}</summary><p>{t("Não. Ele acessa a galeria pelo link enviado por você e, quando necessário, informa apenas a senha da galeria.")}</p></details>
+              <details><summary>{t("Posso usar o Fotura para prova de fotos?")}</summary><p>{t("Sim. Você pode habilitar seleção, definir limite de favoritas e receber comentários por foto.")}</p></details>
+              <details><summary>{t("Minha marca aparece na experiência?")}</summary><p>{t("Sim. O Fotura permite personalizar a apresentação do estúdio e manter sua identidade no centro da entrega.")}</p></details>
+              <details><summary>{t("Posso cancelar quando quiser?")}</summary><p>{t("Sim. A assinatura é gerenciada pelo portal de cobrança e pode ser cancelada para o fim do período vigente.")}</p></details>
             </div>
           </div>
         </section>
@@ -525,23 +531,23 @@ export default function Home() {
           style={{ backgroundImage: 'url("' + fotos[6].url + '")' }}
         >
           <div className="lp2-final-inner">
-            <h2>A entrega também faz parte da fotografia.</h2>
-            <p>Apresente o trabalho, receba a escolha do cliente e continue o processo sem perder o contexto de cada foto.</p>
+            <h2>{t("A entrega também faz parte da fotografia.")}</h2>
+            <p>{t("Apresente o trabalho, receba a escolha do cliente e continue o processo sem perder o contexto de cada foto.")}</p>
             <a className="lp2-btn lp2-btn-primary" href={destinoPrincipal} onClick={() => rastrearCriacao("cta_final")}>
-              {logado ? "Abrir meu painel" : "Criar galeria grátis"} <span>→</span>
+              {logado ? t("Abrir meu painel") : t("Criar galeria grátis")} <span>→</span>
             </a>
           </div>
         </section>
       </main>
 
       <footer className="lp2-shell lp2-footer">
-        <a className="lp2-brand" href="/"><Logo /><strong>FOTURA</strong></a>
+        <a className="lp2-brand" href={withLocalePath("/", locale)}><Logo /><strong>FOTURA</strong></a>
         <div className="lp2-footer-links">
-          <a href="/termos">Termos</a>
-          <a href="/privacidade">Privacidade</a>
-          <a href="/login">Entrar</a>
+          <a href={withLocalePath("/termos", locale)}>{t("Termos")}</a>
+          <a href={withLocalePath("/privacidade", locale)}>{t("Privacidade")}</a>
+          <a href={withLocalePath("/login", locale)}>{t("Entrar")}</a>
         </div>
-        <div className="lp2-credit">© {new Date().getFullYear()} Fotura · Fotos demonstrativas via Unsplash</div>
+        <div className="lp2-credit">© {new Date().getFullYear()} Fotura · {t("Fotos demonstrativas via Unsplash")}</div>
       </footer>
     </div>
   );
