@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase-client";
+import { useI18n } from "../components/I18nProvider";
+import { withLocalePath } from "../../lib/i18n";
 
 function senhaValida(senha: string) {
   return senha.length >= 8 && senha.length <= 128;
 }
 
 export default function RedefinirSenhaPage() {
+  const { locale, t } = useI18n();
   const router = useRouter();
   const supabase = createClient();
   const [novaSenha, setNovaSenha] = useState("");
@@ -69,33 +72,33 @@ export default function RedefinirSenhaPage() {
     await supabase.auth.signOut({ scope: "others" });
     setMensagem("Senha redefinida com sucesso!");
     setCarregando(false);
-    setTimeout(() => router.replace("/dashboard"), 1500);
+    setTimeout(() => router.replace(withLocalePath("/dashboard", locale)), 1500);
   }
 
   const container: React.CSSProperties = { minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(180deg,#F5F3FB 0%,#EEEAF8 100%)",fontFamily:"sans-serif",padding:24 };
   const card: React.CSSProperties = { background:"#FAF8FD",borderRadius:16,padding:40,width:"100%",maxWidth:400,border:"1px solid #D7D0E7" };
   const inputStyle: React.CSSProperties = { width:"100%",padding:"12px 14px",fontSize:14,border:"1.5px solid #D7D0E7",borderRadius:10,background:"#F3EFF9",color:"#21253A",outline:"none",marginBottom:20,boxSizing:"border-box" };
 
-  if (verificando) return <div className="auth-shell" style={container}><div className="auth-card" style={card}><div style={{fontSize:28,fontWeight:700,letterSpacing:4,color:"#21253A",textAlign:"center",marginBottom:8}}>FOTURA</div><p style={{fontSize:14,color:"#73758D",textAlign:"center"}}>Verificando link de recuperação…</p></div></div>;
+  if (verificando) return <div className="auth-shell" style={container}><div className="auth-card" style={card}><div style={{fontSize:28,fontWeight:700,letterSpacing:4,color:"#21253A",textAlign:"center",marginBottom:8}}>FOTURA</div><p style={{fontSize:14,color:"#73758D",textAlign:"center"}}>{t("Verificando link de recuperação…")}</p></div></div>;
 
-  if (!sessaoOk) return <div className="auth-shell" style={container}><div className="auth-card" style={card}><div style={{fontSize:28,fontWeight:700,letterSpacing:4,color:"#21253A",textAlign:"center",marginBottom:8}}>FOTURA</div><p style={{fontSize:14,color:"#ef4444",textAlign:"center",marginBottom:24}}>Link inválido ou expirado.</p><Link href="/esqueci-senha" style={{display:"block",textAlign:"center",fontSize:13,color:"#4a6cf7",textDecoration:"underline"}}>Solicitar novo link</Link></div></div>;
+  if (!sessaoOk) return <div className="auth-shell" style={container}><div className="auth-card" style={card}><div style={{fontSize:28,fontWeight:700,letterSpacing:4,color:"#21253A",textAlign:"center",marginBottom:8}}>FOTURA</div><p style={{fontSize:14,color:"#ef4444",textAlign:"center",marginBottom:24}}>{t("Link inválido ou expirado.")}</p><Link href={withLocalePath("/esqueci-senha", locale)} style={{display:"block",textAlign:"center",fontSize:13,color:"#4a6cf7",textDecoration:"underline"}}>Solicitar novo link</Link></div></div>;
 
   return (
     <div style={container}>
       <div style={card}>
         <div style={{fontSize:28,fontWeight:700,letterSpacing:4,color:"#21253A",textAlign:"center",marginBottom:8}}>FOTURA</div>
-        <p style={{fontSize:14,color:"#73758D",textAlign:"center",marginBottom:32}}>Defina sua nova senha</p>
+        <p style={{fontSize:14,color:"#73758D",textAlign:"center",marginBottom:32}}>{t("Defina sua nova senha")}</p>
         {mensagem ? (
-          <div style={{background:"#EAF5EF",border:"1px solid #22c55e44",borderRadius:10,padding:"16px 18px"}}><p style={{fontSize:14,color:"#47735B",margin:0,lineHeight:1.6}}>{mensagem} Redirecionando…</p></div>
+          <div style={{background:"#EAF5EF",border:"1px solid #22c55e44",borderRadius:10,padding:"16px 18px"}}><p style={{fontSize:14,color:"#47735B",margin:0,lineHeight:1.6}}>{t(mensagem)} {locale === "en" ? "Redirecting…" : locale === "es" ? "Redirigiendo…" : "Redirecionando…"}</p></div>
         ) : (
           <>
-            <label style={{fontSize:13,color:"#5F657D",display:"block",marginBottom:6}}>Nova senha</label>
+            <label style={{fontSize:13,color:"#5F657D",display:"block",marginBottom:6}}>{locale === "en" ? "New password" : locale === "es" ? "Nueva contraseña" : "Nova senha"}</label>
             <input type="password" autoComplete="new-password" maxLength={128} value={novaSenha} onChange={(e)=>setNovaSenha(e.target.value)} placeholder="••••••••" style={inputStyle} />
-            <p style={{fontSize:11,color:"#8A8CA1",margin:"-10px 0 18px"}}>Mínimo de 8 caracteres.</p>
-            <label style={{fontSize:13,color:"#5F657D",display:"block",marginBottom:6}}>Confirmar nova senha</label>
+            <p style={{fontSize:11,color:"#8A8CA1",margin:"-10px 0 18px"}}>{t("Mínimo de 8 caracteres.")}</p>
+            <label style={{fontSize:13,color:"#5F657D",display:"block",marginBottom:6}}>{locale === "en" ? "Confirm new password" : locale === "es" ? "Confirmar nueva contraseña" : "Confirmar nova senha"}</label>
             <input type="password" autoComplete="new-password" maxLength={128} value={confirmar} onChange={(e)=>setConfirmar(e.target.value)} onKeyDown={(e)=>e.key === "Enter" && handleRedefinir()} placeholder="••••••••" style={{...inputStyle,marginBottom:24}} />
-            <button onClick={handleRedefinir} disabled={carregando} style={{width:"100%",padding:"13px",fontSize:14,fontWeight:600,color:"#fff",background:carregando?"#7D83C8":"linear-gradient(90deg,#1196fc,#5d0dfa)",border:"none",borderRadius:10,cursor:carregando?"default":"pointer"}}>{carregando?"Salvando...":"Redefinir senha"}</button>
-            {erro && <p style={{fontSize:13,textAlign:"center",marginTop:16,color:"#ef4444"}}>{erro}</p>}
+            <button onClick={handleRedefinir} disabled={carregando} style={{width:"100%",padding:"13px",fontSize:14,fontWeight:600,color:"#fff",background:carregando?"#7D83C8":"linear-gradient(90deg,#1196fc,#5d0dfa)",border:"none",borderRadius:10,cursor:carregando?"default":"pointer"}}>{carregando?(locale === "en" ? "Saving..." : locale === "es" ? "Guardando..." : "Salvando..."):(locale === "en" ? "Reset password" : locale === "es" ? "Restablecer contraseña" : "Redefinir senha")}</button>
+            {erro && <p style={{fontSize:13,textAlign:"center",marginTop:16,color:"#ef4444"}}>{t(erro)}</p>}
           </>
         )}
       </div>
