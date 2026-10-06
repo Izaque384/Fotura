@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import GalleryAnalytics from "./GalleryAnalytics";
 import { resolvePublicGalleryRef } from "../../../lib/gallery-public-ref.server";
 import { createServiceClient } from "../../../lib/supabase-server";
+import { normalizeLocale, ogLocale, withLocalePath } from "../../../lib/i18n";
 
 export async function generateMetadata({
   params,
@@ -10,17 +12,19 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const locale = normalizeLocale((await headers()).get("x-fotura-locale"));
+  const genericTitle = locale === "en" ? "Gallery — Fotura" : locale === "es" ? "Galería — Fotura" : "Galeria — Fotura";
   const podeResolver = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
   if (!podeResolver) {
     return {
-      title: "Galeria — Fotura",
+      title: genericTitle,
       robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
     };
   }
   const galeria = await resolvePublicGalleryRef(slug);
   if (!galeria) {
     return {
-      title: "Galeria — Fotura",
+      title: genericTitle,
       robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
     };
   }
@@ -35,9 +39,18 @@ export async function generateMetadata({
   const estudio = String(perfil?.nome_estudio || "Fotura");
   const title = `${galeria.titulo} — ${estudio}`;
   const description = galeria.prova
-    ? `Veja as fotos de ${galeria.titulo} e faça sua seleção na galeria compartilhada por ${estudio}.`
-    : `Veja a galeria ${galeria.titulo}, compartilhada por ${estudio}.`;
-  const url = `https://foturax.com.br/g/${galeria.publicRef}`;
+    ? locale === "en"
+      ? `View the photos from ${galeria.titulo} and make your selection in the gallery shared by ${estudio}.`
+      : locale === "es"
+        ? `Mira las fotos de ${galeria.titulo} y haz tu selección en la galería compartida por ${estudio}.`
+        : `Veja as fotos de ${galeria.titulo} e faça sua seleção na galeria compartilhada por ${estudio}.`
+    : locale === "en"
+      ? `View the gallery ${galeria.titulo}, shared by ${estudio}.`
+      : locale === "es"
+        ? `Mira la galería ${galeria.titulo}, compartida por ${estudio}.`
+        : `Veja a galeria ${galeria.titulo}, compartilhada por ${estudio}.`;
+  const path = withLocalePath(`/g/${galeria.publicRef}`, locale);
+  const url = `https://foturax.com.br${path}`;
 
   return {
     title,
@@ -48,6 +61,7 @@ export async function generateMetadata({
       description,
       url,
       siteName: "Fotura",
+      locale: ogLocale(locale),
       type: "website",
     },
     twitter: {
