@@ -243,7 +243,7 @@ const messages: Record<string, Pair> = {
   "Nome do estúdio": { en: "Studio name", es: "Nombre del estudio" },
   "Logo do estúdio": { en: "Studio logo", es: "Logo del estudio" },
   "Salvar perfil": { en: "Save profile", es: "Guardar perfil" },
-  "Carregando perfil…": { en: "Loading profile…", es: "Cargando perfil…" },,
+  "Carregando perfil…": { en: "Loading profile…", es: "Cargando perfil…" },
   "Seleção editorial de fotografias": { en: "Editorial photography selection", es: "Selección editorial de fotografías" },
   "Galeria de prova": { en: "Proofing gallery", es: "Galería de selección" },
   "selecionadas": { en: "selected", es: "seleccionadas" },
