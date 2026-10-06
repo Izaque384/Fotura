@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Sora } from "next/font/google";
 import "./globals.css";
 import "./gallery-hero-presets.css";
@@ -8,6 +9,9 @@ import "./mobile-density.css";
 import "./lavanda-moderna.css";
 import ClientShortcuts from "./components/ClientShortcuts";
 import BellOutsideDismiss from "./components/BellOutsideDismiss";
+import I18nProvider from "./components/I18nProvider";
+import GlobalLanguageAccess from "./components/GlobalLanguageAccess";
+import { htmlLang, normalizeLocale } from "../lib/i18n";
 
 const sora = Sora({
   variable: "--font-sora",
@@ -43,14 +47,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const requestHeaders = await headers();
+  const locale = normalizeLocale(requestHeaders.get("x-fotura-locale"));
   return (
     <html
-      lang="pt-BR"
+      lang={htmlLang(locale)}
       className={`${sora.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}<ClientShortcuts/><BellOutsideDismiss/></body>
+      <body className="min-h-full flex flex-col"><I18nProvider locale={locale}><GlobalLanguageAccess/>{children}<ClientShortcuts/><BellOutsideDismiss/></I18nProvider></body>
     </html>
   );
 }
