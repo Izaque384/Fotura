@@ -142,7 +142,7 @@ export async function POST(req:NextRequest){
     response=await fetch("https://api.resend.com/emails",{
       method:"POST",
       headers:{Authorization:`Bearer ${apiKey}`,"Content-Type":"application/json"},
-      body:JSON.stringify({from,to:[cliente.email],subject:`${g.titulo||"Sua galeria"} — ${studio}`,html}),
+      body:JSON.stringify({from,to:[cliente.email],subject:`${g.titulo||translate(locale,"Sua galeria")} — ${studio}`,html}),
       signal:AbortSignal.timeout(8000)
     });
   }catch(error){
