@@ -10,7 +10,6 @@ import "./lavanda-moderna.css";
 import ClientShortcuts from "./components/ClientShortcuts";
 import BellOutsideDismiss from "./components/BellOutsideDismiss";
 import I18nProvider from "./components/I18nProvider";
-import GlobalLanguageAccess from "./components/GlobalLanguageAccess";
 import { htmlLang, normalizeLocale } from "../lib/i18n";
 
 const sora = Sora({
@@ -93,7 +92,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${sora.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col"><I18nProvider locale={locale}><GlobalLanguageAccess/>{children}<ClientShortcuts/><BellOutsideDismiss/></I18nProvider></body>
+      <body className="min-h-full flex flex-col"><I18nProvider locale={locale}>{children}<ClientShortcuts/><BellOutsideDismiss/></I18nProvider></body>
     </html>
   );
 }
