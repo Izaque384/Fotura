@@ -81,7 +81,7 @@ export default function RedefinirSenhaPage() {
 
   if (verificando) return <div className="auth-shell" style={container}><div className="auth-card" style={card}><div style={{fontSize:28,fontWeight:700,letterSpacing:4,color:"#21253A",textAlign:"center",marginBottom:8}}>FOTURA</div><p style={{fontSize:14,color:"#73758D",textAlign:"center"}}>{t("Verificando link de recuperação…")}</p></div></div>;
 
-  if (!sessaoOk) return <div className="auth-shell" style={container}><div className="auth-card" style={card}><div style={{fontSize:28,fontWeight:700,letterSpacing:4,color:"#21253A",textAlign:"center",marginBottom:8}}>FOTURA</div><p style={{fontSize:14,color:"#ef4444",textAlign:"center",marginBottom:24}}>{t("Link inválido ou expirado.")}</p><Link href={withLocalePath("/esqueci-senha", locale)} style={{display:"block",textAlign:"center",fontSize:13,color:"#4a6cf7",textDecoration:"underline"}}>Solicitar novo link</Link></div></div>;
+  if (!sessaoOk) return <div className="auth-shell" style={container}><div className="auth-card" style={card}><div style={{fontSize:28,fontWeight:700,letterSpacing:4,color:"#21253A",textAlign:"center",marginBottom:8}}>FOTURA</div><p style={{fontSize:14,color:"#ef4444",textAlign:"center",marginBottom:24}}>{t("Link inválido ou expirado.")}</p><Link href={withLocalePath("/esqueci-senha", locale)} style={{display:"block",textAlign:"center",fontSize:13,color:"#4a6cf7",textDecoration:"underline"}}>{t("Solicitar novo link")}</Link></div></div>;
 
   return (
     <div style={container}>
@@ -89,15 +89,15 @@ export default function RedefinirSenhaPage() {
         <div style={{fontSize:28,fontWeight:700,letterSpacing:4,color:"#21253A",textAlign:"center",marginBottom:8}}>FOTURA</div>
         <p style={{fontSize:14,color:"#73758D",textAlign:"center",marginBottom:32}}>{t("Defina sua nova senha")}</p>
         {mensagem ? (
-          <div style={{background:"#EAF5EF",border:"1px solid #22c55e44",borderRadius:10,padding:"16px 18px"}}><p style={{fontSize:14,color:"#47735B",margin:0,lineHeight:1.6}}>{t(mensagem)} {locale === "en" ? "Redirecting…" : locale === "es" ? "Redirigiendo…" : "Redirecionando…"}</p></div>
+          <div style={{background:"#EAF5EF",border:"1px solid #22c55e44",borderRadius:10,padding:"16px 18px"}}><p style={{fontSize:14,color:"#47735B",margin:0,lineHeight:1.6}}>{t(mensagem)} {t("Redirecionando…")}</p></div>
         ) : (
           <>
-            <label style={{fontSize:13,color:"#5F657D",display:"block",marginBottom:6}}>{locale === "en" ? "New password" : locale === "es" ? "Nueva contraseña" : "Nova senha"}</label>
+            <label style={{fontSize:13,color:"#5F657D",display:"block",marginBottom:6}}>{t("Nova senha")}</label>
             <input type="password" autoComplete="new-password" maxLength={128} value={novaSenha} onChange={(e)=>setNovaSenha(e.target.value)} placeholder="••••••••" style={inputStyle} />
             <p style={{fontSize:11,color:"#8A8CA1",margin:"-10px 0 18px"}}>{t("Mínimo de 8 caracteres.")}</p>
-            <label style={{fontSize:13,color:"#5F657D",display:"block",marginBottom:6}}>{locale === "en" ? "Confirm new password" : locale === "es" ? "Confirmar nueva contraseña" : "Confirmar nova senha"}</label>
+            <label style={{fontSize:13,color:"#5F657D",display:"block",marginBottom:6}}>{t("Confirmar nova senha")}</label>
             <input type="password" autoComplete="new-password" maxLength={128} value={confirmar} onChange={(e)=>setConfirmar(e.target.value)} onKeyDown={(e)=>e.key === "Enter" && handleRedefinir()} placeholder="••••••••" style={{...inputStyle,marginBottom:24}} />
-            <button onClick={handleRedefinir} disabled={carregando} style={{width:"100%",padding:"13px",fontSize:14,fontWeight:600,color:"#fff",background:carregando?"#7D83C8":"linear-gradient(90deg,#1196fc,#5d0dfa)",border:"none",borderRadius:10,cursor:carregando?"default":"pointer"}}>{carregando?(locale === "en" ? "Saving..." : locale === "es" ? "Guardando..." : "Salvando..."):(locale === "en" ? "Reset password" : locale === "es" ? "Restablecer contraseña" : "Redefinir senha")}</button>
+            <button onClick={handleRedefinir} disabled={carregando} style={{width:"100%",padding:"13px",fontSize:14,fontWeight:600,color:"#fff",background:carregando?"#7D83C8":"linear-gradient(90deg,#1196fc,#5d0dfa)",border:"none",borderRadius:10,cursor:carregando?"default":"pointer"}}>{carregando ? t("Salvando...") : t("Redefinir senha")}</button>
             {erro && <p style={{fontSize:13,textAlign:"center",marginTop:16,color:"#ef4444"}}>{t(erro)}</p>}
           </>
         )}
