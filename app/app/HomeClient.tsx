@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "../lib/supabase-client";
 import { registrarEventoProduto, utmAtual } from "../lib/product-analytics";
 import "./landing-editorial.css";
+import LanguageSwitcher from "./components/LanguageSwitcher";
 import { useI18n } from "./components/I18nProvider";
 import { withLocalePath } from "../lib/i18n";
 
@@ -317,6 +318,7 @@ export default function Home() {
           <a href="#faq">{t("Dúvidas")}</a>
         </nav>
         <div className="lp2-actions">
+          <LanguageSwitcher compact />
           <a className="lp2-btn" href={destinoLogin}>{logado ? t("Painel") : t("Entrar")}</a>
           <a className="lp2-btn lp2-btn-primary" href={destinoPrincipal} onClick={() => rastrearCriacao("header")}>
             {logado ? t("Abrir Fotura") : t("Criar conta")}
