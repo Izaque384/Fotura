@@ -611,7 +611,11 @@ const messages: Record<string, Pair> = {
   "Histórias": { en: "Stories", es: "Historias" },
   "Famílias": { en: "Families", es: "Familias" },
   "Tudo do Essencial": { en: "Everything in Essential", es: "Todo lo de Esencial" },
-  "Tudo do Profissional": { en: "Everything in Professional", es: "Todo lo de Profesional" }
+  "Tudo do Profissional": { en: "Everything in Professional", es: "Todo lo de Profesional" },
+  "Idioma": { en: "Language", es: "Idioma" },
+  "Escolha o idioma usado na interface do Fotura e nos e-mails enviados aos seus clientes.": { en: "Choose the language used in the Fotura interface and in emails sent to your clients.", es: "Elige el idioma usado en la interfaz de Fotura y en los correos enviados a tus clientes." },
+  "Idioma da interface": { en: "Interface language", es: "Idioma de la interfaz" },
+  "A preferência fica salva na sua conta.": { en: "Your preference is saved to your account.", es: "Tu preferencia se guarda en tu cuenta." }
 };
 
 const dynamicPatterns: Array<{ re: RegExp; en: (...m: string[]) => string; es: (...m: string[]) => string }> = [
