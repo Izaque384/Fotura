@@ -604,7 +604,6 @@ const messages: Record<string, Pair> = {
   "Última atualização:": { en: "Last updated:", es: "Última actualización:" },
   "Solicitar novo link": { en: "Request a new link", es: "Solicitar un nuevo enlace" },
   "Confirmar nova senha": { en: "Confirm new password", es: "Confirmar nueva contraseña" },
-  "Salvando...": { en: "Saving...", es: "Guardando..." },
   "Redefinir senha": { en: "Reset password", es: "Restablecer contraseña" },
   "Redirecionando…": { en: "Redirecting…", es: "Redirigiendo…" },
   "Sua galeria": { en: "Your gallery", es: "Tu galería" },
