@@ -601,7 +601,18 @@ const messages: Record<string, Pair> = {
   "O pedido fica em período de segurança por 7 dias e pode ser cancelado. Nenhum dado é apagado nesta etapa.": { en: "The request remains in a 7-day safety period and can be canceled. No data is deleted at this stage.", es: "La solicitud permanece en un período de seguridad de 7 días y puede cancelarse. No se elimina ningún dato en esta etapa." },
   "Antes de continuar, exporte seus dados. A confirmação bloqueia o acesso e as galerias públicas. A exclusão física só ocorre depois pelo fluxo administrativo de segurança.": { en: "Before continuing, export your data. Confirmation blocks access and public galleries. Physical deletion only happens later through the administrative safety flow.", es: "Antes de continuar, exporta tus datos. La confirmación bloquea el acceso y las galerías públicas. La eliminación física solo ocurre después mediante el flujo administrativo de seguridad." },
   "Envie o problema com o máximo de contexto possível. Se necessário, entraremos em contato pelo e-mail da sua conta.": { en: "Send the problem with as much context as possible. If needed, we'll contact you at your account email.", es: "Envía el problema con todo el contexto posible. Si hace falta, nos pondremos en contacto mediante el correo de tu cuenta." },
-  "Última atualização:": { en: "Last updated:", es: "Última actualización:" }
+  "Última atualização:": { en: "Last updated:", es: "Última actualización:" },
+  "Solicitar novo link": { en: "Request a new link", es: "Solicitar un nuevo enlace" },
+  "Confirmar nova senha": { en: "Confirm new password", es: "Confirmar nueva contraseña" },
+  "Salvando...": { en: "Saving...", es: "Guardando..." },
+  "Redefinir senha": { en: "Reset password", es: "Restablecer contraseña" },
+  "Redirecionando…": { en: "Redirecting…", es: "Redirigiendo…" },
+  "Sua galeria": { en: "Your gallery", es: "Tu galería" },
+  "cliente": { en: "client", es: "cliente" },
+  "Histórias": { en: "Stories", es: "Historias" },
+  "Famílias": { en: "Families", es: "Familias" },
+  "Tudo do Essencial": { en: "Everything in Essential", es: "Todo lo de Esencial" },
+  "Tudo do Profissional": { en: "Everything in Professional", es: "Todo lo de Profesional" }
 };
 
 const dynamicPatterns: Array<{ re: RegExp; en: (...m: string[]) => string; es: (...m: string[]) => string }> = [
