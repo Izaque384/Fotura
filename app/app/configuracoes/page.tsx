@@ -6,6 +6,7 @@ import { createClient } from "../../lib/supabase-client";
 import { desinscreverPush, definirPreferenciaPush, inscreverPush, notificacoesPushAtivadas } from "../../lib/push-client";
 import MenuFotografo from "../MenuFotografo";
 import ConfirmDialog from "../components/ConfirmDialog";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 type Permissao = "granted" | "denied" | "default" | "unsupported";
 type EncerramentoEstado = {
@@ -238,6 +239,20 @@ export default function ConfiguracoesPage() {
 
       <div className="section-label">Preferências e integrações</div>
       <div className="grid">
+        <section className="setting-card">
+          <div className="setting-top">
+            <div className="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.5 3.8 9s-1.3 6.5-3.8 9M12 3C9.5 5.5 8.2 8.5 8.2 12s1.3 6.5 3.8 9"/></svg></div>
+            <div className="setting-copy"><h2 className="title">Idioma</h2><p className="desc">Escolha o idioma usado na interface do Fotura e nos e-mails enviados aos seus clientes.</p></div>
+          </div>
+          <div className="setting-bottom">
+            <div className="setting-info">
+              <div className="label">Idioma da interface</div>
+              <div className="value">A preferência fica salva na sua conta.</div>
+            </div>
+            <LanguageSwitcher />
+          </div>
+        </section>
+
         <section className="setting-card">
           <div className="setting-top">
             <div className="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 9a6 6 0 0 1 12 0v4l2 3H4l2-3V9Z"/><path d="M10 19h4"/></svg></div>
