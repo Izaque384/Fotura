@@ -53,7 +53,7 @@ test.describe("international routes", () => {
 
     await page.goto("/en/g/00000000-0000-4000-8000-000000000004");
     await expect(page.getByRole("heading", { name: "This link has expired" })).toBeVisible();
-    await expect(page.getByText(/The access period for this gallery has ended/i)).toBeVisible();
+    await expect(page.getByText(/Access to this gallery has expired/i)).toBeVisible();
     expect(hydrationErrors).toEqual([]);
   });
 });
