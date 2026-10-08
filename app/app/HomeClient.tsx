@@ -35,36 +35,67 @@ const planos = [
   },
 ];
 
-const fotos = [
+const fotosHero = [
   {
-    url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1600&q=88",
+    url: "https://images.unsplash.com/photo-1759308730169-9156cb9fe8fe?auto=format&fit=crop&w=1600&q=88",
     label: "Casamentos",
   },
   {
-    url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1200&q=88",
-    label: "Retratos",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1400&q=88",
-    label: "Histórias",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1400&q=88",
+    url: "https://images.unsplash.com/photo-1741940365437-e55b919a89d3?auto=format&fit=crop&w=1400&q=88",
     label: "Famílias",
   },
   {
-    url: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1400&q=88",
+    url: "https://images.unsplash.com/photo-1774708053382-f1d453ea5dc9?auto=format&fit=crop&w=1400&q=88",
+    label: "Retratos",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1790926075510-72557dfa0b0f?auto=format&fit=crop&w=1600&q=88",
     label: "Eventos",
   },
   {
-    url: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1400&q=88",
-    label: "Comercial",
+    url: "https://images.unsplash.com/photo-1777728091201-cce6045e078f?auto=format&fit=crop&w=1400&q=88",
+    label: "Histórias",
   },
   {
-    url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=88",
+    url: "https://images.unsplash.com/photo-1694030505309-5fcfc3d58653?auto=format&fit=crop&w=1600&q=88",
     label: "Autorais",
   },
+  {
+    url: "https://images.unsplash.com/photo-1773188536669-17275a1c200c?auto=format&fit=crop&w=1400&q=88",
+    label: "Retratos",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1769412954921-1474a34e8049?auto=format&fit=crop&w=1400&q=88",
+    label: "Famílias",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1763631045896-04d2e60048ae?auto=format&fit=crop&w=1600&q=88",
+    label: "Famílias",
+  },
 ];
+
+const fotosGaleria = [
+  { url: "https://images.unsplash.com/photo-1780291116326-36096428e499?auto=format&fit=crop&w=1400&q=88" },
+  { url: "https://images.unsplash.com/photo-1777312379304-e958accc0fa9?auto=format&fit=crop&w=1400&q=88" },
+  { url: "https://images.unsplash.com/photo-1764593823886-6cd9af7f8a5c?auto=format&fit=crop&w=1400&q=88" },
+  { url: "https://images.unsplash.com/photo-1647900748342-7631ef9c9429?auto=format&fit=crop&w=1400&q=88" },
+  { url: "https://images.unsplash.com/photo-1760080903525-d3608e3bbe2d?auto=format&fit=crop&w=1400&q=88" },
+  { url: "https://images.unsplash.com/photo-1769898548207-ec7bb38a7cb8?auto=format&fit=crop&w=1400&q=88" },
+  { url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1400&q=88" },
+  { url: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1400&q=88" },
+];
+
+const fotosCliente = [
+  { url: "https://images.unsplash.com/photo-1785338016954-2c94ee6c3ff6?auto=format&fit=crop&w=1400&q=88" },
+  { url: "https://images.unsplash.com/photo-1783352117644-11f69ea78256?auto=format&fit=crop&w=1400&q=88" },
+  { url: "https://images.unsplash.com/photo-1785394809415-41f5f6d4041b?auto=format&fit=crop&w=1400&q=88" },
+  { url: "https://images.unsplash.com/photo-1777312378095-44bb1b70f834?auto=format&fit=crop&w=1400&q=88" },
+  { url: "https://images.unsplash.com/photo-1769374072073-bc358149ecee?auto=format&fit=crop&w=1400&q=88" },
+  { url: "https://images.unsplash.com/photo-1758810410416-0d4dd2a7a6cc?auto=format&fit=crop&w=1400&q=88" },
+];
+
+const fotoFinal =
+  "https://images.unsplash.com/photo-1773243086564-a444f7d8a61b?auto=format&fit=crop&w=1800&q=88";
 
 const passos = [
   {
@@ -149,7 +180,7 @@ function DemoScreen({ etapa }: { etapa: number }) {
             <div className="lp2-real-filter">Filtrar por <span>⌄</span></div>
           </div>
           <div className="lp2-real-gallery-row">
-            <div className="lp2-real-cover" style={{ backgroundImage: 'url("' + fotos[0].url + '")' }} />
+            <div className="lp2-real-cover" style={{ backgroundImage: 'url("' + fotosGaleria[0].url + '")' }} />
             <div className="lp2-real-gallery-name">
               <div><strong>Marina & Pedro</strong><span className="lp2-real-mode">Prova</span></div>
               <small>24 fotos</small>
@@ -172,7 +203,7 @@ function DemoScreen({ etapa }: { etapa: number }) {
   if (etapa === 2) {
     return (
       <div className="lp2-demo-screen lp2-real-public">
-        <div className="lp2-real-public-hero" style={{ backgroundImage: 'url("' + fotos[0].url + '")' }}>
+        <div className="lp2-real-public-hero" style={{ backgroundImage: 'url("' + fotosGaleria[0].url + '")' }}>
           <div className="lp2-real-public-brand">STUDIO AURORA</div>
           <div>
             <small>PROVA DE FOTOS</small>
@@ -184,8 +215,8 @@ function DemoScreen({ etapa }: { etapa: number }) {
         </div>
         <div className="lp2-real-public-hint">Selecione as fotos desejadas (até 25) e finalize quando terminar.</div>
         <div className="lp2-real-public-grid">
-          {[2, 0, 3, 1, 6, 4, 5, 0].map((foto, index) => (
-            <div key={index} style={{ backgroundImage: 'url("' + fotos[foto].url + '")' }}>
+          {[2, 0, 3, 1, 6, 4, 5, 7].map((foto, index) => (
+            <div key={index} style={{ backgroundImage: 'url("' + fotosGaleria[foto].url + '")' }}>
               <span className={"lp2-real-check" + ([0, 3, 5].includes(index) ? " on" : "")}>{[0, 3, 5].includes(index) ? "✓" : ""}</span>
               {index === 3 && <i className="lp2-real-comment">●</i>}
             </div>
@@ -220,7 +251,7 @@ function DemoScreen({ etapa }: { etapa: number }) {
       </div>
 
       <div className="lp2-real-selection-row">
-        <div className="lp2-real-cover" style={{ backgroundImage: 'url("' + fotos[0].url + '")' }} />
+        <div className="lp2-real-cover" style={{ backgroundImage: 'url("' + fotosGaleria[0].url + '")' }} />
         <div className="lp2-real-selection-name">
           <div><strong>Marina & Pedro</strong><span className="lp2-real-mode">Prova</span></div>
           <small>Marina Alves · Atualizada agora</small>
@@ -270,7 +301,7 @@ export default function Home() {
     const timer = window.setInterval(() => {
       setHeroCarousel(({ atual }) => ({
         anterior: atual,
-        atual: (atual + 1) % fotos.length,
+        atual: (atual + 1) % fotosHero.length,
       }));
     }, 2600);
     return () => window.clearInterval(timer);
@@ -298,13 +329,13 @@ export default function Home() {
   const destinoLogin = withLocalePath(logado ? "/dashboard" : "/login", locale);
   const heroAtual = [
     heroCarousel.atual,
-    (heroCarousel.atual + 2) % fotos.length,
-    (heroCarousel.atual + 4) % fotos.length,
+    (heroCarousel.atual + 2) % fotosHero.length,
+    (heroCarousel.atual + 4) % fotosHero.length,
   ];
   const heroAnterior = [
     heroCarousel.anterior,
-    (heroCarousel.anterior + 2) % fotos.length,
-    (heroCarousel.anterior + 4) % fotos.length,
+    (heroCarousel.anterior + 2) % fotosHero.length,
+    (heroCarousel.anterior + 4) % fotosHero.length,
   ];
 
   return (
@@ -345,27 +376,27 @@ export default function Home() {
 
           <div
             className="lp2-hero-art"
-            aria-label={`${t("Seleção editorial de fotografias")}: ${heroAtual.map((index) => t(fotos[index].label)).join(", ")}`}
+            aria-label={`${t("Seleção editorial de fotografias")}: ${heroAtual.map((index) => t(fotosHero[index].label)).join(", ")}`}
           >
-            <div className="lp2-photo lp2-hero-main" style={{ backgroundImage: 'url("' + fotos[heroAnterior[0]].url + '")' }}>
+            <div className="lp2-photo lp2-hero-main" style={{ backgroundImage: 'url("' + fotosHero[heroAnterior[0]].url + '")' }}>
               <div
                 key={`hero-main-${heroCarousel.atual}`}
                 className="lp2-hero-photo-layer"
-                style={{ backgroundImage: 'url("' + fotos[heroAtual[0]].url + '")' }}
+                style={{ backgroundImage: 'url("' + fotosHero[heroAtual[0]].url + '")' }}
               />
             </div>
-            <div className="lp2-photo lp2-hero-tall" style={{ backgroundImage: 'url("' + fotos[heroAnterior[1]].url + '")' }}>
+            <div className="lp2-photo lp2-hero-tall" style={{ backgroundImage: 'url("' + fotosHero[heroAnterior[1]].url + '")' }}>
               <div
                 key={`hero-tall-${heroCarousel.atual}`}
                 className="lp2-hero-photo-layer"
-                style={{ backgroundImage: 'url("' + fotos[heroAtual[1]].url + '")' }}
+                style={{ backgroundImage: 'url("' + fotosHero[heroAtual[1]].url + '")' }}
               />
             </div>
-            <div className="lp2-photo lp2-hero-small" style={{ backgroundImage: 'url("' + fotos[heroAnterior[2]].url + '")' }}>
+            <div className="lp2-photo lp2-hero-small" style={{ backgroundImage: 'url("' + fotosHero[heroAnterior[2]].url + '")' }}>
               <div
                 key={`hero-small-${heroCarousel.atual}`}
                 className="lp2-hero-photo-layer"
-                style={{ backgroundImage: 'url("' + fotos[heroAtual[2]].url + '")' }}
+                style={{ backgroundImage: 'url("' + fotosHero[heroAtual[2]].url + '")' }}
               />
             </div>
           </div>
@@ -465,7 +496,7 @@ export default function Home() {
                       (index === 3 ? " wide" : "") +
                       (selecionadas.includes(index) ? " selected" : "")
                     }
-                    style={{ backgroundImage: 'url("' + fotos[fotoIndex].url + '")' }}
+                    style={{ backgroundImage: 'url("' + fotosCliente[fotoIndex].url + '")' }}
                   >
                     <span className="lp2-client-heart">{selecionadas.includes(index) ? "♥" : "♡"}</span>
                   </button>
@@ -528,7 +559,7 @@ export default function Home() {
 
         <section
           className="lp2-final"
-          style={{ backgroundImage: 'url("' + fotos[6].url + '")' }}
+          style={{ backgroundImage: 'url("' + fotoFinal + '")' }}
         >
           <div className="lp2-final-inner">
             <h2>{t("A entrega também faz parte da fotografia.")}</h2>
