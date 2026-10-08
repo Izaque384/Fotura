@@ -14,7 +14,7 @@ test.describe("public demo gallery", () => {
     await page.getByRole("button", { name: "Finalizar demonstração" }).click();
 
     await expect(page.getByText("Seleção concluída")).toBeVisible();
-    await expect(page.getByRole("link", { name: /Criar minha galeria grátis/ })).toBeVisible();
+    await expect(page.getByRole("status").getByRole("link", { name: /Criar minha galeria grátis/ })).toBeVisible();
   });
 
   test("demo internacional respeita o idioma da URL", async ({ page }) => {
