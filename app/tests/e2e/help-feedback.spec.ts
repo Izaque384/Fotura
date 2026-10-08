@@ -42,7 +42,7 @@ test.describe("ajuda e feedback", () => {
 
   test("menu oferece entrada voluntária e preserva a página de origem", () => {
     const menu = read("app/MenuFotografo.tsx");
-    expect(menu).toContain('label: "Ajuda e feedback"');
+    expect(menu).toContain('label: t("Ajuda e feedback")');
     expect(menu).toContain('tipo: "ajuda"');
     expect(menu).toContain("origem=");
   });

@@ -10,6 +10,7 @@ export default defineConfig({
   outputDir: "test-results",
   use: {
     baseURL: "http://localhost:3000",
+    locale: "pt-BR",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",

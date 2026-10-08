@@ -63,24 +63,50 @@ export default function I18nProvider({
     document.documentElement.lang = locale === "pt" ? "pt-BR" : locale;
     if (locale === "pt") return;
 
-    let frame = 0;
-    const run = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => translateDom(locale, document.body));
-    };
-    run();
+    let translateFrame = 0;
+    let startFrameA = 0;
+    let startFrameB = 0;
+    let startTimer = 0;
+    let observer: MutationObserver | null = null;
+    let started = false;
 
-    const observer = new MutationObserver(run);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: ["placeholder", "aria-label", "title", "alt"],
-    });
+    const run = () => {
+      cancelAnimationFrame(translateFrame);
+      translateFrame = requestAnimationFrame(() => translateDom(locale, document.body));
+    };
+
+    const start = () => {
+      if (started) return;
+      started = true;
+      run();
+      observer = new MutationObserver(run);
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ["placeholder", "aria-label", "title", "alt"],
+      });
+    };
+
+    const scheduleStart = () => {
+      startTimer = window.setTimeout(() => {
+        startFrameA = requestAnimationFrame(() => {
+          startFrameB = requestAnimationFrame(start);
+        });
+      }, 0);
+    };
+
+    if (document.readyState === "complete") scheduleStart();
+    else window.addEventListener("load", scheduleStart, { once: true });
+
     return () => {
-      observer.disconnect();
-      cancelAnimationFrame(frame);
+      window.removeEventListener("load", scheduleStart);
+      observer?.disconnect();
+      window.clearTimeout(startTimer);
+      cancelAnimationFrame(startFrameA);
+      cancelAnimationFrame(startFrameB);
+      cancelAnimationFrame(translateFrame);
     };
   }, [locale]);
 

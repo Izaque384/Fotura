@@ -557,6 +557,12 @@ const messages: Record<string, Pair> = {
   "Explique o que você estava fazendo, o que esperava e o que aconteceu.": { en: "Explain what you were doing, what you expected, and what happened.", es: "Explica qué estabas haciendo, qué esperabas y qué ocurrió." },
   "Conte o que está funcionando bem e o que poderíamos melhorar.": { en: "Tell us what is working well and what we could improve.", es: "Cuéntanos qué funciona bien y qué podríamos mejorar." },
   "Galeria protegida": { en: "Protected gallery", es: "Galería protegida" },
+  "Este link expirou": { en: "This link has expired", es: "Este enlace ha caducado" },
+  "Verificando…": { en: "Checking…", es: "Verificando…" },
+  "Não foi possível carregar a galeria.": { en: "We couldn't load the gallery.", es: "No pudimos cargar la galería." },
+  "Não foi possível carregar as fotos.": { en: "We couldn't load the photos.", es: "No pudimos cargar las fotos." },
+  "Senha incorreta. Tente novamente.": { en: "Incorrect password. Try again.", es: "Contraseña incorrecta. Inténtalo de nuevo." },
+
   "Feito com": { en: "Made with", es: "Hecho con" },
   "Cancelar download": { en: "Cancel download", es: "Cancelar descarga" },
   "Baixar todas": { en: "Download all", es: "Descargar todas" },

@@ -29,17 +29,18 @@ test.describe("SEO indexability and UX polish", () => {
   test("public legal pages remain indexable and canonical", () => {
     const termos = read("termos/layout.tsx");
     const privacidade = read("privacidade/layout.tsx");
-    expect(termos).toContain('canonical: "/termos"');
-    expect(privacidade).toContain('canonical: "/privacidade"');
+    expect(termos).toContain('canonical: `/${locale}/${path}`');
+    expect(privacidade).toContain('canonical: `/${locale}/${path}`');
     expect(termos).toContain("index: true");
     expect(privacidade).toContain("index: true");
   });
 
   test("sitemap stays restricted to intentional public pages", () => {
     const sitemap = read("sitemap.ts");
-    expect(sitemap).toContain('url: `${BASE_URL}/`');
-    expect(sitemap).toContain('url: `${BASE_URL}/termos`');
-    expect(sitemap).toContain('url: `${BASE_URL}/privacidade`');
+    expect(sitemap).toContain('const locales = ["pt", "en", "es"] as const');
+    expect(sitemap).toContain('url: `${BASE_URL}/${locale}`');
+    expect(sitemap).toContain('url: `${BASE_URL}/${locale}/termos`');
+    expect(sitemap).toContain('url: `${BASE_URL}/${locale}/privacidade`');
     expect(sitemap).not.toContain("/dashboard");
     expect(sitemap).not.toContain("/login");
     expect(sitemap).not.toContain("/g/");
