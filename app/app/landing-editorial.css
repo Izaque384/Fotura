@@ -110,74 +110,112 @@
   height:630px;
   position:relative;
   isolation:isolate;
+  overflow:visible;
 }
-.lp2-photo{
+.lp2-orbit-stage{
   position:absolute;
+  inset:3%;
+  transform:rotate(-10deg);
+  transform-origin:center;
+  isolation:isolate;
+}
+.lp2-orbit-stage:before{
+  content:"";
+  position:absolute;
+  width:91%;
+  height:48%;
+  left:4.5%;
+  top:26%;
+  border:1px solid rgba(74,56,209,.22);
+  border-radius:50%;
+  box-shadow:
+    0 0 0 12px rgba(17,150,252,.018),
+    0 0 44px rgba(93,13,250,.055);
+  z-index:2;
+  pointer-events:none;
+}
+.lp2-orbit-stage:after{
+  content:"";
+  position:absolute;
+  width:69%;
+  height:34%;
+  left:15.5%;
+  top:33%;
+  border:1px solid rgba(23,25,34,.08);
+  border-radius:50%;
+  z-index:2;
+  pointer-events:none;
+}
+.lp2-hero-core{
+  position:absolute;
+  width:55%;
+  height:62%;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%) rotate(10deg);
+  transform-origin:center;
   background-size:cover;
   background-position:center;
-  box-shadow:0 24px 64px rgba(21,19,22,.16);
+  border-radius:4px;
+  box-shadow:0 30px 80px rgba(21,19,22,.22);
   overflow:hidden;
+  z-index:3;
 }
-.lp2-hero-photo-layer{
-  position:absolute;
-  inset:0;
-  background-size:cover;
-  background-position:center;
-  transform-origin:center center;
-  animation:lp2HeroPhotoRotate .72s cubic-bezier(.2,.72,.24,1) both;
-  will-change:opacity,transform;
-}
-.lp2-hero-main .lp2-hero-photo-layer{--hero-rotate:-2.8deg;animation-delay:0s}
-.lp2-hero-tall .lp2-hero-photo-layer{--hero-rotate:3.4deg;animation-delay:.05s}
-.lp2-hero-small .lp2-hero-photo-layer{--hero-rotate:-4deg;animation-delay:.1s}
-@keyframes lp2HeroPhotoRotate{
-  from{opacity:.18;transform:scale(1.055) rotate(var(--hero-rotate))}
-  to{opacity:1;transform:scale(1) rotate(0deg)}
-}
-.lp2-photo:after{
+.lp2-hero-core:after,
+.lp2-orbit-card:after{
   content:"";
   position:absolute;
   inset:0;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);
   pointer-events:none;
 }
-.lp2-hero-main{
-  width:72%;
-  height:82%;
-  right:6%;
-  top:8%;
-  border-radius:3px;
-}
-.lp2-hero-tall{
-  width:25%;
-  height:43%;
-  left:0;
-  bottom:5%;
-  border-radius:2px;
-  z-index:3;
-}
-.lp2-hero-small{
-  width:31%;
-  height:29%;
-  right:0;
-  bottom:1%;
-  border:8px solid var(--paper);
-  z-index:4;
-}
-.lp2-hero-caption{
+.lp2-orbit-card{
+  --orbit-i:0;
   position:absolute;
-  left:35%;
-  bottom:5%;
-  z-index:5;
-  color:#4f515a;
-  font-family:Georgia,"Times New Roman",serif;
-  font-size:13px;
-  font-style:italic;
+  width:156px;
+  height:110px;
+  border-radius:3px;
+  background-size:cover;
+  background-position:center;
+  box-shadow:0 18px 46px rgba(21,19,22,.18);
+  overflow:hidden;
+  offset-path:ellipse(45% 25% at 50% 50%);
+  offset-distance:0%;
+  offset-rotate:0deg;
+  offset-anchor:50% 50%;
+  transform:rotate(10deg) scale(.86);
+  opacity:.72;
+  z-index:3;
+  animation:lp2SaturnOrbit 16s linear infinite;
+  animation-delay:calc(var(--orbit-i) * -2s);
+  will-change:offset-distance,transform,opacity;
 }
-@keyframes lp2FloatA{0%,100%{transform:translate3d(0,0,0) rotate(.3deg)}50%{transform:translate3d(0,-10px,0) rotate(-.25deg)}}
-@keyframes lp2FloatB{0%,100%{transform:translate3d(0,0,0) rotate(-1deg)}50%{transform:translate3d(5px,-8px,0) rotate(.4deg)}}
-@keyframes lp2FloatC{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(-6px,-7px,0)}}
-
+@keyframes lp2SaturnOrbit{
+  0%,100%{
+    offset-distance:0%;
+    transform:rotate(10deg) scale(.86);
+    opacity:.72;
+    z-index:3;
+  }
+  25%{
+    offset-distance:25%;
+    transform:rotate(10deg) scale(1.08);
+    opacity:1;
+    z-index:6;
+  }
+  50%{
+    offset-distance:50%;
+    transform:rotate(10deg) scale(.88);
+    opacity:.78;
+    z-index:3;
+  }
+  75%{
+    offset-distance:75%;
+    transform:rotate(10deg) scale(.72);
+    opacity:.48;
+    z-index:1;
+  }
+}
 
 .lp2-proof{
   border-top:1px solid var(--line);
@@ -787,9 +825,15 @@
   .lp2-hero-actions{display:grid;grid-template-columns:1fr}
   .lp2-hero-actions .lp2-btn{width:100%}
   .lp2-hero-art{height:440px}
-  .lp2-hero-main{width:78%;height:78%;right:0}
-  .lp2-hero-tall{width:31%;height:44%;left:0}
-  .lp2-hero-small{width:38%;height:27%;right:1%}
+  .lp2-orbit-stage{inset:2%;transform:rotate(-8deg)}
+  .lp2-hero-core{width:58%;height:60%;transform:translate(-50%,-50%) rotate(8deg)}
+  .lp2-orbit-card{width:112px;height:80px;offset-path:ellipse(44% 27% at 50% 50%)}
+  @keyframes lp2SaturnOrbit{
+    0%,100%{offset-distance:0%;transform:rotate(8deg) scale(.84);opacity:.7;z-index:3}
+    25%{offset-distance:25%;transform:rotate(8deg) scale(1.04);opacity:1;z-index:6}
+    50%{offset-distance:50%;transform:rotate(8deg) scale(.86);opacity:.76;z-index:3}
+    75%{offset-distance:75%;transform:rotate(8deg) scale(.72);opacity:.46;z-index:1}
+  }
   .lp2-section,.lp2-demo,.lp2-pricing,.lp2-faq{padding:78px 0}
   .lp2-section-head h2,.lp2-gallery-copy h2,.lp2-pricing-head h2,.lp2-faq-intro h2{font-size:clamp(40px,12vw,58px);letter-spacing:-2.7px}
   .lp2-demo-grid{gap:28px}
@@ -823,10 +867,21 @@
   .lp2-footer-links{flex-wrap:wrap}
 }
 @media(max-width:440px){
+  .lp2-hero-art{height:390px}
+  .lp2-orbit-card{width:98px;height:70px}
+  .lp2-hero-core{width:61%;height:58%}
   .lp2-client-grid{grid-template-columns:1fr}
   .lp2-client-photo,.lp2-client-photo.tall{min-height:230px;grid-row:auto}
 }
 @media(prefers-reduced-motion:reduce){
   .lp2 *{scroll-behavior:auto!important}
-  .lp2-hero-main,.lp2-hero-tall,.lp2-hero-small,.lp2-hero-photo-layer,.lp2-demo-screen,.lp2-step-progress{animation:none!important}
+  .lp2-orbit-card,.lp2-demo-screen,.lp2-step-progress{animation:none!important}
+  .lp2-orbit-card:nth-child(2){offset-distance:0%}
+  .lp2-orbit-card:nth-child(3){offset-distance:12.5%}
+  .lp2-orbit-card:nth-child(4){offset-distance:25%}
+  .lp2-orbit-card:nth-child(5){offset-distance:37.5%}
+  .lp2-orbit-card:nth-child(6){offset-distance:50%}
+  .lp2-orbit-card:nth-child(7){offset-distance:62.5%}
+  .lp2-orbit-card:nth-child(8){offset-distance:75%}
+  .lp2-orbit-card:nth-child(9){offset-distance:87.5%}
 }
