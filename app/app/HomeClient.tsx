@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "../lib/supabase-client";
 import { registrarEventoProduto, utmAtual } from "../lib/product-analytics";
 import "./landing-editorial.css";
@@ -271,6 +271,7 @@ export default function Home() {
   const [logado, setLogado] = useState(false);
   const [etapaAtiva, setEtapaAtiva] = useState(0);
   const [selecionadas, setSelecionadas] = useState<number[]>([0, 3]);
+  const [heroCarousel, setHeroCarousel] = useState({ atual: 0, anterior: 0 });
 
   useEffect(() => {
     let ativo = true;
@@ -295,6 +296,17 @@ export default function Home() {
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const timer = window.setInterval(() => {
+      setHeroCarousel(({ atual }) => ({
+        anterior: atual,
+        atual: (atual + 1) % fotosHero.length,
+      }));
+    }, 2600);
+    return () => window.clearInterval(timer);
+  }, []);
+
   function rastrearCriacao(origem: string, plano?: string) {
     if (logado) return;
     registrarEventoProduto("landing_signup_clicked", {
@@ -315,6 +327,17 @@ export default function Home() {
 
   const destinoPrincipal = withLocalePath(logado ? "/dashboard" : "/login?modo=cadastro", locale);
   const destinoLogin = withLocalePath(logado ? "/dashboard" : "/login", locale);
+  const heroAtual = [
+    heroCarousel.atual,
+    (heroCarousel.atual + 2) % fotosHero.length,
+    (heroCarousel.atual + 4) % fotosHero.length,
+  ];
+  const heroAnterior = [
+    heroCarousel.anterior,
+    (heroCarousel.anterior + 2) % fotosHero.length,
+    (heroCarousel.anterior + 4) % fotosHero.length,
+  ];
+
   return (
     <div className="lp2">
       <header className="lp2-nav">
@@ -353,23 +376,28 @@ export default function Home() {
 
           <div
             className="lp2-hero-art"
-            aria-label={`${t("Seleção editorial de fotografias")}: ${fotosHero.map((foto) => t(foto.label)).join(", ")}`}
+            aria-label={`${t("Seleção editorial de fotografias")}: ${heroAtual.map((index) => t(fotosHero[index].label)).join(", ")}`}
           >
-            <div className="lp2-orbit-stage" aria-hidden="true">
+            <div className="lp2-photo lp2-hero-main" style={{ backgroundImage: 'url("' + fotosHero[heroAnterior[0]].url + '")' }}>
               <div
-                className="lp2-hero-core"
-                style={{ backgroundImage: 'url("' + fotosHero[0].url + '")' }}
+                key={`hero-main-${heroCarousel.atual}`}
+                className="lp2-hero-photo-layer"
+                style={{ backgroundImage: 'url("' + fotosHero[heroAtual[0]].url + '")' }}
               />
-              {fotosHero.slice(1).map((foto, index) => (
-                <div
-                  className="lp2-orbit-card"
-                  key={foto.url}
-                  style={{
-                    "--orbit-i": index,
-                    backgroundImage: 'url("' + foto.url + '")',
-                  } as CSSProperties}
-                />
-              ))}
+            </div>
+            <div className="lp2-photo lp2-hero-tall" style={{ backgroundImage: 'url("' + fotosHero[heroAnterior[1]].url + '")' }}>
+              <div
+                key={`hero-tall-${heroCarousel.atual}`}
+                className="lp2-hero-photo-layer"
+                style={{ backgroundImage: 'url("' + fotosHero[heroAtual[1]].url + '")' }}
+              />
+            </div>
+            <div className="lp2-photo lp2-hero-small" style={{ backgroundImage: 'url("' + fotosHero[heroAnterior[2]].url + '")' }}>
+              <div
+                key={`hero-small-${heroCarousel.atual}`}
+                className="lp2-hero-photo-layer"
+                style={{ backgroundImage: 'url("' + fotosHero[heroAtual[2]].url + '")' }}
+              />
             </div>
           </div>
         </section>
