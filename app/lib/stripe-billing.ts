@@ -1,13 +1,16 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { PlanoCodigo } from "./billing-plans";
+import { BASE_PRICING_CURRENCY, type PricingCurrency } from "./pricing-markets";
 
 const STRIPE_API = "https://api.stripe.com/v1";
 
-const STRIPE_PRICE_LIVE_POR_PLANO: Partial<Record<PlanoCodigo, string>> = {
-  essencial: "price_1UBZoTPNUFf8TwH8X6fqs6Dn",
-  profissional: "price_1UBZoePNUFf8TwH8Y0V7IrQ6",
-  studio: "price_1UBZorPNUFf8TwH83lW4zxAr",
+const STRIPE_PRICE_LIVE_POR_MOEDA: Partial<Record<PricingCurrency, Partial<Record<PlanoCodigo, string>>>> = {
+  BRL: {
+    essencial: "price_1UBZoTPNUFf8TwH8X6fqs6Dn",
+    profissional: "price_1UBZoePNUFf8TwH8Y0V7IrQ6",
+    studio: "price_1UBZorPNUFf8TwH83lW4zxAr",
+  },
 };
 
 const STRIPE_PRICE_LEGACY_POR_PLANO: Partial<Record<PlanoCodigo, string[]>> = {
@@ -37,16 +40,21 @@ function priceEnv(plano: PlanoCodigo) {
   return nome ? process.env[nome]?.trim() || null : null;
 }
 
-export function stripePricePorPlano(plano: PlanoCodigo): string | null {
-  if (stripeTestMode()) return priceEnv(plano);
-  return STRIPE_PRICE_LIVE_POR_PLANO[plano] ?? null;
+export function stripePricePorPlano(
+  plano: PlanoCodigo,
+  currency: PricingCurrency = BASE_PRICING_CURRENCY,
+): string | null {
+  if (stripeTestMode()) return currency === "BRL" ? priceEnv(plano) : null;
+  return STRIPE_PRICE_LIVE_POR_MOEDA[currency]?.[plano] ?? null;
 }
 
 export function planoPorStripePrice(priceId: string | null | undefined): PlanoCodigo | null {
   if (!priceId) return null;
   const planos: PlanoCodigo[] = ["essencial", "profissional", "studio"];
   for (const plano of planos) {
-    if (stripePricePorPlano(plano) === priceId) return plano;
+    for (const currency of ["BRL", "USD", "EUR"] as const) {
+      if (stripePricePorPlano(plano, currency) === priceId) return plano;
+    }
     if (STRIPE_PRICE_LEGACY_POR_PLANO[plano]?.includes(priceId)) return plano;
   }
   return null;
