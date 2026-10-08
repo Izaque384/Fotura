@@ -483,7 +483,7 @@ export default function Home() {
                 <span className="lp2-client-count">{selecionadas.length} {t("selecionadas")}</span>
               </div>
               <div className="lp2-client-grid">
-                {[0, 2, 1, 3, 6, 4].map((fotoIndex, index) => (
+                {[0, 2, 1, 3, 5, 4].map((fotoIndex, index) => (
                   <button
                     type="button"
                     key={fotoIndex}
