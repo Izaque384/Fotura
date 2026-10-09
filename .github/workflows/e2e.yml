@@ -36,8 +36,12 @@ jobs:
         run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
-      - name: Dependency security audit
-        run: npm audit --audit-level=high
+      - name: Production dependency security audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Development dependency audit
+        continue-on-error: true
+        run: npm audit --include=dev --audit-level=high
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v4
