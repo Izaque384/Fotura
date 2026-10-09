@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import HomeClient from "./HomeClient";
 import { type Locale, normalizeLocale, ogLocale } from "../lib/i18n";
+import { APPROVED_MONTHLY_PRICES, defaultPricingCurrencyForCountry, type PricingCurrency } from "../lib/pricing-markets";
 
 const seo: Record<Locale, { title: string; description: string; imageAlt: string }> = {
   pt: {
@@ -24,6 +25,11 @@ const seo: Record<Locale, { title: string; description: string; imageAlt: string
 async function requestLocale(): Promise<Locale> {
   const requestHeaders = await headers();
   return normalizeLocale(requestHeaders.get("x-fotura-locale"));
+}
+
+async function requestPricingCurrency(): Promise<PricingCurrency> {
+  const requestHeaders = await headers();
+  return defaultPricingCurrencyForCountry(requestHeaders.get("x-vercel-ip-country"));
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -74,6 +80,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const locale = await requestLocale();
+  const currency = await requestPricingCurrency();
+  const prices = APPROVED_MONTHLY_PRICES[currency];
   const copy = seo[locale];
   const url = `https://foturax.com.br/${locale}`;
   const structuredData = {
@@ -107,10 +115,10 @@ export default async function HomePage() {
         description: copy.description,
         publisher: { "@id": "https://foturax.com.br/#organization" },
         offers: [
-          { "@type": "Offer", name: locale === "en" ? "Free" : locale === "es" ? "Gratis" : "Grátis", price: "0.00", priceCurrency: "BRL" },
-          { "@type": "Offer", name: locale === "en" ? "Essential" : locale === "es" ? "Esencial" : "Essencial", price: "14.90", priceCurrency: "BRL" },
-          { "@type": "Offer", name: locale === "en" ? "Professional" : locale === "es" ? "Profesional" : "Profissional", price: "29.90", priceCurrency: "BRL" },
-          { "@type": "Offer", name: "Studio", price: "59.90", priceCurrency: "BRL" },
+          { "@type": "Offer", name: locale === "en" ? "Free" : locale === "es" ? "Gratis" : "Grátis", price: "0.00", priceCurrency: currency },
+          { "@type": "Offer", name: locale === "en" ? "Essential" : locale === "es" ? "Esencial" : "Essencial", price: (prices.essencial / 100).toFixed(2), priceCurrency: currency },
+          { "@type": "Offer", name: locale === "en" ? "Professional" : locale === "es" ? "Profesional" : "Profissional", price: (prices.profissional / 100).toFixed(2), priceCurrency: currency },
+          { "@type": "Offer", name: "Studio", price: (prices.studio / 100).toFixed(2), priceCurrency: currency },
         ],
       },
     ],
@@ -122,7 +130,7 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
       />
-      <HomeClient />
+      <HomeClient initialCurrency={currency} />
     </>
   );
 }
