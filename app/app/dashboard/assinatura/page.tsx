@@ -6,7 +6,7 @@ import MenuFotografo from "../../MenuFotografo";
 import { PLANOS_FOTURA, type PlanoCodigo } from "../../../lib/billing-plans";
 import { createClient } from "../../../lib/supabase-client";
 import { registrarEventoProduto } from "../../../lib/product-analytics";
-import { approvedMonthlyPrice, formatPricingAmount, normalizePricingCurrency, type PricingCurrency } from "../../../lib/pricing-markets";
+import { approvedMonthlyPrice, formatPricingAmount, normalizePricingCurrency, type PaidPlanCode, type PricingCurrency } from "../../../lib/pricing-markets";
 
 type StatusBilling = {
   plano: { codigo: PlanoCodigo; nome: string; descricao: string };
@@ -27,7 +27,7 @@ type UsageBilling = {
   };
 };
 
-const comerciais: PlanoCodigo[] = ["essencial", "profissional", "studio"];
+const comerciais: PaidPlanCode[] = ["essencial", "profissional", "studio"];
 
 function dinheiro(centavos: number | null, currency: PricingCurrency) {
   if (centavos === null) return "—";
