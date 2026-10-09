@@ -7,29 +7,30 @@ import "./landing-editorial.css";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import { useI18n } from "./components/I18nProvider";
 import { withLocalePath } from "../lib/i18n";
+import { approvedMonthlyPrice, formatPricingAmount, type PricingCurrency } from "../lib/pricing-markets";
 
 const planos = [
   {
+    codigo: "gratis" as const,
     nome: "Grátis",
-    preco: "0",
     destaque: false,
     itens: ["1 GB de armazenamento", "Galerias, clientes e fotos ilimitados", "Seleção, comentários, senha e entrega", "Identidade básica do estúdio"],
   },
   {
+    codigo: "essencial" as const,
     nome: "Essencial",
-    preco: "14,90",
     destaque: false,
     itens: ["10 GB de armazenamento", "Galerias, clientes e fotos ilimitados", "Hero Minimal com logo, nome e cor", "Prova, comentários, senha e entrega"],
   },
   {
+    codigo: "profissional" as const,
     nome: "Profissional",
-    preco: "29,90",
     destaque: true,
     itens: ["50 GB de armazenamento", "Tudo do Essencial", "Heroes Minimal, Premium e Tech", "Foto da galeria no fundo do hero"],
   },
   {
+    codigo: "studio" as const,
     nome: "Studio",
-    preco: "59,90",
     destaque: false,
     itens: ["100 GB de armazenamento", "Tudo do Profissional", "Mesmos recursos visuais do Profissional", "Para operações com alto volume"],
   },
@@ -265,7 +266,7 @@ function DemoScreen({ etapa }: { etapa: number }) {
   );
 }
 
-export default function Home() {
+export default function Home({ initialCurrency }: { initialCurrency: PricingCurrency }) {
   const { locale, t } = useI18n();
   const supabase = useMemo(() => createClient(), []);
   const [logado, setLogado] = useState(false);
@@ -525,7 +526,13 @@ export default function Home() {
                     <h3>{t(plano.nome)}</h3>
                     {plano.destaque && <span className="lp2-popular">{t("Mais indicado")}</span>}
                   </div>
-                  <div className="lp2-price"><small>R$ </small>{plano.preco}</div>
+                  <div className="lp2-price">
+                    {formatPricingAmount(
+                      plano.codigo === "gratis" ? 0 : approvedMonthlyPrice(plano.codigo, initialCurrency) ?? 0,
+                      initialCurrency,
+                      locale,
+                    )}
+                  </div>
                   <div className="lp2-per">{t("por mês")}</div>
                   <ul>{plano.itens.map((item) => <li key={item}>{t(item)}</li>)}</ul>
                   <a
