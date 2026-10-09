@@ -8,27 +8,39 @@ export const BASE_PRICING_CURRENCY: PricingCurrency = "BRL";
 
 export const PRICING_CURRENCY_STATUS: Record<PricingCurrency, "active" | "pending_approval"> = {
   BRL: "active",
-  USD: "pending_approval",
-  EUR: "pending_approval",
+  USD: "active",
+  EUR: "active",
 };
 
-export const APPROVED_MONTHLY_PRICES: Record<"BRL", Record<PaidPlanCode, number>> = {
+export const APPROVED_MONTHLY_PRICES: Record<PricingCurrency, Record<PaidPlanCode, number>> = {
   BRL: {
     essencial: 1490,
     profissional: 2990,
     studio: 5990,
   },
+  USD: {
+    essencial: 299,
+    profissional: 599,
+    studio: 1199,
+  },
+  EUR: {
+    essencial: 299,
+    profissional: 599,
+    studio: 1199,
+  },
 };
 
-const EURO_COUNTRIES = new Set([
-  "AT", "BE", "HR", "CY", "EE", "FI", "FR", "DE", "GR", "IE",
-  "IT", "LV", "LT", "LU", "MT", "NL", "PT", "SK", "SI", "ES",
+const EUROPE_COUNTRIES = new Set([
+  "AL", "AD", "AT", "BY", "BE", "BA", "BG", "HR", "CY", "CZ", "DK", "EE",
+  "FI", "FR", "DE", "GR", "HU", "IS", "IE", "IT", "XK", "LV", "LI", "LT",
+  "LU", "MT", "MD", "MC", "ME", "NL", "MK", "NO", "PL", "PT", "RO", "SM",
+  "RS", "SK", "SI", "ES", "SE", "CH", "UA", "GB", "VA",
 ]);
 
 export function defaultPricingCurrencyForCountry(countryCode: string | null | undefined): PricingCurrency {
   const country = countryCode?.trim().toUpperCase();
   if (country === "BR") return "BRL";
-  if (country && EURO_COUNTRIES.has(country)) return "EUR";
+  if (country && EUROPE_COUNTRIES.has(country)) return "EUR";
   return "USD";
 }
 
@@ -48,8 +60,7 @@ export function approvedMonthlyPrice(
   plan: PaidPlanCode,
   currency: PricingCurrency,
 ): number | null {
-  if (currency !== "BRL") return null;
-  return APPROVED_MONTHLY_PRICES.BRL[plan];
+  return APPROVED_MONTHLY_PRICES[currency][plan];
 }
 
 export function formatPricingAmount(
