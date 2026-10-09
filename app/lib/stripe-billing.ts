@@ -11,6 +11,16 @@ const STRIPE_PRICE_LIVE_POR_MOEDA: Partial<Record<PricingCurrency, Partial<Recor
     profissional: "price_1UBZoePNUFf8TwH8Y0V7IrQ6",
     studio: "price_1UBZorPNUFf8TwH83lW4zxAr",
   },
+  USD: {
+    essencial: "price_1UOb0UPNUFf8TwH8uM9cHstr",
+    profissional: "price_1UOb0fPNUFf8TwH8ugYyTAVX",
+    studio: "price_1UOb0jPNUFf8TwH8o3r1BYOi",
+  },
+  EUR: {
+    essencial: "price_1UOb0dPNUFf8TwH8KesVyTdS",
+    profissional: "price_1UOb0hPNUFf8TwH8VSvLnWjq",
+    studio: "price_1UOb0kPNUFf8TwH86za76Etv",
+  },
 };
 
 const STRIPE_PRICE_LEGACY_POR_PLANO: Partial<Record<PlanoCodigo, string[]>> = {
