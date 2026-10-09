@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { planoFotura, type PlanoCodigo } from "../../../../lib/billing-plans";
-import { BASE_PRICING_CURRENCY, normalizePricingCurrency } from "../../../../lib/pricing-markets";
+import { BASE_PRICING_CURRENCY, normalizePricingCurrency, pricingCurrencyIsActive } from "../../../../lib/pricing-markets";
 import { registrarErro } from "../../../../lib/observability";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { createServiceClient } from "../../../../lib/supabase-server";
@@ -32,6 +32,9 @@ export async function POST(req: NextRequest) {
   }
   const currency = body.currency === undefined ? BASE_PRICING_CURRENCY : normalizePricingCurrency(body.currency);
   if (!currency) return NextResponse.json({ error: "Moeda inválida." }, { status: 400 });
+  if (!pricingCurrencyIsActive(currency)) {
+    return NextResponse.json({ error: "Esta moeda ainda não está disponível para contratação." }, { status: 409 });
+  }
 
   let priceId: string | null;
   try { priceId = stripePricePorPlano(planoCodigo, currency); }
