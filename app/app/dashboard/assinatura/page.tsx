@@ -6,6 +6,7 @@ import MenuFotografo from "../../MenuFotografo";
 import { PLANOS_FOTURA, type PlanoCodigo } from "../../../lib/billing-plans";
 import { createClient } from "../../../lib/supabase-client";
 import { registrarEventoProduto } from "../../../lib/product-analytics";
+import { approvedMonthlyPrice, formatPricingAmount, normalizePricingCurrency, type PaidPlanCode, type PricingCurrency } from "../../../lib/pricing-markets";
 
 type StatusBilling = {
   plano: { codigo: PlanoCodigo; nome: string; descricao: string };
@@ -26,11 +27,11 @@ type UsageBilling = {
   };
 };
 
-const comerciais: PlanoCodigo[] = ["essencial", "profissional", "studio"];
+const comerciais: PaidPlanCode[] = ["essencial", "profissional", "studio"];
 
-function dinheiro(centavos: number | null) {
+function dinheiro(centavos: number | null, currency: PricingCurrency) {
   if (centavos === null) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(centavos / 100);
+  return formatPricingAmount(centavos, currency, "pt");
 }
 
 function limite(valor: number | null, sufixo = "") {
@@ -70,6 +71,7 @@ export default function AssinaturaPage() {
   const [erro, setErro] = useState("");
   const [aviso, setAviso] = useState("");
   const [processando, setProcessando] = useState<PlanoCodigo | "portal" | null>(null);
+  const [currency, setCurrency] = useState<PricingCurrency>("BRL");
 
   useEffect(() => {
     const retorno = new URLSearchParams(window.location.search).get("checkout");
@@ -85,12 +87,18 @@ export default function AssinaturaPage() {
       if (!session) { router.replace("/login"); return; }
       try {
         const headers = { Authorization: `Bearer ${session.access_token}` };
-        const [rStatus, rUsage] = await Promise.all([
+        const [rStatus, rUsage, rMarket] = await Promise.all([
           fetch("/api/billing/status", { headers, cache: "no-store" }),
           fetch("/api/billing/usage", { headers, cache: "no-store" }),
+          fetch("/api/pricing/market", { cache: "no-store" }),
         ]);
         if (!rStatus.ok || !rUsage.ok) throw new Error("billing_load_failed");
         const [s, u] = await Promise.all([rStatus.json(), rUsage.json()]);
+        if (rMarket.ok) {
+          const market = await rMarket.json().catch(() => null) as { currency?: string } | null;
+          const marketCurrency = normalizePricingCurrency(market?.currency);
+          if (marketCurrency) setCurrency(marketCurrency);
+        }
         if (!ativo) return;
         const statusCarregado = s as StatusBilling;
         const usageCarregado = u as UsageBilling;
@@ -129,7 +137,7 @@ export default function AssinaturaPage() {
       const resposta = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ plano }),
+        body: JSON.stringify({ plano, currency }),
       });
       const dados = await resposta.json().catch(() => ({})) as { url?: string; error?: string };
       if (!resposta.ok || !dados.url) throw new Error(dados.error || "Não foi possível iniciar o checkout.");
@@ -140,6 +148,7 @@ export default function AssinaturaPage() {
           plano,
           plano_atual: status?.plano.codigo ?? "sem_plano",
           origem: "pagina_plano",
+          currency,
         },
       });
       window.location.assign(dados.url);
@@ -219,7 +228,7 @@ export default function AssinaturaPage() {
           {comerciais.map((codigo) => { const p=PLANOS_FOTURA[codigo]; const ehAtual=atual===codigo && !statusRestrito; const ocupado=Boolean(processando); return <article key={codigo} className={`plan${codigo==="profissional"?" featured":""}${ehAtual?" current-plan":""}`}>
             {ehAtual ? <span className="current-plan-tag">SEU PLANO</span> : codigo==="profissional" ? <span className="recommended">MAIS ESCOLHIDO</span> : null}
             <div className="plan-name">{p.nome}</div><div className="plan-desc">{p.descricao}</div>
-            <div className="price-row"><span className="price">{dinheiro(p.precoMensalCentavos)}</span><span className="month">/mês</span></div>
+            <div className="price-row"><span className="price">{dinheiro(approvedMonthlyPrice(codigo, currency), currency)}</span><span className="month">/mês</span></div>
             <div className="storage-size"><strong>{limite(p.limites.armazenamentoGb," GB")}</strong><span>de armazenamento</span></div>
             <ul className="features">
               <li>Galerias ativas ilimitadas</li>

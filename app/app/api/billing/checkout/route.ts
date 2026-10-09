@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { planoFotura, type PlanoCodigo } from "../../../../lib/billing-plans";
-import { BASE_PRICING_CURRENCY, normalizePricingCurrency, pricingCurrencyIsActive } from "../../../../lib/pricing-markets";
+import { BASE_PRICING_CURRENCY, defaultPricingCurrencyForCountry, normalizePricingCurrency, pricingCurrencyIsActive } from "../../../../lib/pricing-markets";
 import { registrarErro } from "../../../../lib/observability";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { createServiceClient } from "../../../../lib/supabase-server";
@@ -30,8 +30,13 @@ export async function POST(req: NextRequest) {
   if (!planoCodigo || !PLANOS_COMERCIAIS.has(planoCodigo)) {
     return NextResponse.json({ error: "Plano inválido." }, { status: 400 });
   }
-  const currency = body.currency === undefined ? BASE_PRICING_CURRENCY : normalizePricingCurrency(body.currency);
-  if (!currency) return NextResponse.json({ error: "Moeda inválida." }, { status: 400 });
+  const requestedCurrency = body.currency === undefined ? null : normalizePricingCurrency(body.currency);
+  if (body.currency !== undefined && !requestedCurrency) {
+    return NextResponse.json({ error: "Moeda inválida." }, { status: 400 });
+  }
+  const countryCode = req.headers.get("x-vercel-ip-country");
+  const detectedCurrency = defaultPricingCurrencyForCountry(countryCode);
+  const currency = countryCode ? detectedCurrency : requestedCurrency ?? BASE_PRICING_CURRENCY;
   if (!pricingCurrencyIsActive(currency)) {
     return NextResponse.json({ error: "Esta moeda ainda não está disponível para contratação." }, { status: 409 });
   }
@@ -95,9 +100,11 @@ export async function POST(req: NextRequest) {
       "metadata[fotura_user_id]": auth.user.id,
       "metadata[plan_code]": planoCodigo,
       "metadata[billing_currency]": currency,
+      "metadata[billing_country]": countryCode?.trim().toUpperCase() ?? "",
       "subscription_data[metadata][fotura_user_id]": auth.user.id,
       "subscription_data[metadata][plan_code]": planoCodigo,
       "subscription_data[metadata][billing_currency]": currency,
+      "subscription_data[metadata][billing_country]": countryCode?.trim().toUpperCase() ?? "",
     });
 
     if (!session.url) throw new Error("Checkout Session sem URL");
