@@ -1,8 +1,7 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { PlanoCodigo } from "./billing-plans";
-import { MOEDA_COBRANCA_PADRAO, MOEDAS_COBRANCA, type MoedaCobranca } from "./billing-currency";
-import { BASE_PRICING_CURRENCY, type PricingCurrency } from "./pricing-markets";
+import { BASE_PRICING_CURRENCY, PRICING_CURRENCIES, type PricingCurrency } from "./pricing-markets";
 
 const STRIPE_API = "https://api.stripe.com/v1";
 
@@ -30,30 +29,32 @@ function stripeTestMode() {
   return stripeSecret().startsWith("sk_test_");
 }
 
-function priceEnv(plano: PlanoCodigo) {
-  const nome = plano === "essencial"
+function priceEnv(plano: PlanoCodigo, currency: PricingCurrency) {
+  const base = plano === "essencial"
     ? "STRIPE_PRICE_ESSENCIAL"
     : plano === "profissional"
       ? "STRIPE_PRICE_PROFISSIONAL"
       : plano === "studio"
         ? "STRIPE_PRICE_STUDIO"
         : null;
-  return nome ? process.env[nome]?.trim() || null : null;
+  if (!base) return null;
+  const nome = currency === "BRL" ? base : `${base}_${currency}`;
+  return process.env[nome]?.trim() || null;
 }
 
 export function stripePricePorPlano(
   plano: PlanoCodigo,
   currency: PricingCurrency = BASE_PRICING_CURRENCY,
 ): string | null {
-  if (stripeTestMode()) return currency === "BRL" ? priceEnv(plano) : null;
-  return STRIPE_PRICE_LIVE_POR_MOEDA[currency]?.[plano] ?? null;
+  if (stripeTestMode()) return priceEnv(plano, currency);
+  return STRIPE_PRICE_LIVE_POR_MOEDA[currency]?.[plano] ?? priceEnv(plano, currency);
 }
 
 export function planoPorStripePrice(priceId: string | null | undefined): PlanoCodigo | null {
   if (!priceId) return null;
   const planos: PlanoCodigo[] = ["essencial", "profissional", "studio"];
   for (const plano of planos) {
-    for (const currency of ["BRL", "USD", "EUR"] as const) {
+    for (const currency of PRICING_CURRENCIES) {
       if (stripePricePorPlano(plano, currency) === priceId) return plano;
     }
     if (STRIPE_PRICE_LEGACY_POR_PLANO[plano]?.includes(priceId)) return plano;

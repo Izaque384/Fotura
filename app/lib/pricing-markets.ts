@@ -1,6 +1,7 @@
 import type { PlanoCodigo } from "./billing-plans";
 
-export type PricingCurrency = "BRL" | "USD" | "EUR";
+export const PRICING_CURRENCIES = ["BRL", "USD", "EUR"] as const;
+export type PricingCurrency = (typeof PRICING_CURRENCIES)[number];
 export type PaidPlanCode = Extract<PlanoCodigo, "essencial" | "profissional" | "studio">;
 
 export const BASE_PRICING_CURRENCY: PricingCurrency = "BRL";
@@ -29,6 +30,14 @@ export function defaultPricingCurrencyForCountry(countryCode: string | null | un
   if (country === "BR") return "BRL";
   if (country && EURO_COUNTRIES.has(country)) return "EUR";
   return "USD";
+}
+
+export function normalizePricingCurrency(value: unknown): PricingCurrency | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toUpperCase();
+  return (PRICING_CURRENCIES as readonly string[]).includes(normalized)
+    ? normalized as PricingCurrency
+    : null;
 }
 
 export function pricingCurrencyIsActive(currency: PricingCurrency): boolean {

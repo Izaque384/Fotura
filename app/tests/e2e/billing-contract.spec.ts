@@ -39,35 +39,6 @@ test.describe("contrato de planos e armazenamento", () => {
   });
 
 
-  test("checkout suporta matriz de moedas sem alterar a cobrança BRL atual", () => {
-    const stripe = fs.readFileSync(
-      path.join(process.cwd(), "lib", "stripe-billing.ts"),
-      "utf8",
-    );
-    const checkout = fs.readFileSync(
-      path.join(process.cwd(), "app", "api", "billing", "checkout", "route.ts"),
-      "utf8",
-    );
-    const currency = fs.readFileSync(
-      path.join(process.cwd(), "lib", "billing-currency.ts"),
-      "utf8",
-    );
-
-    expect(currency).toContain('["brl", "usd", "eur"]');
-    expect(currency).toContain('MOEDA_COBRANCA_PADRAO: MoedaCobranca = "brl"');
-
-    expect(stripe).toContain('essencial: { brl: "price_1UBZoTPNUFf8TwH8X6fqs6Dn" }');
-    expect(stripe).toContain('profissional: { brl: "price_1UBZoePNUFf8TwH8Y0V7IrQ6" }');
-    expect(stripe).toContain('studio: { brl: "price_1UBZorPNUFf8TwH83lW4zxAr" }');
-    expect(stripe).toContain('STRIPE_PRICE_ESSENCIAL');
-    expect(stripe).toContain('moeda.toUpperCase()');
-
-    expect(checkout).toContain('body.moeda === undefined ? MOEDA_COBRANCA_PADRAO : moedaCobranca(body.moeda)');
-    expect(checkout).toContain('stripePricePorPlano(planoCodigo, moeda)');
-    expect(checkout).toContain('"metadata[billing_currency]": moeda');
-    expect(checkout).toContain('"subscription_data[metadata][billing_currency]": moeda');
-  });
-
   test("capa da galeria é a única fonte da foto de fundo do hero", () => {
     const signed = fs.readFileSync(
       path.join(process.cwd(), "app", "api", "fotos", "signed", "route.ts"),

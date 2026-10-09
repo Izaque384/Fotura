@@ -5,6 +5,7 @@ import {
   PRICING_CURRENCY_STATUS,
   approvedMonthlyPrice,
   defaultPricingCurrencyForCountry,
+  normalizePricingCurrency,
   pricingCurrencyIsActive,
 } from "../../lib/pricing-markets";
 
@@ -22,6 +23,9 @@ test.describe("international pricing architecture", () => {
     expect(pricingCurrencyIsActive("USD")).toBe(false);
     expect(pricingCurrencyIsActive("EUR")).toBe(false);
     expect(PRICING_CURRENCY_STATUS.USD).toBe("pending_approval");
+    expect(normalizePricingCurrency("usd")).toBe("USD");
+    expect(normalizePricingCurrency(" eur ")).toBe("EUR");
+    expect(normalizePricingCurrency("gbp")).toBeNull();
   });
 
   test("separates country from interface language when choosing the default currency", () => {
@@ -33,4 +37,17 @@ test.describe("international pricing architecture", () => {
     expect(defaultPricingCurrencyForCountry("DE")).toBe("EUR");
     expect(defaultPricingCurrencyForCountry(undefined)).toBe("USD");
   });
+});
+
+test("checkout keeps BRL as default and never silently falls back across currencies", async () => {
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+  const checkout = fs.readFileSync(path.join(process.cwd(), "app", "api", "billing", "checkout", "route.ts"), "utf8");
+  const stripe = fs.readFileSync(path.join(process.cwd(), "lib", "stripe-billing.ts"), "utf8");
+
+  expect(checkout).toContain("body.currency === undefined ? BASE_PRICING_CURRENCY : normalizePricingCurrency(body.currency)");
+  expect(checkout).toContain("stripePricePorPlano(planoCodigo, currency)");
+  expect(checkout).toContain('"metadata[billing_currency]": currency');
+  expect(stripe).toContain('const nome = currency === "BRL" ? base : `${base}_${currency}`');
+  expect(stripe).toContain("STRIPE_PRICE_LIVE_POR_MOEDA[currency]?.[plano] ?? priceEnv(plano, currency)");
 });

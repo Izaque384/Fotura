@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { planoFotura, type PlanoCodigo } from "../../../../lib/billing-plans";
-import { moedaCobranca, MOEDA_COBRANCA_PADRAO } from "../../../../lib/billing-currency";
+import { BASE_PRICING_CURRENCY, normalizePricingCurrency } from "../../../../lib/pricing-markets";
 import { registrarErro } from "../../../../lib/observability";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { createServiceClient } from "../../../../lib/supabase-server";
@@ -24,23 +24,23 @@ export async function POST(req: NextRequest) {
   const { data: auth, error: authError } = await supabase.auth.getUser(token);
   if (authError || !auth.user) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
 
-  let body: { plano?: string; moeda?: string };
+  let body: { plano?: string; currency?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Payload inválido." }, { status: 400 }); }
   const planoCodigo = body.plano as PlanoCodigo | undefined;
   if (!planoCodigo || !PLANOS_COMERCIAIS.has(planoCodigo)) {
     return NextResponse.json({ error: "Plano inválido." }, { status: 400 });
   }
-  const moeda = body.moeda === undefined ? MOEDA_COBRANCA_PADRAO : moedaCobranca(body.moeda);
-  if (!moeda) return NextResponse.json({ error: "Moeda inválida." }, { status: 400 });
+  const currency = body.currency === undefined ? BASE_PRICING_CURRENCY : normalizePricingCurrency(body.currency);
+  if (!currency) return NextResponse.json({ error: "Moeda inválida." }, { status: 400 });
 
   let priceId: string | null;
-  try { priceId = stripePricePorPlano(planoCodigo, moeda); }
+  try { priceId = stripePricePorPlano(planoCodigo, currency); }
   catch (error) {
-    registrarErro("billing.checkout.price_config", req, error, { userId: auth.user.id, plano: planoCodigo, moeda });
+    registrarErro("billing.checkout.price_config", req, error, { userId: auth.user.id, plano: planoCodigo, currency });
     return NextResponse.json({ error: "Checkout ainda não configurado no ambiente." }, { status: 503 });
   }
   if (!priceId) {
-    return NextResponse.json({ error: "Preço Stripe deste plano e moeda não está configurado para este ambiente." }, { status: 503 });
+    return NextResponse.json({ error: "Preço Stripe deste plano e currency não está configurado para este ambiente." }, { status: 503 });
   }
 
   const { data: assinatura, error: assinaturaError } = await supabase
@@ -91,16 +91,16 @@ export async function POST(req: NextRequest) {
       cancel_url: `${origem}/dashboard/assinatura?checkout=cancel`,
       "metadata[fotura_user_id]": auth.user.id,
       "metadata[plan_code]": planoCodigo,
-      "metadata[billing_currency]": moeda,
+      "metadata[billing_currency]": currency,
       "subscription_data[metadata][fotura_user_id]": auth.user.id,
       "subscription_data[metadata][plan_code]": planoCodigo,
-      "subscription_data[metadata][billing_currency]": moeda,
+      "subscription_data[metadata][billing_currency]": currency,
     });
 
     if (!session.url) throw new Error("Checkout Session sem URL");
     return NextResponse.json({ url: session.url }, { headers: { "Cache-Control": "no-store, private" } });
   } catch (error) {
-    registrarErro("billing.checkout.create", req, error, { userId: auth.user.id, plano: planoCodigo, moeda });
+    registrarErro("billing.checkout.create", req, error, { userId: auth.user.id, plano: planoCodigo, currency });
     const naoConfigurado = error instanceof Error && error.message.includes("STRIPE_SECRET_KEY");
     return NextResponse.json({ error: naoConfigurado ? "Checkout ainda não configurado no ambiente." : "Não foi possível iniciar o checkout." }, { status: naoConfigurado ? 503 : 502 });
   }
