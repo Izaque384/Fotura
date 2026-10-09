@@ -47,6 +47,7 @@ test("checkout keeps BRL as default and never silently falls back across currenc
 
   expect(checkout).toContain("body.currency === undefined ? BASE_PRICING_CURRENCY : normalizePricingCurrency(body.currency)");
   expect(checkout).toContain("stripePricePorPlano(planoCodigo, currency)");
+  expect(checkout).toContain("pricingCurrencyIsActive(currency)");
   expect(checkout).toContain('"metadata[billing_currency]": currency');
   expect(stripe).toContain('const nome = currency === "BRL" ? base : `${base}_${currency}`');
   expect(stripe).toContain("STRIPE_PRICE_LIVE_POR_MOEDA[currency]?.[plano] ?? priceEnv(plano, currency)");
