@@ -199,8 +199,29 @@ export async function POST(req: NextRequest) {
     const { data: preset } = await supabase.from("galeria_presets").select("config").eq("id", body.presetId).eq("user_id", user.id).maybeSingle();
     if (!preset) return json({ error: "Preset não encontrado." }, 404);
     const c = (preset.config ?? {}) as Record<string, unknown>;
+    const provaPreset = Boolean(c.prova);
+    const mudandoModo = Boolean(g.prova) !== provaPreset;
+    let etapaPreset: string | null = null;
+    if (mudandoModo) {
+      const { data: selecaoExistente, error: selecaoError } = await supabase
+        .from("selecoes")
+        .select("galeria")
+        .eq("galeria", body.galeria)
+        .maybeSingle();
+      if (selecaoError) return json({ error: "Não foi possível verificar o fluxo atual da galeria." }, 500);
+      const etapaAtual = String(g.etapa || (g.prova ? "prova" : "entrega"));
+      const fluxoAvancado = Boolean(selecaoExistente)
+        || Boolean(g.entrega_publicada_em)
+        || etapaAtual === "selecao_finalizada"
+        || etapaAtual === "preparando_entrega";
+      if (fluxoAvancado) {
+        return json({ error: "O modo de prova não pode ser alterado por preset depois que o cliente iniciou o fluxo. As demais configurações podem ser ajustadas manualmente." }, 409);
+      }
+      etapaPreset = provaPreset ? "prova" : "entrega";
+    }
     const update = {
-      prova: Boolean(c.prova),
+      prova: provaPreset,
+      ...(etapaPreset ? { etapa: etapaPreset } : {}),
       limite: Math.max(0, Number(c.limite ?? 0) || 0),
       download_ativo: c.downloadAtivo !== false,
       download_individual: c.downloadIndividual !== false,
