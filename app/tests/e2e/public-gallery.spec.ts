@@ -349,3 +349,10 @@ test("download protegido pede PIN e retoma após validação", async ({ page }) 
   await page.getByRole("button", { name: "Liberar download" }).click();
   await expect(page.getByRole("heading", { name: "PIN para download" })).toHaveCount(0);
 });
+
+
+test("watermark endpoint rejeita token inválido sem tocar no Storage", async ({ request }) => {
+  const response = await request.get("/api/fotos/watermark?token=bad");
+  expect(response.status()).toBe(401);
+  await expect(response.json()).resolves.toMatchObject({ error: "Prévia inválida ou expirada." });
+});
