@@ -75,25 +75,16 @@ export async function GET(req: NextRequest) {
   );
 
   let selecao: { fotos: string[]; finalizada: boolean; comentarios: Record<string, string> } | null = null;
-  let listas: Array<{ id: string; nome: string; fotos: string[]; comentarios: Record<string, string>; finalizada: boolean }> = [];
   if (desbloqueada && !linkExpirado) {
-    const [{ data: s, error: selecaoError }, { data: extras, error: listasError }] = await Promise.all([
-      supabase
-        .from("selecoes")
-        .select("fotos,finalizada,comentarios")
-        .eq("galeria", galeria)
-        .maybeSingle(),
-      supabase
-        .from("selecao_listas")
-        .select("id,nome,fotos,comentarios,finalizada")
-        .eq("galeria", galeria)
-        .order("criado_em", { ascending: true }),
-    ]);
+    const { data: s, error: selecaoError } = await supabase
+      .from("selecoes")
+      .select("fotos,finalizada,comentarios")
+      .eq("galeria", galeria)
+      .maybeSingle();
 
-    if (selecaoError || listasError) {
-      console.error("[public-gallery] failed to load selections", {
-        selectionCode: selecaoError?.code,
-        listsCode: listasError?.code,
+    if (selecaoError) {
+      console.error("[public-gallery] failed to load selection", {
+        selectionCode: selecaoError.code,
         galeria,
       });
       return json({ error: "Não foi possível carregar a galeria." }, 500);
@@ -104,13 +95,6 @@ export async function GET(req: NextRequest) {
       finalizada: Boolean(s.finalizada),
       comentarios: (s.comentarios as Record<string, string>) ?? {},
     };
-    listas = (extras ?? []).map((item) => ({
-      id: String(item.id),
-      nome: String(item.nome || "Lista"),
-      fotos: (item.fotos as string[]) ?? [],
-      comentarios: (item.comentarios as Record<string, string>) ?? {},
-      finalizada: Boolean(item.finalizada),
-    }));
   }
 
   return json({
@@ -147,6 +131,5 @@ export async function GET(req: NextRequest) {
       heroEstilo: ((perfil.hero_galeria_estilo as string | null) ?? "premium") as "minimal" | "premium" | "tech",
     } : { nome: null, logo: null, cor: null, heroAtivo: false, heroEstilo: "premium" },
     selecao,
-    listas,
   });
 }
