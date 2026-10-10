@@ -59,12 +59,7 @@ export async function GET(req: NextRequest) {
       return json({ error: "Arquivo inválido." }, 400);
     }
     const caminho = protegerOriginais ? `${base}/thumbs/${arquivo}` : `${base}/${arquivo}`;
-    let { data, error } = await supabase.storage.from("fotos").createSignedUrl(caminho, EXPIRA_SEG);
-    if ((error || !data?.signedUrl) && protegerOriginais) {
-      const fallback = await supabase.storage.from("fotos").createSignedUrl(`${base}/${arquivo}`, EXPIRA_SEG);
-      data = fallback.data;
-      error = fallback.error;
-    }
+    const { data, error } = await supabase.storage.from("fotos").createSignedUrl(caminho, EXPIRA_SEG);
     if (error || !data?.signedUrl) {
       registrarErro("gallery.signed.single", req, error || new Error("signed url missing"), { galeria, arquivo });
       return json({ error: "Não foi possível assinar o arquivo." }, 404);
@@ -136,12 +131,14 @@ export async function GET(req: NextRequest) {
   };
 
   let caminhos: string[] = [];
-  if (modo === "grade") {
+  if (protegerOriginais) {
     caminhos = lista.map((f) => `${base}/thumbs/${f.name}`);
-    if (!protegerOriginais) caminhos.push(...lista.slice(0, ORIGINAIS_PREASSINADOS_GRADE).map((f) => `${base}/${f.name}`));
+  } else if (modo === "grade") {
+    caminhos = lista.map((f) => `${base}/thumbs/${f.name}`);
+    caminhos.push(...lista.slice(0, ORIGINAIS_PREASSINADOS_GRADE).map((f) => `${base}/${f.name}`));
     if (usarFotoHero && capaNome) caminhos.push(`${base}/${capaNome}`);
   } else if (modo === "originais") {
-    caminhos = lista.map((f) => protegerOriginais ? `${base}/thumbs/${f.name}` : `${base}/${f.name}`);
+    caminhos = lista.map((f) => `${base}/${f.name}`);
   } else {
     for (const f of lista) {
       caminhos.push(`${base}/${f.name}`);
@@ -184,7 +181,7 @@ export async function GET(req: NextRequest) {
     return { nome: f.name, url: protegerOriginais ? (thumbAssinada || original) : original, thumb: thumbAssinada || original };
   });
 
-  const fotoCapaUrl = usarFotoHero && capaNome ? (mapa[`${base}/${capaNome}`] ?? null) : null;
+  const fotoCapaUrl = usarFotoHero && capaNome ? (mapa[protegerOriginais ? `${base}/thumbs/${capaNome}` : `${base}/${capaNome}`] ?? null) : null;
   const marcadorPreset = usarHeroEstudio ? `#fotura-hero-${heroEstilo}` : "";
   const capaUrl = usarFotoHero && fotoCapaUrl
     ? `${fotoCapaUrl}${marcadorPreset}`
