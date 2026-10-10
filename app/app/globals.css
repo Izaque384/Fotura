@@ -76,6 +76,7 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
 :where(
   .dash .card,
   .dash .client-card,
+  .dash .project-card,
   .dash .sel-mini,
   .dash .sel-row,
   .sales-page .sales-card,
@@ -117,6 +118,7 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
   :where(
     .dash .card,
     .dash .client-card,
+  .dash .project-card,
     .dash .sel-mini,
     .dash .sel-row,
     .sales-page .sales-card,
@@ -168,6 +170,7 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
 :where(
   .dash .card,
   .dash .client-card,
+  .dash .project-card,
   .dash .sel-mini,
   .dash .sel-row,
   .sales-page .sales-card,
@@ -193,6 +196,7 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
 :where(
   .dash .card,
   .dash .client-card,
+  .dash .project-card,
   .dash .sel-mini,
   .dash .sel-row,
   .sales-page .sales-card,
@@ -237,6 +241,7 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
   :where(
     .dash .card,
     .dash .client-card,
+  .dash .project-card,
     .dash .sel-mini,
     .dash .sel-row,
     .sales-page .sales-card,
