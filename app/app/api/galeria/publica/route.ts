@@ -147,5 +147,6 @@ export async function GET(req: NextRequest) {
       heroEstilo: ((perfil.hero_galeria_estilo as string | null) ?? "premium") as "minimal" | "premium" | "tech",
     } : { nome: null, logo: null, cor: null, heroAtivo: false, heroEstilo: "premium" },
     selecao,
+    listas,
   });
 }

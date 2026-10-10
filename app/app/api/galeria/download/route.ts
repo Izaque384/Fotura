@@ -35,12 +35,10 @@ export async function GET(req: NextRequest) {
   const base = g.prova && etapa === "entrega" ? `${g.user_id}/${galeria}/entrega` : `${g.user_id}/${galeria}`;
   const tamanho = g.download_tamanho === "web" ? "web" : "original";
   const caminho = tamanho === "web" ? `${base}/thumbs/${arquivo}` : `${base}/${arquivo}`;
-  let { data, error } = await supabase.storage.from("fotos").createSignedUrl(caminho, 5 * 60, { download: arquivo });
-  if ((error || !data?.signedUrl) && tamanho === "web") {
-    const fallback = await supabase.storage.from("fotos").createSignedUrl(`${base}/${arquivo}`, 5 * 60, { download: arquivo });
-    data = fallback.data; error = fallback.error;
-  }
-  if (error || !data?.signedUrl) return NextResponse.json({ error: "Arquivo não disponível." }, { status: 404 });
+  const { data, error } = await supabase.storage.from("fotos").createSignedUrl(caminho, 5 * 60, { download: arquivo });
+  if (error || !data?.signedUrl) return NextResponse.json({
+    error: tamanho === "web" ? "A versão web deste arquivo não está disponível." : "Arquivo não disponível."
+  }, { status: 404 });
 
   if (tipo === "individual") {
     await supabase.from("produto_eventos").insert({
