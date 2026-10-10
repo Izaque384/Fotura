@@ -42,14 +42,16 @@ export async function GET(req: NextRequest) {
   }
   if (error || !data?.signedUrl) return NextResponse.json({ error: "Arquivo não disponível." }, { status: 404 });
 
-  await supabase.from("produto_eventos").insert({
-    user_id: g.user_id,
-    evento: tipo === "todos" ? "gallery_download_all" : "gallery_download_single",
-    rota: `/g/${galeria}`,
-    entidade: "galeria",
-    entidade_id: galeria,
-    detalhes: { arquivo, tamanho, origem: "cliente" },
-  });
+  if (tipo === "individual") {
+    await supabase.from("produto_eventos").insert({
+      user_id: g.user_id,
+      evento: "gallery_download_single",
+      rota: `/g/${galeria}`,
+      entidade: "galeria",
+      entidade_id: galeria,
+      detalhes: { arquivo, tamanho, origem: "cliente" },
+    });
+  }
 
   return NextResponse.json({ url: data.signedUrl, nome: arquivo, tamanho }, { headers: { "Cache-Control": "no-store, private" } });
 }
