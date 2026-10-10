@@ -20,9 +20,19 @@ test("cliente seleciona, comenta e finaliza uma prova", async ({ page }) => {
           temSenha: false,
           desbloqueada: true,
           linkExpirado: false,
+          downloadAtivo: true,
+          downloadIndividual: true,
+          downloadCompleto: true,
+          downloadTamanho: "original",
+          downloadPinNecessario: false,
+          watermarkAtivo: false,
+          watermarkTexto: null,
+          watermarkOpacidade: 22,
+          assistenteAtivo: false,
         },
         perfil: { nome: "Estúdio Teste", logo: null, cor: "#0b0b1a" },
         selecao: null,
+        listas: [],
       }),
     });
   });
@@ -92,9 +102,19 @@ test("lightbox de entrega carrega a foto original antes de exibir", async ({ pag
           temSenha: false,
           desbloqueada: true,
           linkExpirado: false,
+          downloadAtivo: true,
+          downloadIndividual: true,
+          downloadCompleto: true,
+          downloadTamanho: "original",
+          downloadPinNecessario: false,
+          watermarkAtivo: false,
+          watermarkTexto: null,
+          watermarkOpacidade: 22,
+          assistenteAtivo: false,
         },
         perfil: { nome: "Estúdio Teste", logo: null, cor: "#0b0b1a" },
         selecao: null,
+        listas: [],
       }),
     });
   });
@@ -144,9 +164,19 @@ test("senha incorreta não libera a galeria e senha correta libera", async ({ pa
           temSenha: true,
           desbloqueada,
           linkExpirado: false,
+          downloadAtivo: true,
+          downloadIndividual: true,
+          downloadCompleto: true,
+          downloadTamanho: "original",
+          downloadPinNecessario: false,
+          watermarkAtivo: false,
+          watermarkTexto: null,
+          watermarkOpacidade: 22,
+          assistenteAtivo: false,
         },
         perfil: { nome: "Estúdio Teste", logo: null, cor: "#0b0b1a" },
         selecao: null,
+        listas: [],
       }),
     });
   });
@@ -199,9 +229,19 @@ test("link expirado mostra estado bloqueado", async ({ page }) => {
           temSenha: false,
           desbloqueada: true,
           linkExpirado: true,
+          downloadAtivo: true,
+          downloadIndividual: true,
+          downloadCompleto: true,
+          downloadTamanho: "original",
+          downloadPinNecessario: false,
+          watermarkAtivo: false,
+          watermarkTexto: null,
+          watermarkOpacidade: 22,
+          assistenteAtivo: false,
         },
         perfil: { nome: "Estúdio Teste", logo: null, cor: "#0b0b1a" },
         selecao: null,
+        listas: [],
       }),
     });
   });
@@ -209,4 +249,103 @@ test("link expirado mostra estado bloqueado", async ({ page }) => {
   await page.goto("/g/00000000-0000-4000-8000-000000000004");
   await expect(page.getByRole("heading", { name: "Este link expirou" })).toBeVisible();
   await expect(page.getByText("O prazo de acesso a esta galeria terminou.")).toBeVisible();
+});
+
+
+test("cliente cria lista auxiliar sem alterar a seleção final", async ({ page }) => {
+  const lista = { id: "10000000-0000-4000-8000-000000000001", nome: "Álbum", fotos: [] as string[], comentarios: {}, finalizada: false };
+
+  await page.route("**/api/galeria/publica**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        galeria: {
+          titulo: "Listas E2E", capa: null, prova: true, limite: 5, prazo: null, linkAte: null,
+          temSenha: false, desbloqueada: true, linkExpirado: false, etapa: "prova",
+          downloadAtivo: true, downloadIndividual: true, downloadCompleto: true, downloadTamanho: "original",
+          downloadPinNecessario: false, watermarkAtivo: false, watermarkTexto: null, watermarkOpacidade: 22, assistenteAtivo: false,
+        },
+        perfil: { nome: "Estúdio Teste", logo: null, cor: "#0b0b1a" },
+        selecao: null,
+        listas: [],
+      }),
+    });
+  });
+  await page.route("**/api/fotos/signed**", async (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ fotos: [{ nome: "foto.jpg", url: foto("Foto"), thumb: foto("Foto") }], capaUrl: null }),
+  }));
+  await page.route("**/api/galeria/listas", async (route) => {
+    if (route.request().method() === "POST") {
+      await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ lista }) });
+      return;
+    }
+    if (route.request().method() === "PATCH") {
+      const body = route.request().postDataJSON() as { fotos: string[] };
+      lista.fotos = body.fotos;
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ lista }) });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ listas: [lista] }) });
+  });
+  let principalAlterada = false;
+  await page.route("**/api/galeria/selecao", async (route) => {
+    principalAlterada = true;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) });
+  });
+
+  await page.goto("/g/00000000-0000-4000-8000-000000000006");
+  await page.getByRole("button", { name: "+ Nova lista" }).click();
+  await page.getByPlaceholder("Ex: Álbum, Família, Redes sociais").fill("Álbum");
+  await page.getByRole("button", { name: "Criar", exact: true }).click();
+  await expect(page.locator(".gc-listbar select")).toHaveValue(lista.id);
+  await page.locator(".gc-card").getByRole("button", { name: "Selecionar" }).click();
+  await expect.poll(() => lista.fotos).toEqual(["foto.jpg"]);
+  expect(principalAlterada).toBe(false);
+});
+
+test("download protegido pede PIN e retoma após validação", async ({ page }) => {
+  await page.route("**/api/galeria/publica**", async (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      galeria: {
+        titulo: "Entrega com PIN", capa: null, prova: false, limite: 0, prazo: null, linkAte: null,
+        temSenha: false, desbloqueada: true, linkExpirado: false, etapa: "entrega",
+        downloadAtivo: true, downloadIndividual: true, downloadCompleto: true, downloadTamanho: "original",
+        downloadPinNecessario: true, watermarkAtivo: false, watermarkTexto: null, watermarkOpacidade: 22, assistenteAtivo: false,
+      },
+      perfil: { nome: "Estúdio Teste", logo: null, cor: "#0b0b1a" },
+      selecao: null, listas: [],
+    }),
+  }));
+  await page.route("**/api/fotos/signed**", async (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ fotos: [{ nome: "foto.jpg", url: foto("Foto"), thumb: foto("Foto") }], capaUrl: null }),
+  }));
+  let liberado = false;
+  await page.route("**/api/galeria/download?**", async (route) => {
+    if (!liberado) {
+      await route.fulfill({ status: 401, contentType: "application/json", body: JSON.stringify({ error: "PIN necessário.", pinNecessario: true }) });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ url: foto("Download"), nome: "foto.jpg" }) });
+  });
+  await page.route("**/api/galeria/download-pin", async (route) => {
+    const body = route.request().postDataJSON() as { pin: string };
+    if (body.pin !== "4827") {
+      await route.fulfill({ status: 401, contentType: "application/json", body: JSON.stringify({ error: "PIN incorreto." }) });
+      return;
+    }
+    liberado = true;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) });
+  });
+
+  await page.goto("/g/00000000-0000-4000-8000-000000000007");
+  await page.locator(".gc-card img").click();
+  await page.getByRole("button", { name: "Baixar foto original" }).click();
+  await expect(page.getByRole("heading", { name: "PIN para download" })).toBeVisible();
+  await page.getByPlaceholder("PIN").fill("4827");
+  await page.getByRole("button", { name: "Liberar download" }).click();
+  await expect(page.getByRole("heading", { name: "PIN para download" })).toHaveCount(0);
 });

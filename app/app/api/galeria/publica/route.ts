@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galeriaError } = await supabase
     .from("galerias")
-    .select("id,user_id,slug,titulo,capa,prova,limite,prazo,link_ate,tem_senha,etapa,entrega_publicada_em,venda_extras_ativa,preco_foto_extra_centavos")
+    .select("id,user_id,slug,titulo,capa,prova,limite,prazo,link_ate,tem_senha,etapa,entrega_publicada_em,venda_extras_ativa,preco_foto_extra_centavos,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade,assistente_ativo")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -75,16 +75,25 @@ export async function GET(req: NextRequest) {
   );
 
   let selecao: { fotos: string[]; finalizada: boolean; comentarios: Record<string, string> } | null = null;
+  let listas: Array<{ id: string; nome: string; fotos: string[]; comentarios: Record<string, string>; finalizada: boolean }> = [];
   if (desbloqueada && !linkExpirado) {
-    const { data: s, error: selecaoError } = await supabase
-      .from("selecoes")
-      .select("fotos,finalizada,comentarios")
-      .eq("galeria", galeria)
-      .maybeSingle();
+    const [{ data: s, error: selecaoError }, { data: extras, error: listasError }] = await Promise.all([
+      supabase
+        .from("selecoes")
+        .select("fotos,finalizada,comentarios")
+        .eq("galeria", galeria)
+        .maybeSingle(),
+      supabase
+        .from("selecao_listas")
+        .select("id,nome,fotos,comentarios,finalizada")
+        .eq("galeria", galeria)
+        .order("criado_em", { ascending: true }),
+    ]);
 
-    if (selecaoError) {
-      console.error("[public-gallery] failed to load selection", {
-        code: selecaoError.code,
+    if (selecaoError || listasError) {
+      console.error("[public-gallery] failed to load selections", {
+        selectionCode: selecaoError?.code,
+        listsCode: listasError?.code,
         galeria,
       });
       return json({ error: "Não foi possível carregar a galeria." }, 500);
@@ -95,6 +104,13 @@ export async function GET(req: NextRequest) {
       finalizada: Boolean(s.finalizada),
       comentarios: (s.comentarios as Record<string, string>) ?? {},
     };
+    listas = (extras ?? []).map((item) => ({
+      id: String(item.id),
+      nome: String(item.nome || "Lista"),
+      fotos: (item.fotos as string[]) ?? [],
+      comentarios: (item.comentarios as Record<string, string>) ?? {},
+      finalizada: Boolean(item.finalizada),
+    }));
   }
 
   return json({
@@ -112,6 +128,15 @@ export async function GET(req: NextRequest) {
       precoFotoExtraCentavos: vendaExtrasAtiva ? precoExtra : null,
       etapa: (g.etapa as string | null) ?? (g.prova ? "prova" : "entrega"),
       entregaPublicadaEm: (g.entrega_publicada_em as string | null) ?? null,
+      downloadAtivo: Boolean(g.download_ativo),
+      downloadIndividual: Boolean(g.download_individual),
+      downloadCompleto: Boolean(g.download_completo),
+      downloadTamanho: g.download_tamanho === "web" ? "web" : "original",
+      downloadPinNecessario: Boolean(g.download_pin_hash),
+      watermarkAtivo: Boolean(g.watermark_ativo),
+      watermarkTexto: (g.watermark_texto as string | null) ?? null,
+      watermarkOpacidade: Number(g.watermark_opacidade ?? 22),
+      assistenteAtivo: Boolean(g.assistente_ativo),
       publicRef: publicGalleryRef(String(g.slug || "galeria"), String(g.id)),
     },
     perfil: perfil ? {

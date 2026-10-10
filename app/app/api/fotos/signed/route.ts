@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galleryError } = await supabase
     .from("galerias")
-    .select("user_id,capa,link_ate,tem_senha,etapa,prova")
+    .select("user_id,capa,link_ate,tem_senha,etapa,prova,watermark_ativo")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -52,18 +52,24 @@ export async function GET(req: NextRequest) {
   const etapa = (g.etapa as string | null) || (g.prova ? "prova" : "entrega");
   const entregaFinalDeProva = etapa === "entrega" && Boolean(g.prova);
   const base = entregaFinalDeProva ? `${dono}/${galeria}/entrega` : `${dono}/${galeria}`;
+  const protegerOriginais = Boolean(g.watermark_ativo) && etapa !== "entrega";
 
   if (arquivo) {
     if (arquivo.includes("/") || arquivo.includes("\\") || arquivo === "." || arquivo === "..") {
       return json({ error: "Arquivo inválido." }, 400);
     }
-    const caminho = `${base}/${arquivo}`;
-    const { data, error } = await supabase.storage.from("fotos").createSignedUrl(caminho, EXPIRA_SEG);
+    const caminho = protegerOriginais ? `${base}/thumbs/${arquivo}` : `${base}/${arquivo}`;
+    let { data, error } = await supabase.storage.from("fotos").createSignedUrl(caminho, EXPIRA_SEG);
+    if ((error || !data?.signedUrl) && protegerOriginais) {
+      const fallback = await supabase.storage.from("fotos").createSignedUrl(`${base}/${arquivo}`, EXPIRA_SEG);
+      data = fallback.data;
+      error = fallback.error;
+    }
     if (error || !data?.signedUrl) {
       registrarErro("gallery.signed.single", req, error || new Error("signed url missing"), { galeria, arquivo });
       return json({ error: "Não foi possível assinar o arquivo." }, 404);
     }
-    return json({ nome: arquivo, url: data.signedUrl, etapa });
+    return json({ nome: arquivo, url: data.signedUrl, etapa, watermarkProtected: protegerOriginais });
   }
 
   const [{ data: perfil, error: profileError }, { data: assinatura, error: billingError }] = await Promise.all([
@@ -132,10 +138,10 @@ export async function GET(req: NextRequest) {
   let caminhos: string[] = [];
   if (modo === "grade") {
     caminhos = lista.map((f) => `${base}/thumbs/${f.name}`);
-    caminhos.push(...lista.slice(0, ORIGINAIS_PREASSINADOS_GRADE).map((f) => `${base}/${f.name}`));
+    if (!protegerOriginais) caminhos.push(...lista.slice(0, ORIGINAIS_PREASSINADOS_GRADE).map((f) => `${base}/${f.name}`));
     if (usarFotoHero && capaNome) caminhos.push(`${base}/${capaNome}`);
   } else if (modo === "originais") {
-    caminhos = lista.map((f) => `${base}/${f.name}`);
+    caminhos = lista.map((f) => protegerOriginais ? `${base}/thumbs/${f.name}` : `${base}/${f.name}`);
   } else {
     for (const f of lista) {
       caminhos.push(`${base}/${f.name}`);
@@ -169,10 +175,13 @@ export async function GET(req: NextRequest) {
     const thumbAssinada = mapa[`${base}/thumbs/${f.name}`] ?? "";
     if (modo === "grade") {
       const preview = thumbAssinada || original;
-      return { nome: f.name, url: original || preview, thumb: preview };
+      return { nome: f.name, url: protegerOriginais ? preview : (original || preview), thumb: preview };
     }
-    if (modo === "originais") return { nome: f.name, url: original, thumb: original };
-    return { nome: f.name, url: original, thumb: thumbAssinada || original };
+    if (modo === "originais") {
+      const protegida = protegerOriginais ? (thumbAssinada || original) : original;
+      return { nome: f.name, url: protegida, thumb: protegida };
+    }
+    return { nome: f.name, url: protegerOriginais ? (thumbAssinada || original) : original, thumb: thumbAssinada || original };
   });
 
   const fotoCapaUrl = usarFotoHero && capaNome ? (mapa[`${base}/${capaNome}`] ?? null) : null;
@@ -182,5 +191,5 @@ export async function GET(req: NextRequest) {
     : usarHeroEstudio
       ? heroPresetDataUrl(heroCor, heroEstilo)
       : null;
-  return json({ fotos, capaUrl, etapa, modo });
+  return json({ fotos, capaUrl, etapa, modo, watermarkProtected: protegerOriginais });
 }

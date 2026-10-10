@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { createServiceClient } from "../../../../lib/supabase-server";
+import { resolvePublicGalleryRef } from "../../../../lib/gallery-public-ref.server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -20,6 +21,12 @@ const EVENTOS = new Set([
   "gallery_share_opened",
   "gallery_shared",
   "public_gallery_view",
+  "selection_started",
+  "gallery_comment_added",
+  "gallery_download_single",
+  "gallery_download_all",
+  "gallery_assist_opened",
+  "gallery_favorite_list_created",
   "selection_finalized",
   "delivery_started",
   "delivery_published",
@@ -37,6 +44,11 @@ const CHAVES_DETALHES = new Set([
   "canal",
   "fotos",
   "modo",
+  "lista",
+  "comentarios",
+  "arquivo",
+  "tamanho",
+  "total",
   "utm_source",
   "utm_medium",
   "utm_campaign",
@@ -90,6 +102,16 @@ export async function POST(req: NextRequest) {
     userId = data.user.id;
   }
 
+  const entidade = texto(body.entidade, 40);
+  let entidadeId = texto(body.entidadeId, 160);
+  if (!bearer && entidade === "galeria" && entidadeId) {
+    const resolvida = await resolvePublicGalleryRef(entidadeId);
+    if (resolvida) {
+      userId = resolvida.userId;
+      entidadeId = resolvida.id;
+    }
+  }
+
   const chave = userId ?? `anon:${evento}`;
   const permitido = await consumirRateLimit(req, "product_event", chave, 60, 90);
   if (!permitido) return NextResponse.json({ error: "Muitas requisições." }, { status: 429 });
@@ -98,8 +120,8 @@ export async function POST(req: NextRequest) {
     user_id: userId,
     evento,
     rota: texto(body.rota, 180),
-    entidade: texto(body.entidade, 40),
-    entidade_id: texto(body.entidadeId, 160),
+    entidade,
+    entidade_id: entidadeId,
     sessao_id: sessaoId,
     detalhes: detalhesSeguros(body.detalhes),
   });

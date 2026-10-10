@@ -6,12 +6,13 @@ import { createClient } from "../lib/supabase-client";
 import { useI18n } from "./components/I18nProvider";
 import { stripLocalePrefix, withLocalePath } from "../lib/i18n";
 
-type T = "painel" | "galerias" | "selecoes" | "vendas" | "clientes" | "assinatura" | "ajuda" | "config" | "admin" | "sair" | "menu" | "fechar";
+type T = "painel" | "galerias" | "projetos" | "selecoes" | "vendas" | "clientes" | "assinatura" | "ajuda" | "config" | "admin" | "sair" | "menu" | "fechar";
 
 function Icone({ tipo }: { tipo: T }) {
   const common = { "aria-hidden": true as const };
   if (tipo === "painel") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/></svg>;
   if (tipo === "galerias") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 15 3-3 3 3 2-2 4 3"/></svg>;
+  if (tipo === "projetos") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 7.5h7l2 2h9v8.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M3 7.5V6a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v1.5"/></svg>;
   if (tipo === "selecoes") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 6h12M8 12h12M8 18h12M3 6l1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/></svg>;
   if (tipo === "vendas") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 7h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="M8 12h8M12 9v6"/></svg>;
   if (tipo === "clientes") return <svg {...common} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.5-3.5 2.3-5.3 5.5-5.3s5 1.8 5.5 5.3M16 8.5a2.5 2.5 0 1 1 0 5M17 14.5c2.2.4 3.3 1.8 3.5 4.5"/></svg>;
@@ -251,6 +252,7 @@ export default function MenuFotografo() {
   const itensPrincipais: { rota: string; label: string; tipo: T; exato?: boolean }[] = [
     { rota: "/dashboard", label: t("Painel"), tipo: "painel", exato: true },
     { rota: "/dashboard/galerias", label: t("Galerias"), tipo: "galerias" },
+    { rota: "/dashboard/projetos", label: t("Projetos"), tipo: "projetos" },
     { rota: "/dashboard/selecoes", label: t("Seleções"), tipo: "selecoes" },
     { rota: "/dashboard/clientes", label: t("Clientes"), tipo: "clientes" },
     { rota: "/dashboard/vendas", label: t("Vendas"), tipo: "vendas" },

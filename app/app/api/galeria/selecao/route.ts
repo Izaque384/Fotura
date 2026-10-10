@@ -147,6 +147,28 @@ export async function POST(req: NextRequest) {
   const { error } = await supabase.from("selecoes").upsert({ galeria, fotos, finalizada, comentarios, atualizado_em: new Date().toISOString() });
   if (error) return NextResponse.json({ error: "Não foi possível salvar a seleção." }, { status: 500 });
 
-  if (finalizada && !anterior?.finalizada) await notificar(supabase, g.user_id as string, (g.titulo as string) || "Galeria", fotos.length);
+  if (!anterior && fotos.length > 0) {
+    await supabase.from("produto_eventos").insert({
+      user_id: g.user_id,
+      evento: "selection_started",
+      rota: `/g/${galeria}`,
+      entidade: "galeria",
+      entidade_id: galeria,
+      detalhes: { fotos: fotos.length },
+    });
+  }
+  if (finalizada && !anterior?.finalizada) {
+    await Promise.all([
+      notificar(supabase, g.user_id as string, (g.titulo as string) || "Galeria", fotos.length),
+      supabase.from("produto_eventos").insert({
+        user_id: g.user_id,
+        evento: "selection_finalized",
+        rota: `/g/${galeria}`,
+        entidade: "galeria",
+        entidade_id: galeria,
+        detalhes: { fotos: fotos.length, comentarios: Object.keys(comentarios).length },
+      }),
+    ]);
+  }
   return NextResponse.json({ ok: true });
 }
