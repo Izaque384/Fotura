@@ -7,6 +7,7 @@ import { uuidValido } from "../../../../lib/validation";
 import { dataCalendarioExpirada } from "../../../../lib/date-only";
 import { planoFotura } from "../../../../lib/billing-plans";
 import { heroPresetDataUrl, estiloHeroEfetivo } from "../../../../lib/gallery-hero";
+import { createGalleryWatermarkUrl } from "../../../../lib/gallery-watermark-token";
 
 export const dynamic = "force-dynamic";
 const EXPIRA_SEG = 3600;
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galleryError } = await supabase
     .from("galerias")
-    .select("user_id,capa,link_ate,tem_senha,etapa,prova,watermark_ativo")
+    .select("user_id,capa,link_ate,tem_senha,etapa,prova,watermark_ativo,watermark_texto,watermark_opacidade")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -58,17 +59,39 @@ export async function GET(req: NextRequest) {
     if (arquivo.includes("/") || arquivo.includes("\\") || arquivo === "." || arquivo === "..") {
       return json({ error: "Arquivo inválido." }, 400);
     }
-    const caminho = protegerOriginais ? `${base}/thumbs/${arquivo}` : `${base}/${arquivo}`;
+    if (protegerOriginais) {
+      const { data: watermarkPerfil } = await supabase.from("perfis").select("nome_estudio").eq("id", dono).maybeSingle();
+      const watermarkTexto = ((g.watermark_texto as string | null) ?? (watermarkPerfil?.nome_estudio as string | null) ?? "FOTURA").trim() || "FOTURA";
+      try {
+        return json({
+          nome: arquivo,
+          url: createGalleryWatermarkUrl({
+            g: galeria,
+            u: dono,
+            f: arquivo,
+            t: watermarkTexto,
+            o: Number(g.watermark_opacidade ?? 22),
+          }),
+          etapa,
+          watermarkProtected: true,
+        });
+      } catch (error) {
+        registrarErro("gallery.signed.watermark_url", req, error, { galeria, arquivo });
+        return json({ error: "Não foi possível proteger a prévia." }, 503);
+      }
+    }
+
+    const caminho = `${base}/${arquivo}`;
     const { data, error } = await supabase.storage.from("fotos").createSignedUrl(caminho, EXPIRA_SEG);
     if (error || !data?.signedUrl) {
       registrarErro("gallery.signed.single", req, error || new Error("signed url missing"), { galeria, arquivo });
       return json({ error: "Não foi possível assinar o arquivo." }, 404);
     }
-    return json({ nome: arquivo, url: data.signedUrl, etapa, watermarkProtected: protegerOriginais });
+    return json({ nome: arquivo, url: data.signedUrl, etapa, watermarkProtected: false });
   }
 
   const [{ data: perfil, error: profileError }, { data: assinatura, error: billingError }] = await Promise.all([
-    supabase.from("perfis").select("hero_galeria_ativo,hero_galeria_estilo,hero_foto_capa_ativo,cor_hero").eq("id", dono).maybeSingle(),
+    supabase.from("perfis").select("hero_galeria_ativo,hero_galeria_estilo,hero_foto_capa_ativo,cor_hero,nome_estudio").eq("id", dono).maybeSingle(),
     supabase.from("assinaturas").select("plano_codigo,status").eq("user_id", dono).maybeSingle(),
   ]);
   if (profileError || billingError) {
@@ -109,6 +132,35 @@ export async function GET(req: NextRequest) {
 
   const capaFile = (g.capa as string | null) ?? null;
   const capaNome = capaFile && lista.some((f) => f.name === capaFile) ? capaFile : lista[0]?.name;
+
+  if (protegerOriginais) {
+    const watermarkTexto = ((g.watermark_texto as string | null) ?? (perfil?.nome_estudio as string | null) ?? "FOTURA").trim() || "FOTURA";
+    const watermarkOpacidade = Number(g.watermark_opacidade ?? 22);
+    try {
+      const urlProtegida = (nome: string) => createGalleryWatermarkUrl({
+        g: galeria,
+        u: dono,
+        f: nome,
+        t: watermarkTexto,
+        o: watermarkOpacidade,
+      });
+      const fotos = lista.map((f) => {
+        const url = urlProtegida(f.name);
+        return { nome: f.name, url, thumb: url };
+      });
+      const fotoCapaUrl = usarFotoHero && capaNome ? urlProtegida(capaNome) : null;
+      const marcadorPreset = usarHeroEstudio ? `#fotura-hero-${heroEstilo}` : "";
+      const capaUrl = usarFotoHero && fotoCapaUrl
+        ? `${fotoCapaUrl}${marcadorPreset}`
+        : usarHeroEstudio
+          ? heroPresetDataUrl(heroCor, heroEstilo)
+          : null;
+      return json({ fotos, capaUrl, etapa, modo, watermarkProtected: true });
+    } catch (error) {
+      registrarErro("gallery.signed.watermark_urls", req, error, { galeria, modo });
+      return json({ error: "Não foi possível proteger as prévias." }, 503);
+    }
+  }
 
   const assinar = async (entrada: string[]) => {
     const caminhos = [...new Set(entrada)];
