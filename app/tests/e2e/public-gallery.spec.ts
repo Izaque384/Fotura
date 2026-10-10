@@ -252,23 +252,21 @@ test("link expirado mostra estado bloqueado", async ({ page }) => {
 });
 
 
-test("cliente cria lista auxiliar sem alterar a seleção final", async ({ page }) => {
-  const lista = { id: "10000000-0000-4000-8000-000000000001", nome: "Álbum", fotos: [] as string[], comentarios: {}, finalizada: false };
-
+test("galeria pública não exibe listas auxiliares ao cliente", async ({ page }) => {
   await page.route("**/api/galeria/publica**", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
         galeria: {
-          titulo: "Listas E2E", capa: null, prova: true, limite: 5, prazo: null, linkAte: null,
+          titulo: "Seleção E2E", capa: null, prova: true, limite: 5, prazo: null, linkAte: null,
           temSenha: false, desbloqueada: true, linkExpirado: false, etapa: "prova",
           downloadAtivo: true, downloadIndividual: true, downloadCompleto: true, downloadTamanho: "original",
           downloadPinNecessario: false, watermarkAtivo: false, watermarkTexto: null, watermarkOpacidade: 22, assistenteAtivo: false,
         },
         perfil: { nome: "Estúdio Teste", logo: null, cor: "#0b0b1a" },
         selecao: null,
-        listas: [],
+        listas: [{ id: "10000000-0000-4000-8000-000000000001", nome: "Álbum", fotos: [], comentarios: {}, finalizada: false }],
       }),
     });
   });
@@ -276,33 +274,12 @@ test("cliente cria lista auxiliar sem alterar a seleção final", async ({ page 
     status: 200, contentType: "application/json",
     body: JSON.stringify({ fotos: [{ nome: "foto.jpg", url: foto("Foto"), thumb: foto("Foto") }], capaUrl: null }),
   }));
-  await page.route("**/api/galeria/listas", async (route) => {
-    if (route.request().method() === "POST") {
-      await route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ lista }) });
-      return;
-    }
-    if (route.request().method() === "PATCH") {
-      const body = route.request().postDataJSON() as { fotos: string[] };
-      lista.fotos = body.fotos;
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ lista }) });
-      return;
-    }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ listas: [lista] }) });
-  });
-  let principalAlterada = false;
-  await page.route("**/api/galeria/selecao", async (route) => {
-    principalAlterada = true;
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) });
-  });
 
   await page.goto("/g/00000000-0000-4000-8000-000000000006");
-  await page.getByRole("button", { name: "+ Nova lista" }).click();
-  await page.getByPlaceholder("Ex: Álbum, Família, Redes sociais").fill("Álbum");
-  await page.getByRole("button", { name: "Criar", exact: true }).click();
-  await expect(page.locator(".gc-listbar select")).toHaveValue(lista.id);
-  await page.locator(".gc-card").getByRole("button", { name: "Selecionar" }).click();
-  await expect.poll(() => lista.fotos).toEqual(["foto.jpg"]);
-  expect(principalAlterada).toBe(false);
+  await expect(page.getByText("Lista de favoritos")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "+ Nova lista" })).toHaveCount(0);
+  await expect(page.locator(".gc-listbar")).toHaveCount(0);
+  await expect(page.locator(".gc-card").getByRole("button", { name: "Selecionar" })).toBeVisible();
 });
 
 test("download protegido pede PIN e retoma após validação", async ({ page }) => {
