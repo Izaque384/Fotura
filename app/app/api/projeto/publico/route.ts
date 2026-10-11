@@ -77,12 +77,12 @@ export async function GET(req: NextRequest) {
       logo: (perfil.logo_url as string | null) ?? null,
       cor: (perfil.cor_hero as string | null) ?? null,
     } : { nome: null, logo: null, cor: null },
-    pastas: (pastas ?? []).map((g) => ({
+    pastas: desbloqueada && !linkExpirado ? (pastas ?? []).map((g) => ({
       id: String(g.id),
       titulo: String(g.titulo || "Pasta"),
       ordem: Number(g.ordem ?? 0),
       etapa: String(g.etapa || (g.prova ? "prova" : "entrega")),
-    })),
+    })) : [],
   });
 
   if (protegida && desbloqueada) {
