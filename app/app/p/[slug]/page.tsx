@@ -76,7 +76,7 @@ export default function ProjetoClientePage(){
       id:dados.projeto.id,
       nome:dados.projeto.nome,
       capaUrl:dados.projeto.capaUrl,
-      publicUrl:`${window.location.origin}/p/${dados.projeto.publicRef}`,
+      publicUrl:typeof window==="undefined"?"":`${window.location.origin}/p/${dados.projeto.publicRef}`,
       pastas:dados.pastas.map(p=>({id:p.id,titulo:p.titulo})),
       pastaAtivaId:pastaAtiva,
       onFolderChange:trocarPasta,
