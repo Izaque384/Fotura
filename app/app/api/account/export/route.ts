@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
       perfilRes,
       assinaturaRes,
       clientesRes,
+      projetosRes,
       galeriasRes,
       vendasRes,
       atividadeRes,
@@ -43,8 +44,11 @@ export async function GET(req: NextRequest) {
       supabase.from("clientes")
         .select("id,nome,email,telefone,criado_em")
         .eq("user_id", user.id).order("criado_em", { ascending: true }),
+      supabase.from("galeria_projetos")
+        .select("id,nome,descricao,slug,cliente_id,capa_galeria_id,capa_arquivo,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos,download_ativo,download_individual,download_completo,download_tamanho,watermark_ativo,watermark_texto,watermark_opacidade,assistente_ativo,criado_em,atualizado_em")
+        .eq("user_id", user.id).order("criado_em", { ascending: true }),
       supabase.from("galerias")
-        .select("id,slug,titulo,capa,prova,limite,prazo,link_ate,tem_senha,criado_em,cliente_id,etapa,venda_extras_ativa,preco_foto_extra_centavos,entrega_publicada_em")
+        .select("id,slug,titulo,projeto_id,ordem,visivel,prova,limite,prazo,link_ate,tem_senha,criado_em,cliente_id,etapa,venda_extras_ativa,preco_foto_extra_centavos,entrega_publicada_em")
         .eq("user_id", user.id).order("criado_em", { ascending: true }),
       supabase.from("vendas_fotos")
         .select("id,galeria,fotos,qtd_incluidas,qtd_extras,valor_unitario_centavos,valor_total_centavos,moeda,status,criado_em,pago_em,atualizado_em,metodo_pagamento")
@@ -61,7 +65,7 @@ export async function GET(req: NextRequest) {
     ]);
 
     const erros = [
-      perfilRes.error, assinaturaRes.error, clientesRes.error, galeriasRes.error,
+      perfilRes.error, assinaturaRes.error, clientesRes.error, projetosRes.error, galeriasRes.error,
       vendasRes.error, atividadeRes.error, eventosRes.error, googleRes.error,
     ].filter(Boolean);
     if (erros.length) throw erros[0];
@@ -78,7 +82,7 @@ export async function GET(req: NextRequest) {
     }
 
     const payload = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportadoEm: new Date().toISOString(),
       observacao: "Este arquivo contém dados da sua conta no Fotura. Arquivos binários de fotos não são duplicados neste JSON.",
       conta: {
@@ -94,6 +98,7 @@ export async function GET(req: NextRequest) {
         google: googleRes.data ?? null,
       },
       clientes: clientesRes.data ?? [],
+      projetos: projetosRes.data ?? [],
       galerias: galeriasRes.data ?? [],
       selecoes,
       vendas: vendasRes.data ?? [],
