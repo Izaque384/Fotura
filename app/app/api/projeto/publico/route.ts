@@ -5,6 +5,7 @@ import { temAcessoProjeto } from "../../../../lib/project-access";
 import { criarTokenGaleria, nomeCookieGaleria } from "../../../../lib/gallery-access";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { dataCalendarioExpirada } from "../../../../lib/date-only";
+import { planoFotura } from "../../../../lib/billing-plans";
 
 export const dynamic = "force-dynamic";
 
@@ -33,13 +34,20 @@ export async function GET(req: NextRequest) {
   const protegida = Boolean(p.tem_senha);
   const desbloqueada = !protegida || temAcessoProjeto(req, resolvido.id);
 
-  const [{ data: perfil }, { data: pastas }] = await Promise.all([
-    supabase.from("perfis").select("nome_estudio,logo_url,cor_hero,hero_galeria_ativo,hero_galeria_estilo,stripe_recebimentos_ativo").eq("id", p.user_id).maybeSingle(),
+  const [{ data: perfil }, { data: assinatura }, { data: pastas }] = await Promise.all([
+    supabase.from("perfis").select("nome_estudio,logo_url,cor_hero,hero_galeria_ativo,hero_galeria_estilo,hero_foto_capa_ativo,stripe_recebimentos_ativo").eq("id", p.user_id).maybeSingle(),
+    supabase.from("assinaturas").select("plano_codigo,status").eq("user_id", p.user_id).maybeSingle(),
     supabase.from("galerias").select("id,slug,titulo,ordem,visivel,etapa,prova").eq("projeto_id", resolvido.id).eq("visivel", true).order("ordem", { ascending: true }).order("criado_em", { ascending: true }),
   ]);
 
+  const statusAssinatura = String(assinatura?.status || "active");
+  const plano = ["active","trialing","past_due"].includes(statusAssinatura)
+    ? planoFotura((assinatura?.plano_codigo as string | null) ?? "sem_plano")
+    : planoFotura("sem_plano");
+  const usarFotoCapaPublica = Boolean(perfil?.hero_galeria_ativo) && Boolean(perfil?.hero_foto_capa_ativo) && plano.recursos.heroFotoGaleria;
+
   let capaUrl: string | null = null;
-  if (desbloqueada && !linkExpirado && p.capa_galeria_id && p.capa_arquivo) {
+  if (desbloqueada && !linkExpirado && usarFotoCapaPublica && p.capa_galeria_id && p.capa_arquivo) {
     const { data } = await supabase.storage.from("fotos").createSignedUrl(
       `${p.user_id}/${p.capa_galeria_id}/${p.capa_arquivo}`, 60 * 60
     );
