@@ -32,16 +32,21 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(migration).toContain("before insert or update of capa, projeto_id");
   });
 
-  test("projeto público oferece entrada por pastas e navegação compartilhada", () => {
+  test("projeto público oferece entrada por galerias e seletor integrado", () => {
     const projectPage = read("app/p/[slug]/page.tsx");
     const publicGallery = read("app/g/[slug]/page.tsx");
     const publicApi = read("app/api/projeto/publico/route.ts");
 
-    expect(projectPage).toContain("Escolha o que deseja ver");
+    expect(projectPage).toContain("Escolha uma galeria");
     expect(projectPage).toContain("<ProjetoHome");
-    expect(publicGallery).toContain("Visão geral");
-    expect(publicGallery).toContain("gc-folder-nav");
+    expect(publicGallery).toContain("Trocar galeria");
+    expect(publicGallery).toContain("gc-gallery-switch");
+    expect(publicGallery).not.toContain("gc-folder-nav");
+    expect(publicGallery).toContain('{perfil.nome||"Fotógrafo"}');
+    expect(publicGallery).toContain("{projectContext?.nome||meta.titulo}");
     expect(publicApi).toContain('eq("projeto_id", resolvido.id)');
+    expect(publicApi).toContain("heroPresetDataUrl");
+    expect(publicApi).toContain("estiloHeroEfetivo");
     expect(publicApi).toContain("capa_galeria_id");
     expect(publicApi).toContain("capa_arquivo");
   });
