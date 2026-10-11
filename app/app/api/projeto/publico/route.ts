@@ -6,6 +6,7 @@ import { criarTokenGaleria, nomeCookieGaleria } from "../../../../lib/gallery-ac
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { dataCalendarioExpirada } from "../../../../lib/date-only";
 import { planoFotura } from "../../../../lib/billing-plans";
+import { estiloHeroEfetivo, heroPresetDataUrl } from "../../../../lib/gallery-hero";
 
 export const dynamic = "force-dynamic";
 
@@ -44,14 +45,21 @@ export async function GET(req: NextRequest) {
   const plano = ["active","trialing","past_due"].includes(statusAssinatura)
     ? planoFotura((assinatura?.plano_codigo as string | null) ?? "sem_plano")
     : planoFotura("sem_plano");
-  const usarFotoCapaPublica = Boolean(perfil?.hero_galeria_ativo) && Boolean(perfil?.hero_foto_capa_ativo) && plano.recursos.heroFotoGaleria;
+  const heroCor = (perfil?.cor_hero as string | null) ?? "#F0EDF7";
+  const usarHeroEstudio = Boolean(perfil?.hero_galeria_ativo) && plano.recursos.heroEstudio;
+  const heroEstilo = estiloHeroEfetivo((perfil?.hero_galeria_estilo as string | null) ?? "minimal", plano.recursos.heroPremiumTech);
+  const usarFotoCapaPublica = usarHeroEstudio && Boolean(perfil?.hero_foto_capa_ativo) && plano.recursos.heroFotoGaleria;
 
   let capaUrl: string | null = null;
-  if (desbloqueada && !linkExpirado && usarFotoCapaPublica && p.capa_galeria_id && p.capa_arquivo) {
-    const { data } = await supabase.storage.from("fotos").createSignedUrl(
-      `${p.user_id}/${p.capa_galeria_id}/${p.capa_arquivo}`, 60 * 60
-    );
-    capaUrl = data?.signedUrl ?? null;
+  if (desbloqueada && !linkExpirado) {
+    if (usarFotoCapaPublica && p.capa_galeria_id && p.capa_arquivo) {
+      const { data } = await supabase.storage.from("fotos").createSignedUrl(
+        `${p.user_id}/${p.capa_galeria_id}/${p.capa_arquivo}`, 60 * 60
+      );
+      capaUrl = data?.signedUrl ?? null;
+    } else if (usarHeroEstudio) {
+      capaUrl = heroPresetDataUrl(heroCor, heroEstilo);
+    }
   }
 
   const response = baseJson({
