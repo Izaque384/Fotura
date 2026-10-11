@@ -366,12 +366,9 @@ begin
 end $$;
 
 -- Para projetos previamente agrupados, escolhe uma única capa compartilhada.
-update public.galeria_projetos p
-set
-  capa_galeria_id = escolha.galeria_id,
-  capa_arquivo = escolha.arquivo
-from lateral (
-  select
+with escolhas as (
+  select distinct on (g.projeto_id)
+    g.projeto_id,
     g.id as galeria_id,
     coalesce(
       nullif(g.capa,''),
@@ -387,12 +384,17 @@ from lateral (
       )
     ) as arquivo
   from public.galerias g
-  where g.projeto_id = p.id
-  order by (g.capa is not null) desc, g.ordem asc, g.criado_em asc
-  limit 1
-) escolha
-where p.capa_arquivo is null
-  and escolha.arquivo is not null;
+  where g.projeto_id is not null
+  order by g.projeto_id, (g.capa is not null) desc, g.ordem asc, g.criado_em asc
+)
+update public.galeria_projetos p
+set
+  capa_galeria_id = escolhas.galeria_id,
+  capa_arquivo = escolhas.arquivo
+from escolhas
+where p.id = escolhas.projeto_id
+  and p.capa_arquivo is null
+  and escolhas.arquivo is not null;
 
 -- Nenhuma pasta mantém capa própria na nova arquitetura.
 update public.galerias
