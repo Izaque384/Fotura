@@ -39,13 +39,17 @@ test.describe("contrato de planos e armazenamento", () => {
   });
 
 
-  test("capa da galeria é a única fonte da foto de fundo do hero", () => {
+  test("capa compartilhada do projeto respeita o entitlement do hero", () => {
     const signed = fs.readFileSync(
       path.join(process.cwd(), "app", "api", "fotos", "signed", "route.ts"),
       "utf8",
     );
-    const galerias = fs.readFileSync(
-      path.join(process.cwd(), "app", "dashboard", "galerias", "page.tsx"),
+    const projetoPublico = fs.readFileSync(
+      path.join(process.cwd(), "app", "api", "projeto", "publico", "route.ts"),
+      "utf8",
+    );
+    const workspace = fs.readFileSync(
+      path.join(process.cwd(), "app", "dashboard", "projetos", "[id]", "page.tsx"),
       "utf8",
     );
     const perfil = fs.readFileSync(
@@ -55,10 +59,11 @@ test.describe("contrato de planos e armazenamento", () => {
 
     expect(signed).toContain("hero_foto_capa_ativo");
     expect(signed).toContain("plano.recursos.heroFotoGaleria");
-    expect(signed).not.toContain("Boolean(g.hero_fundo_foto)");
-
-    expect(galerias).toContain("Define a imagem de identificação da galeria");
-    expect(galerias).toContain("Profissional ou Studio");
+    expect(projetoPublico).toContain("hero_foto_capa_ativo");
+    expect(projetoPublico).toContain("plano.recursos.heroFotoGaleria");
+    expect(projetoPublico).toContain("capa_galeria_id");
+    expect(projetoPublico).toContain("capa_arquivo");
+    expect(workspace).toContain("A capa é única e aparece em todas as pastas. Pastas não possuem capa individual.");
     expect(perfil).toContain("Usar a capa da galeria como fundo do hero");
     expect(perfil).not.toContain('router.push("/dashboard/heros")');
   });
