@@ -1,7 +1,7 @@
 "use client";
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import MenuFotografo from "../../MenuFotografo";
 import ConfirmDialog from "../../components/ConfirmDialog";
 import { createClient } from "../../../lib/supabase-client";
@@ -16,7 +16,7 @@ function FolderIcon(){return <svg viewBox="0 0 24 24" aria-hidden="true"><path d
 function dataCurta(v:string){const d=new Date(v);return Number.isNaN(d.getTime())?"—":new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"short",year:"numeric"}).format(d)}
 
 export default function ProjetosPage(){
- const router=useRouter(),searchParams=useSearchParams(),supabase=useMemo(()=>createClient(),[]);
+ const router=useRouter(),supabase=useMemo(()=>createClient(),[]);
  const[uid,setUid]=useState(""),[projetos,setProjetos]=useState<Projeto[]>([]),[pastas,setPastas]=useState<Pasta[]>([]),[clientes,setClientes]=useState<Cliente[]>([]),[carregando,setCarregando]=useState(true);
  const[busca,setBusca]=useState(""),[filtro,setFiltro]=useState<Filtro>("todos"),[filtroAberto,setFiltroAberto]=useState(false),[projetoAberto,setProjetoAberto]=useState<string|null>(null);
  const[aviso,setAviso]=useState(""),[avisoErro,setAvisoErro]=useState(false),[modalAberto,setModalAberto]=useState(false),[nome,setNome]=useState(""),[descricao,setDescricao]=useState(""),[clienteId,setClienteId]=useState(""),[criando,setCriando]=useState(false);
@@ -24,7 +24,7 @@ export default function ProjetosPage(){
 
  useEffect(()=>{const fora=(e:PointerEvent)=>{const a=e.target;if(!(a instanceof Element)||!a.closest(".filter-wrap"))setFiltroAberto(false)};const tecla=(e:KeyboardEvent)=>{if(e.key==="Escape")setFiltroAberto(false)};document.addEventListener("pointerdown",fora);window.addEventListener("keydown",tecla);return()=>{document.removeEventListener("pointerdown",fora);window.removeEventListener("keydown",tecla)}},[]);
  useEffect(()=>{if(!modalAberto)return;const old=document.body.style.overflow;document.body.style.overflow="hidden";const tecla=(e:KeyboardEvent)=>{if(e.key==="Escape"&&!criando)setModalAberto(false)};window.addEventListener("keydown",tecla);return()=>{window.removeEventListener("keydown",tecla);document.body.style.overflow=old}},[modalAberto,criando]);
- useEffect(()=>{if(searchParams.get("novo")==="1")setModalAberto(true)},[searchParams]);
+ useEffect(()=>{if(new URLSearchParams(window.location.search).get("novo")==="1")setModalAberto(true)},[]);
 
  async function token(){const{data}=await supabase.auth.getSession();return data.session?.access_token||""}
  async function carregar(){
@@ -46,7 +46,7 @@ export default function ProjetosPage(){
  useEffect(()=>{void carregar()},[]);
 
  function abrirModal(){setNome("");setDescricao("");setClienteId("");setAviso("");setAvisoErro(false);setModalAberto(true)}
- function fecharModal(){if(criando)return;setModalAberto(false);setNome("");setDescricao("");setClienteId("");if(searchParams.get("novo")==="1")window.history.replaceState(window.history.state,"","/dashboard/projetos")}
+ function fecharModal(){if(criando)return;setModalAberto(false);setNome("");setDescricao("");setClienteId("");if(new URLSearchParams(window.location.search).get("novo")==="1")window.history.replaceState(window.history.state,"","/dashboard/projetos")}
  async function criar(e:FormEvent){
   e.preventDefault();if(!nome.trim()||criando)return;setCriando(true);setAviso("");setAvisoErro(false);
   try{const access=await token();if(!access)throw new Error("Sua sessão expirou.");const r=await fetch("/api/projeto/workspace",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${access}`},body:JSON.stringify({acao:"criar_projeto",nome:nome.trim(),descricao:descricao.trim()||null,clienteId:clienteId||null})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Não foi possível criar o projeto.");fecharModal();router.push(`/dashboard/projetos/${d.projeto.id}`)}catch(e){setAvisoErro(true);setAviso(e instanceof Error?e.message:"Não foi possível criar o projeto.")}finally{setCriando(false)}
