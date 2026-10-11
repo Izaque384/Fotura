@@ -5,6 +5,7 @@ import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
 import { normalizeLocale, translate, withLocalePath } from "../../../../lib/i18n";
+import { publicProjectRef } from "../../../../lib/project-links";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest) {
 
   const { data: g, error: galleryError } = await auth.supabase
     .from("galerias")
-    .select("id,titulo,etapa,prova,cliente_id,link_ate,entrega_publicada_em,entrega_notificada_em")
+    .select("id,titulo,etapa,prova,cliente_id,link_ate,entrega_publicada_em,entrega_notificada_em,projeto_id")
     .eq("id", galeria)
     .eq("user_id", auth.user.id)
     .maybeSingle();
@@ -68,6 +69,8 @@ export async function GET(req: NextRequest) {
     registrarErro("gallery.delivery.selection", req, selectionError, { galeria });
     return NextResponse.json({ error: "Não foi possível carregar a seleção da galeria." }, { status: 500 });
   }
+
+  const { data: projeto } = g.projeto_id ? await auth.supabase.from("galeria_projetos").select("id,nome,slug").eq("id", g.projeto_id).eq("user_id", auth.user.id).maybeSingle() : { data: null };
 
   let finais: string[] = [];
   try { finais = await listarFinais(auth.supabase, auth.user.id, galeria); }
@@ -92,6 +95,7 @@ export async function GET(req: NextRequest) {
       finalizada: Boolean(selecao?.finalizada),
     },
     finais,
+    projeto: projeto ? { id: String(projeto.id), nome: String(projeto.nome || "Projeto"), publicRef: publicProjectRef(String(projeto.slug || "projeto"), String(projeto.id)) } : null,
   }, { headers: { "Cache-Control": "no-store, private" } });
 }
 
@@ -124,7 +128,7 @@ export async function POST(req: NextRequest) {
 
   const { data: g, error: galleryError } = await auth.supabase
     .from("galerias")
-    .select("id,titulo,etapa,prova,cliente_id,entrega_publicada_em,entrega_notificada_em")
+    .select("id,titulo,etapa,prova,cliente_id,entrega_publicada_em,entrega_notificada_em,projeto_id")
     .eq("id", galeria)
     .eq("user_id", auth.user.id)
     .maybeSingle();
@@ -219,9 +223,11 @@ export async function POST(req: NextRequest) {
           : {};
         const locale = normalizeLocale(configs.idioma ?? auth.user.user_metadata?.language ?? req.headers.get("x-fotura-locale"));
         const origin = (process.env.NEXT_PUBLIC_SITE_URL || "https://foturax.com.br").replace(/\/$/, "");
-        const link = origin + withLocalePath("/g/" + galeria, locale);
+        const { data: projeto } = g.projeto_id ? await auth.supabase.from("galeria_projetos").select("id,nome,slug").eq("id", g.projeto_id).eq("user_id", auth.user.id).maybeSingle() : { data: null };
+        const refProjeto = projeto ? publicProjectRef(String(projeto.slug || "projeto"), String(projeto.id)) : null;
+        const link = origin + withLocalePath(refProjeto ? "/p/" + refProjeto + "?pasta=" + galeria : "/g/" + galeria, locale);
         const estudio = String(perfil?.nome_estudio || "Fotura").replace(/[&<>'"]/g, "");
-        const titulo = String(g.titulo || (locale === "en" ? "Your gallery" : locale === "es" ? "Tu galería" : "Sua galeria")).replace(/[&<>'"]/g, "");
+        const titulo = String(projeto?.nome || g.titulo || (locale === "en" ? "Your project" : locale === "es" ? "Tu proyecto" : "Seu projeto")).replace(/[&<>'"]/g, "");
         const nome = String(cliente?.nome || (locale === "en" ? "client" : locale === "es" ? "cliente" : "cliente")).replace(/[&<>'"]/g, "");
         const greeting = locale === "en" ? "Hello" : locale === "es" ? "Hola" : "Olá";
         const description = locale === "en"

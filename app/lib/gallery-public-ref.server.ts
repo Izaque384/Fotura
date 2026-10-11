@@ -12,6 +12,7 @@ export type PublicGalleryResolved = {
   etapa: string;
   temSenha: boolean;
   publicRef: string;
+  projectId: string | null;
 };
 
 export async function resolvePublicGalleryRef(ref: string): Promise<PublicGalleryResolved | null> {
@@ -22,7 +23,7 @@ export async function resolvePublicGalleryRef(ref: string): Promise<PublicGaller
   if (isGalleryUuid(valor)) {
     const { data } = await supabase
       .from("galerias")
-      .select("id,slug,titulo,user_id,capa,prova,etapa,tem_senha")
+      .select("id,slug,titulo,user_id,capa,prova,etapa,tem_senha,projeto_id")
       .eq("id", valor)
       .maybeSingle();
     if (!data) return null;
@@ -36,6 +37,7 @@ export async function resolvePublicGalleryRef(ref: string): Promise<PublicGaller
       etapa: String(data.etapa || (data.prova ? "prova" : "entrega")),
       temSenha: Boolean(data.tem_senha),
       publicRef: publicGalleryRef(String(data.slug || "galeria"), String(data.id)),
+      projectId: (data.projeto_id as string | null) ?? null,
     };
   }
 
@@ -44,7 +46,7 @@ export async function resolvePublicGalleryRef(ref: string): Promise<PublicGaller
   const prefixo = match?.[2]?.toLowerCase() ?? null;
   const { data } = await supabase
     .from("galerias")
-    .select("id,slug,titulo,user_id,capa,prova,etapa,tem_senha")
+    .select("id,slug,titulo,user_id,capa,prova,etapa,tem_senha,projeto_id")
     .eq("slug", slug)
     .limit(100);
 
@@ -64,5 +66,6 @@ export async function resolvePublicGalleryRef(ref: string): Promise<PublicGaller
     etapa: String(encontrado.etapa || (encontrado.prova ? "prova" : "entrega")),
     temSenha: Boolean(encontrado.tem_senha),
     publicRef: publicGalleryRef(String(encontrado.slug || "galeria"), String(encontrado.id)),
+    projectId: (encontrado.projeto_id as string | null) ?? null,
   };
 }

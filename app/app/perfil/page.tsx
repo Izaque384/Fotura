@@ -146,7 +146,7 @@ export default function PerfilPage() {
       previewEstiloBloqueado
         ? "Perfil salvo. O estilo em prévia não foi aplicado; Premium e Tech ficam disponíveis no Profissional e Studio."
         : ativoEfetivo
-          ? "Perfil salvo. O Hero do estúdio está ativo nas galerias."
+          ? "Perfil salvo. O Hero do estúdio está ativo nos projetos."
           : "Perfil do estúdio salvo com sucesso."
     );
   }
@@ -180,7 +180,7 @@ export default function PerfilPage() {
       <header className="profile-head">
         <div className="ey">PERFIL DO ESTÚDIO</div>
         <h1 className="h1">Sua marca no Fotura</h1>
-        <p className="sub">Defina como seu estúdio aparece nas galerias entregues aos clientes.</p>
+        <p className="sub">Defina como seu estúdio aparece nos projetos entregues aos clientes.</p>
       </header>
 
       <div className="layout">
@@ -210,7 +210,7 @@ export default function PerfilPage() {
             <span className="field-label">Cor preferencial do hero</span>
             <div className="color-block">
               <input className="color" type="color" value={corHero} onChange={e=>setCorHero(e.target.value)}/>
-              <div><div className="hex">{corHero}</div><div className="hint">Usada como base quando o hero não utiliza uma foto da galeria.</div></div>
+              <div><div className="hex">{corHero}</div><div className="hint">Usada como base quando o hero não utiliza a capa do projeto.</div></div>
             </div>
           </label>
 
@@ -218,7 +218,7 @@ export default function PerfilPage() {
 
           <div className="hero-section">
             <div className="hero-header">
-              <div><div className="hero-title">Hero do estúdio</div><div className="hero-copy">Controle a composição da logo e dos textos nas galerias.</div></div>
+              <div><div className="hero-title">Hero do estúdio</div><div className="hero-copy">Controle a composição da logo e dos textos nos projetos.</div></div>
               <label className="switch">
                 <input type="checkbox" checked={heroAtivo} disabled={!podeHeroEstudio} onChange={e=>setHeroAtivo(e.target.checked)}/>
                 <span className="switch-track"/>
@@ -234,8 +234,8 @@ export default function PerfilPage() {
             <div className="plan-note">Plano atual: {planoNome}. {podePremiumTech?"Premium e Tech estão liberados no seu plano.":podeHeroEstudio?"Premium e Tech podem ser pré-visualizados; para aplicar, use Profissional ou Studio.":"O Hero personalizado começa no Essencial."}</div>
 
             <div className="photo-feature">
-              <div><strong>Usar a capa da galeria como fundo do hero</strong><p>{podeFotoHero?"Quando ativado, cada galeria usa a capa definida em Gerenciar galeria → Alterar capa como fundo do hero.":"Disponível nos planos Profissional e Studio. A capa continua sendo escolhida em Gerenciar galeria → Alterar capa."}</p></div>
-              <label className="switch" aria-label="Usar a capa da galeria como fundo do hero">
+              <div><strong>Usar a capa do projeto como fundo do hero</strong><p>{podeFotoHero?"Quando ativado, cada projeto usa sua capa compartilhada como fundo do hero em todas as pastas.":"Disponível nos planos Profissional e Studio. A capa é escolhida dentro do Workspace do Projeto."}</p></div>
+              <label className="switch" aria-label="Usar a capa do projeto como fundo do hero">
                 <input type="checkbox" checked={podeFotoHero&&heroFotoCapaAtivo} disabled={!podeFotoHero||!podeHeroEstudio} onChange={e=>setHeroFotoCapaAtivo(e.target.checked)}/>
                 <span className="switch-track"/>
               </label>
@@ -248,7 +248,7 @@ export default function PerfilPage() {
 
         <aside className="panel preview-panel">
           <div className="panel-head">
-            <div><h2 className="panel-title">Prévia do hero</h2><p className="panel-desc">A mesma composição usada na abertura das galerias.</p></div>
+            <div><h2 className="panel-title">Prévia do hero</h2><p className="panel-desc">A mesma composição usada na abertura dos projetos.</p></div>
           </div>
 
           <div className="sample">
@@ -260,15 +260,15 @@ export default function PerfilPage() {
                     {logoUrl?<img src={logoUrl} alt={nomeEstudio||"Fotura"}/>:<span style={{color:"#fff"}}>{nomeEstudio||"Fotura"}</span>}
                   </div>
                   <div className="gc-info">
-                    <div style={{color:"#fff",opacity:.72}}>{nomeEstudio||"GALERIA"}</div>
-                    <h1 style={{color:"#fff"}}>Nome da galeria</h1>
+                    <div style={{color:"#fff",opacity:.72}}>{nomeEstudio||"PROJETO"}</div>
+                    <h1 style={{color:"#fff"}}>Nome do projeto</h1>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="preview-note">{podeFotoHero&&heroFotoCapaAtivo?"Nas galerias, a mesma composição será aplicada sobre a capa escolhida em “Alterar capa”.":"A prévia usa o mesmo fundo, posicionamento, tipografia e composição do estilo selecionado na galeria pública."}</div>
+          <div className="preview-note">{podeFotoHero&&heroFotoCapaAtivo?"Nos projetos, a mesma composição será aplicada sobre a capa compartilhada definida no Workspace.":"A prévia usa o mesmo fundo, posicionamento, tipografia e composição do estilo selecionado no projeto público."}</div>
         </aside>
       </div>
     </div>
