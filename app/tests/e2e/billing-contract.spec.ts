@@ -64,7 +64,7 @@ test.describe("contrato de planos e armazenamento", () => {
     expect(projetoPublico).toContain("capa_galeria_id");
     expect(projetoPublico).toContain("capa_arquivo");
     expect(workspace).toContain("A capa é única e aparece em todas as pastas. Pastas não possuem capa individual.");
-    expect(perfil).toContain("Usar a capa da galeria como fundo do hero");
+    expect(perfil).toContain("Usar a capa do projeto como fundo do hero");
     expect(perfil).not.toContain('router.push("/dashboard/heros")');
   });
 
