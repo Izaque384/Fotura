@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import MenuFotografo from "../../MenuFotografo";
 import ConfirmDialog from "../../components/ConfirmDialog";
