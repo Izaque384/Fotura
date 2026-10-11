@@ -50,10 +50,14 @@ export default function DashboardActionCenter() {
 
       const userId = session.user.id;
       try {
-        const [{ data: galerias }, { data: vendas }, { data: perfil }, usageRes] = await Promise.all([
+        const [{ data: galerias }, { data: projetos }, { data: vendas }, { data: perfil }, usageRes] = await Promise.all([
           supabase
             .from("galerias")
             .select("id,titulo,etapa,link_ate")
+            .eq("user_id", userId),
+          supabase
+            .from("galeria_projetos")
+            .select("id")
             .eq("user_id", userId),
           supabase
             .from("vendas_fotos")
@@ -107,19 +111,19 @@ export default function DashboardActionCenter() {
           proximas.push({
             id: "configurar-identidade",
             titulo: "Configure a identidade do seu estúdio",
-            descricao: "Defina nome, logo, cor e hero antes de compartilhar sua primeira galeria.",
+            descricao: "Defina nome, logo, cor e hero antes de compartilhar seu primeiro projeto.",
             botao: "Configurar perfil",
             rota: "/perfil",
             tom: "purple",
           });
         }
-        if (lista.length === 0) {
+        if ((projetos?.length ?? 0) === 0) {
           proximas.push({
-            id: "primeira-galeria",
-            titulo: "Crie sua primeira galeria",
-            descricao: "Envie as fotos, vincule um cliente e prepare seu primeiro compartilhamento.",
-            botao: "Criar galeria",
-            rota: "/upload",
+            id: "primeiro-projeto",
+            titulo: "Crie seu primeiro projeto",
+            descricao: "Crie o trabalho, adicione suas pastas de fotos e compartilhe um único link com o cliente.",
+            botao: "Criar projeto",
+            rota: "/dashboard/projetos?novo=1",
             tom: "blue",
           });
         }
@@ -128,8 +132,8 @@ export default function DashboardActionCenter() {
             id: "selecoes-finalizadas",
             titulo: `Preparar ${finalizadas.length} entrega${finalizadas.length === 1 ? "" : "s"}`,
             descricao: `${finalizadas.length} seleção${finalizadas.length === 1 ? "" : "ões"} concluída${finalizadas.length === 1 ? "" : "s"} aguardando os arquivos finais.`,
-            botao: finalizadas.length === 1 ? "Preparar entrega" : "Ver seleções",
-            rota: "/dashboard/selecoes?filtro=finalizada",
+            botao: finalizadas.length === 1 ? "Abrir projetos" : "Ver projetos",
+            rota: "/dashboard/projetos",
             tom: "purple",
           });
         }
@@ -139,17 +143,17 @@ export default function DashboardActionCenter() {
             titulo: `Finalizar ${preparando.length} entrega${preparando.length === 1 ? "" : "s"} em preparação`,
             descricao: "A etapa final já foi iniciada, mas ainda falta publicar a entrega.",
             botao: "Continuar entrega",
-            rota: "/dashboard/selecoes?filtro=preparando_entrega",
+            rota: "/dashboard/projetos",
             tom: "blue",
           });
         }
         if (expirando.length) {
           proximas.push({
             id: "expirando",
-            titulo: `Revisar validade de ${expirando.length} galeria${expirando.length === 1 ? "" : "s"}`,
+            titulo: `Revisar validade de ${expirando.length} pasta${expirando.length === 1 ? "" : "s"}`,
             descricao: `${expirando.length} link${expirando.length === 1 ? "" : "s"} vence${expirando.length === 1 ? "" : "m"} em até 7 dias.`,
-            botao: "Revisar galerias",
-            rota: "/dashboard/galerias",
+            botao: "Revisar projetos",
+            rota: "/dashboard/projetos",
             tom: "amber",
           });
         }
@@ -243,7 +247,7 @@ export default function DashboardActionCenter() {
             {acoes.length === 0 ? (
               <div className="action-center-clear">
                 <strong>Nenhuma pendência importante agora.</strong>
-                <span>Suas galerias, seleções e vendas estão sem ações urgentes.</span>
+                <span>Seus projetos, seleções e vendas estão sem ações urgentes.</span>
               </div>
             ) : acoes.map((acao) => (
               <article className={`action-item ${acao.tom}`} key={acao.id}>
@@ -261,7 +265,7 @@ export default function DashboardActionCenter() {
               <div>
                 <span>PLANO GRÁTIS</span>
                 <strong>Seu armazenamento está em {storagePercent}%.</strong>
-                <p>O Essencial amplia de 1 GB para 10 GB sem limitar galerias, clientes ou fotos por galeria.</p>
+                <p>O Essencial amplia de 1 GB para 10 GB sem limitar projetos, clientes ou fotos por pasta.</p>
               </div>
               <button type="button" onClick={() => void upgrade()}>Ver planos</button>
             </div>
