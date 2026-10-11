@@ -191,7 +191,6 @@ export async function PATCH(req: NextRequest) {
     const nome = body.nome.trim().slice(0, 120);
     if (!nome) return json({ error: "Informe o nome do projeto." }, 400);
     update.nome = nome;
-    update.slug = slugify(nome);
   }
   if (body.descricao !== undefined) update.descricao = body.descricao?.trim().slice(0, 500) || null;
   if (body.clienteId !== undefined) {
