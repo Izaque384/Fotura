@@ -62,6 +62,34 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  const miniaturas = new Map<string, string | null>();
+  if (desbloqueada && !linkExpirado && (pastas?.length ?? 0) > 0) {
+    const resolvidas = await Promise.all((pastas ?? []).map(async (galeria) => {
+      const galeriaId = String(galeria.id);
+      const base = `${p.user_id}/${galeriaId}`;
+      const { data: arquivos } = await supabase.storage.from("fotos").list(base, {
+        limit: 40,
+        offset: 0,
+        sortBy: { column: "created_at", order: "asc" },
+      });
+      const arquivo = (arquivos ?? []).find((item) =>
+        item.id !== null && item.name !== "thumbs" && item.name !== "entrega"
+      );
+      if (!arquivo) return [galeriaId, null] as const;
+
+      const { data: thumbs } = await supabase.storage.from("fotos").list(`${base}/thumbs`, {
+        limit: 5,
+        offset: 0,
+        search: arquivo.name,
+      });
+      const temThumb = (thumbs ?? []).some((item) => item.id !== null && item.name === arquivo.name);
+      const caminho = temThumb ? `${base}/thumbs/${arquivo.name}` : `${base}/${arquivo.name}`;
+      const { data: signed } = await supabase.storage.from("fotos").createSignedUrl(caminho, 60 * 60);
+      return [galeriaId, signed?.signedUrl ?? null] as const;
+    }));
+    for (const [galeriaId, url] of resolvidas) miniaturas.set(galeriaId, url);
+  }
+
   const response = baseJson({
     projeto: {
       id: String(p.id),
@@ -95,9 +123,10 @@ export async function GET(req: NextRequest) {
     } : { nome: null, logo: null, cor: null },
     pastas: desbloqueada && !linkExpirado ? (pastas ?? []).map((g) => ({
       id: String(g.id),
-      titulo: String(g.titulo || "Pasta"),
+      titulo: String(g.titulo || "Galeria"),
       ordem: Number(g.ordem ?? 0),
       etapa: String(g.etapa || (g.prova ? "prova" : "entrega")),
+      thumbnailUrl: miniaturas.get(String(g.id)) ?? null,
     })) : [],
   });
 
