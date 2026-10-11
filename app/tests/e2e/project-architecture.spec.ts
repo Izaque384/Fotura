@@ -39,6 +39,9 @@ test.describe("arquitetura centrada em projetos", () => {
 
     expect(projectPage).toContain("Escolha uma galeria");
     expect(projectPage).toContain("<ProjetoHome");
+    expect(projectPage).toContain("thumbnailUrl");
+    expect(projectPage).toContain("pc-gallery-thumb");
+    expect(projectPage).toContain("GALERIAS DO PROJETO");
     expect(publicGallery).toContain("Trocar galeria");
     expect(publicGallery).toContain("gc-gallery-switch");
     expect(publicGallery).not.toContain("gc-folder-nav");
@@ -49,6 +52,8 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(publicApi).toContain("estiloHeroEfetivo");
     expect(publicApi).toContain("capa_galeria_id");
     expect(publicApi).toContain("capa_arquivo");
+    expect(publicApi).toContain("thumbnailUrl");
+    expect(publicApi).toContain('/thumbs');
   });
 
   test("rotas legadas internas convergem para projetos", () => {
