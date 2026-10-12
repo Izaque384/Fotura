@@ -4,6 +4,7 @@ import { publicGalleryRef } from "../../../../lib/gallery-links";
 import { publicProjectRef } from "../../../../lib/project-links";
 import { hashDownloadPin } from "../../../../lib/gallery-download-access";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
+import { registrarErro } from "../../../../lib/observability";
 import { uuidValido } from "../../../../lib/validation";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,51 @@ async function usuario(req: NextRequest) {
 function slugify(valor: string) {
   return valor.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "") || "pasta";
+}
+
+const STORAGE_PAGE_SIZE = 1000;
+const STORAGE_REMOVE_BATCH = 500;
+
+async function listarArquivosStorage(supabase: ReturnType<typeof createServiceClient>, prefixo: string) {
+  const nomes: string[] = [];
+  let offset = 0;
+  while (true) {
+    const { data, error } = await supabase.storage.from("fotos").list(prefixo, {
+      limit: STORAGE_PAGE_SIZE,
+      offset,
+      sortBy: { column: "name", order: "asc" },
+    });
+    if (error) throw error;
+    const pagina = data ?? [];
+    nomes.push(...pagina.filter((item) => item.id !== null).map((item) => item.name));
+    if (pagina.length < STORAGE_PAGE_SIZE) break;
+    offset += STORAGE_PAGE_SIZE;
+  }
+  return nomes;
+}
+
+async function removerStorageGaleria(
+  supabase: ReturnType<typeof createServiceClient>,
+  userId: string,
+  galeriaId: string,
+) {
+  const base = `${userId}/${galeriaId}`;
+  const [originais, thumbs, entrega, entregaThumbs] = await Promise.all([
+    listarArquivosStorage(supabase, base),
+    listarArquivosStorage(supabase, `${base}/thumbs`),
+    listarArquivosStorage(supabase, `${base}/entrega`),
+    listarArquivosStorage(supabase, `${base}/entrega/thumbs`),
+  ]);
+  const caminhos = [
+    ...originais.map((nome) => `${base}/${nome}`),
+    ...thumbs.map((nome) => `${base}/thumbs/${nome}`),
+    ...entrega.map((nome) => `${base}/entrega/${nome}`),
+    ...entregaThumbs.map((nome) => `${base}/entrega/thumbs/${nome}`),
+  ];
+  for (let i = 0; i < caminhos.length; i += STORAGE_REMOVE_BATCH) {
+    const { error } = await supabase.storage.from("fotos").remove(caminhos.slice(i, i + STORAGE_REMOVE_BATCH));
+    if (error) throw error;
+  }
 }
 
 async function projetoDoUsuario(projeto: string, userId: string) {
@@ -290,7 +336,7 @@ type PostBody =
   | { acao: "reordenar_pastas"; projetoId?: string; pastas?: string[] }
   | { acao: "atualizar_pasta"; projetoId?: string; pastaId?: string; nome?: string; visivel?: boolean }
   | { acao: "definir_capa_se_vazia"; projetoId?: string; pastaId?: string; arquivo?: string }
-  | { acao: "excluir_projeto"; projetoId?: string };
+  | { acao: "excluir_projeto"; projetoId?: string; confirmacao?: string };
 
 export async function POST(req: NextRequest) {
   if (!requisicaoMesmoOrigin(req)) return json({ error: "Origem inválida." }, 403);
@@ -410,10 +456,42 @@ export async function POST(req: NextRequest) {
 
   if (body.acao === "excluir_projeto") {
     if (!uuidValido(body.projetoId)) return json({ error: "Projeto inválido." }, 400);
-    const { count } = await supabase.from("galerias").select("id", { count: "exact", head: true }).eq("projeto_id", body.projetoId).eq("user_id", user.id);
-    if ((count ?? 0) > 0) return json({ error: "Remova as pastas do projeto antes de excluí-lo." }, 409);
-    const { error } = await supabase.from("galeria_projetos").delete().eq("id", body.projetoId).eq("user_id", user.id);
-    return error ? json({ error: "Não foi possível excluir o projeto." }, 500) : json({ ok: true });
+    const projeto = await projetoDoUsuario(body.projetoId!, user.id);
+    if (!projeto) return json({ error: "Projeto não encontrado." }, 404);
+
+    const confirmacao = body.confirmacao?.trim() ?? "";
+    if (!confirmacao || confirmacao !== String(projeto.nome)) {
+      return json({ error: "Digite o nome exato do projeto para confirmar a exclusão." }, 400);
+    }
+
+    const { data: galeriasRemovidas, error: exclusaoError } = await supabase.rpc("excluir_projeto_backend", {
+      p_projeto: body.projetoId,
+      p_user_id: user.id,
+    });
+    if (exclusaoError || galeriasRemovidas === null) {
+      registrarErro("project.delete.database", req, exclusaoError ?? new Error("RPC retornou nulo"), { projeto: body.projetoId });
+      return json({ error: "Não foi possível excluir o projeto." }, 500);
+    }
+
+    const ids = Array.isArray(galeriasRemovidas) ? galeriasRemovidas.map(String) : [];
+    const pendentes: string[] = [];
+    for (const galeriaId of ids) {
+      try {
+        await removerStorageGaleria(supabase, user.id, galeriaId);
+      } catch (error) {
+        pendentes.push(galeriaId);
+        registrarErro("project.delete.storage_pending", req, error, { projeto: body.projetoId, galeria: galeriaId });
+      }
+    }
+
+    return json({
+      ok: true,
+      galeriasExcluidas: ids.length,
+      limpezaPendente: pendentes.length > 0,
+      aviso: pendentes.length
+        ? "O projeto foi excluído. A limpeza residual de alguns arquivos será concluída automaticamente."
+        : undefined,
+    });
   }
 
   return json({ error: "Ação inválida." }, 400);
