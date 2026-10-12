@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { MAX_TAMANHO_ARQUIVO, validarArquivo } from "../../lib/upload-validation";
+import { MAX_TAMANHO_ARQUIVO, mesclarArquivosSelecionados, validarArquivo } from "../../lib/upload-validation";
 
 function arquivo(name: string, type: string, size: number) {
   return { name, type, size };
@@ -29,4 +29,24 @@ test("rejeita nomes inseguros ou excessivamente longos", () => {
   expect(validarArquivo(arquivo("pasta/foto.jpg", "image/jpeg", 10))).toBe("nome do arquivo inválido");
   expect(validarArquivo(arquivo(`${"a".repeat(181)}.jpg`, "image/jpeg", 10))).toBe("nome do arquivo muito longo");
   expect(validarArquivo(arquivo("sem-extensao", "image/jpeg", 10))).toBe("extensão ausente ou inválida");
+});
+
+
+test("acumula seleções sucessivas sem duplicar arquivos", () => {
+  const a = { name: "a.jpg", type: "image/jpeg", size: 10, lastModified: 1 };
+  const b = { name: "b.jpg", type: "image/jpeg", size: 20, lastModified: 2 };
+  const c = { name: "c.jpg", type: "image/jpeg", size: 30, lastModified: 3 };
+  const resultado = mesclarArquivosSelecionados([a, b], [b, c], 500);
+  expect(resultado.arquivos.map(x => x.name)).toEqual(["a.jpg", "b.jpg", "c.jpg"]);
+  expect(resultado.duplicados.map(x => x.name)).toEqual(["b.jpg"]);
+  expect(resultado.excedentes).toHaveLength(0);
+});
+
+test("respeita o limite total ao somar novas seleções", () => {
+  const a = { name: "a.jpg", type: "image/jpeg", size: 10, lastModified: 1 };
+  const b = { name: "b.jpg", type: "image/jpeg", size: 20, lastModified: 2 };
+  const c = { name: "c.jpg", type: "image/jpeg", size: 30, lastModified: 3 };
+  const resultado = mesclarArquivosSelecionados([a, b], [c], 2);
+  expect(resultado.arquivos.map(x => x.name)).toEqual(["a.jpg", "b.jpg"]);
+  expect(resultado.excedentes.map(x => x.name)).toEqual(["c.jpg"]);
 });
