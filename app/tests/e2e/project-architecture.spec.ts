@@ -91,6 +91,26 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(deleteApi).toContain('order("ordem", { ascending: true })');
   });
 
+  test("projeto pode ser excluído definitivamente pela zona de perigo", () => {
+    const workspace = read("app/dashboard/projetos/[id]/page.tsx");
+    const lista = read("app/dashboard/projetos/page.tsx");
+    const api = read("app/api/projeto/workspace/route.ts");
+    const migration = read("sql/project_cascade_delete_2026.sql");
+
+    expect(workspace).toContain("ZONA DE PERIGO");
+    expect(workspace).toContain("Excluir projeto permanentemente");
+    expect(workspace).toContain("confirmacaoProjeto.trim()!==p.nome");
+    expect(workspace).toContain('acao:"excluir_projeto"');
+
+    expect(lista).not.toContain('onClick={()=>setExcluirProjeto(p)}');
+    expect(api).toContain('confirmacao !== String(projeto.nome)');
+    expect(api).toContain('rpc("excluir_projeto_backend"');
+    expect(api).toContain("removerStorageGaleria");
+    expect(migration).toContain("create or replace function public.excluir_projeto_backend");
+    expect(migration).toContain("delete from public.galerias");
+    expect(migration).toContain("delete from public.galeria_projetos");
+  });
+
   test("portabilidade inclui projetos e pastas relacionadas", () => {
     const exportRoute = read("app/api/account/export/route.ts");
     expect(exportRoute).toContain('from("galeria_projetos")');
