@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galeriaError } = await supabase
     .from("galerias")
-    .select("id,user_id,slug,titulo,capa,prova,limite,prazo,link_ate,tem_senha,etapa,entrega_publicada_em,venda_extras_ativa,preco_foto_extra_centavos,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade,assistente_ativo")
+    .select("id,user_id,slug,titulo,capa,visivel,prova,limite,prazo,link_ate,tem_senha,etapa,entrega_publicada_em,venda_extras_ativa,preco_foto_extra_centavos,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade,assistente_ativo")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     });
     return json({ error: "Não foi possível carregar a galeria." }, 500);
   }
-  if (!g) return json({ error: "Galeria não encontrada." }, 404);
+  if (!g || g.visivel === false) return json({ error: "Galeria não encontrada." }, 404);
 
   const linkAte = (g.link_ate as string | null) ?? null;
   const linkExpirado = dataCalendarioExpirada(linkAte);

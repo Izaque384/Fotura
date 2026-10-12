@@ -66,6 +66,31 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(workspaceLegado).toContain("/dashboard/projetos/");
   });
 
+  test("workspace gerencia ciclo completo das pastas", () => {
+    const workspace = read("app/dashboard/projetos/[id]/page.tsx");
+    const api = read("app/api/projeto/workspace/route.ts");
+    const deleteApi = read("app/api/galeria/excluir/route.ts");
+    const publicGallery = read("app/api/galeria/publica/route.ts");
+    const signedPhotos = read("app/api/fotos/signed/route.ts");
+
+    expect(workspace).toContain("Arraste para reordenar.");
+    expect(workspace).toContain("Renomear");
+    expect(workspace).toContain('x.visivel?"Ocultar":"Publicar"');
+    expect(workspace).toContain("Excluir pasta");
+    expect(workspace).toContain("ConfirmDialog");
+
+    expect(api).toContain('acao: "atualizar_pasta"');
+    expect(api).toContain('acao: "reordenar_pastas"');
+    expect(api).toContain("update.titulo = nome");
+    expect(api).toContain("update.visivel = body.visivel");
+
+    expect(publicGallery).toContain("g.visivel === false");
+    expect(signedPhotos).toContain("g.visivel === false");
+    expect(deleteApi).toContain("eraCapaProjeto");
+    expect(deleteApi).toContain("capa_arquivo = null");
+    expect(deleteApi).toContain('order("ordem", { ascending: true })');
+  });
+
   test("portabilidade inclui projetos e pastas relacionadas", () => {
     const exportRoute = read("app/api/account/export/route.ts");
     expect(exportRoute).toContain('from("galeria_projetos")');

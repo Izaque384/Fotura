@@ -288,6 +288,7 @@ type PostBody =
   | { acao: "criar_projeto"; nome?: string; descricao?: string | null; clienteId?: string | null }
   | { acao: "criar_pasta"; projetoId?: string; nome?: string }
   | { acao: "reordenar_pastas"; projetoId?: string; pastas?: string[] }
+  | { acao: "atualizar_pasta"; projetoId?: string; pastaId?: string; nome?: string; visivel?: boolean }
   | { acao: "definir_capa_se_vazia"; projetoId?: string; pastaId?: string; arquivo?: string }
   | { acao: "excluir_projeto"; projetoId?: string };
 
@@ -354,6 +355,40 @@ export async function POST(req: NextRequest) {
     }
     await supabase.from("galeria_projetos").update({ atualizado_em: new Date().toISOString() }).eq("id", body.projetoId).eq("user_id", user.id);
     return json({ ok: true });
+  }
+
+  if (body.acao === "atualizar_pasta") {
+    if (!uuidValido(body.projetoId) || !uuidValido(body.pastaId)) {
+      return json({ error: "Pasta inválida." }, 400);
+    }
+    const projeto = await projetoDoUsuario(body.projetoId!, user.id);
+    if (!projeto) return json({ error: "Projeto não encontrado." }, 404);
+
+    const update: Record<string, unknown> = {};
+    if (body.nome !== undefined) {
+      const nome = body.nome.trim().slice(0, 120);
+      if (!nome) return json({ error: "Informe o nome da pasta." }, 400);
+      update.titulo = nome;
+    }
+    if (typeof body.visivel === "boolean") update.visivel = body.visivel;
+    if (!Object.keys(update).length) return json({ error: "Nenhuma alteração informada." }, 400);
+
+    const { data: pasta, error } = await supabase.from("galerias")
+      .update(update)
+      .eq("id", body.pastaId)
+      .eq("projeto_id", body.projetoId)
+      .eq("user_id", user.id)
+      .select("id,titulo,visivel")
+      .maybeSingle();
+    if (error) return json({ error: "Não foi possível atualizar a pasta." }, 500);
+    if (!pasta) return json({ error: "Pasta não encontrada." }, 404);
+
+    await supabase.from("galeria_projetos")
+      .update({ atualizado_em: new Date().toISOString() })
+      .eq("id", body.projetoId)
+      .eq("user_id", user.id);
+
+    return json({ ok: true, pasta });
   }
 
   if (body.acao === "definir_capa_se_vazia") {
