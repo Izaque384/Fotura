@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galleryError } = await supabase
     .from("galerias")
-    .select("user_id,capa,link_ate,tem_senha,etapa,prova,watermark_ativo,watermark_texto,watermark_opacidade")
+    .select("user_id,capa,visivel,link_ate,tem_senha,etapa,prova,watermark_ativo,watermark_texto,watermark_opacidade")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     registrarErro("gallery.signed.lookup", req, galleryError, { galeria });
     return json({ error: "Não foi possível verificar a galeria." }, 500);
   }
-  if (!g) return json({ error: "Galeria não encontrada." }, 404);
+  if (!g || g.visivel === false) return json({ error: "Galeria não encontrada." }, 404);
   const linkAte = (g.link_ate as string | null) ?? null;
   if (dataCalendarioExpirada(linkAte)) return json({ error: "Link expirado." }, 403);
   if (g.tem_senha && !temAcessoGaleria(req, galeria)) return json({ error: "Acesso à galeria necessário." }, 401);
