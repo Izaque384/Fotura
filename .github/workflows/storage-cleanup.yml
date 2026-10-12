@@ -1,0 +1,19 @@
+name: Storage cleanup regression
+on:
+  push:
+    branches: [main]
+    paths: ["supabase/**", "tests/storage-cleanup.test.ts", ".github/workflows/storage-cleanup.yml"]
+  pull_request:
+    paths: ["supabase/**", "tests/storage-cleanup.test.ts", ".github/workflows/storage-cleanup.yml"]
+permissions:
+  contents: read
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node --test tests/storage-cleanup.test.ts

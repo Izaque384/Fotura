@@ -1,0 +1,4 @@
+[functions.storage-cleanup]
+# Custom authentication: high-entropy token in Vault, validated server-side.
+verify_jwt = false
+entrypoint = "./functions/storage-cleanup/index.ts"

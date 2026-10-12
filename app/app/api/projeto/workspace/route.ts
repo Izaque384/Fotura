@@ -27,51 +27,6 @@ function slugify(valor: string) {
     .replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "") || "pasta";
 }
 
-const STORAGE_PAGE_SIZE = 1000;
-const STORAGE_REMOVE_BATCH = 500;
-
-async function listarArquivosStorage(supabase: ReturnType<typeof createServiceClient>, prefixo: string) {
-  const nomes: string[] = [];
-  let offset = 0;
-  while (true) {
-    const { data, error } = await supabase.storage.from("fotos").list(prefixo, {
-      limit: STORAGE_PAGE_SIZE,
-      offset,
-      sortBy: { column: "name", order: "asc" },
-    });
-    if (error) throw error;
-    const pagina = data ?? [];
-    nomes.push(...pagina.filter((item) => item.id !== null).map((item) => item.name));
-    if (pagina.length < STORAGE_PAGE_SIZE) break;
-    offset += STORAGE_PAGE_SIZE;
-  }
-  return nomes;
-}
-
-async function removerStorageGaleria(
-  supabase: ReturnType<typeof createServiceClient>,
-  userId: string,
-  galeriaId: string,
-) {
-  const base = `${userId}/${galeriaId}`;
-  const [originais, thumbs, entrega, entregaThumbs] = await Promise.all([
-    listarArquivosStorage(supabase, base),
-    listarArquivosStorage(supabase, `${base}/thumbs`),
-    listarArquivosStorage(supabase, `${base}/entrega`),
-    listarArquivosStorage(supabase, `${base}/entrega/thumbs`),
-  ]);
-  const caminhos = [
-    ...originais.map((nome) => `${base}/${nome}`),
-    ...thumbs.map((nome) => `${base}/thumbs/${nome}`),
-    ...entrega.map((nome) => `${base}/entrega/${nome}`),
-    ...entregaThumbs.map((nome) => `${base}/entrega/thumbs/${nome}`),
-  ];
-  for (let i = 0; i < caminhos.length; i += STORAGE_REMOVE_BATCH) {
-    const { error } = await supabase.storage.from("fotos").remove(caminhos.slice(i, i + STORAGE_REMOVE_BATCH));
-    if (error) throw error;
-  }
-}
-
 async function projetoDoUsuario(projeto: string, userId: string) {
   const supabase = createServiceClient();
   const { data } = await supabase.from("galeria_projetos")
@@ -474,22 +429,14 @@ export async function POST(req: NextRequest) {
     }
 
     const ids = Array.isArray(galeriasRemovidas) ? galeriasRemovidas.map(String) : [];
-    const pendentes: string[] = [];
-    for (const galeriaId of ids) {
-      try {
-        await removerStorageGaleria(supabase, user.id, galeriaId);
-      } catch (error) {
-        pendentes.push(galeriaId);
-        registrarErro("project.delete.storage_pending", req, error, { projeto: body.projetoId, galeria: galeriaId });
-      }
-    }
+    // The gallery deletion trigger enqueues cleanup in the same transaction.
 
     return json({
       ok: true,
       galeriasExcluidas: ids.length,
-      limpezaPendente: pendentes.length > 0,
-      aviso: pendentes.length
-        ? "O projeto foi excluído. A limpeza residual de alguns arquivos será concluída automaticamente."
+      limpezaPendente: ids.length > 0,
+      aviso: ids.length
+        ? "O projeto foi excluído. A remoção dos arquivos está na fila e será verificada automaticamente."
         : undefined,
     });
   }

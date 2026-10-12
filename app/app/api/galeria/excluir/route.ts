@@ -4,36 +4,6 @@ import { registrarErro } from "../../../../lib/observability";
 import { uuidValido } from "../../../../lib/validation";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 
-const PAGE_SIZE = 1000;
-const REMOVE_BATCH = 500;
-
-async function listarArquivos(supabase: ReturnType<typeof createServiceClient>, prefixo: string) {
-  const nomes: string[] = [];
-  let offset = 0;
-
-  while (true) {
-    const { data, error } = await supabase.storage
-      .from("fotos")
-      .list(prefixo, { limit: PAGE_SIZE, offset, sortBy: { column: "name", order: "asc" } });
-
-    if (error) throw error;
-    const arquivos = (data ?? []).filter((item) => item.id !== null);
-    nomes.push(...arquivos.map((item) => item.name));
-
-    if ((data ?? []).length < PAGE_SIZE) break;
-    offset += PAGE_SIZE;
-  }
-
-  return nomes;
-}
-
-async function removerEmLotes(supabase: ReturnType<typeof createServiceClient>, caminhos: string[]) {
-  for (let i = 0; i < caminhos.length; i += REMOVE_BATCH) {
-    const { error } = await supabase.storage.from("fotos").remove(caminhos.slice(i, i + REMOVE_BATCH));
-    if (error) throw error;
-  }
-}
-
 export async function DELETE(req: NextRequest) {
   if (!requisicaoMesmoOrigin(req)) return NextResponse.json({ error: "Origem inválida." }, { status: 403 });
   const authorization = req.headers.get("authorization") ?? "";
@@ -70,7 +40,6 @@ export async function DELETE(req: NextRequest) {
   }
   if (!g || g.user_id !== auth.user.id) return NextResponse.json({ error: "Galeria não encontrada." }, { status: 404 });
 
-  const base = `${auth.user.id}/${galeria}`;
   let eraCapaProjeto = false;
   if (g.projeto_id) {
     const { data: projeto } = await supabase.from("galeria_projetos")
@@ -81,8 +50,8 @@ export async function DELETE(req: NextRequest) {
     eraCapaProjeto = projeto?.capa_galeria_id === galeria;
   }
 
-  // Remove primeiro o registro transacional. Se a limpeza do Storage falhar depois,
-  // o cron de órfãos consegue concluir a remoção sem deixar uma galeria quebrada visível.
+  // The deletion trigger persists the cleanup job in the same transaction.
+  // The worker confirms completion only after checking the full storage prefix.
   const { data: removida, error: dbError } = await supabase.rpc("excluir_dados_galeria_backend", {
     p_galeria: galeria,
     p_user_id: auth.user.id,
@@ -122,30 +91,9 @@ export async function DELETE(req: NextRequest) {
     }
   }
 
-  try {
-    const [originais, thumbs, entrega, entregaThumbs] = await Promise.all([
-      listarArquivos(supabase, base),
-      listarArquivos(supabase, `${base}/thumbs`),
-      listarArquivos(supabase, `${base}/entrega`),
-      listarArquivos(supabase, `${base}/entrega/thumbs`),
-    ]);
-
-    const caminhos = [
-      ...originais.map((nome) => `${base}/${nome}`),
-      ...thumbs.map((nome) => `${base}/thumbs/${nome}`),
-      ...entrega.map((nome) => `${base}/entrega/${nome}`),
-      ...entregaThumbs.map((nome) => `${base}/entrega/thumbs/${nome}`),
-    ];
-
-    await removerEmLotes(supabase, caminhos);
-  } catch (error) {
-    registrarErro("gallery.delete.storage_pending", req, error, { galeria });
-    return NextResponse.json({
-      ok: true,
-      limpezaPendente: true,
-      aviso: "A galeria foi excluída. A limpeza residual dos arquivos será concluída automaticamente.",
-    });
-  }
-
-  return NextResponse.json({ ok: true, limpezaPendente: false });
+  return NextResponse.json({
+    ok: true,
+    limpezaPendente: true,
+    aviso: "A galeria foi excluída. A remoção dos arquivos está na fila e será verificada automaticamente.",
+  });
 }

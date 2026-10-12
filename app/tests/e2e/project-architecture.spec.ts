@@ -123,7 +123,8 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(lista).not.toContain('onClick={()=>setExcluirProjeto(p)}');
     expect(api).toContain('confirmacao !== String(projeto.nome)');
     expect(api).toContain('rpc("excluir_projeto_backend"');
-    expect(api).toContain("removerStorageGaleria");
+    expect(api).toContain("limpezaPendente: ids.length > 0");
+    expect(api).not.toContain("removerStorageGaleria");
     expect(migration).toContain("create or replace function public.excluir_projeto_backend");
     expect(migration).toContain("delete from public.galerias");
     expect(migration).toContain("delete from public.galeria_projetos");
