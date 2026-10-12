@@ -53,10 +53,10 @@ export async function GET(req: NextRequest) {
   let capaUrl: string | null = null;
   if (desbloqueada && !linkExpirado) {
     if (usarFotoCapaPublica && p.capa_galeria_id && p.capa_arquivo) {
-      const { data } = await supabase.storage.from("fotos").createSignedUrl(
-        `${p.user_id}/${p.capa_galeria_id}/${p.capa_arquivo}`, 60 * 60
-      );
-      capaUrl = data?.signedUrl ?? null;
+      const baseCapa = `${p.user_id}/${p.capa_galeria_id}`;
+      const caminhosCapa = [`${baseCapa}/thumbs/${p.capa_arquivo}`, `${baseCapa}/${p.capa_arquivo}`];
+      const { data } = await supabase.storage.from("fotos").createSignedUrls(caminhosCapa, 60 * 60);
+      capaUrl = caminhosCapa.map(caminho => data?.find(item => item.path === caminho)?.signedUrl).find(Boolean) ?? null;
     } else if (usarHeroEstudio) {
       capaUrl = heroPresetDataUrl(heroCor, heroEstilo);
     }
@@ -77,15 +77,10 @@ export async function GET(req: NextRequest) {
       );
       if (!arquivo) return [galeriaId, null] as const;
 
-      const { data: thumbs } = await supabase.storage.from("fotos").list(`${base}/thumbs`, {
-        limit: 5,
-        offset: 0,
-        search: arquivo.name,
-      });
-      const temThumb = (thumbs ?? []).some((item) => item.id !== null && item.name === arquivo.name);
-      const caminho = temThumb ? `${base}/thumbs/${arquivo.name}` : `${base}/${arquivo.name}`;
-      const { data: signed } = await supabase.storage.from("fotos").createSignedUrl(caminho, 60 * 60);
-      return [galeriaId, signed?.signedUrl ?? null] as const;
+      const caminhos = [`${base}/thumbs/${arquivo.name}`, `${base}/${arquivo.name}`];
+      const { data: signed } = await supabase.storage.from("fotos").createSignedUrls(caminhos, 60 * 60);
+      const url = caminhos.map(caminho => signed?.find(item => item.path === caminho)?.signedUrl).find(Boolean) ?? null;
+      return [galeriaId, url] as const;
     }));
     for (const [galeriaId, url] of resolvidas) miniaturas.set(galeriaId, url);
   }
