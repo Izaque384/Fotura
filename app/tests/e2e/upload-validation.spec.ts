@@ -1,4 +1,6 @@
 import { expect, test } from "@playwright/test";
+import fs from "node:fs";
+import path from "node:path";
 import { MAX_TAMANHO_ARQUIVO, mesclarArquivosSelecionados, validarArquivo } from "../../lib/upload-validation";
 
 function arquivo(name: string, type: string, size: number) {
@@ -49,4 +51,16 @@ test("respeita o limite total ao somar novas seleções", () => {
   const resultado = mesclarArquivosSelecionados([a, b], [c], 2);
   expect(resultado.arquivos.map(x => x.name)).toEqual(["a.jpg", "b.jpg"]);
   expect(resultado.excedentes.map(x => x.name)).toEqual(["c.jpg"]);
+});
+
+
+test("seletor de fotos aguarda confirmação nativa e mantém fallback", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "app", "upload", "page.tsx"), "utf8");
+  expect(source).toContain("showOpenFilePicker");
+  expect(source).toContain("multiple:true");
+  expect(source).toContain('error.name==="AbortError"');
+  expect(source).toContain("inputRef.current?.click()");
+  expect(source).toContain("Selecionar fotos");
+  expect(source).not.toContain("Você pode abrir o seletor quantas vezes precisar");
+  expect(source).not.toContain("JPG, PNG ou WebP · até 50 MB por foto");
 });
