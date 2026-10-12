@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { registrarErro } from "../../../../lib/observability";
 import { uuidValido } from "../../../../lib/validation";
+import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 
 const PAGE_SIZE = 1000;
 const REMOVE_BATCH = 500;
@@ -34,6 +35,7 @@ async function removerEmLotes(supabase: ReturnType<typeof createServiceClient>, 
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!requisicaoMesmoOrigin(req)) return NextResponse.json({ error: "Origem inválida." }, { status: 403 });
   const authorization = req.headers.get("authorization") ?? "";
   const match = authorization.match(/^Bearer\s+(.+)$/i);
   if (!match) return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
@@ -58,7 +60,7 @@ export async function DELETE(req: NextRequest) {
 
   const { data: g, error: galleryError } = await supabase
     .from("galerias")
-    .select("id,user_id")
+    .select("id,user_id,projeto_id")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -69,6 +71,15 @@ export async function DELETE(req: NextRequest) {
   if (!g || g.user_id !== auth.user.id) return NextResponse.json({ error: "Galeria não encontrada." }, { status: 404 });
 
   const base = `${auth.user.id}/${galeria}`;
+  let eraCapaProjeto = false;
+  if (g.projeto_id) {
+    const { data: projeto } = await supabase.from("galeria_projetos")
+      .select("capa_galeria_id")
+      .eq("id", g.projeto_id)
+      .eq("user_id", auth.user.id)
+      .maybeSingle();
+    eraCapaProjeto = projeto?.capa_galeria_id === galeria;
+  }
 
   // Remove primeiro o registro transacional. Se a limpeza do Storage falhar depois,
   // o cron de órfãos consegue concluir a remoção sem deixar uma galeria quebrada visível.
@@ -83,6 +94,32 @@ export async function DELETE(req: NextRequest) {
       { error: "Não foi possível concluir a exclusão dos dados da galeria." },
       { status: 500 }
     );
+  }
+
+  if (g.projeto_id) {
+    const agora = new Date().toISOString();
+    const projetoUpdate: Record<string, unknown> = { atualizado_em: agora };
+    if (eraCapaProjeto) {
+      projetoUpdate.capa_galeria_id = null;
+      projetoUpdate.capa_arquivo = null;
+    }
+    await supabase.from("galeria_projetos")
+      .update(projetoUpdate)
+      .eq("id", g.projeto_id)
+      .eq("user_id", auth.user.id);
+
+    const { data: restantes } = await supabase.from("galerias")
+      .select("id")
+      .eq("projeto_id", g.projeto_id)
+      .eq("user_id", auth.user.id)
+      .order("ordem", { ascending: true })
+      .order("criado_em", { ascending: true });
+    for (let i = 0; i < (restantes ?? []).length; i++) {
+      await supabase.from("galerias")
+        .update({ ordem: i })
+        .eq("id", restantes![i].id)
+        .eq("user_id", auth.user.id);
+    }
   }
 
   try {
