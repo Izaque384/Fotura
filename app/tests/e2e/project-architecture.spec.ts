@@ -17,8 +17,9 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(blocoItens).not.toContain('rota: "/dashboard/selecoes"');
 
     expect(projetos).toContain("Cada projeto reúne suas pastas, seleção, entrega e um único link para o cliente.");
-    expect(workspace).toContain('"resumo","pastas","selecao","entrega","atividade","configuracoes","vendas"');
-    expect(workspace).toContain("Um único link para todo o trabalho");
+    expect(workspace).toContain('["resumo","pastas","selecao","entrega"]');
+    expect(workspace).toContain("Mais ações do projeto");
+    expect(workspace).toContain("Um link para todo o projeto");
   });
 
   test("capa pertence somente ao projeto", () => {
@@ -64,6 +65,23 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(galerias).toContain('redirect("/dashboard/projetos")');
     expect(selecoes).toContain('redirect("/dashboard/projetos")');
     expect(workspaceLegado).toContain("/dashboard/projetos/");
+  });
+
+  test("workspace segue a UX atual com ações secundárias em menus", () => {
+    const workspace = read("app/dashboard/projetos/[id]/page.tsx");
+
+    expect(workspace).toContain('className="pw-page mf-shift"');
+    expect(workspace).toContain("pw-overview-grid");
+    expect(workspace).toContain("pw-metrics");
+    expect(workspace).toContain("pw-overflow-menu project");
+    expect(workspace).toContain("pw-overflow-menu folder");
+    expect(workspace).toContain("Ver como cliente");
+    expect(workspace).toContain("Compartilhar no WhatsApp");
+    expect(workspace).toContain("Configurações");
+    expect(workspace).toContain("Adicionar fotos");
+    expect(workspace).not.toContain("pw-order-buttons");
+    expect(workspace).not.toContain("pw-grid{");
+    expect(workspace).not.toContain("pw-cover-card");
   });
 
   test("workspace gerencia ciclo completo das pastas", () => {
