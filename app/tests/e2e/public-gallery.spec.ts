@@ -362,3 +362,31 @@ test("fotos começam a carregar enquanto os dados da galeria estão pendentes", 
   await expect(page.getByRole("heading", { name: "Galeria paralela" })).toBeVisible();
   await expect(page.locator(".gc-grid-img")).toHaveAttribute("src", foto("Prévia"));
 });
+
+
+for (const width of [390, 1440]) {
+  test(`logo fica na faixa branca e capa da pasta prevalece (${width}px)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const pastaId = "00000000-0000-4000-8000-000000000001";
+    await page.route("**/api/projeto/publico**", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+      projeto: { id: "00000000-0000-4000-8000-000000000002", nome: "Casamento", publicRef: "casamento", capaUrl: foto("Projeto"), desbloqueado: true },
+      perfil: { nome: "Alvor Fotografia", logo: foto("Logo"), cor: null },
+      pastas: [{ id: pastaId, titulo: "Entrada da Noiva", ordem: 0, etapa: "entrega", thumbnailUrl: foto("Pasta") }],
+    }) }));
+    await page.route("**/api/galeria/publica**", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+      galeria: { titulo: "Entrada da Noiva", capa: "capa.jpg", prova: false, desbloqueada: true, linkExpirado: false },
+      perfil: { nome: "Alvor Fotografia", logo: foto("Logo"), cor: null }, selecao: null,
+    }) }));
+    await page.route("**/api/fotos/signed**", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+      fotos: [{ nome: "capa.jpg", url: foto("Original"), thumb: foto("Pasta") }], capaUrl: foto("Pasta"),
+    }) }));
+    await page.route("**/api/analytics/event", route => route.fulfill({ status: 200, body: "{}" }));
+    await page.goto(`/p/casamento?pasta=${pastaId}`);
+    await expect(page.locator(".gc-album-logo img")).toBeVisible({timeout:15000});
+    await expect(page.locator(".gc-hero img")).toHaveCount(0);
+    await expect(page.getByRole("combobox", { name: "Trocar galeria" })).toHaveValue(pastaId);
+    await expect(page.locator(".gc-hero-bg")).toHaveAttribute("style", /Pasta/);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.screenshot({ path: `/tmp/fotura-cover-strip-${width}.png`, fullPage: false });
+  });
+}
