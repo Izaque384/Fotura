@@ -9,7 +9,28 @@ const MIME_POR_EXTENSAO: Record<string, string> = {
   webp: "image/webp",
 };
 
-export type ArquivoValidavel = Pick<File, "name" | "type" | "size">;
+export type ArquivoValidavel = Pick<File, "name" | "type" | "size"> & Partial<Pick<File, "lastModified">>;
+
+export function identidadeArquivo(arquivo: ArquivoValidavel) {
+  return `${arquivo.name}\u0000${arquivo.type}\u0000${arquivo.size}\u0000${arquivo.lastModified ?? 0}`;
+}
+
+export function mesclarArquivosSelecionados<T extends ArquivoValidavel>(atuais: T[], novos: T[], limite = MAX_ARQUIVOS_POR_LOTE) {
+  const resultado = [...atuais];
+  const chaves = new Set(resultado.map(identidadeArquivo));
+  const duplicados: T[] = [];
+  const excedentes: T[] = [];
+
+  for (const arquivo of novos) {
+    const chave = identidadeArquivo(arquivo);
+    if (chaves.has(chave)) { duplicados.push(arquivo); continue; }
+    if (resultado.length >= limite) { excedentes.push(arquivo); continue; }
+    chaves.add(chave);
+    resultado.push(arquivo);
+  }
+
+  return { arquivos: resultado, duplicados, excedentes };
+}
 
 export function validarArquivo(arquivo: ArquivoValidavel): string | null {
   const nome = arquivo.name.trim();
