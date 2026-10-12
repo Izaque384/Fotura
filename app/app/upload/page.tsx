@@ -12,6 +12,10 @@ import { publicProjectRef } from "../../lib/project-links";
 type Cliente = { id:string; nome:string; email:string|null; telefone:string|null };
 type ArquivoRejeitado = { nome:string; motivo:string };
 type ProtecaoUpload = { permitido:boolean; reiniciaEm:string|null };
+type FileHandleLeve = { getFile(): Promise<File> };
+type JanelaComSeletorNativo = Window & {
+ showOpenFilePicker?: (opcoes:{multiple?:boolean;excludeAcceptAllOption?:boolean;types?:Array<{description?:string;accept:Record<string,string[]>}>})=>Promise<FileHandleLeve[]>;
+};
 
 function gerarSlug(texto:string){return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")}
 function endpointTus(){const base=process.env.NEXT_PUBLIC_SUPABASE_URL;if(!base)throw new Error("Supabase não configurado");const ref=new URL(base).hostname.split(".")[0];return `https://${ref}.storage.supabase.co/storage/v1/upload/resumable`}
@@ -48,6 +52,21 @@ function UploadContent(){
  }
  function limparSelecao(){
   if(enviando)return;setArquivos([]);setArquivosRejeitados([]);nomesStorage.current.clear();progressoBytes.current.clear();setProgresso(0);setProcessadas(0);setTotalEnvio(0);setLink("");setMensagem("");setErro(false);
+ }
+ async function abrirSeletorFotos(){
+  if(enviando||galeriaInvalida)return;
+  const seletor=(window as JanelaComSeletorNativo).showOpenFilePicker;
+  if(seletor){
+   try{
+    const handles=await seletor.call(window,{multiple:true,excludeAcceptAllOption:true,types:[{description:"Fotos",accept:{"image/jpeg":[".jpg",".jpeg"],"image/png":[".png"],"image/webp":[".webp"]}}]});
+    const escolhidos=await Promise.all(handles.map(handle=>handle.getFile()));
+    adicionarArquivos(escolhidos);
+    return;
+   }catch(error){
+    if(error instanceof DOMException&&error.name==="AbortError")return;
+   }
+  }
+  inputRef.current?.click();
  }
  async function enviarOriginalResumivel(arquivo:File,caminho:string,onProgress:(bytes:number)=>void){const{data:{session}}=await supabase.auth.getSession();if(!session?.access_token)throw new Error("Sessão expirada");return new Promise<void>((resolve,reject)=>{let terminou=false;const upload=new tus.Upload(arquivo,{endpoint:endpointTus(),retryDelays:[0,1000,3000,5000,10000],headers:{authorization:`Bearer ${session.access_token}`},uploadDataDuringCreation:true,removeFingerprintOnSuccess:true,chunkSize:6*1024*1024,metadata:{bucketName:"fotos",objectName:caminho,contentType:arquivo.type,cacheControl:"3600"},fingerprint:async()=>`fotura-${caminho}-${arquivo.size}-${arquivo.lastModified}`,onProgress:(bytes)=>onProgress(bytes),onError:(e)=>{if(!terminou){terminou=true;reject(e)}},onSuccess:()=>{if(!terminou){terminou=true;resolve()}}});upload.findPreviousUploads().then(prev=>{if(prev.length)upload.resumeFromPreviousUpload(prev[0]);upload.start()}).catch(reject)})}
  async function enviarThumb(caminho:string,thumb:Blob){for(let tentativa=0;tentativa<2;tentativa++){const{error}=await supabase.storage.from("fotos").upload(caminho,thumb,{contentType:"image/jpeg",cacheControl:"3600"});if(!error)return true;if(tentativa===0)await new Promise(r=>setTimeout(r,500))}return false}
