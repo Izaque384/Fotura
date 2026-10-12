@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
   const [{ data: perfil }, { data: assinatura }, { data: pastas }] = await Promise.all([
     supabase.from("perfis").select("nome_estudio,logo_url,cor_hero,hero_galeria_ativo,hero_galeria_estilo,hero_foto_capa_ativo,stripe_recebimentos_ativo").eq("id", p.user_id).maybeSingle(),
     supabase.from("assinaturas").select("plano_codigo,status").eq("user_id", p.user_id).maybeSingle(),
-    supabase.from("galerias").select("id,slug,titulo,ordem,visivel,etapa,prova").eq("projeto_id", resolvido.id).eq("visivel", true).order("ordem", { ascending: true }).order("criado_em", { ascending: true }),
+    supabase.from("galerias").select("id,slug,titulo,capa,ordem,visivel,etapa,prova").eq("projeto_id", resolvido.id).eq("visivel", true).order("ordem", { ascending: true }).order("criado_em", { ascending: true }),
   ]);
 
   const statusAssinatura = String(assinatura?.status || "active");
@@ -72,9 +72,16 @@ export async function GET(req: NextRequest) {
         offset: 0,
         sortBy: { column: "created_at", order: "asc" },
       });
-      const arquivo = (arquivos ?? []).find((item) =>
-        item.id !== null && item.name !== "thumbs" && item.name !== "entrega"
-      );
+      const candidatas = (arquivos ?? []).filter(item => item.id !== null && item.name !== "thumbs" && item.name !== "entrega");
+      // A selected cover may be beyond the first page of the gallery.
+      const nomeCapa = (galeria.capa as string | null) || candidatas[0]?.name;
+      if (nomeCapa && galeria.capa) {
+        const { data: capa } = await supabase.storage.from("fotos").list(base, { limit: 100, search: nomeCapa });
+        if (!(capa ?? []).some(item => item.id !== null && item.name === nomeCapa)) {
+          galeria.capa = null;
+        }
+      }
+      const arquivo = galeria.capa ? { name: String(galeria.capa) } : candidatas[0];
       if (!arquivo) return [galeriaId, null] as const;
 
       const caminhos = [`${base}/thumbs/${arquivo.name}`, `${base}/${arquivo.name}`];

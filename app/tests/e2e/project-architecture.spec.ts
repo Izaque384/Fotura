@@ -22,15 +22,16 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(workspace).toContain("Um link para todo o projeto");
   });
 
-  test("capa pertence somente ao projeto", () => {
+  test("pastas podem ter capa própria com fallback do projeto", () => {
     const workspace = read("app/dashboard/projetos/[id]/page.tsx");
+    const api = read("app/api/projeto/workspace/route.ts");
     const publicGallery = read("app/g/[slug]/page.tsx");
-    const migration = read("sql/project_shared_cover_guard_2026.sql");
-
-    expect(workspace).toContain("A capa é única e aparece em todas as pastas. Pastas não possuem capa individual.");
-    expect(publicGallery).toContain("projectContext?projectContext.capaUrl:capaUrl");
-    expect(migration).toContain("new.capa := null");
-    expect(migration).toContain("before insert or update of capa, projeto_id");
+    const migration = read("sql/project_folder_covers_2026.sql");
+    expect(workspace).toContain("Configurar capa");
+    expect(workspace).toContain("Usar capa do projeto");
+    expect(api).toContain("update.capa = arquivo");
+    expect(publicGallery).toContain("meta.capa?(capaPreviewUrl||projectContext.capaUrl)");
+    expect(migration).toContain("drop trigger if exists trg_bloquear_capa_individual_pasta");
   });
 
   test("projeto público oferece entrada por galerias e seletor integrado", () => {

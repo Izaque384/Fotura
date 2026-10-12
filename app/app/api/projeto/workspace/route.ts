@@ -81,22 +81,33 @@ export async function GET(req: NextRequest) {
       .eq("projeto_id", projeto).eq("user_id", user.id).maybeSingle();
     if (!pasta) return json({ error: "Pasta não encontrada." }, 404);
 
-    const { data: arquivos, error } = await supabase.storage.from("fotos").list(`${user.id}/${capaPasta}`, {
-      limit: 120, offset: 0, sortBy: { column: "created_at", order: "asc" },
-    });
-    if (error) return json({ error: "Não foi possível carregar as fotos." }, 500);
-    const nomes = (arquivos ?? []).filter((a) => a.id !== null && a.name !== "thumbs" && a.name !== "entrega").map((a) => a.name);
+    const nomes: string[] = [];
+    for (let offset = 0; ; offset += 1000) {
+      const { data: arquivos, error } = await supabase.storage.from("fotos").list(`${user.id}/${capaPasta}`, {
+        limit: 1000, offset, sortBy: { column: "created_at", order: "asc" },
+      });
+      if (error) return json({ error: "Não foi possível carregar as fotos." }, 500);
+      const pagina = arquivos ?? [];
+      nomes.push(...pagina.filter(a => a.id !== null && a.name !== "thumbs" && a.name !== "entrega").map(a => a.name));
+      if (pagina.length < 1000) break;
+    }
     if (!nomes.length) return json({ fotos: [] });
 
     const caminhos = nomes.map((nome) => `${user.id}/${capaPasta}/thumbs/${nome}`);
-    const { data: thumbs } = await supabase.storage.from("fotos").createSignedUrls(caminhos, 15 * 60);
-    const mapa = new Map((thumbs ?? []).filter((x) => x.path && x.signedUrl).map((x) => [x.path as string, x.signedUrl as string]));
+    const mapa = new Map<string, string>();
+    for (let i = 0; i < caminhos.length; i += 200) {
+      const { data: thumbs, error } = await supabase.storage.from("fotos").createSignedUrls(caminhos.slice(i, i + 200), 15 * 60);
+      if (error) return json({ error: "Não foi possível carregar as prévias." }, 500);
+      for (const x of thumbs ?? []) if (x.path && x.signedUrl) mapa.set(x.path, x.signedUrl);
+    }
     const semThumb = nomes.filter((nome) => !mapa.get(`${user.id}/${capaPasta}/thumbs/${nome}`));
     if (semThumb.length) {
-      const { data: originals } = await supabase.storage.from("fotos").createSignedUrls(
-        semThumb.map((nome) => `${user.id}/${capaPasta}/${nome}`), 15 * 60
-      );
-      for (const x of originals ?? []) if (x.path && x.signedUrl) mapa.set(x.path as string, x.signedUrl as string);
+      for (let i = 0; i < semThumb.length; i += 200) {
+        const { data: originals } = await supabase.storage.from("fotos").createSignedUrls(
+          semThumb.slice(i, i + 200).map(nome => `${user.id}/${capaPasta}/${nome}`), 15 * 60
+        );
+        for (const x of originals ?? []) if (x.path && x.signedUrl) mapa.set(x.path, x.signedUrl);
+      }
     }
     return json({
       fotos: nomes.map((nome) => ({
@@ -107,7 +118,7 @@ export async function GET(req: NextRequest) {
   }
 
   const { data: pastas, error: pastasError } = await supabase.from("galerias")
-    .select("id,slug,titulo,ordem,visivel,etapa,prova,criado_em,entrega_publicada_em")
+    .select("id,slug,titulo,capa,ordem,visivel,etapa,prova,criado_em,entrega_publicada_em")
     .eq("projeto_id", projeto).eq("user_id", user.id)
     .order("ordem", { ascending: true }).order("criado_em", { ascending: true });
   if (pastasError) return json({ error: "Não foi possível carregar as pastas." }, 500);
@@ -289,7 +300,7 @@ type PostBody =
   | { acao: "criar_projeto"; nome?: string; descricao?: string | null; clienteId?: string | null }
   | { acao: "criar_pasta"; projetoId?: string; nome?: string }
   | { acao: "reordenar_pastas"; projetoId?: string; pastas?: string[] }
-  | { acao: "atualizar_pasta"; projetoId?: string; pastaId?: string; nome?: string; visivel?: boolean }
+  | { acao: "atualizar_pasta"; projetoId?: string; pastaId?: string; nome?: string; visivel?: boolean; capaArquivo?: string | null }
   | { acao: "definir_capa_se_vazia"; projetoId?: string; pastaId?: string; arquivo?: string }
   | { acao: "excluir_projeto"; projetoId?: string; confirmacao?: string };
 
@@ -365,7 +376,26 @@ export async function POST(req: NextRequest) {
     const projeto = await projetoDoUsuario(body.projetoId!, user.id);
     if (!projeto) return json({ error: "Projeto não encontrado." }, 404);
 
+    const { data: pastaAtual } = await supabase.from("galerias").select("id")
+      .eq("id", body.pastaId).eq("projeto_id", body.projetoId).eq("user_id", user.id).maybeSingle();
+    if (!pastaAtual) return json({ error: "Pasta não encontrada." }, 404);
     const update: Record<string, unknown> = {};
+    if (body.capaArquivo !== undefined) {
+      if (body.capaArquivo === null) update.capa = null;
+      else {
+        const arquivo = body.capaArquivo;
+        if (typeof arquivo !== "string" || !arquivo || arquivo.length > 300 || arquivo.includes("/") || arquivo.includes("\\") || /[\u0000-\u001f\u007f]/.test(arquivo)) {
+          return json({ error: "Capa inválida." }, 400);
+        }
+        const { data: encontrados, error: storageError } = await supabase.storage.from("fotos")
+          .list(`${user.id}/${body.pastaId}`, { limit: 100, search: arquivo });
+        if (storageError) return json({ error: "Não foi possível verificar a foto." }, 500);
+        if (!(encontrados ?? []).some(item => item.id !== null && item.name === arquivo)) {
+          return json({ error: "A foto escolhida não pertence a esta pasta." }, 404);
+        }
+        update.capa = arquivo;
+      }
+    }
     if (body.nome !== undefined) {
       const nome = body.nome.trim().slice(0, 120);
       if (!nome) return json({ error: "Informe o nome da pasta." }, 400);
@@ -379,7 +409,7 @@ export async function POST(req: NextRequest) {
       .eq("id", body.pastaId)
       .eq("projeto_id", body.projetoId)
       .eq("user_id", user.id)
-      .select("id,titulo,visivel")
+      .select("id,titulo,visivel,capa")
       .maybeSingle();
     if (error) return json({ error: "Não foi possível atualizar a pasta." }, 500);
     if (!pasta) return json({ error: "Pasta não encontrada." }, 404);
