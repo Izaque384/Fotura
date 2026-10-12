@@ -11,11 +11,13 @@ test.describe("product ops polish",()=>{
   expect(dataCalendarioExpirada("2026-09-25",new Date("2026-09-26T02:59:59Z"))).toBe(false);
   expect(dataCalendarioExpirada("2026-09-25",new Date("2026-09-26T03:00:00Z"))).toBe(true);
  });
- test("manual gallery deletion includes final delivery trees and auto-delete stays disabled",()=>{
+ test("manual gallery deletion queues verified cleanup for nested delivery trees and auto-delete stays disabled",()=>{
   const del=read("app/api/galeria/excluir/route.ts");
+  const cleanupTest=read("../tests/storage-cleanup.test.ts");
   const vercel=read("vercel.json");
-  expect(del).toContain("/entrega");
-  expect(del).toContain("/entrega/thumbs");
+  expect(del).toContain("limpezaPendente: true");
+  expect(cleanupTest).toContain("entrega/thumbs/deep/");
+  expect(cleanupTest).toContain("without offset skipping");
   expect(vercel).not.toContain("/api/cron/expirar");
  });
  test("Stripe photo-sale webhook reconciles a session race safely",()=>{
