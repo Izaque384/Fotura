@@ -26,6 +26,7 @@ function UploadContent(){
  const galeriaFixa=searchParams.get("galeria"),projetoInicial=searchParams.get("projeto"),clienteInicial=searchParams.get("cliente");
  const[carregando,setCarregando]=useState(true),[enviando,setEnviando]=useState(false),[mensagem,setMensagem]=useState(""),[erro,setErro]=useState(false),[arquivos,setArquivos]=useState<File[]>([]),[arquivosRejeitados,setArquivosRejeitados]=useState<ArquivoRejeitado[]>([]),[nomeGaleria,setNomeGaleria]=useState(""),[tituloTravado,setTituloTravado]=useState(""),[link,setLink]=useState(""),[galeriaDestinoId,setGaleriaDestinoId]=useState<string|null>(galeriaFixa),[galeriaInvalida,setGaleriaInvalida]=useState(false),[progresso,setProgresso]=useState(0),[processadas,setProcessadas]=useState(0),[totalEnvio,setTotalEnvio]=useState(0);
  const[clientes,setClientes]=useState<Cliente[]>([]),[clienteId,setClienteId]=useState(""),[novoCliente,setNovoCliente]=useState(false),[clienteNome,setClienteNome]=useState(""),[clienteEmail,setClienteEmail]=useState(""),[clienteTelefone,setClienteTelefone]=useState(""),[online,setOnline]=useState(true),[arrastandoArquivos,setArrastandoArquivos]=useState(false),[projetoId,setProjetoId]=useState(""),[projetoRef,setProjetoRef]=useState(""),[projetoNome,setProjetoNome]=useState("");
+ const seletorAberto=useRef(false);
  const nomesStorage=useRef<Map<File,string>>(new Map()),progressoBytes=useRef<Map<string,number>>(new Map()),totalBytes=useRef(0);
  useEffect(()=>{let ativo=true;(async()=>{if(!galeriaFixa){router.replace("/dashboard/projetos");return}const{data}=await supabase.auth.getUser();if(!data.user){router.replace("/login");return}const uid=data.user.id;const{data:cs}=await supabase.from("clientes").select("id,nome,email,telefone").eq("user_id",uid).order("nome");const listaClientes=(cs??[]) as Cliente[];if(ativo)setClientes(listaClientes);const{data:g}=await supabase.from("galerias").select("titulo,cliente_id,projeto_id").eq("id",galeriaFixa).eq("user_id",uid).maybeSingle();if(!ativo)return;if(!g||!g.projeto_id||(projetoInicial&&g.projeto_id!==projetoInicial)){setGaleriaInvalida(true);setErro(true);setMensagem("Esta pasta não pertence a um projeto válido.");setCarregando(false);return}const{data:p}=await supabase.from("galeria_projetos").select("id,nome,slug").eq("id",g.projeto_id).eq("user_id",uid).maybeSingle();if(!p){setGaleriaInvalida(true);setErro(true);setMensagem("O projeto desta pasta não foi encontrado.");setCarregando(false);return}setTituloTravado(g.titulo||"Pasta");setClienteId((g.cliente_id as string|null)??"");setProjetoId(String(p.id));setProjetoNome(String(p.nome||"Projeto"));setProjetoRef(publicProjectRef(String(p.slug||"projeto"),String(p.id)));setCarregando(false)})();return()=>{ativo=false}},[router,supabase,galeriaFixa,projetoInicial]);
  useEffect(()=>{const sair=(e:BeforeUnloadEvent)=>{if(!enviando)return;e.preventDefault();e.returnValue=""};window.addEventListener("beforeunload",sair);return()=>window.removeEventListener("beforeunload",sair)},[enviando]);
@@ -54,9 +55,10 @@ function UploadContent(){
   if(enviando)return;setArquivos([]);setArquivosRejeitados([]);nomesStorage.current.clear();progressoBytes.current.clear();setProgresso(0);setProcessadas(0);setTotalEnvio(0);setLink("");setMensagem("");setErro(false);
  }
  async function abrirSeletorFotos(){
-  if(enviando||galeriaInvalida)return;
+  if(enviando||galeriaInvalida||seletorAberto.current)return;
   const seletor=(window as JanelaComSeletorNativo).showOpenFilePicker;
   if(seletor){
+   seletorAberto.current=true;
    try{
     const handles=await seletor.call(window,{multiple:true,excludeAcceptAllOption:true,types:[{description:"Fotos",accept:{"image/jpeg":[".jpg",".jpeg"],"image/png":[".png"],"image/webp":[".webp"]}}]});
     const escolhidos=await Promise.all(handles.map(handle=>handle.getFile()));
@@ -64,7 +66,9 @@ function UploadContent(){
     return;
    }catch(error){
     if(error instanceof DOMException&&error.name==="AbortError")return;
-   }
+    setErro(true);setMensagem("Não foi possível abrir as fotos. Tente novamente.");
+    return;
+   }finally{seletorAberto.current=false}
   }
   inputRef.current?.click();
  }

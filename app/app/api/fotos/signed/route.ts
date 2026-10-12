@@ -188,7 +188,6 @@ export async function GET(req: NextRequest) {
   } else if (modo === "grade") {
     caminhos = lista.map((f) => `${base}/thumbs/${f.name}`);
     caminhos.push(...lista.slice(0, ORIGINAIS_PREASSINADOS_GRADE).map((f) => `${base}/${f.name}`));
-    if (usarFotoHero && capaNome) caminhos.push(`${base}/${capaNome}`);
   } else if (modo === "originais") {
     caminhos = lista.map((f) => `${base}/${f.name}`);
   } else {
@@ -233,7 +232,7 @@ export async function GET(req: NextRequest) {
     return { nome: f.name, url: protegerOriginais ? (thumbAssinada || original) : original, thumb: thumbAssinada || original };
   });
 
-  const fotoCapaUrl = usarFotoHero && capaNome ? (mapa[protegerOriginais ? `${base}/thumbs/${capaNome}` : `${base}/${capaNome}`] ?? null) : null;
+  const fotoCapaUrl = usarFotoHero && capaNome ? (mapa[`${base}/thumbs/${capaNome}`] ?? mapa[`${base}/${capaNome}`] ?? null) : null;
   const marcadorPreset = usarHeroEstudio ? `#fotura-hero-${heroEstilo}` : "";
   const capaUrl = usarFotoHero && fotoCapaUrl
     ? `${fotoCapaUrl}${marcadorPreset}`

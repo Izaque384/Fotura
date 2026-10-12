@@ -42,11 +42,16 @@ export async function GET(req: NextRequest) {
   const protegida = Boolean(g.tem_senha);
   const desbloqueada = !protegida || temAcessoGaleria(req, galeria);
 
-  const { data: perfil, error: perfilError } = await supabase
-    .from("perfis")
-    .select("nome_estudio,logo_url,cor_hero,hero_galeria_ativo,hero_galeria_estilo,stripe_recebimentos_ativo")
-    .eq("id", g.user_id)
-    .maybeSingle();
+  const [{ data: perfil, error: perfilError }, { data: assinatura }, selecaoRes] = await Promise.all([
+    supabase.from("perfis")
+      .select("nome_estudio,logo_url,cor_hero,hero_galeria_ativo,hero_galeria_estilo,stripe_recebimentos_ativo")
+      .eq("id", g.user_id).maybeSingle(),
+    supabase.from("assinaturas").select("plano_codigo,status")
+      .eq("user_id", g.user_id).maybeSingle(),
+    desbloqueada && !linkExpirado
+      ? supabase.from("selecoes").select("fotos,finalizada,comentarios").eq("galeria", galeria).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
 
   if (perfilError) {
     console.error("[public-gallery] failed to load studio profile", {
@@ -56,11 +61,6 @@ export async function GET(req: NextRequest) {
     return json({ error: "Não foi possível carregar a galeria." }, 500);
   }
 
-  const { data: assinatura } = await supabase
-    .from("assinaturas")
-    .select("plano_codigo,status")
-    .eq("user_id", g.user_id)
-    .maybeSingle();
   const planoPago = Boolean(
     assinatura &&
     ["active","trialing","past_due"].includes(String(assinatura.status)) &&
@@ -76,11 +76,7 @@ export async function GET(req: NextRequest) {
 
   let selecao: { fotos: string[]; finalizada: boolean; comentarios: Record<string, string> } | null = null;
   if (desbloqueada && !linkExpirado) {
-    const { data: s, error: selecaoError } = await supabase
-      .from("selecoes")
-      .select("fotos,finalizada,comentarios")
-      .eq("galeria", galeria)
-      .maybeSingle();
+    const { data: s, error: selecaoError } = selecaoRes;
 
     if (selecaoError) {
       console.error("[public-gallery] failed to load selection", {

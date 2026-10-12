@@ -333,3 +333,32 @@ test("watermark endpoint rejeita token inválido sem tocar no Storage", async ({
   expect(response.status()).toBe(401);
   await expect(response.json()).resolves.toMatchObject({ error: "Prévia inválida ou expirada." });
 });
+
+
+test("fotos começam a carregar enquanto os dados da galeria estão pendentes", async ({ page }) => {
+  let liberar!: () => void;
+  const espera = new Promise<void>(resolve => { liberar = resolve; });
+  let fotosSolicitadas = false;
+  await page.route("**/api/galeria/resolve**", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ id: "00000000-0000-4000-8000-000000000001" }),
+  }));
+  await page.route("**/api/galeria/publica**", async route => {
+    await espera;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+      galeria: { titulo: "Galeria paralela", prova: true, limite: 0, desbloqueada: true, linkExpirado: false },
+      perfil: { nome: "Estúdio", logo: null, cor: null }, selecao: null,
+    }) });
+  });
+  await page.route("**/api/fotos/signed**", async route => {
+    fotosSolicitadas = true;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+      fotos: [{ nome: "foto.jpg", url: foto("Original"), thumb: foto("Prévia") }], capaUrl: null,
+    }) });
+  });
+  await page.goto("/g/00000000-0000-4000-8000-000000000001");
+  try { await expect.poll(() => fotosSolicitadas).toBe(true); }
+  finally { liberar(); }
+  await expect(page.getByRole("heading", { name: "Galeria paralela" })).toBeVisible();
+  await expect(page.locator(".gc-grid-img")).toHaveAttribute("src", foto("Prévia"));
+});
