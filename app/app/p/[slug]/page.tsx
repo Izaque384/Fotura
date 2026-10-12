@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { GaleriaClienteView, type ProjectClientContext } from "../../g/[slug]/page";
+import PublicProjectHero from "../../components/PublicProjectHero";
 
 type ProjetoPublico = {
   id:string;
@@ -76,7 +77,10 @@ export default function ProjetoClientePage(){
     return{
       id:dados.projeto.id,
       nome:dados.projeto.nome,
+      descricao:dados.projeto.descricao,
       capaUrl:dados.projeto.capaUrl,
+      studioName:dados.perfil.nome,
+      heroColor:dados.perfil.cor||"#F0EDF7",
       publicUrl:typeof window==="undefined"?"":`${window.location.origin}/p/${dados.projeto.publicRef}`,
       pastas:dados.pastas.map(p=>({id:p.id,titulo:p.titulo})),
       pastaAtivaId:pastaAtiva,
@@ -98,7 +102,7 @@ export default function ProjetoClientePage(){
 function ProjetoHome({dados,onOpen}:{dados:Payload;onOpen:(id:string)=>void}){
   const cor=dados.perfil.cor||"#F0EDF7";
   const statusGaleria=(etapa:string)=>etapa==="entrega"?"Entrega disponível":etapa==="preparando_entrega"?"Em preparação":etapa==="selecao_finalizada"?"Seleção concluída":"Galeria";
-  return <div className="pc-home"><style>{css}</style><header className="pc-home-hero" style={{backgroundColor:cor}}>{dados.projeto.capaUrl&&<div className="pc-home-hero-bg" style={{backgroundImage:`url("${dados.projeto.capaUrl}")`}}/>}<div className="pc-home-hero-wrap"><div className="pc-home-info"><div>{dados.perfil.nome||"PROJETO"}</div><h1>{dados.projeto.nome}</h1>{dados.projeto.descricao&&<p>{dados.projeto.descricao}</p>}</div></div></header><main className="pc-home-main"><div className="pc-home-head"><div className="pc-home-strip-identity">{dados.perfil.logo&&<img className="pc-strip-logo" src={dados.perfil.logo} alt={dados.perfil.nome||"Logo do fotógrafo"}/>}<div><span>{dados.perfil.nome||"GALERIAS DO PROJETO"}</span><h2>Escolha uma galeria</h2><p>Navegue pelos diferentes momentos deste projeto.</p></div></div><small>{dados.pastas.length} {dados.pastas.length===1?"galeria":"galerias"}</small></div><div className={"pc-galleries"+(dados.pastas.length===1?" single":"")}>{dados.pastas.map((p,i)=><button className="pc-gallery-card" key={p.id} onClick={()=>onOpen(p.id)} aria-label={`Abrir galeria ${p.titulo}`}><div className="pc-gallery-thumb">{p.thumbnailUrl?<img src={p.thumbnailUrl} alt="" loading="lazy" draggable={false}/>:<div className="pc-gallery-placeholder"><span>{String(i+1).padStart(2,"0")}</span><b>{dados.projeto.nome}</b></div>}<div className="pc-gallery-shade"/><span className="pc-gallery-status">{statusGaleria(p.etapa)}</span><span className="pc-gallery-index">{String(i+1).padStart(2,"0")}</span></div><div className="pc-gallery-copy"><div><strong>{p.titulo}</strong><span>Ver galeria</span></div><i aria-hidden="true">→</i></div></button>)}</div><div className="pc-home-footer">Feito com <b>Fotura</b></div></main></div>
+  return <div className="pc-home"><style>{css}</style><PublicProjectHero color={cor} imageUrl={dados.projeto.capaUrl} studioName={dados.perfil.nome} title={dados.projeto.nome} description={dados.projeto.descricao}/><main className="pc-home-main"><div className="pc-home-head"><div className="pc-home-strip-identity">{dados.perfil.logo&&<img className="pc-strip-logo" src={dados.perfil.logo} alt={dados.perfil.nome||"Logo do fotógrafo"}/>}<div><span>{dados.perfil.nome||"GALERIAS DO PROJETO"}</span><h2>Escolha uma galeria</h2><p>Navegue pelos diferentes momentos deste projeto.</p></div></div><small>{dados.pastas.length} {dados.pastas.length===1?"galeria":"galerias"}</small></div><div className={"pc-galleries"+(dados.pastas.length===1?" single":"")}>{dados.pastas.map((p,i)=><button className="pc-gallery-card" key={p.id} onClick={()=>onOpen(p.id)} aria-label={`Abrir galeria ${p.titulo}`}><div className="pc-gallery-thumb">{p.thumbnailUrl?<img src={p.thumbnailUrl} alt="" loading="lazy" draggable={false}/>:<div className="pc-gallery-placeholder"><span>{String(i+1).padStart(2,"0")}</span><b>{dados.projeto.nome}</b></div>}<div className="pc-gallery-shade"/><span className="pc-gallery-status">{statusGaleria(p.etapa)}</span><span className="pc-gallery-index">{String(i+1).padStart(2,"0")}</span></div><div className="pc-gallery-copy"><div><strong>{p.titulo}</strong><span>Ver galeria</span></div><i aria-hidden="true">→</i></div></button>)}</div><div className="pc-home-footer">Feito com <b>Fotura</b></div></main></div>
 }
 
 function Estado({titulo,texto}:{titulo?:string;texto:string}){
