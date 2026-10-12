@@ -93,7 +93,7 @@ test.describe("arquitetura centrada em projetos", () => {
 
     expect(workspace).toContain("Arraste para reordenar.");
     expect(workspace).toContain("Renomear");
-    expect(workspace).toContain('x.visivel?"Ocultar":"Publicar"');
+    expect(workspace).toContain('x.visivel?"Ocultar do cliente":"Publicar para o cliente"');
     expect(workspace).toContain("Excluir pasta");
     expect(workspace).toContain("ConfirmDialog");
 
