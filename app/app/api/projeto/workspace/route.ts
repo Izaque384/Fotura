@@ -64,6 +64,37 @@ async function urlCapa(projeto: {
   return data?.signedUrl ?? null;
 }
 
+async function urlsCapasPastas(userId: string, pastas: Array<{ id: unknown; capa: unknown }>) {
+  const comCapa = pastas
+    .map((g) => ({ id: String(g.id), capa: typeof g.capa === "string" && g.capa ? g.capa : null }))
+    .filter((g): g is { id: string; capa: string } => Boolean(g.capa));
+  const mapa = new Map<string, string>();
+  if (!comCapa.length) return mapa;
+
+  const supabase = createServiceClient();
+  const thumbs = comCapa.map((g) => `${userId}/${g.id}/thumbs/${g.capa}`);
+  const thumbPorPasta = new Map(comCapa.map((g) => [`${userId}/${g.id}/thumbs/${g.capa}`, g.id]));
+  const { data: thumbsAssinadas } = await supabase.storage.from("fotos").createSignedUrls(thumbs, 60 * 60);
+  for (const item of thumbsAssinadas ?? []) {
+    if (!item.path || !item.signedUrl) continue;
+    const pastaId = thumbPorPasta.get(item.path);
+    if (pastaId) mapa.set(pastaId, item.signedUrl);
+  }
+
+  const semThumb = comCapa.filter((g) => !mapa.has(g.id));
+  if (semThumb.length) {
+    const originais = semThumb.map((g) => `${userId}/${g.id}/${g.capa}`);
+    const originalPorPasta = new Map(semThumb.map((g) => [`${userId}/${g.id}/${g.capa}`, g.id]));
+    const { data: originaisAssinados } = await supabase.storage.from("fotos").createSignedUrls(originais, 60 * 60);
+    for (const item of originaisAssinados ?? []) {
+      if (!item.path || !item.signedUrl) continue;
+      const pastaId = originalPorPasta.get(item.path);
+      if (pastaId) mapa.set(pastaId, item.signedUrl);
+    }
+  }
+  return mapa;
+}
+
 export async function GET(req: NextRequest) {
   const user = await usuario(req);
   if (!user) return json({ error: "Não autorizado." }, 401);
@@ -125,7 +156,7 @@ export async function GET(req: NextRequest) {
 
   const ids = (pastas ?? []).map((g) => String(g.id));
   const refs = (pastas ?? []).map((g) => publicGalleryRef(String(g.slug || "pasta"), String(g.id)));
-  const [clienteR, clientesR, selecoesR, vendasR, eventosR, presetsR, capa] = await Promise.all([
+  const [clienteR, clientesR, selecoesR, vendasR, eventosR, presetsR, capa, capasPastas] = await Promise.all([
     p.cliente_id ? supabase.from("clientes").select("id,nome,email,telefone").eq("id", p.cliente_id).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     supabase.from("clientes").select("id,nome,email,telefone").eq("user_id", user.id).order("nome"),
     ids.length ? supabase.from("selecoes").select("galeria,fotos,finalizada,comentarios,atualizado_em").in("galeria", ids) : Promise.resolve({ data: [] }),
@@ -133,6 +164,7 @@ export async function GET(req: NextRequest) {
     ids.length ? supabase.from("produto_eventos").select("id,evento,entidade_id,detalhes,criado_em,sessao_id").eq("entidade", "galeria").in("entidade_id", [...ids, ...refs]).order("criado_em", { ascending: false }).limit(150) : Promise.resolve({ data: [] }),
     supabase.from("galeria_presets").select("id,nome,config,criado_em,atualizado_em").eq("user_id", user.id).order("atualizado_em", { ascending: false }),
     urlCapa(p as typeof p & { user_id: string }),
+    urlsCapasPastas(user.id, pastas ?? []),
   ]);
 
   const contagens = await Promise.all((pastas ?? []).map((g) => contarFotos(user.id, String(g.id))));
@@ -152,6 +184,7 @@ export async function GET(req: NextRequest) {
       ...g,
       qtd: contagens[i] ?? 0,
       publicRef: refs[i],
+      capaUrl: capasPastas.get(String(g.id)) ?? capa ?? null,
       selecao: selecaoPorPasta.get(String(g.id)) ?? null,
     })),
     vendas: vendasR.data ?? [],
