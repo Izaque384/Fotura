@@ -367,7 +367,7 @@ test("fotos começam a carregar enquanto os dados da galeria estão pendentes", 
 
 
 for (const width of [390, 1440]) {
-  test(`logo fica na faixa branca e capa da pasta prevalece (${width}px)`, async ({ page }) => {
+  test(`logo fica na faixa branca e hero global do projeto prevalece (${width}px)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     const pastaId = "00000000-0000-4000-8000-000000000001";
     await page.route("**/api/projeto/publico**", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
@@ -387,7 +387,7 @@ for (const width of [390, 1440]) {
     await expect(page.locator(".gc-album-logo img")).toBeVisible({timeout:15000});
     await expect(page.locator(".gc-hero img")).toHaveCount(0);
     await expect(page.getByRole("combobox", { name: "Trocar galeria" })).toHaveValue(pastaId);
-    await expect(page.locator(".gc-hero-bg")).toHaveAttribute("style", /Pasta/);
+    await expect(page.locator(".pph-bg")).toHaveAttribute("style", /Projeto/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.screenshot({ path: `/tmp/fotura-cover-strip-${width}.png`, fullPage: false });
   });
