@@ -24,21 +24,13 @@ async function listarFinais(
   userId: string,
   galeriaId: string
 ) {
-  const arquivos: string[] = [];
-  let offset = 0;
-  while (true) {
-    const { data, error } = await supabase.storage.from("fotos").list(`${userId}/${galeriaId}/entrega`, {
-      limit: 1000,
-      offset,
-      sortBy: { column: "created_at", order: "asc" },
-    });
-    if (error) throw error;
-    const pagina = data ?? [];
-    arquivos.push(...pagina.filter((item) => item.id !== null && item.name !== "thumbs").map((item) => item.name));
-    if (pagina.length < 1000) break;
-    offset += 1000;
-  }
-  return arquivos;
+  const { data, error } = await supabase.rpc("listar_fotos_galeria_storage", {
+    p_galeria: galeriaId,
+    p_user: userId,
+    p_variante: "entrega",
+  });
+  if (error) throw error;
+  return (data ?? []).map((item: { nome?: unknown }) => String(item.nome || "")).filter(Boolean);
 }
 
 export async function GET(req: NextRequest) {

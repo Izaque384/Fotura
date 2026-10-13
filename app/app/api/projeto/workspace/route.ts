@@ -37,19 +37,12 @@ async function projetoDoUsuario(projeto: string, userId: string) {
 
 async function contarFotos(userId: string, pasta: string) {
   const supabase = createServiceClient();
-  let total = 0;
-  let offset = 0;
-  while (true) {
-    const { data, error } = await supabase.storage.from("fotos").list(`${userId}/${pasta}`, {
-      limit: 1000, offset, sortBy: { column: "created_at", order: "asc" },
-    });
-    if (error) return 0;
-    const pagina = data ?? [];
-    total += pagina.filter((item) => item.id !== null && item.name !== "thumbs" && item.name !== "entrega").length;
-    if (pagina.length < 1000) break;
-    offset += 1000;
-  }
-  return total;
+  const { data, error } = await supabase.rpc("listar_fotos_galeria_storage", {
+    p_galeria: pasta,
+    p_user: userId,
+    p_variante: "principal",
+  });
+  return error || !Array.isArray(data) ? 0 : data.length;
 }
 
 async function urlCapa(projeto: {

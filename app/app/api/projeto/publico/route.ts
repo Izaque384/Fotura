@@ -64,32 +64,33 @@ export async function GET(req: NextRequest) {
 
   const miniaturas = new Map<string, string | null>();
   if (desbloqueada && !linkExpirado && (pastas?.length ?? 0) > 0) {
-    const resolvidas = await Promise.all((pastas ?? []).map(async (galeria) => {
-      const galeriaId = String(galeria.id);
-      const base = `${p.user_id}/${galeriaId}`;
-      const { data: arquivos } = await supabase.storage.from("fotos").list(base, {
-        limit: 40,
-        offset: 0,
-        sortBy: { column: "created_at", order: "asc" },
+    const arquivosPorGaleria = new Map<string,string>();
+    await Promise.all((pastas ?? []).map(async (galeria) => {
+      const galeriaId=String(galeria.id);
+      const capa=typeof galeria.capa==="string"&&galeria.capa?galeria.capa:null;
+      if(capa){arquivosPorGaleria.set(galeriaId,capa);return}
+      const {data}=await supabase.rpc("listar_fotos_galeria_storage",{
+        p_galeria:galeriaId,
+        p_user:String(p.user_id),
+        p_variante:"principal",
       });
-      const candidatas = (arquivos ?? []).filter(item => item.id !== null && item.name !== "thumbs" && item.name !== "entrega");
-      // A selected cover may be beyond the first page of the gallery.
-      const nomeCapa = (galeria.capa as string | null) || candidatas[0]?.name;
-      if (nomeCapa && galeria.capa) {
-        const { data: capa } = await supabase.storage.from("fotos").list(base, { limit: 100, search: nomeCapa });
-        if (!(capa ?? []).some(item => item.id !== null && item.name === nomeCapa)) {
-          galeria.capa = null;
-        }
-      }
-      const arquivo = galeria.capa ? { name: String(galeria.capa) } : candidatas[0];
-      if (!arquivo) return [galeriaId, null] as const;
-
-      const caminhos = [`${base}/thumbs/${arquivo.name}`, `${base}/${arquivo.name}`];
-      const { data: signed } = await supabase.storage.from("fotos").createSignedUrls(caminhos, 60 * 60);
-      const url = caminhos.map(caminho => signed?.find(item => item.path === caminho)?.signedUrl).find(Boolean) ?? null;
-      return [galeriaId, url] as const;
+      const primeira=Array.isArray(data)&&data.length?String((data[0] as {nome?:unknown}).nome||""):"";
+      if(primeira)arquivosPorGaleria.set(galeriaId,primeira);
     }));
-    for (const [galeriaId, url] of resolvidas) miniaturas.set(galeriaId, url);
+
+    const caminhos:string[]=[];
+    for(const [galeriaId,nome] of arquivosPorGaleria){
+      const base=`${p.user_id}/${galeriaId}`;
+      caminhos.push(`${base}/thumbs/${nome}`,`${base}/${nome}`);
+    }
+    const {data:signed}=caminhos.length
+      ? await supabase.storage.from("fotos").createSignedUrls(caminhos,60*60)
+      : {data:[] as Array<{path?:string;signedUrl?:string}>};
+    const mapa=new Map((signed??[]).filter(item=>item.path&&item.signedUrl).map(item=>[item.path!,item.signedUrl!]));
+    for(const [galeriaId,nome] of arquivosPorGaleria){
+      const base=`${p.user_id}/${galeriaId}`;
+      miniaturas.set(galeriaId,mapa.get(`${base}/thumbs/${nome}`)??mapa.get(`${base}/${nome}`)??null);
+    }
   }
 
   const response = baseJson({

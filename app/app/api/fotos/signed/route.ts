@@ -14,7 +14,7 @@ const EXPIRA_SEG = 3600;
 const LISTA_LOTE = 1000;
 const ASSINATURA_LOTE = 200;
 const CONCORRENCIA_ASSINATURA = 3;
-const ORIGINAIS_PREASSINADOS_GRADE = 8;
+const ORIGINAIS_PREASSINADOS_GRADE = 4;
 const STATUS_COM_ACESSO = new Set(["active", "trialing", "past_due"]);
 
 function json(data: unknown, status = 200, retryAfter?: number) {
@@ -108,22 +108,40 @@ export async function GET(req: NextRequest) {
   const heroCor = (perfil?.cor_hero as string | null) ?? "#0b0b1a";
   const usarFotoHero = usarHeroEstudio && Boolean(perfil?.hero_foto_capa_ativo) && plano.recursos.heroFotoGaleria;
 
-  const lista: Array<{ name: string }> = [];
-  let offset = 0;
-  while (true) {
-    const { data: arquivos, error: listError } = await supabase.storage.from("fotos").list(base, {
-      limit: LISTA_LOTE,
-      offset,
-      sortBy: { column: "created_at", order: "asc" },
-    });
-    if (listError) {
-      registrarErro("gallery.signed.storage_list", req, listError, { galeria });
-      return json({ error: "Não foi possível listar a galeria." }, 500);
+  type FotoListada={name:string;largura?:number;altura?:number;bytes?:number;mimeType?:string|null};
+  let lista:FotoListada[]=[];
+  const variante=entregaFinalDeProva?"entrega":"principal";
+  const { data: catalogo, error: catalogoError } = await supabase.rpc("listar_fotos_galeria_storage", {
+    p_galeria: galeria,
+    p_user: dono,
+    p_variante: variante,
+  });
+  if (!catalogoError && Array.isArray(catalogo)) {
+    lista = catalogo.map((item: {nome?:unknown;largura?:unknown;altura?:unknown;bytes?:unknown;mime_type?:unknown}) => ({
+      name: String(item.nome || ""),
+      largura: typeof item.largura === "number" ? item.largura : undefined,
+      altura: typeof item.altura === "number" ? item.altura : undefined,
+      bytes: typeof item.bytes === "number" ? item.bytes : undefined,
+      mimeType: typeof item.mime_type === "string" ? item.mime_type : null,
+    })).filter((item:FotoListada)=>Boolean(item.name));
+  } else {
+    registrarErro("gallery.signed.catalog_fallback", req, catalogoError || new Error("catalog unavailable"), { galeria, variante });
+    let offset=0;
+    while(true){
+      const { data: arquivos, error: listError } = await supabase.storage.from("fotos").list(base, {
+        limit: LISTA_LOTE,
+        offset,
+        sortBy: { column: "created_at", order: "asc" },
+      });
+      if (listError) {
+        registrarErro("gallery.signed.storage_list", req, listError, { galeria });
+        return json({ error: "Não foi possível listar a galeria." }, 500);
+      }
+      const pagina=arquivos??[];
+      lista.push(...pagina.filter((item)=>item.id!==null&&item.name!=="thumbs"&&item.name!=="entrega").map((item)=>({name:item.name})));
+      if(pagina.length<LISTA_LOTE)break;
+      offset+=LISTA_LOTE;
     }
-    const pagina = arquivos ?? [];
-    lista.push(...pagina.filter((f) => f.id !== null && f.name !== "thumbs").map((f) => ({ name: f.name })));
-    if (pagina.length < LISTA_LOTE) break;
-    offset += LISTA_LOTE;
   }
 
   if (lista.length === 0) {
@@ -146,7 +164,7 @@ export async function GET(req: NextRequest) {
       });
       const fotos = lista.map((f) => {
         const url = urlProtegida(f.name);
-        return { nome: f.name, url, thumb: url };
+        return { nome: f.name, url, thumb: url, largura:f.largura, altura:f.altura, bytes:f.bytes, mimeType:f.mimeType };
       });
       const fotoCapaUrl = usarFotoHero && capaNome ? urlProtegida(capaNome) : null;
       const marcadorPreset = usarHeroEstudio ? `#fotura-hero-${heroEstilo}` : "";
@@ -223,13 +241,13 @@ export async function GET(req: NextRequest) {
     const thumbAssinada = mapa[`${base}/thumbs/${f.name}`] ?? "";
     if (modo === "grade") {
       const preview = thumbAssinada || original;
-      return { nome: f.name, url: protegerOriginais ? preview : (original || preview), thumb: preview };
+      return { nome: f.name, url: protegerOriginais ? preview : (original || preview), thumb: preview, largura:f.largura, altura:f.altura, bytes:f.bytes, mimeType:f.mimeType };
     }
     if (modo === "originais") {
       const protegida = protegerOriginais ? (thumbAssinada || original) : original;
-      return { nome: f.name, url: protegida, thumb: protegida };
+      return { nome: f.name, url: protegida, thumb: protegida, largura:f.largura, altura:f.altura, bytes:f.bytes, mimeType:f.mimeType };
     }
-    return { nome: f.name, url: protegerOriginais ? (thumbAssinada || original) : original, thumb: thumbAssinada || original };
+    return { nome: f.name, url: protegerOriginais ? (thumbAssinada || original) : original, thumb: thumbAssinada || original, largura:f.largura, altura:f.altura, bytes:f.bytes, mimeType:f.mimeType };
   });
 
   const fotoCapaUrl = usarFotoHero && capaNome ? (mapa[`${base}/thumbs/${capaNome}`] ?? mapa[`${base}/${capaNome}`] ?? null) : null;

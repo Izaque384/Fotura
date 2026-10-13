@@ -30,7 +30,9 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(workspace).toContain("Configurar capa");
     expect(workspace).toContain("Usar capa do projeto");
     expect(api).toContain("update.capa = arquivo");
-    expect(publicGallery).toContain("meta.capa?(capaPreviewUrl||projectContext.capaUrl)");
+    expect(publicGallery).toContain("imageUrl={projectContext.capaUrl}");
+    expect(publicGallery).toContain("title={projectContext.nome}");
+    expect(publicGallery).toContain("description={null}");
     expect(migration).toContain("drop trigger if exists trg_bloquear_capa_individual_pasta");
   });
 
@@ -48,7 +50,7 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(publicGallery).toContain("gc-gallery-switch");
     expect(publicGallery).not.toContain("gc-folder-nav");
     expect(publicGallery).toContain('{perfil.nome||"Fotógrafo"}');
-    expect(publicGallery).toContain("{projectContext?.nome||meta.titulo}");
+    expect(publicGallery).toContain("title={projectContext.nome}");
     expect(publicApi).toContain('eq("projeto_id", resolvido.id)');
     expect(publicApi).toContain("heroPresetDataUrl");
     expect(publicApi).toContain("estiloHeroEfetivo");
@@ -137,4 +139,45 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(exportRoute).toContain("projetos: projetosRes.data");
     expect(exportRoute).toContain("projeto_id");
   });
+  test("pipeline público de imagens usa catálogo, metadados e módulos isolados", () => {
+    const publicGallery = read("app/g/[slug]/page.tsx");
+    const signedPhotos = read("app/api/fotos/signed/route.ts");
+    const projectApi = read("app/api/projeto/publico/route.ts");
+    const metadataApi = read("app/api/fotos/metadata/route.ts");
+    const upload = read("app/upload/page.tsx");
+    const delivery = read("app/dashboard/entrega/[id]/page.tsx");
+    const cache = read("app/g/[slug]/gallery-image-cache.ts");
+    const masonry = read("app/g/[slug]/gallery-masonry.ts");
+    const tour = read("app/g/[slug]/FirstAccessTour.tsx");
+    const migration = read("../supabase/migrations/20261013100000_gallery_photo_metadata_hardening.sql");
+
+    expect(publicGallery).toContain('from "./gallery-image-cache"');
+    expect(publicGallery).toContain('from "./gallery-masonry"');
+    expect(publicGallery).toContain('from "./gallery-types"');
+    expect(publicGallery).toContain("<FirstAccessTour");
+    expect(publicGallery).toContain('loading={i<4?"eager":"lazy"}');
+    expect(publicGallery).toContain("e.touches.length!==1");
+    expect(cache).toContain("44*60*1000");
+    expect(masonry).toContain("alturas[destino]");
+    expect(tour).toContain("PASSO {step} DE 2");
+
+    expect(signedPhotos).toContain('rpc("listar_fotos_galeria_storage"');
+    expect(signedPhotos).toContain("ORIGINAIS_PREASSINADOS_GRADE = 4");
+    expect(projectApi).toContain('rpc("listar_fotos_galeria_storage"');
+    expect(metadataApi).toContain('from("galeria_foto_metadata").upsert');
+    expect(upload).toContain("gerarMiniaturaComMetadata");
+    expect(upload).toContain('"principal",metadados');
+    expect(delivery).toContain('"entrega",metadados');
+    expect(migration).toContain("Storage remains authoritative");
+    expect(migration).toContain("galeria_foto_metadata");
+  });
+
+  test("Open Graph do projeto depende apenas do projeto e identidade do fotógrafo", () => {
+    const og = read("app/p/[slug]/opengraph-image.tsx");
+    expect(og).toContain('select("nome_estudio,logo_url,cor_hero")');
+    expect(og).toContain("backgroundColor: cor");
+    expect(og).toContain("projeto.nome");
+    expect(og).not.toContain("cliente_id");
+  });
+
 });

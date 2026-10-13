@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { GaleriaClienteView, type ProjectClientContext } from "../../g/[slug]/page";
+import { GaleriaClienteView } from "../../g/[slug]/page";
+import type { ProjectClientContext } from "../../g/[slug]/gallery-types";
 import PublicProjectHero from "../../components/PublicProjectHero";
 
 type ProjetoPublico = {
