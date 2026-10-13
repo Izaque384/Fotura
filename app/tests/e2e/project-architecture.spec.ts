@@ -30,7 +30,9 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(workspace).toContain("Configurar capa");
     expect(workspace).toContain("Usar capa do projeto");
     expect(api).toContain("update.capa = arquivo");
-    expect(publicGallery).toContain("meta.capa?(capaPreviewUrl||projectContext.capaUrl)");
+    expect(publicGallery).toContain("imageUrl={projectContext.capaUrl}");
+    expect(publicGallery).toContain("title={projectContext.nome}");
+    expect(publicGallery).toContain("description={null}");
     expect(migration).toContain("drop trigger if exists trg_bloquear_capa_individual_pasta");
   });
 
@@ -48,7 +50,7 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(publicGallery).toContain("gc-gallery-switch");
     expect(publicGallery).not.toContain("gc-folder-nav");
     expect(publicGallery).toContain('{perfil.nome||"Fotógrafo"}');
-    expect(publicGallery).toContain("{projectContext?.nome||meta.titulo}");
+    expect(publicGallery).toContain("title={projectContext.nome}");
     expect(publicApi).toContain('eq("projeto_id", resolvido.id)');
     expect(publicApi).toContain("heroPresetDataUrl");
     expect(publicApi).toContain("estiloHeroEfetivo");
