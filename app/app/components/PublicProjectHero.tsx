@@ -28,11 +28,11 @@ const css=`
 .pph-info{width:min(1120px,100%);color:#fff}
 .pph-info>div{font-size:clamp(18px,1.35vw,24px);font-weight:500;opacity:.78}
 .pph-info h1{max-width:1180px;margin:24px auto 28px;font-size:clamp(54px,5vw,82px);line-height:1.04;font-weight:500;letter-spacing:-.045em}
-.pph-info p{max-width:980px;margin:0 auto;font-size:clamp(16px,1.1vw,20px);line-height:1.5;opacity:.9}
+.pph-info p{max-width:900px;margin:0 auto;font-size:clamp(14px,.95vw,17px);line-height:1.55;opacity:.88}
 @media(max-width:720px){
   .pph-wrap{min-height:34vh;padding:44px 20px;text-align:center}
   .pph-info>div{font-size:clamp(18px,4.2vw,24px)}
   .pph-info h1{margin:16px auto 20px;font-size:clamp(30px,9vw,46px);line-height:1.08}
-  .pph-info p{max-width:620px;margin-inline:auto;font-size:clamp(15px,3.6vw,19px);line-height:1.55}
+  .pph-info p{max-width:560px;margin-inline:auto;font-size:clamp(13px,3.2vw,16px);line-height:1.55}
 }
 `;
