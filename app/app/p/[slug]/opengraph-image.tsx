@@ -61,7 +61,6 @@ export default async function Image({
   const texto = corTexto(cor);
   const textoSuave = texto === "#ffffff" ? "rgba(255,255,255,.76)" : "rgba(23,24,42,.7)";
   const linha = texto === "#ffffff" ? "rgba(255,255,255,.24)" : "rgba(23,24,42,.16)";
-  const painel = texto === "#ffffff" ? "rgba(255,255,255,.08)" : "rgba(255,255,255,.3)";
   const inicial = estudio.trim().charAt(0).toUpperCase() || "F";
 
   return new ImageResponse(
@@ -75,20 +74,11 @@ export default async function Image({
           overflow: "hidden",
           alignItems: "center",
           justifyContent: "center",
-          background: cor,
+          backgroundColor: cor,
           color: texto,
           fontFamily: "Arial, sans-serif",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            inset: 30,
-            border: `1px solid ${linha}`,
-            borderRadius: 34,
-          }}
-        />
-
         <div
           style={{
             width: "100%",
@@ -109,9 +99,6 @@ export default async function Image({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              borderRadius: 36,
-              background: painel,
-              border: `1px solid ${linha}`,
             }}
           >
             {logo ? (
