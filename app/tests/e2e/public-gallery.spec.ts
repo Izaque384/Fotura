@@ -392,3 +392,129 @@ for (const width of [390, 1440]) {
     await page.screenshot({ path: `/tmp/fotura-cover-strip-${width}.png`, fullPage: false });
   });
 }
+
+
+test("trocar de pasta reutiliza a grade assinada já carregada na sessão", async ({ page }) => {
+  const projetoId = "33333333-3333-4333-8333-333333333333";
+  const pastaA = "11111111-1111-4111-8111-111111111111";
+  const pastaB = "22222222-2222-4222-8222-222222222222";
+  const chamadas: Record<string, number> = {};
+
+  await page.route("**/api/projeto/publico**", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      projeto: { id: projetoId, nome: "Projeto Cache", descricao: null, publicRef: "projeto-cache", capaUrl: null, temSenha: false, desbloqueado: true, linkExpirado: false },
+      perfil: { nome: "Estúdio Cache", logo: null, cor: "#25213c" },
+      pastas: [
+        { id: pastaA, titulo: "Pasta A", ordem: 0, etapa: "entrega", thumbnailUrl: foto("A") },
+        { id: pastaB, titulo: "Pasta B", ordem: 1, etapa: "entrega", thumbnailUrl: foto("B") },
+      ],
+    }),
+  }));
+  await page.route("**/api/galeria/publica**", route => {
+    const id = new URL(route.request().url()).searchParams.get("galeria")!;
+    return route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({
+        galeria: {
+          titulo: id === pastaA ? "Pasta A" : "Pasta B", capa: null, prova: false, limite: 0, prazo: null, linkAte: null,
+          temSenha: false, desbloqueada: true, linkExpirado: false, etapa: "entrega",
+          downloadAtivo: true, downloadIndividual: true, downloadCompleto: true, downloadTamanho: "original",
+          downloadPinNecessario: false, watermarkAtivo: false, watermarkTexto: null, watermarkOpacidade: 22, assistenteAtivo: false,
+        },
+        perfil: { nome: "Estúdio Cache", logo: null, cor: "#25213c" }, selecao: null,
+      }),
+    });
+  });
+  await page.route("**/api/fotos/signed**", route => {
+    const url = new URL(route.request().url());
+    const id = url.searchParams.get("galeria")!;
+    if (url.searchParams.get("modo") === "grade") chamadas[id] = (chamadas[id] ?? 0) + 1;
+    return route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({ fotos: [{ nome: id + ".jpg", url: foto(id), thumb: foto(id), largura: 1200, altura: 800 }], capaUrl: null }),
+    });
+  });
+  await page.route("**/api/analytics/event", route => route.fulfill({ status: 200, body: "{}" }));
+
+  await page.goto(`/p/projeto-cache?pasta=${pastaA}`);
+  const seletor = page.getByRole("combobox", { name: "Trocar galeria" });
+  await expect(seletor).toHaveValue(pastaA);
+  await seletor.selectOption(pastaB);
+  await expect(seletor).toHaveValue(pastaB);
+  await seletor.selectOption(pastaA);
+  await expect(seletor).toHaveValue(pastaA);
+  await expect.poll(() => chamadas[pastaA]).toBe(1);
+  await expect.poll(() => chamadas[pastaB]).toBe(1);
+});
+
+test("tutorial do projeto ensina apenas seletor e download em lote", async ({ page }) => {
+  const projetoId = "44444444-4444-4444-8444-444444444444";
+  const pasta = "55555555-5555-4555-8555-555555555555";
+
+  await page.route("**/api/projeto/publico**", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      projeto: { id: projetoId, nome: "Projeto Tutorial", descricao: null, publicRef: "projeto-tutorial", capaUrl: null, temSenha: false, desbloqueado: true, linkExpirado: false },
+      perfil: { nome: "Estúdio Tutorial", logo: null, cor: "#25213c" },
+      pastas: [{ id: pasta, titulo: "Galeria Única", ordem: 0, etapa: "entrega", thumbnailUrl: foto("Capa") }],
+    }),
+  }));
+  await page.route("**/api/galeria/publica**", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      galeria: {
+        titulo: "Galeria Única", capa: null, prova: false, limite: 0, prazo: null, linkAte: null,
+        temSenha: false, desbloqueada: true, linkExpirado: false, etapa: "entrega",
+        downloadAtivo: true, downloadIndividual: true, downloadCompleto: true, downloadTamanho: "original",
+        downloadPinNecessario: false, watermarkAtivo: false, watermarkTexto: null, watermarkOpacidade: 22, assistenteAtivo: true,
+      },
+      perfil: { nome: "Estúdio Tutorial", logo: null, cor: "#25213c" }, selecao: null,
+    }),
+  }));
+  await page.route("**/api/fotos/signed**", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ fotos: [{ nome: "foto.jpg", url: foto("Foto"), thumb: foto("Foto"), largura: 1200, altura: 800 }], capaUrl: null }),
+  }));
+  await page.route("**/api/analytics/event", route => route.fulfill({ status: 200, body: "{}" }));
+
+  await page.goto(`/p/projeto-tutorial?pasta=${pasta}`);
+  const tutorial = page.getByRole("dialog", { name: "Tutorial rápido" });
+  await expect(tutorial).toBeVisible();
+  await expect(tutorial.getByText("Troque de galeria aqui")).toBeVisible();
+  await tutorial.getByRole("button", { name: /Próximo/ }).click();
+  await expect(tutorial.getByText("Baixe a galeria inteira")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Baixar todas" })).toBeVisible();
+  await tutorial.getByRole("button", { name: /Concluir/ }).click();
+  await expect(tutorial).toHaveCount(0);
+});
+
+test("masonry mantém todas as colunas ocupadas quando há fotos suficientes", async ({ page }) => {
+  await page.route("**/api/galeria/publica**", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      galeria: {
+        titulo: "Masonry", capa: null, prova: false, limite: 0, prazo: null, linkAte: null,
+        temSenha: false, desbloqueada: true, linkExpirado: false, etapa: "entrega",
+        downloadAtivo: true, downloadIndividual: true, downloadCompleto: true, downloadTamanho: "original",
+        downloadPinNecessario: false, watermarkAtivo: false, watermarkTexto: null, watermarkOpacidade: 22, assistenteAtivo: false,
+      },
+      perfil: { nome: "Estúdio", logo: null, cor: "#25213c" }, selecao: null,
+    }),
+  }));
+  await page.route("**/api/fotos/signed**", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      fotos: Array.from({ length: 8 }, (_, i) => ({
+        nome: `foto-${i}.jpg`, url: foto(`Foto ${i}`), thumb: foto(`Foto ${i}`),
+        largura: i % 3 === 0 ? 800 : 1200, altura: i % 3 === 0 ? 1200 : 800,
+      })),
+      capaUrl: null,
+    }),
+  }));
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/g/66666666-6666-4666-8666-666666666666");
+  await expect(page.locator(".gc-grid-col")).toHaveCount(4);
+  for (let i = 0; i < 4; i++) await expect(page.locator(".gc-grid-col").nth(i).locator(".gc-card")).not.toHaveCount(0);
+});
