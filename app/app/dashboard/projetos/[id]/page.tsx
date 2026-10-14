@@ -304,18 +304,18 @@ const css=`
 .pw-state{min-height:100vh;display:grid;place-items:center;color:#74788f}
 .pw-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:20px}
 .pw-head-copy{min-width:0}
-.pw-back{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;color:#675b9d;font:700 11px inherit;cursor:pointer}
+.pw-back{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;color:#675b9d;font-size:var(--ft-font-sm);font-weight:700;font-family:inherit;cursor:pointer}
 .pw-head p{margin:10px 0 5px;color:#6f76a0;font-size:10px;font-weight:700;letter-spacing:1.8px}
 .pw-head h1{max-width:760px;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:30px;font-weight:600;letter-spacing:-.65px}
 .pw-status{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
 .pw-status span{padding:4px 7px;border:1px solid #ddd7e8;border-radius:999px;background:rgba(250,248,253,.7);color:#74788c;font-size:var(--ft-font-xs);font-weight:700}
 .pw-head-actions{display:flex;align-items:center;gap:7px;flex:none}
-.pw-head-actions>button,.pw-section button,.pw-head-buttons button,.pw-overview-card button{min-height:36px;border:1px solid #d0c7e2;border-radius:var(--ft-radius-control);background:var(--ft-surface);color:#4a5067;padding:0 11px;font:700 10.5px inherit;text-decoration:none;cursor:pointer}
+.pw-head-actions>button,.pw-section button,.pw-head-buttons button,.pw-overview-card button{min-height:36px;border:1px solid #d0c7e2;border-radius:var(--ft-radius-control);background:var(--ft-surface);color:#4a5067;padding:0 11px;font-size:var(--ft-font-sm);font-weight:700;font-family:inherit;text-decoration:none;cursor:pointer}
 .pw-head-actions button:disabled,.pw-section button:disabled,.pw-overview-card button:disabled{opacity:.48;cursor:default}
 .primary{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0!important;background:linear-gradient(90deg,var(--ft-brand-blue),var(--ft-brand-purple))!important;color:#fff!important}
 .pw-notice{margin-bottom:14px;padding:9px 11px;border:1px solid #d7cee8;border-radius:var(--ft-radius-control);background:#f8f5fb;color:#5e637a;font-size:var(--ft-font-sm)}
 .pw-tabs{display:flex;align-items:center;gap:22px;overflow:auto;margin-bottom:18px;border-bottom:1px solid var(--ft-border)}
-.pw-tabs button{position:relative;flex:none;border:0;background:transparent;padding:10px 1px 11px;color:#777c91;font:700 10.5px inherit;cursor:pointer}
+.pw-tabs button{position:relative;flex:none;border:0;background:transparent;padding:10px 1px 11px;color:#777c91;font-size:var(--ft-font-sm);font-weight:700;font-family:inherit;cursor:pointer}
 .pw-tabs button.on{color:#2e354d}
 .pw-tabs button.on:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;border-radius:999px;background:#5d67a7}
 .pw-tabs button.secondary{margin-left:auto;color:var(--ft-accent-ink)}
@@ -324,7 +324,7 @@ const css=`
 .pw-more:hover,.pw-more.open{border-color:#bfb4d8!important;background:#f1edf7!important;color:#40395f!important}
 .pw-more.folder{width:34px;min-width:34px!important;height:32px!important;min-height:32px!important;border-radius:var(--ft-radius-control)!important;background:#f8f5fb!important}
 .pw-overflow-menu{position:absolute;right:0;top:calc(100% + 7px);z-index:50;display:grid;min-width:220px;padding:5px;border:1px solid #d8d1e7;border-radius:var(--ft-radius-card);background:#fbfafd;box-shadow:0 16px 36px rgba(43,35,72,.15)}
-.pw-overflow-menu button,.pw-overflow-menu a{display:flex;align-items:center;width:100%;min-height:34px;box-sizing:border-box;border:0!important;border-radius:var(--ft-radius-control)!important;background:transparent!important;color:#535a72!important;padding:7px 9px!important;font:600 10.5px inherit!important;text-decoration:none;text-align:left;cursor:pointer}
+.pw-overflow-menu button,.pw-overflow-menu a{display:flex;align-items:center;width:100%;min-height:34px;box-sizing:border-box;border:0!important;border-radius:var(--ft-radius-control)!important;background:transparent!important;color:#535a72!important;padding:7px 9px!important;font-size:var(--ft-font-sm)!important;font-weight:600!important;font-family:inherit!important;text-decoration:none;text-align:left;cursor:pointer}
 .pw-overflow-menu button:hover,.pw-overflow-menu a:hover,.pw-overflow-menu button.active{background:#efebf7!important;color:#30294f!important}
 .pw-overflow-menu button:disabled{opacity:.42;cursor:default}
 .pw-overflow-menu .danger{color:#a44755!important}
@@ -386,7 +386,7 @@ const css=`
 .pw-visibility.published{color:var(--ft-success);border-color:#c9e4d5;background:#edf7f2}
 .pw-visibility.hidden{color:#79758a;border-color:#d8d2df;background:#efebf2}
 .pw-folder-edit{display:flex;align-items:center;gap:5px}
-.pw-folder-edit input{min-width:0;flex:1;height:32px;box-sizing:border-box;border:1px solid #cfc6df;border-radius:var(--ft-radius-control);padding:0 9px;background:#fff;color:#30354a;font:700 11px inherit;outline:none}
+.pw-folder-edit input{min-width:0;flex:1;height:32px;box-sizing:border-box;border:1px solid #cfc6df;border-radius:var(--ft-radius-control);padding:0 9px;background:#fff;color:#30354a;font-size:var(--ft-font-sm);font-weight:700;font-family:inherit;outline:none}
 .pw-folder-edit input:focus{border-color:#9f90cb;box-shadow:0 0 0 3px rgba(95,78,164,.09)}
 .pw-folder-edit button{min-height:32px!important}
 .pw-folder-edit .save{border-color:#c6bce0!important;background:#eee8f7!important;color:var(--ft-accent-ink)!important}
@@ -437,7 +437,7 @@ const css=`
 .pw-danger-zone span{display:block;color:#a24e5c;font-size:var(--ft-font-xs);font-weight:800;letter-spacing:.14em}
 .pw-danger-zone h3{margin:5px 0 4px;color:#6f2f39;font-size:13px}
 .pw-danger-zone p{max-width:700px;margin:0;color:#8b6268;font-size:var(--ft-font-xs);line-height:1.55}
-.pw-danger-zone button,.pw-delete-project{flex:none;min-height:36px;border:1px solid #c7707c!important;border-radius:var(--ft-radius-control);background:#b4232f!important;color:#fff!important;padding:0 12px;font:700 10.5px inherit;cursor:pointer}
+.pw-danger-zone button,.pw-delete-project{flex:none;min-height:36px;border:1px solid #c7707c!important;border-radius:var(--ft-radius-control);background:#b4232f!important;color:#fff!important;padding:0 12px;font-size:var(--ft-font-sm);font-weight:700;font-family:inherit;cursor:pointer}
 .pw-danger-zone button:hover,.pw-delete-project:hover:not(:disabled){background:#9f1f2a!important}
 .pw-delete-project:disabled{opacity:.45;cursor:not-allowed}
 .pw-danger-modal{border-color:#e1bcc2}
