@@ -208,6 +208,14 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
 }
 
 
+/* Shared authenticated shell: every dashboard screen paints the same background layer. */
+.mf-shift{
+  min-height:100vh;
+  background:var(--ft-app-bg)!important;
+  background-attachment:fixed!important;
+  color:var(--ft-text);
+}
+
 /* Shared visual language for the Fotura product surface. */
 .ft-icon{display:inline-block;flex:none;vertical-align:middle}
 .ft-icon-button{display:inline-grid;place-items:center;min-width:40px;min-height:40px;padding:0;border:1px solid var(--ft-border);border-radius:var(--ft-radius-control);background:var(--ft-surface);color:var(--ft-text-secondary)}
