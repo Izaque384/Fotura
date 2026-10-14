@@ -70,7 +70,7 @@ export default function ProjetoWorkspacePage(){
   const r=await fetch(`/api/projeto/workspace?projeto=${encodeURIComponent(id)}`,{headers:{Authorization:`Bearer ${access}`},cache:"no-store"});
   const d=await r.json().catch(()=>({}));
   if(!r.ok){setErro(d.error||"Não foi possível abrir o projeto.");setCarregando(false);return}
-  const w=d as Dados;setDados(w);aplicarForm(w.projeto);setOrigem(window.location.origin);setCarregando(false);
+  const recebido=d as Dados;const w={...recebido,comercial:recebido.comercial??{planoCodigo:"sem_plano",assinaturaAtiva:false,stripeRecebimentosAtivo:false,vendaFotosDisponivel:false}};setDados(w);aplicarForm(w.projeto);setOrigem(window.location.origin);setCarregando(false);
  }
  useEffect(()=>{void carregar()},[id]);
  useEffect(()=>{const valor=new URLSearchParams(window.location.search).get("aba");if(valor&&["resumo","pastas","selecao","entrega","atividade","configuracoes","vendas"].includes(valor))setAba(valor as Aba)},[id]);
