@@ -6,6 +6,7 @@ import { hashDownloadPin } from "../../../../lib/gallery-download-access";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { registrarErro } from "../../../../lib/observability";
 import { uuidValido } from "../../../../lib/validation";
+import { ordemFotosValida, type OrdemFotos } from "../../../../lib/gallery-photo-order";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -142,26 +143,32 @@ export async function GET(req: NextRequest) {
   }
 
   const { data: pastas, error: pastasError } = await supabase.from("galerias")
-    .select("id,slug,titulo,capa,ordem,visivel,etapa,prova,criado_em,entrega_publicada_em")
+    .select("id,slug,titulo,capa,ordem,ordem_fotos,visivel,etapa,prova,criado_em,entrega_publicada_em")
     .eq("projeto_id", projeto).eq("user_id", user.id)
     .order("ordem", { ascending: true }).order("criado_em", { ascending: true });
   if (pastasError) return json({ error: "Não foi possível carregar as pastas." }, 500);
 
   const ids = (pastas ?? []).map((g) => String(g.id));
   const refs = (pastas ?? []).map((g) => publicGalleryRef(String(g.slug || "pasta"), String(g.id)));
-  const [clienteR, clientesR, selecoesR, vendasR, eventosR, presetsR, capa, capasPastas] = await Promise.all([
+  const [clienteR, clientesR, selecoesR, vendasR, eventosR, presetsR, perfilR, assinaturaR, capa, capasPastas] = await Promise.all([
     p.cliente_id ? supabase.from("clientes").select("id,nome,email,telefone").eq("id", p.cliente_id).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     supabase.from("clientes").select("id,nome,email,telefone").eq("user_id", user.id).order("nome"),
     ids.length ? supabase.from("selecoes").select("galeria,fotos,finalizada,comentarios,atualizado_em").in("galeria", ids) : Promise.resolve({ data: [] }),
     ids.length ? supabase.from("vendas_fotos").select("id,galeria,qtd_extras,valor_total_centavos,moeda,status,criado_em,pago_em").eq("fotografo_id", user.id).in("galeria", ids).order("criado_em", { ascending: false }).limit(100) : Promise.resolve({ data: [] }),
     ids.length ? supabase.from("produto_eventos").select("id,evento,entidade_id,detalhes,criado_em,sessao_id").eq("entidade", "galeria").in("entidade_id", [...ids, ...refs]).order("criado_em", { ascending: false }).limit(150) : Promise.resolve({ data: [] }),
     supabase.from("galeria_presets").select("id,nome,config,criado_em,atualizado_em").eq("user_id", user.id).order("atualizado_em", { ascending: false }),
+    supabase.from("perfis").select("stripe_recebimentos_ativo").eq("id", user.id).maybeSingle(),
+    supabase.from("assinaturas").select("plano_codigo,status").eq("user_id", user.id).maybeSingle(),
     urlCapa(p as typeof p & { user_id: string }),
     urlsCapasPastas(user.id, pastas ?? []),
   ]);
 
   const contagens = await Promise.all((pastas ?? []).map((g) => contarFotos(user.id, String(g.id))));
   const selecaoPorPasta = new Map((selecoesR.data ?? []).map((s) => [String(s.galeria), s]));
+  const planoCodigo=String(assinaturaR.data?.plano_codigo??"sem_plano");
+  const assinaturaAtiva=["active","trialing","past_due"].includes(String(assinaturaR.data?.status??""));
+  const planoComVendas=assinaturaAtiva&&["legacy","essencial","profissional","studio"].includes(planoCodigo);
+  const stripeRecebimentosAtivo=Boolean(perfilR.data?.stripe_recebimentos_ativo);
 
   return json({
     projeto: {
@@ -183,6 +190,12 @@ export async function GET(req: NextRequest) {
     vendas: vendasR.data ?? [],
     eventos: eventosR.data ?? [],
     presets: presetsR.data ?? [],
+    comercial: {
+      planoCodigo,
+      assinaturaAtiva,
+      stripeRecebimentosAtivo,
+      vendaFotosDisponivel: planoComVendas && stripeRecebimentosAtivo,
+    },
   });
 }
 
@@ -326,7 +339,7 @@ type PostBody =
   | { acao: "criar_projeto"; nome?: string; descricao?: string | null; clienteId?: string | null }
   | { acao: "criar_pasta"; projetoId?: string; nome?: string }
   | { acao: "reordenar_pastas"; projetoId?: string; pastas?: string[] }
-  | { acao: "atualizar_pasta"; projetoId?: string; pastaId?: string; nome?: string; visivel?: boolean; capaArquivo?: string | null }
+  | { acao: "atualizar_pasta"; projetoId?: string; pastaId?: string; nome?: string; visivel?: boolean; capaArquivo?: string | null; ordemFotos?: OrdemFotos }
   | { acao: "definir_capa_se_vazia"; projetoId?: string; pastaId?: string; arquivo?: string }
   | { acao: "excluir_projeto"; projetoId?: string; confirmacao?: string };
 
@@ -428,6 +441,10 @@ export async function POST(req: NextRequest) {
       update.titulo = nome;
     }
     if (typeof body.visivel === "boolean") update.visivel = body.visivel;
+    if (body.ordemFotos !== undefined) {
+      if (!ordemFotosValida(body.ordemFotos)) return json({ error: "Ordenação inválida." }, 400);
+      update.ordem_fotos = body.ordemFotos;
+    }
     if (!Object.keys(update).length) return json({ error: "Nenhuma alteração informada." }, 400);
 
     const { data: pasta, error } = await supabase.from("galerias")
@@ -435,7 +452,7 @@ export async function POST(req: NextRequest) {
       .eq("id", body.pastaId)
       .eq("projeto_id", body.projetoId)
       .eq("user_id", user.id)
-      .select("id,titulo,visivel,capa")
+      .select("id,titulo,visivel,capa,ordem_fotos")
       .maybeSingle();
     if (error) return json({ error: "Não foi possível atualizar a pasta." }, 500);
     if (!pasta) return json({ error: "Pasta não encontrada." }, 404);

@@ -8,6 +8,7 @@ import { dataCalendarioExpirada } from "../../../../lib/date-only";
 import { planoFotura } from "../../../../lib/billing-plans";
 import { heroPresetDataUrl, estiloHeroEfetivo } from "../../../../lib/gallery-hero";
 import { createGalleryWatermarkUrl } from "../../../../lib/gallery-watermark-token";
+import { ordenarFotos } from "../../../../lib/gallery-photo-order";
 
 export const dynamic = "force-dynamic";
 const EXPIRA_SEG = 3600;
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galleryError } = await supabase
     .from("galerias")
-    .select("user_id,capa,visivel,link_ate,tem_senha,etapa,prova,watermark_ativo,watermark_texto,watermark_opacidade")
+    .select("user_id,capa,visivel,link_ate,tem_senha,etapa,prova,ordem_fotos,watermark_ativo,watermark_texto,watermark_opacidade")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -108,7 +109,7 @@ export async function GET(req: NextRequest) {
   const heroCor = (perfil?.cor_hero as string | null) ?? "#0b0b1a";
   const usarFotoHero = usarHeroEstudio && Boolean(perfil?.hero_foto_capa_ativo) && plano.recursos.heroFotoGaleria;
 
-  type FotoListada={name:string;largura?:number;altura?:number;bytes?:number;mimeType?:string|null};
+  type FotoListada={name:string;largura?:number;altura?:number;bytes?:number;mimeType?:string|null;criadoEm?:string|null};
   let lista:FotoListada[]=[];
   const variante=entregaFinalDeProva?"entrega":"principal";
   const { data: catalogo, error: catalogoError } = await supabase.rpc("listar_fotos_galeria_storage", {
@@ -117,12 +118,13 @@ export async function GET(req: NextRequest) {
     p_variante: variante,
   });
   if (!catalogoError && Array.isArray(catalogo)) {
-    lista = catalogo.map((item: {nome?:unknown;largura?:unknown;altura?:unknown;bytes?:unknown;mime_type?:unknown}) => ({
+    lista = catalogo.map((item: {nome?:unknown;largura?:unknown;altura?:unknown;bytes?:unknown;mime_type?:unknown;criado_em?:unknown}) => ({
       name: String(item.nome || ""),
       largura: typeof item.largura === "number" ? item.largura : undefined,
       altura: typeof item.altura === "number" ? item.altura : undefined,
       bytes: typeof item.bytes === "number" ? item.bytes : undefined,
       mimeType: typeof item.mime_type === "string" ? item.mime_type : null,
+      criadoEm: typeof item.criado_em === "string" ? item.criado_em : null,
     })).filter((item:FotoListada)=>Boolean(item.name));
   } else {
     registrarErro("gallery.signed.catalog_fallback", req, catalogoError || new Error("catalog unavailable"), { galeria, variante });
@@ -138,11 +140,13 @@ export async function GET(req: NextRequest) {
         return json({ error: "Não foi possível listar a galeria." }, 500);
       }
       const pagina=arquivos??[];
-      lista.push(...pagina.filter((item)=>item.id!==null&&item.name!=="thumbs"&&item.name!=="entrega").map((item)=>({name:item.name})));
+      lista.push(...pagina.filter((item)=>item.id!==null&&item.name!=="thumbs"&&item.name!=="entrega").map((item)=>({name:item.name,criadoEm:item.created_at??null})));
       if(pagina.length<LISTA_LOTE)break;
       offset+=LISTA_LOTE;
     }
   }
+
+  lista=ordenarFotos(lista,(g.ordem_fotos as string|null)??"upload");
 
   if (lista.length === 0) {
     return json({ fotos: [], capaUrl: usarHeroEstudio ? heroPresetDataUrl(heroCor, heroEstilo) : null, etapa });

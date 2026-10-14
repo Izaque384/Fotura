@@ -8,33 +8,24 @@ import LanguageSwitcher from "./components/LanguageSwitcher";
 import { useI18n } from "./components/I18nProvider";
 import { withLocalePath } from "../lib/i18n";
 import { approvedMonthlyPrice, formatPricingAmount, type PricingCurrency } from "../lib/pricing-markets";
+import { PLANOS_FOTURA, type PlanoCodigo } from "../lib/billing-plans";
 
-const planos = [
-  {
-    codigo: "gratis" as const,
-    nome: "Grátis",
-    destaque: false,
-    itens: ["1 GB de armazenamento", "Galerias, clientes e fotos ilimitados", "Seleção, comentários, senha e entrega", "Identidade básica do estúdio"],
-  },
-  {
-    codigo: "essencial" as const,
-    nome: "Essencial",
-    destaque: false,
-    itens: ["10 GB de armazenamento", "Galerias, clientes e fotos ilimitados", "Hero Minimal com logo, nome e cor", "Prova, comentários, senha e entrega"],
-  },
-  {
-    codigo: "profissional" as const,
-    nome: "Profissional",
-    destaque: true,
-    itens: ["50 GB de armazenamento", "Tudo do Essencial", "Heroes Minimal, Premium e Tech", "Foto da galeria no fundo do hero"],
-  },
-  {
-    codigo: "studio" as const,
-    nome: "Studio",
-    destaque: false,
-    itens: ["100 GB de armazenamento", "Tudo do Profissional", "Mesmos recursos visuais do Profissional", "Para operações com alto volume"],
-  },
-];
+const codigosPlanos=["gratis","essencial","profissional","studio"] as const satisfies readonly PlanoCodigo[];
+const extrasPlano:Record<(typeof codigosPlanos)[number],string[]>={
+  gratis:["Projetos, pastas, clientes e fotos sem limite por quantidade","Seleção, comentários, senha e entrega","Logo, cor e Open Graph com a marca do fotógrafo"],
+  essencial:["Projetos, pastas, clientes e fotos sem limite por quantidade","Hero Minimal com logo, nome e cor","Seleção, comentários, senha e entrega"],
+  profissional:["Tudo do Essencial","Heroes Minimal, Premium e Tech","Foto do projeto no fundo do hero"],
+  studio:["Tudo do Profissional","Mesmos recursos visuais do Profissional","Para operações com alto volume"],
+};
+const planos=codigosPlanos.map(codigo=>{
+  const plano=PLANOS_FOTURA[codigo];
+  return{
+    codigo,
+    nome:plano.nome,
+    destaque:codigo==="profissional",
+    itens:[`${plano.limites.armazenamentoGb} GB de armazenamento`,...extrasPlano[codigo]],
+  };
+});
 
 const fotosHero = [
   {
@@ -100,20 +91,20 @@ const fotoFinal =
 
 const passos = [
   {
-    titulo: "Crie a galeria e envie as fotos",
-    descricao: "A mesma tela do Fotura reúne nome da galeria, cliente e seleção dos arquivos para o upload.",
+    titulo: "Crie o projeto e organize as pastas",
+    descricao: "Cada trabalho reúne suas galerias em um único projeto e um único link para o cliente.",
   },
   {
-    titulo: "Gerencie e compartilhe",
-    descricao: "Em Galerias, acompanhe o estágio do trabalho e compartilhe por link, WhatsApp ou e-mail.",
+    titulo: "Envie, organize e compartilhe",
+    descricao: "Adicione fotos por pasta, escolha capas e compartilhe o projeto inteiro por um único link.",
   },
   {
     titulo: "O cliente faz a seleção",
     descricao: "Na galeria pública, ele marca as fotos, comenta e finaliza a prova sem precisar criar uma conta.",
   },
   {
-    titulo: "Acompanhe em Seleções",
-    descricao: "Escolhidas, comentários e status aparecem no painel do fotógrafo para seguir até a entrega final.",
+    titulo: "Siga até a entrega final",
+    descricao: "Escolhas e comentários continuam ligados à pasta certa até a publicação das fotos finais.",
   },
 ];
 
@@ -515,7 +506,7 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
                 <h2>{t("Comece leve.")}<br />{t("Escale quando precisar.")}</h2>
               </div>
               <p>
-                {t("Galerias, clientes e fotos por galeria são ilimitados. Você escolhe o plano pelo armazenamento e pelo nível de apresentação.")}
+                {t("Projetos, pastas, clientes e fotos não têm limite por quantidade. Você escolhe o plano pelo armazenamento e pelo nível de apresentação.")}
               </p>
             </div>
 
