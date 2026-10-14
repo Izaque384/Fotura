@@ -320,11 +320,11 @@ const css=`
 .pw-tabs button.on:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;border-radius:999px;background:#5d67a7}
 .pw-tabs button.secondary{margin-left:auto;color:var(--ft-accent-ink)}
 .pw-overflow-wrap{position:relative;display:inline-flex}
-.pw-more{display:inline-grid;place-items:center;width:38px;min-width:38px!important;height:36px!important;min-height:36px!important;padding:0!important;border:1px solid #d0c7e2!important;border-radius:9px!important;background:var(--ft-surface)!important;color:#555c74!important;font:800 14px/1 inherit!important;letter-spacing:1px;cursor:pointer}
+.pw-more{display:inline-grid;place-items:center;width:38px;min-width:38px!important;height:36px!important;min-height:36px!important;padding:0!important;border:1px solid #d0c7e2!important;border-radius:var(--ft-radius-control)!important;background:var(--ft-surface)!important;color:#555c74!important;font:800 14px/1 inherit!important;letter-spacing:1px;cursor:pointer}
 .pw-more:hover,.pw-more.open{border-color:#bfb4d8!important;background:#f1edf7!important;color:#40395f!important}
-.pw-more.folder{width:34px;min-width:34px!important;height:32px!important;min-height:32px!important;border-radius:8px!important;background:#f8f5fb!important}
+.pw-more.folder{width:34px;min-width:34px!important;height:32px!important;min-height:32px!important;border-radius:var(--ft-radius-control)!important;background:#f8f5fb!important}
 .pw-overflow-menu{position:absolute;right:0;top:calc(100% + 7px);z-index:50;display:grid;min-width:220px;padding:5px;border:1px solid #d8d1e7;border-radius:var(--ft-radius-card);background:#fbfafd;box-shadow:0 16px 36px rgba(43,35,72,.15)}
-.pw-overflow-menu button,.pw-overflow-menu a{display:flex;align-items:center;width:100%;min-height:34px;box-sizing:border-box;border:0!important;border-radius:7px!important;background:transparent!important;color:#535a72!important;padding:7px 9px!important;font:600 10.5px inherit!important;text-decoration:none;text-align:left;cursor:pointer}
+.pw-overflow-menu button,.pw-overflow-menu a{display:flex;align-items:center;width:100%;min-height:34px;box-sizing:border-box;border:0!important;border-radius:var(--ft-radius-control)!important;background:transparent!important;color:#535a72!important;padding:7px 9px!important;font:600 10.5px inherit!important;text-decoration:none;text-align:left;cursor:pointer}
 .pw-overflow-menu button:hover,.pw-overflow-menu a:hover,.pw-overflow-menu button.active{background:#efebf7!important;color:#30294f!important}
 .pw-overflow-menu button:disabled{opacity:.42;cursor:default}
 .pw-overflow-menu .danger{color:#a44755!important}
