@@ -9,7 +9,7 @@ type Tipo = "problema" | "sugestao" | "feedback";
 type Categoria = "galerias" | "clientes" | "selecoes" | "vendas" | "planos" | "perfil" | "conta" | "outro";
 
 const categorias: Array<{ value: Categoria; label: string }> = [
-  { value: "galerias", label: "Galerias" },
+  { value: "galerias", label: "Projetos e galerias" },
   { value: "clientes", label: "Clientes" },
   { value: "selecoes", label: "Seleções" },
   { value: "vendas", label: "Vendas" },
@@ -21,12 +21,12 @@ const categorias: Array<{ value: Categoria; label: string }> = [
 
 const faq = [
   { pergunta: "Qual a diferença entre prova e entrega?", resposta: "A prova é usada quando o cliente ainda precisa selecionar fotos. A entrega é a galeria final, preparada para visualização e download das imagens entregues." },
-  { pergunta: "Como compartilho uma galeria?", resposta: "Em Galerias, use a ação Compartilhar. Você pode copiar o link ou enviar pelo WhatsApp ou e-mail quando o cliente tiver os dados de contato necessários." },
-  { pergunta: "Como funciona a seleção do cliente?", resposta: "Em uma galeria de prova, o cliente marca as fotos desejadas e pode finalizar a seleção. O resultado aparece em Seleções para você continuar o fluxo." },
-  { pergunta: "Onde altero a capa e o visual da galeria?", resposta: "A capa é escolhida em Galerias → Gerenciar galeria → Alterar capa. Os recursos gerais de apresentação do estúdio ficam no Perfil." },
+  { pergunta: "Como compartilho um projeto?", resposta: "Abra o projeto e use o menu de ações para copiar o link ou compartilhar por WhatsApp ou e-mail. O mesmo link dá acesso às pastas publicadas." },
+  { pergunta: "Como funciona a seleção do cliente?", resposta: "Em uma pasta configurada como prova, o cliente marca as fotos desejadas e finaliza a seleção. O resultado aparece na aba Seleção do próprio projeto para você continuar o fluxo." },
+  { pergunta: "Onde altero a capa e o visual do projeto?", resposta: "Abra o projeto e, em Pastas e fotos, use Configurar capa para cada pasta ou Trocar capa no menu do projeto. A identidade geral do estúdio fica no Perfil." },
   { pergunta: "Como funciona o armazenamento?", resposta: "O uso de armazenamento segue o limite do seu plano. Você pode acompanhar o consumo e os limites na área Planos." },
-  { pergunta: "O que acontece quando o link expira?", resposta: "A galeria deixa de ficar disponível para o cliente, mas não é apagada automaticamente. Você continua no controle do conteúdo dentro da sua conta." },
-  { pergunta: "Como vendo fotos extras?", resposta: "Quando a venda de extras estiver habilitada para a galeria, o cliente pode comprar fotos além da quantidade incluída. As vendas aparecem na área Vendas." },
+  { pergunta: "O que acontece quando o link expira?", resposta: "O projeto deixa de ficar disponível para o cliente, mas o conteúdo não é apagado automaticamente. Você continua no controle das pastas e fotos dentro da sua conta." },
+  { pergunta: "Como vendo fotos extras?", resposta: "Quando a venda de extras estiver habilitada no projeto e os recebimentos estiverem configurados, o cliente pode comprar fotos além da quantidade incluída. As vendas aparecem na área Vendas." },
 ];
 
 function SearchIcon() {
