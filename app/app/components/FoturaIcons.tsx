@@ -22,6 +22,7 @@ export function UserIcon(props:IconProps){return <IconBase {...props}><circle cx
 export function FolderIcon(props:IconProps){return <IconBase {...props}><path d="M3.5 7.5h6l2-2h9v13h-17z"/></IconBase>}
 export function ImageIcon(props:IconProps){return <IconBase {...props}><rect x="3.5" y="4" width="17" height="16" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="m5.5 17 4-4 3 3 2-2 4 4"/></IconBase>}
 export function CircleIcon(props:IconProps){return <IconBase {...props}><circle cx="12" cy="12" r="7"/></IconBase>}
+export function PlusIcon(props:IconProps){return <IconBase {...props}><path d="M12 5v14M5 12h14"/></IconBase>}
 export function ArrowDownIcon(props:IconProps){return <IconBase {...props}><path d="M12 4v14"/><path d="m7 13 5 5 5-5"/></IconBase>}
 export function ChevronLeftIcon(props:IconProps){return <IconBase {...props}><path d="m15 18-6-6 6-6"/></IconBase>}
 export function ChevronRightIcon(props:IconProps){return <IconBase {...props}><path d="m9 6 6 6-6 6"/></IconBase>}
