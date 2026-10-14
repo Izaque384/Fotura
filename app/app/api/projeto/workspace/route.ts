@@ -142,7 +142,7 @@ export async function GET(req: NextRequest) {
   }
 
   const { data: pastas, error: pastasError } = await supabase.from("galerias")
-    .select("id,slug,titulo,capa,ordem,visivel,etapa,prova,criado_em,entrega_publicada_em")
+    .select("id,slug,titulo,capa,ordem,ordem_fotos,visivel,etapa,prova,criado_em,entrega_publicada_em")
     .eq("projeto_id", projeto).eq("user_id", user.id)
     .order("ordem", { ascending: true }).order("criado_em", { ascending: true });
   if (pastasError) return json({ error: "Não foi possível carregar as pastas." }, 500);
@@ -326,7 +326,7 @@ type PostBody =
   | { acao: "criar_projeto"; nome?: string; descricao?: string | null; clienteId?: string | null }
   | { acao: "criar_pasta"; projetoId?: string; nome?: string }
   | { acao: "reordenar_pastas"; projetoId?: string; pastas?: string[] }
-  | { acao: "atualizar_pasta"; projetoId?: string; pastaId?: string; nome?: string; visivel?: boolean; capaArquivo?: string | null }
+  | { acao: "atualizar_pasta"; projetoId?: string; pastaId?: string; nome?: string; visivel?: boolean; capaArquivo?: string | null; ordemFotos?: "upload" | "recentes" | "nome_asc" | "nome_desc" }
   | { acao: "definir_capa_se_vazia"; projetoId?: string; pastaId?: string; arquivo?: string }
   | { acao: "excluir_projeto"; projetoId?: string; confirmacao?: string };
 
@@ -428,6 +428,10 @@ export async function POST(req: NextRequest) {
       update.titulo = nome;
     }
     if (typeof body.visivel === "boolean") update.visivel = body.visivel;
+    if (body.ordemFotos !== undefined) {
+      if (!["upload","recentes","nome_asc","nome_desc"].includes(body.ordemFotos)) return json({ error: "Ordenação inválida." }, 400);
+      update.ordem_fotos = body.ordemFotos;
+    }
     if (!Object.keys(update).length) return json({ error: "Nenhuma alteração informada." }, 400);
 
     const { data: pasta, error } = await supabase.from("galerias")
@@ -435,7 +439,7 @@ export async function POST(req: NextRequest) {
       .eq("id", body.pastaId)
       .eq("projeto_id", body.projetoId)
       .eq("user_id", user.id)
-      .select("id,titulo,visivel,capa")
+      .select("id,titulo,visivel,capa,ordem_fotos")
       .maybeSingle();
     if (error) return json({ error: "Não foi possível atualizar a pasta." }, 500);
     if (!pasta) return json({ error: "Pasta não encontrada." }, 404);
