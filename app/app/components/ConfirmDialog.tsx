@@ -101,12 +101,12 @@ export default function ConfirmDialog({
         aria-describedby={descriptionId}
         style={{
           width: "min(440px, 100%)",
-          background: "linear-gradient(180deg,#FAF8FD,#F3EFF9)",
-          border: "1px solid #D7D0E7",
+          background: "linear-gradient(180deg,var(--ft-surface),var(--ft-surface-muted))",
+          border: "1px solid var(--ft-border)",
           borderRadius: 16,
           padding: "clamp(18px, 5vw, 22px)",
           boxShadow: "0 24px 70px rgba(0,0,0,.45)",
-          color: "#21253A",
+          color: "var(--ft-text)",
           boxSizing: "border-box",
         }}
       >
@@ -115,7 +115,7 @@ export default function ConfirmDialog({
         </h2>
         <p
           id={descriptionId}
-          style={{ margin: "10px 0 20px", color: "#73758D", fontSize: 13, lineHeight: 1.6 }}
+          style={{ margin: "10px 0 20px", color: "var(--ft-text-muted)", fontSize: 13, lineHeight: 1.6 }}
         >
           {description}
         </p>
@@ -127,11 +127,11 @@ export default function ConfirmDialog({
             disabled={loading}
             style={{
               minHeight: 44,
-              border: "1px solid #D7D0E7",
+              border: "1px solid var(--ft-border)",
               borderRadius: 10,
               padding: "10px 14px",
-              color: "#596079",
-              background: "#F3EFF9",
+              color: "var(--ft-text-secondary)",
+              background: "var(--ft-surface-muted)",
               font: "600 13px inherit",
               cursor: loading ? "default" : "pointer",
               opacity: loading ? 0.65 : 1,
@@ -150,7 +150,7 @@ export default function ConfirmDialog({
               borderRadius: 10,
               padding: "10px 14px",
               color: "#fff",
-              background: danger ? "#b4232f" : "linear-gradient(90deg,#1196fc,#5d0dfa)",
+              background: danger ? "#b4232f" : "linear-gradient(90deg,var(--ft-brand-blue),var(--ft-brand-purple))",
               font: "600 13px inherit",
               cursor: loading ? "default" : "pointer",
               opacity: loading ? 0.7 : 1,
