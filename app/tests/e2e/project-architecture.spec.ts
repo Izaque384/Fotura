@@ -180,4 +180,46 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(og).not.toContain("cliente_id");
   });
 
+  test("fluxo do fotógrafo retorna ao contexto e pastas têm ação contextual", () => {
+    const workspace = read("app/dashboard/projetos/[id]/page.tsx");
+    const upload = read("app/upload/page.tsx");
+    const delivery = read("app/dashboard/entrega/[id]/page.tsx");
+    expect(workspace).toContain("rotuloAcaoPasta");
+    expect(workspace).toContain("Preparar entrega");
+    expect(workspace).toContain("Continuar entrega");
+    expect(workspace).toContain('new URLSearchParams(window.location.search).get("aba")');
+    expect(upload).toContain("?aba=pastas");
+    expect(delivery).toContain("?aba=entrega");
+  });
+
+  test("pastas controlam ordenação pública das fotos", () => {
+    const workspace = read("app/dashboard/projetos/[id]/page.tsx");
+    const api = read("app/api/projeto/workspace/route.ts");
+    const signed = read("app/api/fotos/signed/route.ts");
+    const migration = read("../supabase/migrations/20261014090000_gallery_photo_sorting.sql");
+    expect(workspace).toContain("alterarOrdemFotos");
+    expect(workspace).toContain("Nome A–Z");
+    expect(api).toContain("ordem_fotos");
+    expect(api).toContain("ordemFotosValida");
+    expect(signed).toContain("ordenarFotos");
+    expect(migration).toContain("ordem_fotos");
+  });
+
+  test("cliente pre-carrega pastas vizinhas e preserva a posição por galeria", () => {
+    const projectPage = read("app/p/[slug]/page.tsx");
+    expect(projectPage).toContain("loadGalleryGrid");
+    expect(projectPage).toContain("scrollPastas");
+    expect(projectPage).toContain("scrollPastas.current.get(pastaAtiva)");
+    expect(projectPage).toContain("onPointerEnter={()=>onPrefetch(p.id)}");
+  });
+
+  test("monetização só aparece pronta quando plano e Stripe estão aptos", () => {
+    const api = read("app/api/projeto/workspace/route.ts");
+    const workspace = read("app/dashboard/projetos/[id]/page.tsx");
+    expect(api).toContain("vendaFotosDisponivel");
+    expect(api).toContain("stripe_recebimentos_ativo");
+    expect(workspace).toContain("dados.comercial.vendaFotosDisponivel");
+    expect(workspace).toContain("Conecte os recebimentos pelo Stripe");
+  });
+
 });
