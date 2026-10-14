@@ -110,12 +110,12 @@ export default function ConfirmDialog({
           boxSizing: "border-box",
         }}
       >
-        <h2 id={titleId} style={{ margin: 0, fontSize: 18 }}>
+        <h2 id={titleId} style={{ margin: 0, fontSize: "var(--ft-font-xl)", fontWeight: 700 }}>
           {title}
         </h2>
         <p
           id={descriptionId}
-          style={{ margin: "10px 0 20px", color: "var(--ft-text-muted)", fontSize: 13, lineHeight: 1.6 }}
+          style={{ margin: "10px 0 20px", color: "var(--ft-text-muted)", fontSize: "var(--ft-font-md)", lineHeight: 1.6 }}
         >
           {description}
         </p>
@@ -132,7 +132,9 @@ export default function ConfirmDialog({
               padding: "10px 14px",
               color: "var(--ft-text-secondary)",
               background: "var(--ft-surface-muted)",
-              font: "600 13px inherit",
+              fontFamily: "inherit",
+              fontWeight: 600,
+              fontSize: "var(--ft-font-sm)",
               cursor: loading ? "default" : "pointer",
               opacity: loading ? 0.65 : 1,
             }}
@@ -147,11 +149,13 @@ export default function ConfirmDialog({
             style={{
               minHeight: 44,
               border: 0,
-              borderRadius: 10,
+              borderRadius: "var(--ft-radius-control)",
               padding: "10px 14px",
               color: "#fff",
               background: danger ? "#b4232f" : "var(--ft-brand-gradient)",
-              font: "600 13px inherit",
+              fontFamily: "inherit",
+              fontWeight: 600,
+              fontSize: "var(--ft-font-sm)",
               cursor: loading ? "default" : "pointer",
               opacity: loading ? 0.7 : 1,
             }}
