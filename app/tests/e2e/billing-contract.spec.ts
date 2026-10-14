@@ -29,7 +29,9 @@ test.describe("contrato de planos e armazenamento", () => {
       path.join(process.cwd(), "app", "HomeClient.tsx"),
       "utf8",
     );
-    expect(landing).toContain('\"100 GB de armazenamento\"');
+    expect(landing).toContain('import { PLANOS_FOTURA');
+    expect(landing).toContain('plano.limites.armazenamentoGb');
+    expect(landing).toContain("Projetos, pastas, clientes e fotos sem limite por quantidade");
 
     for (const codigo of ["gratis", "essencial", "profissional", "studio"] as const) {
       expect(PLANOS_FOTURA[codigo].limites.galeriasAtivas).toBeNull();
