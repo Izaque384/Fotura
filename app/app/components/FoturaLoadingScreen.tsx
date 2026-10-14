@@ -32,8 +32,8 @@ export default function FoturaLoadingScreen() {
           overflow: hidden;
           background:
             radial-gradient(circle at 50% 42%, rgba(31, 50, 102, .16), transparent 34%),
-            linear-gradient(180deg, #F0EDF7 0%, #ECE8F4 100%);
-          color: #21253A;
+            linear-gradient(180deg, var(--ft-bg-start) 0%, var(--ft-bg-end) 100%);
+          color: var(--ft-text);
           font-family: var(--font-sora), Sora, system-ui, sans-serif;
         }
 
@@ -50,13 +50,13 @@ export default function FoturaLoadingScreen() {
         .fotura-loading__ambient--one {
           top: -150px;
           left: -120px;
-          background: #1196fc;
+          background: var(--ft-brand-blue);
         }
 
         .fotura-loading__ambient--two {
           right: -140px;
           bottom: -170px;
-          background: #5d0dfa;
+          background: var(--ft-brand-purple);
         }
 
         .fotura-loading__content {
@@ -99,7 +99,7 @@ export default function FoturaLoadingScreen() {
 
         .fotura-loading__core {
           inset: 26px;
-          background: linear-gradient(135deg, #1196fc, #5d0dfa);
+          background: linear-gradient(135deg, var(--ft-brand-blue), var(--ft-brand-purple));
           box-shadow: 0 0 18px rgba(74, 108, 247, .22);
           animation: fotura-pulse 1.8s ease-in-out infinite;
         }
@@ -109,7 +109,7 @@ export default function FoturaLoadingScreen() {
           font-size: 18px;
           font-weight: 700;
           letter-spacing: .22em;
-          background: linear-gradient(90deg, #d9efff 0%, #21253A 45%, #ded4ff 100%);
+          background: linear-gradient(90deg, #d9efff 0%, var(--ft-text) 45%, #ded4ff 100%);
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
@@ -117,7 +117,7 @@ export default function FoturaLoadingScreen() {
 
         .fotura-loading__message {
           margin: 9px 0 20px;
-          color: #7a7f9a;
+          color: var(--ft-text-muted);
           font-size: 12px;
           font-weight: 400;
           letter-spacing: .01em;
@@ -137,7 +137,7 @@ export default function FoturaLoadingScreen() {
           inset: 0 auto 0 0;
           width: 46%;
           border-radius: inherit;
-          background: linear-gradient(90deg, #1196fc, #5d0dfa);
+          background: linear-gradient(90deg, var(--ft-brand-blue), var(--ft-brand-purple));
           animation: fotura-progress 1.55s cubic-bezier(.4, 0, .2, 1) infinite;
         }
 

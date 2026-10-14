@@ -3,6 +3,48 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Fotura design tokens */
+  --ft-bg-start: #F0EDF7;
+  --ft-bg-end: #ECE8F4;
+  --ft-surface: #FAF8FD;
+  --ft-surface-muted: #F3EFF9;
+  --ft-surface-soft: #F7F4FB;
+  --ft-border: #D7D0E7;
+  --ft-border-soft: #DCD6EE;
+  --ft-text: #21253A;
+  --ft-text-secondary: #596079;
+  --ft-text-muted: #7A7F9A;
+  --ft-accent-ink: #514780;
+  --ft-brand-blue: #1196FC;
+  --ft-brand-purple: #5D0DFA;
+  --ft-success: #3F7C5B;
+  --ft-danger: #B95C66;
+  --ft-warning: #7D6537;
+
+  --ft-font-xs: 10px;
+  --ft-font-caption: 11px;
+  --ft-font-sm: 12px;
+  --ft-font-md: 14px;
+  --ft-font-lg: 16px;
+  --ft-font-xl: 20px;
+  --ft-font-page: 30px;
+
+  --ft-weight-regular: 500;
+  --ft-weight-medium: 600;
+  --ft-weight-semibold: 700;
+  --ft-weight-bold: 800;
+
+  --ft-radius-control: 10px;
+  --ft-radius-card: 14px;
+  --ft-radius-panel: 16px;
+  --ft-radius-pill: 999px;
+
+  --ft-shadow-card: 0 10px 28px rgba(65, 52, 111, .06);
+  --ft-shadow-modal: 0 24px 70px rgba(20, 18, 31, .28);
+  --ft-backdrop: rgba(20, 18, 31, .56);
+  --ft-app-bg: linear-gradient(180deg, var(--ft-bg-start), var(--ft-bg-end));
+  --ft-brand-gradient: linear-gradient(90deg, var(--ft-brand-blue), var(--ft-brand-purple));
 }
 
 @theme inline {
@@ -163,4 +205,50 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
     border-color: #DCD6EE !important;
     box-shadow: 0 10px 28px rgba(65, 52, 111, .05) !important;
   }
+}
+
+
+/* Shared visual language for the Fotura product surface. */
+.ft-icon{display:inline-block;flex:none;vertical-align:middle}
+.ft-icon-button{display:inline-grid;place-items:center;min-width:40px;min-height:40px;padding:0;border:1px solid var(--ft-border);border-radius:var(--ft-radius-control);background:var(--ft-surface);color:var(--ft-text-secondary)}
+.ft-icon-button:hover{background:var(--ft-surface-muted);color:var(--ft-text)}
+.ft-eyebrow{font-size:var(--ft-font-xs);font-weight:var(--ft-weight-semibold);letter-spacing:1.5px;text-transform:uppercase;color:var(--ft-text-muted)}
+.ft-page-title{font-size:var(--ft-font-page);font-weight:var(--ft-weight-semibold);letter-spacing:-.55px;color:var(--ft-text)}
+.ft-body{font-size:var(--ft-font-sm);line-height:1.55;color:var(--ft-text-secondary)}
+.ft-muted{color:var(--ft-text-muted)}
+.ft-panel{border:1px solid var(--ft-border-soft);border-radius:var(--ft-radius-panel);background:linear-gradient(180deg,var(--ft-surface),var(--ft-surface-muted));box-shadow:var(--ft-shadow-card)}
+.ft-control{min-height:40px;border:1px solid var(--ft-border);border-radius:var(--ft-radius-control);background:var(--ft-surface-soft);color:var(--ft-text);font-size:var(--ft-font-sm)}
+.ft-button-primary{min-height:40px;border:0;border-radius:var(--ft-radius-control);background:var(--ft-brand-gradient);color:#fff;font-size:var(--ft-font-sm);font-weight:var(--ft-weight-semibold)}
+.ft-button-secondary{min-height:40px;border:1px solid var(--ft-border);border-radius:var(--ft-radius-control);background:var(--ft-surface-muted);color:var(--ft-text-secondary);font-size:var(--ft-font-sm);font-weight:var(--ft-weight-semibold)}
+.ft-modal-backdrop{background:var(--ft-backdrop);backdrop-filter:blur(6px)}
+.ft-modal-panel{border:1px solid var(--ft-border);border-radius:var(--ft-radius-panel);background:linear-gradient(180deg,var(--ft-surface),var(--ft-surface-muted));box-shadow:var(--ft-shadow-modal)}
+
+/* Keep internal Fotura pages on the same base canvas. */
+:where(.dash,.pw-page,.sales-page,.bill-page,.cfg,.profile,.help,.up-page,.delivery-page,.onb){
+  background:var(--ft-app-bg)!important;
+  color:var(--ft-text)!important;
+}
+
+/* Shared heading scale across the authenticated product. */
+:where(.dash .h1,.dash h1,.pw-head h1,.sales-page h1,.bill-page h1,.cfg h1,.profile h1,.help h1,.delivery-title,.onb h1){
+  font-size:var(--ft-font-page)!important;
+  font-weight:var(--ft-weight-semibold)!important;
+  letter-spacing:-.55px!important;
+}
+
+/* Readability floor: metadata can be compact, but never microscopic. */
+:where(
+  .dash,.pw-page,.sales-page,.bill-page,.cfg,.profile,.help,.up-page,.delivery-page,.onb
+) :where(.ey,.pw-section-head>div>span,.pw-card-head span,.delivery-ey,.field-label,.project-meta,.count-badge,.pw-pill,.form-badge,.storage-size span,.features li,.fine){
+  font-size:var(--ft-font-xs)!important;
+}
+
+/* Standard control geometry for the main app. */
+:where(.dash,.pw-page,.sales-page,.bill-page,.cfg,.profile,.help,.up-page,.delivery-page,.onb)
+:where(input:not([type="checkbox"]):not([type="radio"]),select,textarea,button){
+  border-radius:var(--ft-radius-control);
+}
+
+@media(max-width:700px){
+  :root{--ft-font-page:24px}
 }

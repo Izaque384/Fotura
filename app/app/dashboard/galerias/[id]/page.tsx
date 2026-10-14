@@ -17,5 +17,5 @@ export default function GalleryWorkspaceLegacyRedirect(){
     router.replace(data?.projeto_id?`/dashboard/projetos/${data.projeto_id}`:"/dashboard/projetos");
   })();return()=>{ativo=false}},[id,router,supabase]);
 
-  return <div style={{minHeight:"100vh",display:"grid",placeItems:"center",background:"linear-gradient(180deg,#F0EDF7,#ECE8F4)",color:"#74788f"}}>Abrindo projeto…</div>;
+  return <div style={{minHeight:"100vh",display:"grid",placeItems:"center",background:"var(--ft-app-bg)",color:"var(--ft-text-muted)"}}>Abrindo projeto…</div>;
 }

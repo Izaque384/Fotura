@@ -85,7 +85,7 @@ export default function ConfirmDialog({
         position: "fixed",
         inset: 0,
         zIndex: 160,
-        background: "rgba(3,3,12,.78)",
+        background: "var(--ft-backdrop)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -101,21 +101,21 @@ export default function ConfirmDialog({
         aria-describedby={descriptionId}
         style={{
           width: "min(440px, 100%)",
-          background: "linear-gradient(180deg,#FAF8FD,#F3EFF9)",
-          border: "1px solid #D7D0E7",
-          borderRadius: 16,
+          background: "linear-gradient(180deg,var(--ft-surface),var(--ft-surface-muted))",
+          border: "1px solid var(--ft-border)",
+          borderRadius: "var(--ft-radius-panel)",
           padding: "clamp(18px, 5vw, 22px)",
-          boxShadow: "0 24px 70px rgba(0,0,0,.45)",
-          color: "#21253A",
+          boxShadow: "var(--ft-shadow-modal)",
+          color: "var(--ft-text)",
           boxSizing: "border-box",
         }}
       >
-        <h2 id={titleId} style={{ margin: 0, fontSize: 18 }}>
+        <h2 id={titleId} style={{ margin: 0, fontSize: "var(--ft-font-xl)", fontWeight: 700 }}>
           {title}
         </h2>
         <p
           id={descriptionId}
-          style={{ margin: "10px 0 20px", color: "#73758D", fontSize: 13, lineHeight: 1.6 }}
+          style={{ margin: "10px 0 20px", color: "var(--ft-text-muted)", fontSize: "var(--ft-font-md)", lineHeight: 1.6 }}
         >
           {description}
         </p>
@@ -127,12 +127,14 @@ export default function ConfirmDialog({
             disabled={loading}
             style={{
               minHeight: 44,
-              border: "1px solid #D7D0E7",
-              borderRadius: 10,
+              border: "1px solid var(--ft-border)",
+              borderRadius: "var(--ft-radius-control)",
               padding: "10px 14px",
-              color: "#596079",
-              background: "#F3EFF9",
-              font: "600 13px inherit",
+              color: "var(--ft-text-secondary)",
+              background: "var(--ft-surface-muted)",
+              fontFamily: "inherit",
+              fontWeight: 600,
+              fontSize: "var(--ft-font-sm)",
               cursor: loading ? "default" : "pointer",
               opacity: loading ? 0.65 : 1,
             }}
@@ -147,11 +149,13 @@ export default function ConfirmDialog({
             style={{
               minHeight: 44,
               border: 0,
-              borderRadius: 10,
+              borderRadius: "var(--ft-radius-control)",
               padding: "10px 14px",
               color: "#fff",
-              background: danger ? "#b4232f" : "linear-gradient(90deg,#1196fc,#5d0dfa)",
-              font: "600 13px inherit",
+              background: danger ? "#b4232f" : "var(--ft-brand-gradient)",
+              fontFamily: "inherit",
+              fontWeight: 600,
+              fontSize: "var(--ft-font-sm)",
               cursor: loading ? "default" : "pointer",
               opacity: loading ? 0.7 : 1,
             }}
