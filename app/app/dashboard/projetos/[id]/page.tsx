@@ -6,10 +6,10 @@ import MenuFotografo from "../../../MenuFotografo";
 import ModalSelecao from "../../../components/ModalSelecao";
 import ConfirmDialog from "../../../components/ConfirmDialog";
 import { createClient } from "../../../../lib/supabase-client";
+import type { OrdemFotos } from "../../../../lib/gallery-photo-order";
 
 type Cliente={id:string;nome:string;email:string|null;telefone:string|null};
 type Selecao={galeria:string;fotos:string[];finalizada:boolean;comentarios:Record<string,string>;atualizado_em:string|null};
-type OrdemFotos="upload"|"recentes"|"nome_asc"|"nome_desc";
 type Pasta={id:string;slug:string;titulo:string;capa:string|null;capaUrl:string|null;ordem:number;ordem_fotos:OrdemFotos;visivel:boolean;etapa:string;prova:boolean;criado_em:string;entrega_publicada_em:string|null;qtd:number;publicRef:string;selecao:Selecao|null};
 type Venda={id:string;galeria:string;qtd_extras:number;valor_total_centavos:number;moeda:string;status:string;criado_em:string;pago_em:string|null};
 type Evento={id:number;evento:string;entidade_id:string;detalhes:Record<string,unknown>|null;criado_em:string;sessao_id:string|null};
