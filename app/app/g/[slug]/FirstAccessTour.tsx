@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type RefObject } from "react";
+import { ChevronRightIcon } from "../../components/FoturaIcons";
 
 type Rect={top:number;left:number;width:number;height:number};
 
@@ -50,7 +51,7 @@ export default function FirstAccessTour({
       <p>{step===1?"Use este seletor para navegar entre as pastas do projeto sem voltar para a visão geral.":"Use “Baixar todas” para salvar todas as fotos desta galeria de uma só vez."}</p>
       <div className="gc-tour-actions">
         <button type="button" className="gc-tour-skip" onClick={onClose}>Pular</button>
-        <button type="button" className="gc-tour-next" onClick={onNext}>{step===1?"Próximo":"Concluir"} <span>›</span></button>
+        <button type="button" className="gc-tour-next" onClick={onNext}>{step===1?"Próximo":"Concluir"} <span><ChevronRightIcon size={16}/></span></button>
       </div>
     </div>
   </div>;
