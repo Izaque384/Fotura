@@ -8,6 +8,7 @@ import { dataCalendarioExpirada } from "../../../../lib/date-only";
 import { planoFotura } from "../../../../lib/billing-plans";
 import { heroPresetDataUrl, estiloHeroEfetivo } from "../../../../lib/gallery-hero";
 import { createGalleryWatermarkUrl } from "../../../../lib/gallery-watermark-token";
+import { ordenarFotos } from "../../../../lib/gallery-photo-order";
 
 export const dynamic = "force-dynamic";
 const EXPIRA_SEG = 3600;
@@ -145,10 +146,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const ordemFotos=(g.ordem_fotos as string|null)??"upload";
-  if(ordemFotos==="recentes")lista.sort((a,b)=>String(b.criadoEm??"").localeCompare(String(a.criadoEm??"")));
-  else if(ordemFotos==="nome_asc")lista.sort((a,b)=>a.name.localeCompare(b.name,"pt-BR",{numeric:true,sensitivity:"base"}));
-  else if(ordemFotos==="nome_desc")lista.sort((a,b)=>b.name.localeCompare(a.name,"pt-BR",{numeric:true,sensitivity:"base"}));
+  lista=ordenarFotos(lista,(g.ordem_fotos as string|null)??"upload");
 
   if (lista.length === 0) {
     return json({ fotos: [], capaUrl: usarHeroEstudio ? heroPresetDataUrl(heroCor, heroEstilo) : null, etapa });
