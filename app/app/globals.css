@@ -224,13 +224,13 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
 .ft-modal-panel{border:1px solid var(--ft-border);border-radius:var(--ft-radius-panel);background:linear-gradient(180deg,var(--ft-surface),var(--ft-surface-muted));box-shadow:var(--ft-shadow-modal)}
 
 /* Keep internal Fotura pages on the same base canvas. */
-:where(.dash,.pw-page,.sales-page,.bill-page,.cfg,.profile,.help,.up-page,.delivery-page){
+:where(.dash,.pw-page,.sales-page,.bill-page,.cfg,.profile,.help,.up-page,.delivery-page,.onb){
   background:var(--ft-app-bg)!important;
   color:var(--ft-text)!important;
 }
 
 /* Shared heading scale across the authenticated product. */
-:where(.dash .h1,.dash h1,.pw-head h1,.sales-page h1,.bill-page h1,.cfg h1,.profile h1,.help h1,.delivery-title){
+:where(.dash .h1,.dash h1,.pw-head h1,.sales-page h1,.bill-page h1,.cfg h1,.profile h1,.help h1,.delivery-title,.onb h1){
   font-size:var(--ft-font-page)!important;
   font-weight:var(--ft-weight-semibold)!important;
   letter-spacing:-.55px!important;
@@ -238,13 +238,13 @@ svg.channel-icon:has(circle[fill="#25D366"]) > * {
 
 /* Readability floor: metadata can be compact, but never microscopic. */
 :where(
-  .dash,.pw-page,.sales-page,.bill-page,.cfg,.profile,.help,.up-page,.delivery-page
+  .dash,.pw-page,.sales-page,.bill-page,.cfg,.profile,.help,.up-page,.delivery-page,.onb
 ) :where(.ey,.pw-section-head>div>span,.pw-card-head span,.delivery-ey,.field-label,.project-meta,.count-badge,.pw-pill,.form-badge,.storage-size span,.features li,.fine){
   font-size:var(--ft-font-xs)!important;
 }
 
 /* Standard control geometry for the main app. */
-:where(.dash,.pw-page,.sales-page,.bill-page,.cfg,.profile,.help,.up-page,.delivery-page)
+:where(.dash,.pw-page,.sales-page,.bill-page,.cfg,.profile,.help,.up-page,.delivery-page,.onb)
 :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea,button){
   border-radius:var(--ft-radius-control);
 }
