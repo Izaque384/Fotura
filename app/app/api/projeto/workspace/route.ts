@@ -149,19 +149,25 @@ export async function GET(req: NextRequest) {
 
   const ids = (pastas ?? []).map((g) => String(g.id));
   const refs = (pastas ?? []).map((g) => publicGalleryRef(String(g.slug || "pasta"), String(g.id)));
-  const [clienteR, clientesR, selecoesR, vendasR, eventosR, presetsR, capa, capasPastas] = await Promise.all([
+  const [clienteR, clientesR, selecoesR, vendasR, eventosR, presetsR, perfilR, assinaturaR, capa, capasPastas] = await Promise.all([
     p.cliente_id ? supabase.from("clientes").select("id,nome,email,telefone").eq("id", p.cliente_id).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     supabase.from("clientes").select("id,nome,email,telefone").eq("user_id", user.id).order("nome"),
     ids.length ? supabase.from("selecoes").select("galeria,fotos,finalizada,comentarios,atualizado_em").in("galeria", ids) : Promise.resolve({ data: [] }),
     ids.length ? supabase.from("vendas_fotos").select("id,galeria,qtd_extras,valor_total_centavos,moeda,status,criado_em,pago_em").eq("fotografo_id", user.id).in("galeria", ids).order("criado_em", { ascending: false }).limit(100) : Promise.resolve({ data: [] }),
     ids.length ? supabase.from("produto_eventos").select("id,evento,entidade_id,detalhes,criado_em,sessao_id").eq("entidade", "galeria").in("entidade_id", [...ids, ...refs]).order("criado_em", { ascending: false }).limit(150) : Promise.resolve({ data: [] }),
     supabase.from("galeria_presets").select("id,nome,config,criado_em,atualizado_em").eq("user_id", user.id).order("atualizado_em", { ascending: false }),
+    supabase.from("perfis").select("stripe_recebimentos_ativo").eq("id", user.id).maybeSingle(),
+    supabase.from("assinaturas").select("plano_codigo,status").eq("user_id", user.id).maybeSingle(),
     urlCapa(p as typeof p & { user_id: string }),
     urlsCapasPastas(user.id, pastas ?? []),
   ]);
 
   const contagens = await Promise.all((pastas ?? []).map((g) => contarFotos(user.id, String(g.id))));
   const selecaoPorPasta = new Map((selecoesR.data ?? []).map((s) => [String(s.galeria), s]));
+  const planoCodigo=String(assinaturaR.data?.plano_codigo??"sem_plano");
+  const assinaturaAtiva=["active","trialing","past_due"].includes(String(assinaturaR.data?.status??""));
+  const planoComVendas=assinaturaAtiva&&["legacy","essencial","profissional","studio"].includes(planoCodigo);
+  const stripeRecebimentosAtivo=Boolean(perfilR.data?.stripe_recebimentos_ativo);
 
   return json({
     projeto: {
@@ -183,6 +189,12 @@ export async function GET(req: NextRequest) {
     vendas: vendasR.data ?? [],
     eventos: eventosR.data ?? [],
     presets: presetsR.data ?? [],
+    comercial: {
+      planoCodigo,
+      assinaturaAtiva,
+      stripeRecebimentosAtivo,
+      vendaFotosDisponivel: planoComVendas && stripeRecebimentosAtivo,
+    },
   });
 }
 
