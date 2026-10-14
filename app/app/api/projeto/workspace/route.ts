@@ -6,6 +6,7 @@ import { hashDownloadPin } from "../../../../lib/gallery-download-access";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { registrarErro } from "../../../../lib/observability";
 import { uuidValido } from "../../../../lib/validation";
+import { ordemFotosValida, type OrdemFotos } from "../../../../lib/gallery-photo-order";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -338,7 +339,7 @@ type PostBody =
   | { acao: "criar_projeto"; nome?: string; descricao?: string | null; clienteId?: string | null }
   | { acao: "criar_pasta"; projetoId?: string; nome?: string }
   | { acao: "reordenar_pastas"; projetoId?: string; pastas?: string[] }
-  | { acao: "atualizar_pasta"; projetoId?: string; pastaId?: string; nome?: string; visivel?: boolean; capaArquivo?: string | null; ordemFotos?: "upload" | "recentes" | "nome_asc" | "nome_desc" }
+  | { acao: "atualizar_pasta"; projetoId?: string; pastaId?: string; nome?: string; visivel?: boolean; capaArquivo?: string | null; ordemFotos?: OrdemFotos }
   | { acao: "definir_capa_se_vazia"; projetoId?: string; pastaId?: string; arquivo?: string }
   | { acao: "excluir_projeto"; projetoId?: string; confirmacao?: string };
 
@@ -441,7 +442,7 @@ export async function POST(req: NextRequest) {
     }
     if (typeof body.visivel === "boolean") update.visivel = body.visivel;
     if (body.ordemFotos !== undefined) {
-      if (!["upload","recentes","nome_asc","nome_desc"].includes(body.ordemFotos)) return json({ error: "Ordenação inválida." }, 400);
+      if (!ordemFotosValida(body.ordemFotos)) return json({ error: "Ordenação inválida." }, 400);
       update.ordem_fotos = body.ordemFotos;
     }
     if (!Object.keys(update).length) return json({ error: "Nenhuma alteração informada." }, 400);
