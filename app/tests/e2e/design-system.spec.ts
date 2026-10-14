@@ -37,6 +37,7 @@ test.describe("Fotura design system",()=>{
     for(const arquivo of arquivos){
       const conteudo=read(arquivo);
       expect(conteudo,arquivo).not.toMatch(/font-size:(?:7|7\.5|8|8\.5|8\.8|9|9\.5)px/);
+      expect(conteudo,arquivo).not.toMatch(/font:[^;}]*(?:7|7\.5|8|8\.5|8\.8|9|9\.5)px/);
       expect(conteudo,arquivo).not.toMatch(/font-weight:(?:650|750|850)\b/);
     }
   });
