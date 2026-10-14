@@ -71,4 +71,14 @@ test.describe("Fotura design system",()=>{
     expect(selecao).toContain("var(--ft-border)");
     expect(delivery).toContain("var(--ft-app-bg)");
   });
+  test("Projetos e workspace compartilham o mesmo fundo pelo shell autenticado",()=>{
+    const css=read("app/globals.css");
+    const projetos=read("app/dashboard/projetos/page.tsx");
+    const workspace=read("app/dashboard/projetos/[id]/page.tsx");
+    expect(css).toContain(".mf-shift{");
+    expect(css).toContain("background:var(--ft-app-bg)!important");
+    expect(projetos).toContain('className="dash mf-shift projects-page"');
+    expect(workspace).toContain('className="pw-page mf-shift"');
+  });
+
 });
