@@ -3,6 +3,7 @@ import { createServiceClient } from "../../../../lib/supabase-server";
 import { registrarErro } from "../../../../lib/observability";
 import { uuidValido } from "../../../../lib/validation";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
+import { consumirRateLimit } from "../../../../lib/rate-limit";
 
 export async function DELETE(req: NextRequest) {
   if (!requisicaoMesmoOrigin(req)) return NextResponse.json({ error: "Origem inválida." }, { status: 403 });
@@ -27,6 +28,9 @@ export async function DELETE(req: NextRequest) {
   if (authError || !auth.user) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   }
+
+  const permitido = await consumirRateLimit(req, "gallery_delete", auth.user.id, 10 * 60, 20);
+  if (!permitido) return NextResponse.json({ error: "Aguarde alguns minutos e tente novamente." }, { status: 429, headers: { "Retry-After": "600" } });
 
   const { data: g, error: galleryError } = await supabase
     .from("galerias")

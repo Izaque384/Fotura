@@ -247,7 +247,7 @@ export default function ProjetoWorkspacePage(){
  }
 
  if(carregando)return <div className="pw-page mf-shift"><MenuFotografo/><style>{css}</style><div className="pw-state">Carregando projeto…</div></div>;
- if(erro||!dados)return <div className="pw-page mf-shift"><MenuFotografo/><style>{css}</style><div className="pw-state">{erro||"Projeto indisponível."}</div></div>;
+ if(erro||!dados)return <div className="pw-page mf-shift"><MenuFotografo/><style>{css}</style><div className="pw-state"><div className="pw-state-card"><strong>Não foi possível abrir o projeto</strong><span>{erro||"Projeto indisponível."}</span><div><button type="button" onClick={()=>void carregar()}>Tentar novamente</button><button type="button" className="secondary" onClick={()=>router.push("/dashboard/projetos")}>Voltar para Projetos</button></div></div></div></div>;
 
  const p=dados.projeto,publicUrl=origem?`${origem}/p/${p.publicRef}`:"";
  const totalFotos=dados.pastas.reduce((s,x)=>s+x.qtd,0),totalSelecionadas=dados.pastas.reduce((s,x)=>s+(x.selecao?.fotos.length??0),0),totalComentarios=dados.pastas.reduce((s,x)=>s+Object.values(x.selecao?.comentarios??{}).filter(v=>v?.trim()).length,0);
@@ -301,7 +301,7 @@ const css=`
 
 .pw-page{min-height:100vh;background:linear-gradient(180deg,var(--ft-bg-start),var(--ft-bg-end));color:var(--ft-text)}
 .pw-shell{max-width:1120px;margin:0 auto;padding:40px 40px 80px}
-.pw-state{min-height:100vh;display:grid;place-items:center;color:#74788f}
+.pw-state{min-height:100vh;display:grid;place-items:center;padding:24px;color:#74788f}.pw-state-card{width:min(440px,100%);box-sizing:border-box;padding:26px;border:1px solid var(--ft-border);border-radius:var(--ft-radius-panel);background:var(--ft-surface);box-shadow:var(--ft-shadow-card);text-align:center}.pw-state-card strong{display:block;color:var(--ft-text);font-size:18px}.pw-state-card span{display:block;margin-top:8px;color:var(--ft-text-muted);font-size:var(--ft-font-sm);line-height:1.55}.pw-state-card>div{display:flex;justify-content:center;gap:8px;margin-top:20px;flex-wrap:wrap}.pw-state-card button{min-height:38px;border:0;border-radius:var(--ft-radius-control);background:var(--ft-brand-gradient);color:#fff;padding:0 12px;font:700 var(--ft-font-sm) inherit;cursor:pointer}.pw-state-card button.secondary{border:1px solid var(--ft-border);background:var(--ft-surface-muted);color:var(--ft-accent-ink)}
 .pw-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:20px}
 .pw-head-copy{min-width:0}
 .pw-back{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:0;color:#675b9d;font-size:var(--ft-font-sm);font-weight:700;font-family:inherit;cursor:pointer}
