@@ -222,6 +222,7 @@ test.describe("arquitetura centrada em projetos", () => {
     const signedPhotos = read("app/api/fotos/signed/route.ts");
     const projectList = read("app/dashboard/projetos/page.tsx");
     const workspaceApi = read("app/api/projeto/workspace/route.ts");
+    const publicProjectApi = read("app/api/projeto/publico/route.ts");
     const workspace = read("app/dashboard/projetos/[id]/page.tsx");
     const migration = read("../supabase/migrations/20261015112000_default_gallery_downloads_to_web.sql");
 
@@ -238,6 +239,8 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(projectList).not.toContain("const originais=semThumb");
     expect(workspaceApi).toContain("/thumbs/");
     expect(workspaceApi).not.toContain("const originais = semThumb");
+    expect(publicProjectApi).toContain("/thumbs/");
+    expect(publicProjectApi).not.toContain('caminhos.push(`${base}/thumbs/${nome}`,`${base}/${nome}`)');
     expect(workspace).toContain("Web / compartilhamento · recomendado");
     expect(workspace).toContain("Original · alto consumo de banda");
     expect(migration).toContain("alter table public.galeria_projetos");
