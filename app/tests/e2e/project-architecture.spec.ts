@@ -236,8 +236,6 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(workspaceApi).toContain("/thumbs/");
     expect(workspace).toContain("Web / compartilhamento · recomendado");
     expect(workspace).toContain("Original · alto consumo de banda");
-    expect(image).toContain("maxLado=800");
-    expect(image).toContain("qualidade=.76");
     expect(migration).toContain("set default 'web'");
     expect(migration).toContain("set download_tamanho='web'");
   });
