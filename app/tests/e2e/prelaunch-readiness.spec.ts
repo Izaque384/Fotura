@@ -14,10 +14,13 @@ test.describe("pré-lançamento Fotura",()=>{
 
     const notFound=read("app/not-found.tsx");
     const error=read("app/error.tsx");
+    const globalError=read("app/global-error.tsx");
     expect(notFound).toContain("PÁGINA NÃO ENCONTRADA");
     expect(notFound).toContain("Ir para o início");
     expect(error).toContain("Tentar novamente");
     expect(error).toContain("reset");
+    expect(globalError).toContain("Não foi possível carregar o Fotura");
+    expect(globalError).toContain("reset");
   });
 
   test("robots e metadados mantêm áreas privadas fora da indexação",()=>{
