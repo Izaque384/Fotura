@@ -39,6 +39,12 @@ test("rotas sensíveis rejeitam chamadas sem autenticação ou payload", async (
 
   const encerramentoConta = await request.get("/api/account/closure");
   expect(encerramentoConta.status()).toBe(401);
+
+  const projetoWorkspace = await request.get("/api/projeto/workspace?projeto=00000000-0000-4000-8000-000000000000");
+  expect(projetoWorkspace.status()).toBe(401);
+
+  const projetoWrite = await request.post("/api/projeto/workspace", { data: { acao: "criar_projeto", nome: "Teste" } });
+  expect(projetoWrite.status()).toBe(401);
 });
 
 test("APIs de galeria rejeitam identificadores que não são UUID", async ({ request }) => {
@@ -114,6 +120,18 @@ test("mutações de galeria e cobrança bloqueiam origem externa", async ({ requ
     data: { acao: "solicitar", motivo: "Solicitação de teste" },
   });
   expect(encerramentoConta.status()).toBe(403);
+
+  const projetoWorkspace = await request.post("/api/projeto/workspace", {
+    headers,
+    data: { acao: "criar_projeto", nome: "Teste" },
+  });
+  expect(projetoWorkspace.status()).toBe(403);
+
+  const excluirGaleria = await request.delete("/api/galeria/excluir", {
+    headers,
+    data: { galeria: "00000000-0000-4000-8000-000000000000" },
+  });
+  expect(excluirGaleria.status()).toBe(403);
 });
 
 test("APIs retornam identificador de requisição para correlação", async ({ request }) => {
