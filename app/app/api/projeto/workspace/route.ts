@@ -54,9 +54,10 @@ async function urlCapa(projeto: {
 }) {
   if (!projeto.capa_galeria_id || !projeto.capa_arquivo) return null;
   const supabase = createServiceClient();
-  const { data } = await supabase.storage.from("fotos")
-    .createSignedUrl(`${projeto.user_id}/${projeto.capa_galeria_id}/${projeto.capa_arquivo}`, 60 * 60);
-  return data?.signedUrl ?? null;
+  const base=`${projeto.user_id}/${projeto.capa_galeria_id}`;
+  const caminhos=[`${base}/thumbs/${projeto.capa_arquivo}`,`${base}/${projeto.capa_arquivo}`];
+  const { data } = await supabase.storage.from("fotos").createSignedUrls(caminhos, 60 * 60);
+  return caminhos.map(caminho=>data?.find(item=>item.path===caminho)?.signedUrl).find(Boolean) ?? null;
 }
 
 async function urlsCapasPastas(userId: string, pastas: Array<{ id: unknown; capa: unknown }>) {

@@ -162,7 +162,7 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(tour).toContain("PASSO {step} DE 2");
 
     expect(signedPhotos).toContain('rpc("listar_fotos_galeria_storage"');
-    expect(signedPhotos).toContain("ORIGINAIS_PREASSINADOS_GRADE = 4");
+    expect(signedPhotos).toContain("ORIGINAIS_PREASSINADOS_GRADE = 0");
     expect(projectApi).toContain('rpc("listar_fotos_galeria_storage"');
     expect(metadataApi).toContain('from("galeria_foto_metadata").upsert');
     expect(upload).toContain("gerarMiniaturaComMetadata");
@@ -215,6 +215,28 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(api).toContain("stripe_recebimentos_ativo");
     expect(workspace).toContain("dados.comercial.vendaFotosDisponivel");
     expect(workspace).toContain("Conecte os recebimentos pelo Stripe");
+  });
+
+  test("proteção de egress evita originais automáticos e privilegia thumbnails", () => {
+    const publicGallery = read("app/g/[slug]/page.tsx");
+    const signedPhotos = read("app/api/fotos/signed/route.ts");
+    const projectList = read("app/dashboard/projetos/page.tsx");
+    const workspaceApi = read("app/api/projeto/workspace/route.ts");
+    const workspace = read("app/dashboard/projetos/[id]/page.tsx");
+    const migration = read("../supabase/migrations/20261015112000_default_gallery_downloads_to_web.sql");
+
+    expect(signedPhotos).toContain("ORIGINAIS_PREASSINADOS_GRADE = 0");
+    expect(signedPhotos).toContain('g.download_tamanho !== "original"');
+    expect(publicGallery).not.toContain("agendarPreloadOriginal");
+    expect(publicGallery).not.toContain("precarregarOriginal");
+    expect(publicGallery).toContain("Carregar foto em alta resolução");
+    expect(publicGallery).toContain('meta.downloadTamanho==="original"');
+    expect(projectList).toContain("/thumbs/");
+    expect(workspaceApi).toContain("/thumbs/");
+    expect(workspace).toContain("Web / compartilhamento · recomendado");
+    expect(workspace).toContain("Original · alto consumo de banda");
+    expect(migration).toContain("set default 'web'");
+    expect(migration).toContain("set download_tamanho='web'");
   });
 
 });

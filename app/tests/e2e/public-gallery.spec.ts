@@ -86,7 +86,8 @@ test("cliente seleciona, comenta e finaliza uma prova", async ({ page }) => {
   expect(salvamentos.at(-1)?.comentarios["foto-1.jpg"]).toBe("Minha favorita");
 });
 
-test("lightbox exibe a miniatura imediatamente e troca para o original quando pronto", async ({ page }) => {
+test("lightbox usa miniatura e só busca original após pedido explícito de HD", async ({ page }) => {
+  let originaisSolicitados = 0;
   await page.route("**/api/galeria/publica**", async (route) => {
     await route.fulfill({
       status: 200,
@@ -122,7 +123,8 @@ test("lightbox exibe a miniatura imediatamente e troca para o original quando pr
   await page.route("**/api/fotos/signed**", async (route) => {
     const url = new URL(route.request().url());
     if (url.searchParams.get("arquivo")) {
-      await new Promise(resolve => setTimeout(resolve, 450));
+      originaisSolicitados++;
+      await new Promise(resolve => setTimeout(resolve, 250));
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -144,6 +146,10 @@ test("lightbox exibe a miniatura imediatamente e troca para o original quando pr
   await page.locator(".gc-card img").click();
   await expect(page.getByRole("dialog", { name: "Foto 1 de 1" })).toBeVisible();
   await expect(page.locator(".gc-photo img")).toHaveAttribute("src", foto("Miniatura"));
+  await page.waitForTimeout(500);
+  expect(originaisSolicitados).toBe(0);
+  await page.getByRole("button", { name: "Carregar foto em alta resolução" }).click();
+  await expect.poll(() => originaisSolicitados).toBe(1);
   await expect(page.locator(".gc-photo img")).toHaveAttribute("src", /Original%20em%20alta/, { timeout: 3000 });
   await expect(page.getByRole("button", { name: "Baixar foto original" })).toBeVisible();
 });

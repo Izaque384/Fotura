@@ -15,7 +15,7 @@ const EXPIRA_SEG = 3600;
 const LISTA_LOTE = 1000;
 const ASSINATURA_LOTE = 200;
 const CONCORRENCIA_ASSINATURA = 3;
-const ORIGINAIS_PREASSINADOS_GRADE = 4;
+const ORIGINAIS_PREASSINADOS_GRADE = 0;
 const STATUS_COM_ACESSO = new Set(["active", "trialing", "past_due"]);
 
 function json(data: unknown, status = 200, retryAfter?: number) {
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galleryError } = await supabase
     .from("galerias")
-    .select("user_id,capa,visivel,link_ate,tem_senha,etapa,prova,ordem_fotos,watermark_ativo,watermark_texto,watermark_opacidade")
+    .select("user_id,capa,visivel,link_ate,tem_senha,etapa,prova,ordem_fotos,download_ativo,download_tamanho,watermark_ativo,watermark_texto,watermark_opacidade")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -82,6 +82,9 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    if (!g.download_ativo || g.download_tamanho !== "original") {
+      return json({ error: "Alta resolução não está habilitada para esta galeria." }, 403);
+    }
     const caminho = `${base}/${arquivo}`;
     const { data, error } = await supabase.storage.from("fotos").createSignedUrl(caminho, EXPIRA_SEG);
     if (error || !data?.signedUrl) {
@@ -245,7 +248,7 @@ export async function GET(req: NextRequest) {
     const thumbAssinada = mapa[`${base}/thumbs/${f.name}`] ?? "";
     if (modo === "grade") {
       const preview = thumbAssinada || original;
-      return { nome: f.name, url: protegerOriginais ? preview : (original || preview), thumb: preview, largura:f.largura, altura:f.altura, bytes:f.bytes, mimeType:f.mimeType };
+      return { nome: f.name, url: preview, thumb: preview, largura:f.largura, altura:f.altura, bytes:f.bytes, mimeType:f.mimeType };
     }
     if (modo === "originais") {
       const protegida = protegerOriginais ? (thumbAssinada || original) : original;
