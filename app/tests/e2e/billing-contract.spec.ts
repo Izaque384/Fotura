@@ -93,9 +93,10 @@ test.describe("contrato de planos e armazenamento", () => {
 
     const checkout = fs.readFileSync(path.join(process.cwd(),"app","api","billing","checkout","route.ts"),"utf8");
     const webhook = fs.readFileSync(path.join(process.cwd(),"app","api","billing","webhook","route.ts"),"utf8");
+    const stripe = fs.readFileSync(path.join(process.cwd(),"lib","stripe-billing.ts"),"utf8");
     expect(checkout).toContain('new Set<PlanoCodigo>(["essencial", "profissional", "studio"])');
     expect(checkout).toContain("stripePricePorPlano");
-    expect(checkout).toContain("Idempotency");
+    expect(stripe).toContain('"Idempotency-Key"');
     expect(webhook).toContain('subscription.status === "canceled"');
     expect(webhook).toContain('plano_codigo: "gratis"');
     expect(webhook).toContain("verificarAssinaturaStripe");
