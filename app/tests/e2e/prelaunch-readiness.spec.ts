@@ -83,4 +83,29 @@ test.describe("pré-lançamento Fotura",()=>{
     expect(workspace).toContain("Voltar para Projetos");
     expect(workspace).toContain("void carregar()");
   });
+  test("fluxo do fotógrafo mantém contexto do projeto até a entrega",()=>{
+    const projetos=read("app/dashboard/projetos/page.tsx");
+    const workspace=read("app/dashboard/projetos/[id]/page.tsx");
+    const upload=read("app/upload/page.tsx");
+    const entrega=read("app/dashboard/entrega/[id]/page.tsx");
+    const publico=read("app/p/[slug]/page.tsx");
+
+    expect(projetos).toContain('router.push(`/dashboard/projetos/${d.projeto.id}`)');
+    expect(workspace).toContain('router.push(`/upload?galeria=${d.pasta.id}&projeto=${id}`)');
+    expect(upload).toContain("?aba=pastas");
+    expect(workspace).toContain("Preparar entrega");
+    expect(workspace).toContain("Continuar entrega");
+    expect(entrega).toContain("?aba=entrega");
+    expect(entrega).toContain("Publicar entrega");
+    expect(publico).toContain("Um único link");
+  });
+
+  test("cobrança comunica estados de risco sem divergir dos limites",()=>{
+    const billing=read("app/dashboard/assinatura/page.tsx");
+    expect(billing).toContain("Existe uma pendência de pagamento");
+    expect(billing).toContain("assinatura está programada para encerrar");
+    expect(billing).toContain("plano Grátis");
+    expect(billing).toContain("statusRestrito");
+  });
+
 });
