@@ -27,7 +27,7 @@ function json(data: unknown, status = 200, retryAfter?: number) {
 export async function GET(req: NextRequest) {
   const galeria = req.nextUrl.searchParams.get("galeria")?.trim();
   const modoParam = req.nextUrl.searchParams.get("modo")?.trim();
-  const modo = modoParam === "grade" || modoParam === "originais" ? modoParam : "completo";
+  const modo = modoParam === "originais" ? "originais" : modoParam === "completo" ? "completo" : "grade";
   const arquivo = req.nextUrl.searchParams.get("arquivo")?.trim() || null;
   if (!uuidValido(galeria)) return json({ error: "galeria inválida." }, 400);
 
@@ -55,34 +55,13 @@ export async function GET(req: NextRequest) {
   const entregaFinalDeProva = etapa === "entrega" && Boolean(g.prova);
   const base = entregaFinalDeProva ? `${dono}/${galeria}/entrega` : `${dono}/${galeria}`;
   const protegerOriginais = Boolean(g.watermark_ativo) && etapa !== "entrega";
+  const originalHabilitado = etapa === "entrega" && Boolean(g.download_ativo) && g.download_tamanho === "original";
 
   if (arquivo) {
     if (arquivo.includes("/") || arquivo.includes("\\") || arquivo === "." || arquivo === "..") {
       return json({ error: "Arquivo inválido." }, 400);
     }
-    if (protegerOriginais) {
-      const { data: watermarkPerfil } = await supabase.from("perfis").select("nome_estudio").eq("id", dono).maybeSingle();
-      const watermarkTexto = ((g.watermark_texto as string | null) ?? (watermarkPerfil?.nome_estudio as string | null) ?? "FOTURA").trim() || "FOTURA";
-      try {
-        return json({
-          nome: arquivo,
-          url: createGalleryWatermarkUrl({
-            g: galeria,
-            u: dono,
-            f: arquivo,
-            t: watermarkTexto,
-            o: Number(g.watermark_opacidade ?? 22),
-          }),
-          etapa,
-          watermarkProtected: true,
-        });
-      } catch (error) {
-        registrarErro("gallery.signed.watermark_url", req, error, { galeria, arquivo });
-        return json({ error: "Não foi possível proteger a prévia." }, 503);
-      }
-    }
-
-    if (!g.download_ativo || g.download_tamanho !== "original") {
+    if (!originalHabilitado) {
       return json({ error: "Alta resolução não está habilitada para esta galeria." }, 403);
     }
     const caminho = `${base}/${arquivo}`;
@@ -92,6 +71,10 @@ export async function GET(req: NextRequest) {
       return json({ error: "Não foi possível assinar o arquivo." }, 404);
     }
     return json({ nome: arquivo, url: data.signedUrl, etapa, watermarkProtected: false });
+  }
+
+  if ((modo === "originais" || modo === "completo") && !originalHabilitado) {
+    return json({ error: "Originais não estão habilitados para esta galeria." }, 403);
   }
 
   const [{ data: perfil, error: profileError }, { data: assinatura, error: billingError }] = await Promise.all([
@@ -228,20 +211,6 @@ export async function GET(req: NextRequest) {
     return json({ error: "Não foi possível assinar os arquivos." }, 500);
   }
   const mapa = assinaturaInicial.mapa;
-
-  if (modo === "grade") {
-    const semThumb = lista
-      .filter((f) => !mapa[`${base}/thumbs/${f.name}`])
-      .map((f) => `${base}/${f.name}`);
-    if (semThumb.length) {
-      const fallback = await assinar(semThumb);
-      if (fallback.erroAssinatura) {
-        registrarErro("gallery.signed.thumb_fallback", req, fallback.erroAssinatura, { galeria });
-      } else {
-        Object.assign(mapa, fallback.mapa);
-      }
-    }
-  }
 
   const fotos = lista.map((f) => {
     const original = mapa[`${base}/${f.name}`] ?? "";
