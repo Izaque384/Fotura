@@ -40,10 +40,7 @@ export default function ProjetosPage(){
   const thumbs=capas.map(x=>`${auth.user!.id}/${x.capa_galeria_id}/thumbs/${x.capa_arquivo}`);
   const mapa=new Map<string,string>();
   for(let i=0;i<thumbs.length;i+=200){const{data:signed}=await supabase.storage.from("fotos").createSignedUrls(thumbs.slice(i,i+200),3600);for(const x of signed??[])if(x.path&&x.signedUrl)mapa.set(x.path as string,x.signedUrl as string)}
-  const semThumb=capas.filter(x=>!mapa.get(`${auth.user!.id}/${x.capa_galeria_id}/thumbs/${x.capa_arquivo}`));
-  const originais=semThumb.map(x=>`${auth.user!.id}/${x.capa_galeria_id}/${x.capa_arquivo}`);
-  for(let i=0;i<originais.length;i+=200){const{data:signed}=await supabase.storage.from("fotos").createSignedUrls(originais.slice(i,i+200),3600);for(const x of signed??[])if(x.path&&x.signedUrl)mapa.set(x.path as string,x.signedUrl as string)}
-  setProjetos(lista.map(x=>({...x,capaUrl:x.capa_galeria_id&&x.capa_arquivo?(mapa.get(`${auth.user!.id}/${x.capa_galeria_id}/thumbs/${x.capa_arquivo}`)||mapa.get(`${auth.user!.id}/${x.capa_galeria_id}/${x.capa_arquivo}`)):undefined})));
+  setProjetos(lista.map(x=>({...x,capaUrl:x.capa_galeria_id&&x.capa_arquivo?mapa.get(`${auth.user!.id}/${x.capa_galeria_id}/thumbs/${x.capa_arquivo}`):undefined})));
   setPastas((g.data??[]) as Pasta[]);setClientes((c.data??[]) as Cliente[]);setCarregando(false);
  }
  useEffect(()=>{void carregar()},[]);
