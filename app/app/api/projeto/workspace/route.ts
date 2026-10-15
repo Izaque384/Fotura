@@ -7,6 +7,7 @@ import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { registrarErro } from "../../../../lib/observability";
 import { uuidValido } from "../../../../lib/validation";
 import { ordemFotosValida, type OrdemFotos } from "../../../../lib/gallery-photo-order";
+import { consumirRateLimit } from "../../../../lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -349,6 +350,10 @@ export async function POST(req: NextRequest) {
   if (!user) return json({ error: "Não autorizado." }, 401);
   let body: PostBody;
   try { body = await req.json() as PostBody; } catch { return json({ error: "Dados inválidos." }, 400); }
+  const escopoRate=body.acao==="excluir_projeto"?"project_delete":"project_write";
+  const limiteRate=body.acao==="excluir_projeto"?8:120;
+  const permitido=await consumirRateLimit(req,escopoRate,user.id,10*60,limiteRate);
+  if(!permitido)return json({error:"Muitas alterações em pouco tempo. Aguarde alguns minutos e tente novamente."},429);
   const supabase = createServiceClient();
 
   if (body.acao === "criar_projeto") {
