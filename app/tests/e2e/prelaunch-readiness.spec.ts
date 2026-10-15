@@ -97,7 +97,7 @@ test.describe("pré-lançamento Fotura",()=>{
     expect(workspace).toContain("Continuar entrega");
     expect(entrega).toContain("?aba=entrega");
     expect(entrega).toContain("Publicar entrega");
-    expect(publico).toContain("Um único link");
+    expect(publico).toContain("Escolha uma galeria");
   });
 
   test("cobrança comunica estados de risco sem divergir dos limites",()=>{
