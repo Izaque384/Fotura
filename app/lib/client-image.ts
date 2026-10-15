@@ -8,8 +8,8 @@ export type ThumbnailWithMetadata={
 
 export function gerarMiniaturaComMetadata(
   arquivo:File,
-  maxLado=800,
-  qualidade=.76,
+  maxLado=960,
+  qualidade=.8,
 ):Promise<ThumbnailWithMetadata|null>{
   return new Promise(resolve=>{
     const img=new Image();
