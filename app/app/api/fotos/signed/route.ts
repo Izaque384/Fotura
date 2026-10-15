@@ -15,7 +15,7 @@ const EXPIRA_SEG = 3600;
 const LISTA_LOTE = 1000;
 const ASSINATURA_LOTE = 200;
 const CONCORRENCIA_ASSINATURA = 3;
-const ORIGINAIS_PREASSINADOS_GRADE = 4;
+const ORIGINAIS_PREASSINADOS_GRADE = 0;
 const STATUS_COM_ACESSO = new Set(["active", "trialing", "past_due"]);
 
 function json(data: unknown, status = 200, retryAfter?: number) {
@@ -245,7 +245,7 @@ export async function GET(req: NextRequest) {
     const thumbAssinada = mapa[`${base}/thumbs/${f.name}`] ?? "";
     if (modo === "grade") {
       const preview = thumbAssinada || original;
-      return { nome: f.name, url: protegerOriginais ? preview : (original || preview), thumb: preview, largura:f.largura, altura:f.altura, bytes:f.bytes, mimeType:f.mimeType };
+      return { nome: f.name, url: preview, thumb: preview, largura:f.largura, altura:f.altura, bytes:f.bytes, mimeType:f.mimeType };
     }
     if (modo === "originais") {
       const protegida = protegerOriginais ? (thumbAssinada || original) : original;
