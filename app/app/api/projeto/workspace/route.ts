@@ -54,10 +54,9 @@ async function urlCapa(projeto: {
 }) {
   if (!projeto.capa_galeria_id || !projeto.capa_arquivo) return null;
   const supabase = createServiceClient();
-  const base=`${projeto.user_id}/${projeto.capa_galeria_id}`;
-  const caminhos=[`${base}/thumbs/${projeto.capa_arquivo}`,`${base}/${projeto.capa_arquivo}`];
-  const { data } = await supabase.storage.from("fotos").createSignedUrls(caminhos, 60 * 60);
-  return caminhos.map(caminho=>data?.find(item=>item.path===caminho)?.signedUrl).find(Boolean) ?? null;
+  const caminho=`${projeto.user_id}/${projeto.capa_galeria_id}/thumbs/${projeto.capa_arquivo}`;
+  const { data } = await supabase.storage.from("fotos").createSignedUrl(caminho, 60 * 60);
+  return data?.signedUrl ?? null;
 }
 
 async function urlsCapasPastas(userId: string, pastas: Array<{ id: unknown; capa: unknown }>) {
@@ -77,17 +76,6 @@ async function urlsCapasPastas(userId: string, pastas: Array<{ id: unknown; capa
     if (pastaId) mapa.set(pastaId, item.signedUrl);
   }
 
-  const semThumb = comCapa.filter((g) => !mapa.has(g.id));
-  if (semThumb.length) {
-    const originais = semThumb.map((g) => `${userId}/${g.id}/${g.capa}`);
-    const originalPorPasta = new Map(semThumb.map((g) => [`${userId}/${g.id}/${g.capa}`, g.id]));
-    const { data: originaisAssinados } = await supabase.storage.from("fotos").createSignedUrls(originais, 60 * 60);
-    for (const item of originaisAssinados ?? []) {
-      if (!item.path || !item.signedUrl) continue;
-      const pastaId = originalPorPasta.get(item.path);
-      if (pastaId) mapa.set(pastaId, item.signedUrl);
-    }
-  }
   return mapa;
 }
 
@@ -127,19 +115,10 @@ export async function GET(req: NextRequest) {
       if (error) return json({ error: "Não foi possível carregar as prévias." }, 500);
       for (const x of thumbs ?? []) if (x.path && x.signedUrl) mapa.set(x.path, x.signedUrl);
     }
-    const semThumb = nomes.filter((nome) => !mapa.get(`${user.id}/${capaPasta}/thumbs/${nome}`));
-    if (semThumb.length) {
-      for (let i = 0; i < semThumb.length; i += 200) {
-        const { data: originals } = await supabase.storage.from("fotos").createSignedUrls(
-          semThumb.slice(i, i + 200).map(nome => `${user.id}/${capaPasta}/${nome}`), 15 * 60
-        );
-        for (const x of originals ?? []) if (x.path && x.signedUrl) mapa.set(x.path, x.signedUrl);
-      }
-    }
     return json({
       fotos: nomes.map((nome) => ({
         nome,
-        url: mapa.get(`${user.id}/${capaPasta}/thumbs/${nome}`) || mapa.get(`${user.id}/${capaPasta}/${nome}`) || "",
+        url: mapa.get(`${user.id}/${capaPasta}/thumbs/${nome}`) || "",
       })).filter((item) => item.url),
     });
   }
