@@ -154,6 +154,41 @@ test("lightbox usa miniatura e só busca original após pedido explícito de HD"
   await expect(page.getByRole("button", { name: "Baixar foto original" })).toBeVisible();
 });
 
+test("qualidade web nunca solicita original ao abrir o lightbox", async ({ page }) => {
+  let originaisSolicitados = 0;
+  await page.route("**/api/galeria/publica**", async route => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({
+      galeria: {
+        titulo: "Entrega econômica", capa: null, prova: false, limite: 0, prazo: null, linkAte: null,
+        temSenha: false, desbloqueada: true, linkExpirado: false, etapa: "entrega",
+        downloadAtivo: true, downloadIndividual: true, downloadCompleto: true, downloadTamanho: "web",
+        downloadPinNecessario: false, watermarkAtivo: false, watermarkTexto: null, watermarkOpacidade: 22, assistenteAtivo: false,
+      },
+      perfil: { nome: "Estúdio Teste", logo: null, cor: "#0b0b1a" },
+      selecao: null, listas: [],
+    }),
+  }));
+  await page.route("**/api/fotos/signed**", async route => {
+    const url = new URL(route.request().url());
+    if (url.searchParams.get("arquivo") || url.searchParams.get("modo") === "originais") originaisSolicitados++;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ fotos: [{ nome: "foto.jpg", url: foto("Miniatura"), thumb: foto("Miniatura") }], capaUrl: null }),
+    });
+  });
+
+  await page.goto("/g/00000000-0000-4000-8000-000000000012");
+  await page.locator(".gc-card img").click();
+  await expect(page.locator(".gc-photo img")).toHaveAttribute("src", foto("Miniatura"));
+  await page.waitForTimeout(500);
+  expect(originaisSolicitados).toBe(0);
+  await expect(page.getByRole("button", { name: "Carregar foto em alta resolução" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Baixar foto em qualidade web" })).toBeVisible();
+});
+
 test("senha incorreta não libera a galeria e senha correta libera", async ({ page }) => {
   let desbloqueada = false;
 
