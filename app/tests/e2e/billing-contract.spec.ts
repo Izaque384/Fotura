@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
 import { PLANOS_FOTURA } from "../../lib/billing-plans";
+import { APPROVED_MONTHLY_PRICES } from "../../lib/pricing-markets";
 
 test.describe("contrato de planos e armazenamento", () => {
   test("mantém os limites comerciais atuais em uma única fonte de verdade", () => {
@@ -85,4 +86,19 @@ test.describe("contrato de planos e armazenamento", () => {
     expect(sql).not.toContain("v_photo_limit");
     expect(sql).not.toContain("v_current_photos");
   });
+  test("preços BRL exibidos e contrato canônico não divergem", () => {
+    expect(PLANOS_FOTURA.essencial.precoMensalCentavos).toBe(APPROVED_MONTHLY_PRICES.BRL.essencial);
+    expect(PLANOS_FOTURA.profissional.precoMensalCentavos).toBe(APPROVED_MONTHLY_PRICES.BRL.profissional);
+    expect(PLANOS_FOTURA.studio.precoMensalCentavos).toBe(APPROVED_MONTHLY_PRICES.BRL.studio);
+
+    const checkout = fs.readFileSync(path.join(process.cwd(),"app","api","billing","checkout","route.ts"),"utf8");
+    const webhook = fs.readFileSync(path.join(process.cwd(),"app","api","billing","webhook","route.ts"),"utf8");
+    expect(checkout).toContain('new Set<PlanoCodigo>(["essencial", "profissional", "studio"])');
+    expect(checkout).toContain("stripePricePorPlano");
+    expect(checkout).toContain("Idempotency");
+    expect(webhook).toContain('subscription.status === "canceled"');
+    expect(webhook).toContain('plano_codigo: "gratis"');
+    expect(webhook).toContain("verificarAssinaturaStripe");
+  });
+
 });
