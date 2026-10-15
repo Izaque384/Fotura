@@ -223,7 +223,6 @@ test.describe("arquitetura centrada em projetos", () => {
     const projectList = read("app/dashboard/projetos/page.tsx");
     const workspaceApi = read("app/api/projeto/workspace/route.ts");
     const workspace = read("app/dashboard/projetos/[id]/page.tsx");
-    const image = read("../lib/client-image.ts");
     const migration = read("../supabase/migrations/20261015112000_default_gallery_downloads_to_web.sql");
 
     expect(signedPhotos).toContain("ORIGINAIS_PREASSINADOS_GRADE = 0");
