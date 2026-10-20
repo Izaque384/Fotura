@@ -1,8 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { planoFotura, type PlanoFotura } from "./billing-plans";
+import { planoEfetivoAssinatura, planoFotura, type PlanoFotura } from "./billing-plans";
 
 const GIB = 1024 * 1024 * 1024;
-const STATUS_COM_ACESSO = new Set(["active", "trialing", "past_due"]);
 
 export type UsoPlano = {
   galeriasAtivas: number;
@@ -77,7 +76,7 @@ export async function contextoPlano(supabase: SupabaseClient, userId: string) {
 
   const status = (assinatura?.status as string | null) ?? "active";
   const codigoPersistido = (assinatura?.plano_codigo as string | null) ?? "sem_plano";
-  const plano = STATUS_COM_ACESSO.has(status) ? planoFotura(codigoPersistido) : planoFotura("gratis");
+  const plano = planoEfetivoAssinatura(assinatura ? { plano_codigo: codigoPersistido, status } : null);
   const uso = await obterUsoPlano(supabase, userId);
 
   return {
