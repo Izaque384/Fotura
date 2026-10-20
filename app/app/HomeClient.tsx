@@ -23,6 +23,8 @@ const planos=codigosPlanos.map(codigo=>{
     codigo,
     nome:plano.nome,
     destaque:codigo==="profissional",
+    uploadMensalGb:plano.limites.uploadMensalGb,
+    envioEmail:plano.recursos.envioEmail,
     itens:[`${plano.limites.armazenamentoGb} GB de armazenamento`,...extrasPlano[codigo]],
   };
 });
@@ -525,7 +527,9 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
                     )}
                   </div>
                   <div className="lp2-per">{t("por mês")}</div>
-                  <ul>{plano.itens.map((item) => <li key={item}>{t(item)}</li>)}</ul>
+                  <ul>{plano.itens.map((item) => <li key={item}>{t(item)}</li>)}
+                      <li>{locale === "en" ? `Monthly upload allowance (fair use): ${plano.uploadMensalGb} GB` : locale === "es" ? `Franquicia mensual de subidas (uso razonable): ${plano.uploadMensalGb} GB` : `Franquia mensal de envios (uso justo): ${plano.uploadMensalGb?.toLocaleString("pt-BR")} GB`}</li>
+                      <li>{plano.envioEmail ? (locale === "en" ? "Gallery invitations and delivery notices by email" : locale === "es" ? "Invitaciones y avisos de entrega por correo" : "Convites e avisos de entrega por e-mail") : (locale === "en" ? "Share by link; emails require a paid plan" : locale === "es" ? "Compartir por enlace; correos requieren un plan de pago" : "Compartilhe por link; e-mails exigem plano pago")}</li></ul>
                   <a
                     className="lp2-btn"
                     href={destinoPrincipal}
