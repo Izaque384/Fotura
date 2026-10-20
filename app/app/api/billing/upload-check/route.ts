@@ -54,6 +54,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       permitido,
       reiniciaEm: permitido ? null : (status.reinicia_em ?? null),
+      bytesEnviados: usados,
+      limiteBytes: temLimite ? limite : null,
+      mensagem: permitido ? null : "Franquia mensal de envios atingida. Consulte seu plano; ela reinicia no próximo mês.",
     }, {
       headers: { "Cache-Control": "no-store, private" },
     });
