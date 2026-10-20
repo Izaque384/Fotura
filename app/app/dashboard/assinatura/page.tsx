@@ -20,6 +20,7 @@ type StatusBilling = {
 };
 
 type UsageBilling = {
+  usoMensalUpload?: {bytesEnviados:number;limiteBytes:number;reiniciaEm:string|null;bloqueado:boolean};
   uso: { galeriasAtivas: number; clientes: number; armazenamentoBytes: number; armazenamentoGb: number };
   limites: {
     galeriasAtivas: { usado: number; limite: number | null; excedido: boolean };
@@ -180,6 +181,9 @@ export default function AssinaturaPage() {
   const atual = status?.plano.codigo ?? "sem_plano";
   const planoAtual = PLANOS_FOTURA[atual];
   const armazenamentoUsado = usage?.uso.armazenamentoGb ?? 0;
+  const uploadMensal=usage?.usoMensalUpload;
+  const uploadsUsadosGb=(uploadMensal?.bytesEnviados??0)/(1024**3);
+  const limiteUploadMensalGb=(uploadMensal?.limiteBytes??0)>0 ? ((uploadMensal?.limiteBytes??0)/(1024**3)):planoAtual.limites.uploadMensalGb;
   const gerenciadaStripe = Boolean(status?.temAssinatura);
   const statusRestrito = status ? ["canceled", "unpaid", "paused", "incomplete", "incomplete_expired"].includes(status.status) : false;
   const rotuloStatusAtual = atual === "sem_plano" ? "Sem assinatura" : statusLabel(status?.status ?? "active");
@@ -231,13 +235,14 @@ export default function AssinaturaPage() {
             <div className="meter"><div className="meter-head"><span>Galerias ativas</span><span>{usage?.uso.galeriasAtivas ?? 0} / {limite(planoAtual.limites.galeriasAtivas)}</span></div><div className="track"><div className="fill" style={{width:`${percentual(usage?.uso.galeriasAtivas ?? 0, planoAtual.limites.galeriasAtivas)}%`}}/></div></div>
             <div className="meter"><div className="meter-head"><span>Clientes</span><span>{usage?.uso.clientes ?? 0} / {limite(planoAtual.limites.clientes)}</span></div><div className="track"><div className="fill" style={{width:`${percentual(usage?.uso.clientes ?? 0, planoAtual.limites.clientes)}%`}}/></div></div>
             <div className="meter"><div className="meter-head"><span>Armazenamento</span><span>{armazenamentoUsado.toLocaleString("pt-BR",{maximumFractionDigits:2})} GB / {limite(planoAtual.limites.armazenamentoGb," GB")}</span></div><div className="track"><div className="fill" style={{width:`${percentual(armazenamentoUsado, planoAtual.limites.armazenamentoGb)}%`}}/></div></div>
+            <div className="meter"><div className="meter-head"><span>Envios neste mês (uso justo)</span><span>{uploadsUsadosGb.toLocaleString("pt-BR",{maximumFractionDigits:2})} GB / {limite(limiteUploadMensalGb," GB")}</span></div><div className="track"><div className="fill" style={{width:`${percentual(uploadsUsadosGb,limiteUploadMensalGb)}%`}}/></div><p className="usage-caption">Volume enviado no mês, incluindo reenvios e arquivos excluídos posteriormente. {uploadMensal?.reiniciaEm ? `Reinicia em ${dataPlano(uploadMensal.reiniciaEm)}.` : "Renovação mensal (UTC)."}{uploadMensal?.bloqueado ? " Limite atingido." : ""}</p></div>
           </div>
         </section>
 
         <div className="plans-head"><div><div className="bill-ey">Planos pagos</div><h2>Escolha o espaço que combina com seu volume de trabalho</h2></div><p>Todos incluem galerias, clientes e fotos por galeria ilimitados.</p></div>
         <section className="plans">
           {comerciais.map((codigo) => { const p=PLANOS_FOTURA[codigo]; const ehAtual=atual===codigo && !statusRestrito; const ocupado=Boolean(processando); return <article key={codigo} className={`plan${codigo==="profissional"?" featured":""}${ehAtual?" current-plan":""}`}>
-            {ehAtual ? <span className="current-plan-tag">SEU PLANO</span> : codigo==="profissional" ? <span className="recommended">MAIS ESCOLHIDO</span> : null}
+            {ehAtual ? <span className="current-plan-tag">SEU PLANO</span> : codigo==="profissional" ? <span className="recommended">RECOMENDADO</span> : null}
             <div className="plan-name">{p.nome}</div><div className="plan-desc">{p.descricao}</div>
             <div className="price-row"><span className="price">{dinheiro(approvedMonthlyPrice(codigo, currency), currency)}</span><span className="month">/mês</span></div>
             <div className="storage-size"><strong>{limite(p.limites.armazenamentoGb," GB")}</strong><span>de armazenamento</span></div>
@@ -245,6 +250,8 @@ export default function AssinaturaPage() {
               <li><CheckIcon size={14}/>Galerias ativas ilimitadas</li>
               <li><CheckIcon size={14}/>Fotos por galeria ilimitadas</li>
               <li><CheckIcon size={14}/>Clientes ilimitados</li>
+              <li><CheckIcon size={14}/>Até {limite(p.limites.uploadMensalGb," GB")} de envios por mês (uso justo)</li>
+              <li><CheckIcon size={14}/>Convites e avisos de entrega por e-mail</li>
               <li><CheckIcon size={14}/>Prova, comentários, senha e entrega final</li>
               <li><CheckIcon size={14}/>{codigo==="essencial"?"Hero Minimal com logo, nome e cor":"Heroes Minimal, Premium e Tech"}</li>
               {p.recursos.heroFotoGaleria&&<li><CheckIcon size={14}/>Foto da galeria no fundo do hero</li>}
