@@ -4,6 +4,7 @@ import { registrarErro } from "../../../../lib/observability";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
+import { planoEfetivoAssinatura } from "../../../../lib/billing-plans";
 import { publicGalleryRef } from "../../../../lib/gallery-links";
 import { htmlLang, normalizeLocale, translate, withLocalePath } from "../../../../lib/i18n";
 
@@ -43,6 +44,9 @@ export async function POST(req:NextRequest){
     return NextResponse.json({error:"Não foi possível verificar a galeria."},{status:500});
   }
   if(!g)return NextResponse.json({error:"Galeria não encontrada."},{status:404});
+  const {data:assinatura,error:erroAssinatura}=await supabase.from("assinaturas").select("plano_codigo,status").eq("user_id",user.id).maybeSingle();
+  if(erroAssinatura){registrarErro("gallery.send.billing",req,erroAssinatura,{galeria});return NextResponse.json({error:"Não foi possível verificar seu plano."},{status:500});}
+  if(!planoEfetivoAssinatura(assinatura).recursos.envioEmail)return NextResponse.json({error:"Envio por e-mail disponível a partir do Essencial. Use o link da galeria para compartilhar gratuitamente."},{status:403});
   if(!g.config_revisada_em)return NextResponse.json({error:"Revise e confirme as configurações da galeria antes de enviá-la."},{status:409});
   if(!g.cliente_id)return NextResponse.json({error:"Vincule um cliente à galeria antes de enviar."},{status:400});
 
