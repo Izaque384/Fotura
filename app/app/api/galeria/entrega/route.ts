@@ -4,6 +4,7 @@ import { registrarErro } from "../../../../lib/observability";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
+import { planoEfetivoAssinatura } from "../../../../lib/billing-plans";
 import { normalizeLocale, translate, withLocalePath } from "../../../../lib/i18n";
 import { publicProjectRef } from "../../../../lib/project-links";
 
@@ -201,7 +202,11 @@ export async function POST(req: NextRequest) {
   }
 
   let clienteNotificado = Boolean(g.entrega_notificada_em);
-  if (!clienteNotificado && g.cliente_id) {
+  // A entrega é permitida em todos os planos; notificações automáticas exigem acesso pago.
+  const {data:assinaturaEmail,error:erroPlanoEmail}=await auth.supabase.from("assinaturas").select("plano_codigo,status").eq("user_id",auth.user.id).maybeSingle();
+  if(erroPlanoEmail) registrarErro("gallery.delivery.billing",req,erroPlanoEmail,{galeria});
+  const emailPermitido=!erroPlanoEmail && planoEfetivoAssinatura(assinaturaEmail).recursos.envioEmail;
+  if (emailPermitido && !clienteNotificado && g.cliente_id) {
     try {
       const [{ data: cliente }, { data: perfil }] = await Promise.all([
         auth.supabase.from("clientes").select("nome,email").eq("id", g.cliente_id).eq("user_id", auth.user.id).maybeSingle(),
@@ -250,5 +255,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, etapa: "entrega", quantidade: finais.length, clienteNotificado });
+  return NextResponse.json({ ok: true, etapa: "entrega", quantidade: finais.length, clienteNotificado, emailDisponivelNoPlano: emailPermitido });
 }

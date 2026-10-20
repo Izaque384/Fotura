@@ -8,6 +8,7 @@ export type PlanoFotura = {
   limites: {
     galeriasAtivas: number | null;
     armazenamentoGb: number | null;
+    uploadMensalGb: number | null;
     clientes: number | null;
     fotosPorGaleria: number | null;
   };
@@ -34,6 +35,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     limites: {
       galeriasAtivas: 0,
       armazenamentoGb: 0,
+      uploadMensalGb: 0,
       clientes: 0,
       fotosPorGaleria: 0,
     },
@@ -58,6 +60,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     limites: {
       galeriasAtivas: null,
       armazenamentoGb: 1,
+      uploadMensalGb: 1.1,
       clientes: null,
       fotosPorGaleria: null,
     },
@@ -82,6 +85,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     limites: {
       galeriasAtivas: null,
       armazenamentoGb: null,
+      uploadMensalGb: 2048,
       clientes: null,
       fotosPorGaleria: null,
     },
@@ -106,6 +110,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     limites: {
       galeriasAtivas: null,
       armazenamentoGb: 10,
+      uploadMensalGb: 11,
       clientes: null,
       fotosPorGaleria: null,
     },
@@ -130,6 +135,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     limites: {
       galeriasAtivas: null,
       armazenamentoGb: 50,
+      uploadMensalGb: 55,
       clientes: null,
       fotosPorGaleria: null,
     },
@@ -154,6 +160,7 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
     limites: {
       galeriasAtivas: null,
       armazenamentoGb: 100,
+      uploadMensalGb: 110,
       clientes: null,
       fotosPorGaleria: null,
     },
@@ -175,4 +182,11 @@ export const PLANOS_FOTURA: Record<PlanoCodigo, PlanoFotura> = {
 export function planoFotura(codigo: string | null | undefined): PlanoFotura {
   if (codigo && codigo in PLANOS_FOTURA) return PLANOS_FOTURA[codigo as PlanoCodigo];
   return PLANOS_FOTURA.sem_plano;
+}
+
+// Compartilhado entre billing e rotas de funcionalidades premium.
+export const STATUS_ASSINATURA_COM_ACESSO = new Set(["active", "trialing", "past_due"]);
+export function planoEfetivoAssinatura(a: {plano_codigo?: string | null;status?: string | null} | null | undefined): PlanoFotura {
+  if (!a) return planoFotura("sem_plano");
+  return STATUS_ASSINATURA_COM_ACESSO.has(a.status ?? "") ? planoFotura(a.plano_codigo) : planoFotura("gratis");
 }

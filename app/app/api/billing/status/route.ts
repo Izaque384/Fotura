@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
-import { planoFotura } from "../../../../lib/billing-plans";
+import { planoEfetivoAssinatura } from "../../../../lib/billing-plans";
 import { obterSuspensaoAdministrativa } from "../../../../lib/account-access";
 import { registrarErro } from "../../../../lib/observability";
 
@@ -36,9 +36,7 @@ export async function GET(req: NextRequest) {
     }
 
     const statusAtual = assinatura.status as string;
-    const plano = ["active", "trialing", "past_due"].includes(statusAtual)
-      ? planoFotura(assinatura.plano_codigo as string | null)
-      : planoFotura("gratis");
+    const plano = planoEfetivoAssinatura({ plano_codigo: assinatura.plano_codigo as string | null, status: statusAtual });
     const temAssinatura = assinatura.provedor === "stripe" && Boolean(assinatura.provedor_assinatura_id);
 
     return NextResponse.json({

@@ -10,6 +10,12 @@ test.describe("contrato de planos e armazenamento", () => {
     expect(PLANOS_FOTURA.essencial.limites.armazenamentoGb).toBe(10);
     expect(PLANOS_FOTURA.profissional.limites.armazenamentoGb).toBe(50);
     expect(PLANOS_FOTURA.studio.limites.armazenamentoGb).toBe(100);
+    expect(PLANOS_FOTURA.gratis.limites.uploadMensalGb).toBe(1.1);
+    expect(PLANOS_FOTURA.essencial.limites.uploadMensalGb).toBe(11);
+    expect(PLANOS_FOTURA.profissional.limites.uploadMensalGb).toBe(55);
+    expect(PLANOS_FOTURA.studio.limites.uploadMensalGb).toBe(110);
+    expect(PLANOS_FOTURA.gratis.recursos.envioEmail).toBe(false);
+    expect(PLANOS_FOTURA.essencial.recursos.envioEmail).toBe(true);
 
 
     expect(PLANOS_FOTURA.gratis.recursos.heroEstudio).toBe(false);
@@ -69,6 +75,19 @@ test.describe("contrato de planos e armazenamento", () => {
     expect(workspace).toContain("A capa do projeto aparece nas pastas que ainda não têm uma capa própria.");
     expect(perfil).toContain("Usar a capa do projeto como fundo do hero");
     expect(perfil).not.toContain('router.push("/dashboard/heros")');
+  });
+
+  test("entitlement de e-mail, franquia visível e retorno ao grátis", () => {
+    const send=fs.readFileSync(path.join(process.cwd(),"app","api","galeria","enviar","route.ts"),"utf8");
+    const deliver=fs.readFileSync(path.join(process.cwd(),"app","api","galeria","entrega","route.ts"),"utf8");
+    const page=fs.readFileSync(path.join(process.cwd(),"app","dashboard","assinatura","page.tsx"),"utf8");
+    const sql=fs.readFileSync(path.join(process.cwd(),"..","supabase","migrations","20261019221000_align_plan_limits_and_free_fallback.sql"),"utf8");
+    expect(send).toContain("planoEfetivoAssinatura(assinatura).recursos.envioEmail");
+    expect(deliver).toContain("emailPermitido && !clienteNotificado");
+    expect(page).toContain("Envios neste mês (uso justo)");
+    expect(page).toContain("RECOMENDADO");
+    expect(page).not.toContain("MAIS ESCOLHIDO");
+    expect(sql).toContain("v_plan := 'gratis'");
   });
 
   test("SQL de Storage acompanha os planos e não reintroduz limite oculto de fotos", () => {
