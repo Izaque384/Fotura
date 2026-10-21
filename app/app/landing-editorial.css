@@ -829,3 +829,57 @@
   .lp2 *{scroll-behavior:auto!important}
   .lp2-hero-main,.lp2-hero-tall,.lp2-hero-small,.lp2-hero-photo-layer,.lp2-demo-screen,.lp2-step-progress{animation:none!important}
 }
+
+
+/* Demonstração editorial alinhada à navegação real: projetos -> pastas -> prova -> entrega. */
+.lp2-demo-navitem{display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:6.7px}
+.lp2-demo-navglyph{display:inline-flex;width:12px;height:12px;align-items:center;justify-content:center;flex:none;color:#787f96;font-size:11px;line-height:1}
+.lp2-demo-navitem.on .lp2-demo-navglyph{color:#5848df}
+.lp2-real-projects,.lp2-real-project-folders,.lp2-real-selections{min-height:410px}
+.lp2-real-project-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:-1px 0 13px}
+.lp2-real-project-stats>div{display:flex;flex-direction:column;gap:5px;padding:10px 12px;border:1px solid #e0dce8;border-radius:9px;background:#faf8fd}
+.lp2-real-project-stats b{font-size:17px;color:#262b40;line-height:1}
+.lp2-real-project-stats span{color:#777b90;font-size:7px}
+.lp2-real-project-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.lp2-real-project-toolbar .lp2-real-search{flex:1;min-width:0;background:#fff}
+.lp2-real-project-filter{white-space:nowrap;font-size:7px;font-weight:700;color:#656b81}
+.lp2-real-project-filter span{margin-left:6px}
+.lp2-real-project-list,.lp2-real-folder-list{display:grid;gap:8px}
+.lp2-real-project-row,.lp2-real-folder-row{display:flex;align-items:center;gap:12px;min-height:67px;padding:8px 10px;border:1px solid #e0dce8;border-radius:10px;background:#fff;box-shadow:0 3px 10px rgba(28,23,49,.025)}
+.lp2-real-project-cover,.lp2-real-folder-cover{width:65px;height:48px;flex:none;border-radius:7px;background-color:#e1dbe9;background-size:cover;background-position:center}
+.lp2-real-project-info,.lp2-real-folder-info{min-width:0;flex:1}
+.lp2-real-project-info strong,.lp2-real-folder-info strong{display:block;color:#262b40;font-size:9px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lp2-real-project-info small,.lp2-real-folder-info small{display:block;margin-top:5px;color:#80859b;font-size:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lp2-real-project-info>span{display:inline-block;margin-top:5px;padding:3px 6px;border-radius:5px;background:#f0eefb;color:#5752a5;font-size:6px;font-weight:800}
+.lp2-real-project-action,.lp2-real-folder-row>span{flex:none;font-size:7px;font-weight:800;color:#5752a5;white-space:nowrap}
+.lp2-real-project-back{margin:-3px 0 10px;color:#777d93;font-size:8px;font-weight:700}
+.lp2-real-project-tabs{display:flex;align-items:center;gap:20px;margin:12px 0 18px;border-bottom:1px solid #dedbe5;white-space:nowrap}
+.lp2-real-project-tabs span{position:relative;padding:0 0 10px;color:#7d8196;font-size:7px;font-weight:750}
+.lp2-real-project-tabs span.on{color:#5b4cf2}
+.lp2-real-project-tabs span.on:after{content:"";position:absolute;bottom:-1px;left:0;right:0;height:2px;border-radius:2px;background:#5b4cf2}
+.lp2-real-folders-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 11px}
+.lp2-real-folders-head strong{display:block;font-size:11px;color:#262b40}
+.lp2-real-folders-head small{display:block;margin-top:3px;color:#80859b;font-size:7px}
+.lp2-real-folder-row{min-height:61px}
+.lp2-real-folder-cover{width:58px;height:45px}
+.lp2-real-project-share{display:flex;flex-direction:column;gap:4px;margin-top:11px;padding:10px 12px;border:1px solid #ded9f3;border-radius:9px;background:#f4f2fc}
+.lp2-real-project-share b{font-size:8px;color:#34365a}
+.lp2-real-project-share span{font-size:7px;line-height:1.45;color:#747b94}
+.lp2-real-selections .lp2-real-summary{margin:0 0 13px}
+.lp2-real-selections .lp2-real-folder-row{min-height:66px}
+@media(max-width:720px){
+  .lp2-real-projects,.lp2-real-project-folders,.lp2-real-selections{min-height:360px}
+  .lp2-real-project-stats>div{padding:8px}
+  .lp2-real-project-stats span{font-size:6px}
+  .lp2-real-project-tabs{gap:13px;overflow-x:auto;scrollbar-width:none}
+  .lp2-real-project-tabs span{font-size:6.5px}
+  .lp2-real-project-row,.lp2-real-folder-row{gap:8px;padding:8px}
+  .lp2-real-project-cover{width:47px;height:44px}
+  .lp2-real-folder-cover{width:46px;height:42px}
+  .lp2-real-project-action{display:none}
+  .lp2-real-project-info strong,.lp2-real-folder-info strong{font-size:8px}
+  .lp2-real-project-info small,.lp2-real-folder-info small{font-size:6px}
+  .lp2-real-project-filter{display:none}
+  .lp2-real-folders-head strong{font-size:10px}
+  .lp2-real-project-back{margin-top:0}
+}
