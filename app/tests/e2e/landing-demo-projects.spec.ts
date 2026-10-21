@@ -24,7 +24,7 @@ test.describe("landing: demonstração da arquitetura atual", () => {
     await expect(demo.locator(".lp2-demo-side")).toContainText("Projetos");
 
     await demo.getByRole("button", { name: /Envie, organize e compartilhe/ }).click();
-    await expect(demo.getByText("Pastas de fotos")).toBeVisible();
+    await expect(demo.locator(".lp2-real-folders-head").getByText("Pastas de fotos")).toBeVisible();
     await expect(demo.getByText("Making of")).toBeVisible();
 
     await demo.getByRole("button", { name: /O cliente faz a seleção/ }).click();
