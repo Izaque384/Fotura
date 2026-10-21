@@ -31,7 +31,7 @@ test.describe("landing: demonstração da arquitetura atual", () => {
     await expect(demo.getByText("Cerimônia", { exact: false }).first()).toBeVisible();
 
     await demo.getByRole("button", { name: /Siga até a entrega final/ }).click();
-    await expect(demo.getByText("Escolhas do cliente")).toBeVisible();
+    await expect(demo.getByText("Escolhas do cliente", { exact: true })).toBeVisible();
     await expect(demo.getByText("Ver seleção →").first()).toBeVisible();
   });
 });
