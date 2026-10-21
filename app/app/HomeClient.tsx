@@ -94,7 +94,7 @@ const fotoFinal =
 const passos = [
   {
     titulo: "Crie o projeto e organize as pastas",
-    descricao: "Cada trabalho reúne suas galerias em um único projeto e um único link para o cliente.",
+    descricao: "Cada trabalho reúne pastas de fotos em um projeto, com um único link para o cliente.",
   },
   {
     titulo: "Envie, organize e compartilhe",
@@ -102,11 +102,11 @@ const passos = [
   },
   {
     titulo: "O cliente faz a seleção",
-    descricao: "Na galeria pública, ele marca as fotos, comenta e finaliza a prova sem precisar criar uma conta.",
+    descricao: "No link público do projeto, o cliente escolhe fotos por pasta, comenta e conclui a seleção sem criar conta.",
   },
   {
     titulo: "Siga até a entrega final",
-    descricao: "Escolhas e comentários continuam ligados à pasta certa até a publicação das fotos finais.",
+    descricao: "As escolhas de cada pasta acompanham a preparação e a publicação das fotos finais.",
   },
 ];
 
@@ -218,14 +218,14 @@ function DemoScreen({ etapa }: { etapa: number }) {
         <div className="lp2-real-public-hero" style={{ backgroundImage: 'url("' + fotosGaleria[0].url + '")' }}>
           <div className="lp2-real-public-brand">STUDIO AURORA</div>
           <div>
-            <small>PROVA DE FOTOS</small>
+            <small>PROJETO DE FOTOS</small>
             <strong>Marina & Pedro</strong>
           </div>
         </div>
         <div className="lp2-real-public-head">
-          <strong>Galeria <span>24 fotos</span></strong>
+          <strong>Cerimônia <span>24 fotos · Marina &amp; Pedro</span></strong>
         </div>
-        <div className="lp2-real-public-hint">Selecione as fotos desejadas (até 25) e finalize quando terminar.</div>
+        <div className="lp2-real-public-hint">Pasta Cerimônia · Selecione as fotos desejadas (até 25) e finalize quando terminar.</div>
         <div className="lp2-real-public-grid">
           {[2, 0, 3, 1, 6, 4, 5, 7].map((foto, index) => (
             <div key={index} style={{ backgroundImage: 'url("' + fotosGaleria[foto].url + '")' }}>
@@ -241,38 +241,41 @@ function DemoScreen({ etapa }: { etapa: number }) {
 
   return (
     <div className="lp2-demo-screen lp2-real-selections">
+      <div className="lp2-real-project-back">‹ Projetos / Marina & Pedro</div>
       <div className="lp2-real-page-head">
         <div>
-          <small>SELEÇÕES</small>
-          <strong>Ciclo de prova e preparação</strong>
-          <p>Acompanhe a seleção do cliente até a preparação da entrega final.</p>
+          <small>PROJETO · SELEÇÃO</small>
+          <strong>Escolhas do cliente</strong>
+          <p>Acompanhe as escolhas e comentários de cada pasta do projeto.</p>
         </div>
-        <span className="lp2-real-secondary">Atualizar</span>
+        <span className="lp2-real-secondary">↻ Atualizar</span>
       </div>
-
+      <div className="lp2-real-project-tabs">
+        <span>Resumo</span><span>Pastas</span><span className="on">Seleção</span><span>Entrega</span><span>Atividade</span>
+      </div>
       <div className="lp2-real-summary">
-        <div><b>2</b><span>Sem interação</span></div>
-        <div><b>3</b><span>Em andamento</span></div>
-        <div><b>1</b><span>Seleção finalizada</span></div>
-        <div><b>0</b><span>Preparando entrega</span></div>
+        <div><b>3</b><span>Pastas</span></div>
+        <div><b>1</b><span>Em andamento</span></div>
+        <div><b>2</b><span>Finalizadas</span></div>
+        <div><b>24</b><span>Fotos escolhidas</span></div>
       </div>
-
-      <div className="lp2-real-selection-toolbar">
-        <div className="lp2-real-search">⌕ <span>Buscar galeria ou cliente</span></div>
-        <div className="lp2-real-filter">Filtrar por <span>⌄</span></div>
+      <div className="lp2-real-folder-list">
+        {[
+          {nome:"Making of",selecionadas:"6 / 10 fotos",status:"Finalizada",foto:2},
+          {nome:"Cerimônia",selecionadas:"12 / 25 fotos",status:"Em andamento",foto:0},
+          {nome:"Recepção",selecionadas:"6 / 15 fotos",status:"Finalizada",foto:4},
+        ].map((pasta) => (
+          <div className="lp2-real-folder-row" key={pasta.nome}>
+            <div className="lp2-real-folder-cover" style={{backgroundImage:'url("' + fotosGaleria[pasta.foto].url + '")'}} />
+            <div className="lp2-real-folder-info">
+              <strong>{pasta.nome}</strong>
+              <small>{pasta.selecionadas} · {pasta.status}</small>
+            </div>
+            <span>Ver seleção →</span>
+          </div>
+        ))}
       </div>
-
-      <div className="lp2-real-selection-row">
-        <div className="lp2-real-cover" style={{ backgroundImage: 'url("' + fotosGaleria[0].url + '")' }} />
-        <div className="lp2-real-selection-name">
-          <div><strong>Marina & Pedro</strong><span className="lp2-real-mode">Prova</span></div>
-          <small>Marina Alves · Atualizada agora</small>
-        </div>
-        <div><small>ESCOLHIDAS</small><strong>18 / 25</strong></div>
-        <div><small>COMENTÁRIOS</small><strong>4</strong></div>
-        <div><small>STATUS</small><span className="lp2-real-status">Seleção finalizada</span></div>
-        <span className="lp2-real-secondary">Ver seleção</span>
-      </div>
+      <div className="lp2-real-project-share"><b>Próximo passo: entrega final</b><span>Prepare as fotos escolhidas e publique a entrega nas respectivas pastas.</span></div>
     </div>
   );
 }
@@ -422,7 +425,7 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
                 <h2>{t("Do upload à escolha final.")}<br />{t("No mesmo fluxo.")}</h2>
               </div>
               <p>
-                {t("Monte a galeria, compartilhe um único link e receba a seleção sem reconstruir o processo em mensagens, planilhas ou listas de nomes de arquivo.")}
+                {t("Crie o projeto, organize as pastas e receba as escolhas do cliente por um único link, sem mensagens soltas ou listas de arquivos.")}
               </p>
             </div>
 
@@ -452,14 +455,15 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
                     {etapaAtiva !== 2 && (
                       <aside className="lp2-demo-side">
                         <div className="lp2-demo-logo">FOTURA</div>
-                        {["Painel","Galerias","Seleções","Vendas","Clientes","Planos"].map((item) => (
+                        {["Painel","Projetos","Clientes","Vendas","Planos","Configurações","Ajuda e feedback"].map((item) => (
                           <div
                             className={
                               "lp2-demo-navitem" +
-                              ((etapaAtiva === 3 && item === "Seleções") || (etapaAtiva !== 3 && item === "Galerias") ? " on" : "")
+                              (item === "Projetos" ? " on" : "")
                             }
                             key={item}
                           >
+                            <span className="lp2-demo-navglyph" aria-hidden="true">{item === "Projetos" ? "▱" : item === "Painel" ? "▦" : item === "Clientes" ? "♙" : item === "Vendas" ? "↗" : item === "Planos" ? "▤" : item === "Configurações" ? "⚙" : "?"}</span>
                             {t(item)}
                           </div>
                         ))}
