@@ -130,27 +130,43 @@ function Logo() {
 function DemoScreen({ etapa }: { etapa: number }) {
   if (etapa === 0) {
     return (
-      <div className="lp2-demo-screen lp2-real-upload">
-        <div className="lp2-real-upload-card">
-          <div className="lp2-real-upload-title">Nova galeria</div>
-          <div className="lp2-real-upload-sub">Dê um nome, vincule o cliente e escolha as fotos</div>
-
-          <label className="lp2-real-label">Nome da galeria</label>
-          <div className="lp2-real-input">Casamento Marina e Pedro</div>
-
-          <div className="lp2-real-label-row">
-            <span className="lp2-real-label">Cliente <em>(opcional)</em></span>
-            <span className="lp2-real-mini">+ Cadastrar agora</span>
+      <div className="lp2-demo-screen lp2-real-projects">
+        <div className="lp2-real-page-head">
+          <div>
+            <small>PROJETOS</small>
+            <strong>Seus trabalhos em um só lugar</strong>
+            <p>Cada projeto reúne suas pastas, seleção, entrega e um único link para o cliente.</p>
           </div>
-          <div className="lp2-real-select">Marina Alves <span>⌄</span></div>
-          <p className="lp2-real-note">O cliente não precisa informar esses dados ao abrir a galeria. O vínculo é apenas para sua organização interna.</p>
+          <span className="lp2-real-primary compact">+ Novo projeto</span>
+        </div>
 
-          <label className="lp2-real-label">Fotos</label>
-          <div className="lp2-real-file">Escolher fotos</div>
-          <div className="lp2-real-file-status">24 fotos válidas selecionadas</div>
-          <div className="lp2-real-rules">JPG, PNG ou WebP · até 50 MB por foto · até 500 fotos por lote</div>
+        <div className="lp2-real-project-stats">
+          <div><b>3</b><span>Projetos</span></div>
+          <div><b>3</b><span>Projetos com fotos</span></div>
+          <div><b>7</b><span>Pastas de fotos</span></div>
+        </div>
 
-          <div className="lp2-real-primary">Criar nova galeria</div>
+        <div className="lp2-real-project-toolbar">
+          <div className="lp2-real-search">⌕ <span>Buscar projeto, cliente ou pasta</span></div>
+          <div className="lp2-real-project-filter">Todos os projetos <span>⌄</span></div>
+        </div>
+
+        <div className="lp2-real-project-list">
+          {[
+            {nome:"Casamento Marina & Pedro",cliente:"Marina Alves",pastas:3,foto:0,atualizado:"hoje"},
+            {nome:"Ensaio Família Alves",cliente:"Família Alves",pastas:2,foto:1,atualizado:"há 2 dias"},
+            {nome:"Ensaio Gestante Juliana",cliente:"Juliana Souza",pastas:2,foto:3,atualizado:"há 5 dias"},
+          ].map((projeto) => (
+            <div className="lp2-real-project-row" key={projeto.nome}>
+              <div className="lp2-real-project-cover" style={{backgroundImage:'url("' + fotosGaleria[projeto.foto].url + '")'}} />
+              <div className="lp2-real-project-info">
+                <strong>{projeto.nome}</strong>
+                <small>{projeto.cliente} · Atualizado {projeto.atualizado}</small>
+                <span>{projeto.pastas} pastas</span>
+              </div>
+              <span className="lp2-real-project-action">Abrir projeto →</span>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -158,38 +174,40 @@ function DemoScreen({ etapa }: { etapa: number }) {
 
   if (etapa === 1) {
     return (
-      <div className="lp2-demo-screen lp2-real-galleries">
+      <div className="lp2-demo-screen lp2-real-project-folders">
+        <div className="lp2-real-project-back">‹ Projetos</div>
         <div className="lp2-real-page-head">
           <div>
-            <small>GALERIAS</small>
-            <strong>Gerencie suas entregas</strong>
-            <p>Da prova à entrega final, acompanhe cada trabalho em uma única galeria.</p>
+            <small>PROJETO · MARINA ALVES</small>
+            <strong>Casamento Marina & Pedro</strong>
+            <p>Organize as pastas do trabalho e compartilhe um único link.</p>
           </div>
-          <span className="lp2-real-primary compact">+ Nova galeria</span>
+          <span className="lp2-real-secondary">↗ Compartilhar projeto</span>
         </div>
-
-        <div className="lp2-real-panel">
-          <div className="lp2-real-toolbar">
-            <div className="lp2-real-search">⌕ <span>Buscar por galeria ou cliente</span></div>
-            <div className="lp2-real-filter">Filtrar por <span>⌄</span></div>
-          </div>
-          <div className="lp2-real-gallery-row">
-            <div className="lp2-real-cover" style={{ backgroundImage: 'url("' + fotosGaleria[0].url + '")' }} />
-            <div className="lp2-real-gallery-name">
-              <div><strong>Marina & Pedro</strong><span className="lp2-real-mode">Prova</span></div>
-              <small>24 fotos</small>
-            </div>
-            <div className="lp2-real-gallery-client">
-              <strong>Marina Alves</strong>
-              <small>Aguardando cliente</small>
-            </div>
-            <div className="lp2-real-gallery-actions">
-              <span>Ver galeria</span>
-              <span className="share">↗ Compartilhar</span>
-              <span>•••</span>
-            </div>
-          </div>
+        <div className="lp2-real-project-tabs">
+          <span>Resumo</span><span className="on">Pastas</span><span>Seleção</span><span>Entrega</span><span>Atividade</span>
         </div>
+        <div className="lp2-real-folders-head">
+          <div><strong>Pastas de fotos</strong><small>Organize o trabalho por momentos</small></div>
+          <span className="lp2-real-primary compact">+ Nova pasta</span>
+        </div>
+        <div className="lp2-real-folder-list">
+          {[
+            {nome:"Making of",fotos:86,status:"Em prova",foto:2},
+            {nome:"Cerimônia",fotos:242,status:"Aguardando seleção",foto:0},
+            {nome:"Recepção",fotos:164,status:"Entrega publicada",foto:4},
+          ].map((pasta) => (
+            <div className="lp2-real-folder-row" key={pasta.nome}>
+              <div className="lp2-real-folder-cover" style={{backgroundImage:'url("' + fotosGaleria[pasta.foto].url + '")'}} />
+              <div className="lp2-real-folder-info">
+                <strong>{pasta.nome}</strong>
+                <small>{pasta.fotos} fotos · {pasta.status}</small>
+              </div>
+              <span>Ver pasta →</span>
+            </div>
+          ))}
+        </div>
+        <div className="lp2-real-project-share"><b>Um único link para o projeto</b><span>O cliente navega pelas pastas, seleciona fotos e acompanha a entrega.</span></div>
       </div>
     );
   }
