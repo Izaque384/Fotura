@@ -21,6 +21,10 @@ test.describe("Fotura: UX dos projetos",()=>{
   for(const t of ["Aguardando cliente","Seleção concluída","Preparando entrega","Entregues","fotura-projetos-modo","project-grid","aria-pressed"])expect(codigo).toContain(t);
   expect(codigo).toContain("Modelo do projeto");
  });
+ test("novas pastas herdam o modelo e alterações do projeto são sincronizadas",()=>{
+  const api=read("app/api/projeto/workspace/route.ts");
+  for(const key of ["prova: p.prova","download_tamanho: p.download_tamanho","watermark_ativo: p.watermark_ativo","const atualizarPastas = Object.fromEntries","if(sincronizacao.error)"])expect(api).toContain(key);
+ });
  test("compartilhamento revisa o acesso antes de enviar o link",()=>{
   const codigo=read("app/dashboard/ProjectShareCenter.tsx");
   for(const t of ["Pastas visíveis","DOWNLOADS","VALIDADE","PIN DE DOWNLOAD","Ver como cliente","Copiar link"])expect(codigo).toContain(t);
