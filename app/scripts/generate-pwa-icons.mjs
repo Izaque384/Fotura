@@ -39,6 +39,11 @@ for (const tamanho of [192, 512]) {
     .png({ compressionLevel: 9 })
     .toBuffer();
 
-  await writeFile(path.join(dir, `icon-${tamanho}.png`), imagem);
-  console.log(`PWA Fotura: ícone ${tamanho}x${tamanho} atualizado.`);
+  // Mantém o caminho antigo para compatibilidade com instalações prévias,
+  // mas publica um caminho NOVO no manifesto para impedir cache da arte anterior.
+  await Promise.all([
+    writeFile(path.join(dir, `icon-${tamanho}.png`), imagem),
+    writeFile(path.join(dir, `fotura-pwa-${tamanho}-20261022.png`), imagem),
+  ]);
+  console.log(`PWA Fotura: ícones ${tamanho}x${tamanho} gerados (novo e legado).`);
 }
