@@ -8,6 +8,7 @@ import { registrarErro } from "../../../../lib/observability";
 import { uuidValido } from "../../../../lib/validation";
 import { ordemFotosValida, type OrdemFotos } from "../../../../lib/gallery-photo-order";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
+import { MODELOS_PROJETO,modeloValido,configProjeto } from "../../../../lib/project-templates";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -317,7 +318,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 type PostBody =
-  | { acao: "criar_projeto"; nome?: string; descricao?: string | null; clienteId?: string | null }
+  | { acao: "criar_projeto"; nome?: string; descricao?: string | null; clienteId?: string | null; modelo?: string; presetId?: string | null }
   | { acao: "criar_pasta"; projetoId?: string; nome?: string }
   | { acao: "reordenar_pastas"; projetoId?: string; pastas?: string[] }
   | { acao: "atualizar_pasta"; projetoId?: string; pastaId?: string; nome?: string; visivel?: boolean; capaArquivo?: string | null; ordemFotos?: OrdemFotos }
@@ -345,7 +346,16 @@ export async function POST(req: NextRequest) {
       const { data: cliente } = await supabase.from("clientes").select("id").eq("id", clienteId).eq("user_id", user.id).maybeSingle();
       if (!cliente) return json({ error: "Cliente não encontrado." }, 404);
     }
+    let configuracao = modeloValido(body.modelo) ? MODELOS_PROJETO[body.modelo].config : MODELOS_PROJETO.ensaio.config;
+    if(body.presetId){
+      if(!uuidValido(body.presetId))return json({error:"Modelo inválido."},400);
+      const {data:preset}=await supabase.from("galeria_presets").select("config").eq("id",body.presetId).eq("user_id",user.id).maybeSingle();
+      if(!preset)return json({error:"Modelo não encontrado."},404);
+      const validado=configProjeto(preset.config);if(!validado)return json({error:"Modelo incompatível."},400);
+      configuracao=validado;
+    }
     const { data, error } = await supabase.from("galeria_projetos").insert({
+      ...configuracao,
       user_id: user.id,
       cliente_id: clienteId,
       nome,
