@@ -30,6 +30,11 @@ const exemplo = {
 
 test("valida duração, fotos e mantém a configuração desativada por padrão", () => {
   expect(lerAbertura(null).ativo).toBe(false);
+  expect(lerAbertura(null).duracao).toBe(12);
+  expect(lerAbertura({ duracao: 6 }).duracao).toBe(12);
+  expect(lerAbertura({ duracao: 4 }).duracao).toBe(8);
+  expect(lerAbertura({ duracao: 8 }).duracao).toBe(8);
+  expect(validarAbertura({ ...exemplo.projeto.abertura, duracao: 16 })?.duracao).toBe(16);
   expect(validarAbertura({ ...exemplo.projeto.abertura, fotos: [] })).toBeNull();
   expect(validarAbertura({ ...exemplo.projeto.abertura, duracao: 150 })).toBeNull();
   expect(validarAbertura({ ...exemplo.projeto.abertura, fotos: [{ pastaId: folder, arquivo: "../segredo" }] })).toBeNull();
@@ -42,6 +47,9 @@ test("abertura aparece uma vez e pode ser pulada no primeiro acesso ao projeto",
   const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
   await expect(tela).toBeVisible();
   await expect(page.getByText("Alguns momentos merecem ser revividos.")).toBeVisible();
+  await expect(page.locator(".fci-intro h1.fci-title")).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(page.locator(".fci-eyebrow")).toHaveCSS("color", "rgb(246, 244, 255)");
+  await expect(page.locator(".fci-images img")).toHaveCSS("transition-duration", "1.8s");
   await page.getByRole("button", { name: /Pular introdução/ }).click();
   await expect(tela).toHaveCount(0);
   await expect(page.getByText("Escolha uma galeria")).toBeVisible();
