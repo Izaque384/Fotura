@@ -8,6 +8,7 @@ import { registrarErro } from "../../../../lib/observability";
 import { uuidValido } from "../../../../lib/validation";
 import { ordemFotosValida, type OrdemFotos } from "../../../../lib/gallery-photo-order";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
+import { validarAbertura } from "../../../../lib/cinematic-intro";
 import { MODELOS_PROJETO,modeloValido,configProjeto } from "../../../../lib/project-templates";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ function slugify(valor: string) {
 async function projetoDoUsuario(projeto: string, userId: string) {
   const supabase = createServiceClient();
   const { data } = await supabase.from("galeria_projetos")
-    .select("id,user_id,cliente_id,nome,descricao,slug,capa_galeria_id,capa_arquivo,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade,assistente_ativo,config_revisada_em,criado_em,atualizado_em")
+    .select("id,user_id,cliente_id,nome,descricao,slug,capa_galeria_id,capa_arquivo,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade,assistente_ativo,abertura_config,config_revisada_em,criado_em,atualizado_em")
     .eq("id", projeto).eq("user_id", userId).maybeSingle();
   return data ?? null;
 }
@@ -203,6 +204,7 @@ type PatchBody = {
   watermarkTexto?: string | null;
   watermarkOpacidade?: number;
   assistenteAtivo?: boolean;
+  abertura?: unknown;
   capaPastaId?: string | null;
   capaArquivo?: string | null;
   removerCapa?: boolean;
@@ -268,6 +270,27 @@ export async function PATCH(req: NextRequest) {
     update.watermark_opacidade = op;
   }
   if (typeof body.assistenteAtivo === "boolean") update.assistente_ativo = body.assistenteAtivo;
+  if (body.abertura !== undefined) {
+    const abertura = validarAbertura(body.abertura);
+    if (!abertura) return json({ error: "Configuração da abertura inválida. Escolha até três fotos e revise os campos." }, 400);
+    if (abertura.fotos.length) {
+      const ids = [...new Set(abertura.fotos.map((foto) => foto.pastaId))];
+      const { data: permitidas, error: pastasErro } = await supabase.from("galerias").select("id")
+        .eq("projeto_id", body.projeto).eq("user_id", user.id).eq("visivel", true).in("id", ids);
+      if (pastasErro || (permitidas ?? []).length !== ids.length) {
+        return json({ error: "As fotos da abertura devem pertencer a pastas publicadas deste projeto." }, 400);
+      }
+      const verificacoes = await Promise.all(abertura.fotos.map(async (foto) => {
+        const { data, error } = await supabase.storage.from("fotos")
+          .list(`${user.id}/${foto.pastaId}`, { limit: 100, search: foto.arquivo });
+        return !error && (data ?? []).some((item) => item.id !== null && item.name === foto.arquivo);
+      }));
+      if (verificacoes.some((existe) => !existe)) {
+        return json({ error: "Uma das fotografias da abertura não está mais disponível." }, 400);
+      }
+    }
+    update.abertura_config = abertura;
+  }
 
   if (body.removerCapa) {
     update.capa_galeria_id = null;
