@@ -4,7 +4,7 @@ export type FotoAbertura = { pastaId: string; arquivo: string };
 export type ConfigAbertura = {
   ativo: boolean;
   estilo: EstiloAbertura;
-  duracao: 4 | 6 | 8;
+  duracao: 8 | 12 | 16;
   frase: string;
   fotos: FotoAbertura[];
   versao: string;
@@ -16,14 +16,21 @@ export type AberturaPublica = Omit<ConfigAbertura, "fotos"> & { fotos: FotoAbert
 export const ABERTURA_PADRAO: ConfigAbertura = {
   ativo: false,
   estilo: "cinematografico",
-  duracao: 6,
+  duracao: 12,
   frase: "Alguns momentos merecem ser revividos.",
   fotos: [],
   versao: "1",
 };
 
 const estilos: EstiloAbertura[] = ["cinematografico", "minimalista", "editorial"];
-const duracoes = [4, 6, 8];
+const duracoes = [4, 6, 8, 12, 16];
+// Compatibilidade: aberturas salvas antes do ajuste de ritmo utilizavam 4 ou 6 segundos.
+// Elas passam a ter 8 ou 12 segundos sem exigir alteração manual pelo fotógrafo.
+function duracaoSuave(valor: unknown): 8 | 12 | 16 {
+  if (valor === 4) return 8;
+  if (valor === 6) return 12;
+  return valor === 8 || valor === 12 || valor === 16 ? valor : 12;
+}
 
 export function lerAbertura(valor: unknown): ConfigAbertura {
   if (!valor || typeof valor !== "object" || Array.isArray(valor)) return { ...ABERTURA_PADRAO, fotos: [] };
@@ -40,7 +47,7 @@ export function lerAbertura(valor: unknown): ConfigAbertura {
   return {
     ativo: c.ativo === true,
     estilo: estilos.includes(c.estilo as EstiloAbertura) ? c.estilo as EstiloAbertura : "cinematografico",
-    duracao: duracoes.includes(c.duracao as number) ? c.duracao as 4 | 6 | 8 : 6,
+    duracao: duracaoSuave(c.duracao),
     frase: typeof c.frase === "string" ? c.frase.slice(0, 140) : ABERTURA_PADRAO.frase,
     fotos,
     versao: typeof c.versao === "string" ? c.versao.slice(0, 40) : "1",
