@@ -8,7 +8,7 @@ import { registrarErro } from "../../../../lib/observability";
 import { uuidValido } from "../../../../lib/validation";
 import { ordemFotosValida, type OrdemFotos } from "../../../../lib/gallery-photo-order";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
-import { validarAbertura } from "../../../../lib/cinematic-intro";
+import { lerAbertura, validarAbertura } from "../../../../lib/cinematic-intro";
 import { MODELOS_PROJETO,modeloValido,configProjeto } from "../../../../lib/project-templates";
 
 export const dynamic = "force-dynamic";
@@ -273,7 +273,7 @@ export async function PATCH(req: NextRequest) {
   if (body.abertura !== undefined) {
     const abertura = validarAbertura(body.abertura);
     if (!abertura) return json({ error: "Configuração da abertura inválida. Escolha até três fotos e revise os campos." }, 400);
-    if (abertura.fotos.length) {
+    if (abertura.ativo && abertura.fotos.length) {
       const ids = [...new Set(abertura.fotos.map((foto) => foto.pastaId))];
       const { data: permitidas, error: pastasErro } = await supabase.from("galerias").select("id")
         .eq("projeto_id", body.projeto).eq("user_id", user.id).eq("visivel", true).in("id", ids);
@@ -289,6 +289,10 @@ export async function PATCH(req: NextRequest) {
         return json({ error: "Uma das fotografias da abertura não está mais disponível." }, 400);
       }
     }
+    // Alterações em outras configurações não devem reapresentar a abertura aos clientes.
+    const anterior = lerAbertura(p.abertura_config);
+    const semVersao = (config: typeof abertura) => JSON.stringify({ ...config, versao: "" });
+    if (semVersao(anterior) === semVersao(abertura)) abertura.versao = anterior.versao;
     update.abertura_config = abertura;
   }
 
