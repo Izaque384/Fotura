@@ -30,6 +30,6 @@ test.describe("Fotura: UX dos projetos",()=>{
   const rota=read("app/api/projeto/fotos/route.ts");
   const gerenciador=read("app/dashboard/ProjectPhotoManager.tsx");
   for(const t of ['.eq("projeto_id",projeto)',"origem.etapa!==\"prova\"","dest.etapa!==\"prova\"",'from("selecoes")','from("vendas_fotos")','from("galeria_foto_metadata")','b.fotos.length>25'])expect(rota).toContain(t);
-  for(const t of ["Selecionar visíveis","Definir como capa","Mover fotos","Carregar mais fotos"])expect(gerenciador).toContain(t);
+  for(const t of ["Selecionar até 25","Definir como capa","Mover fotos","Carregar mais fotos"])expect(gerenciador).toContain(t);
  });
 });
