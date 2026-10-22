@@ -109,9 +109,10 @@ export default function ProjectCinematicSettings({ projeto, nome, pastas, value,
       </label>
 
       <label className="pw-field">Duração
-        <select value={value.duracao} onChange={(e) => onChange({ ...value, duracao: Number(e.target.value) as 4 | 6 | 8 })}>
-          <option value={4}>4 segundos</option><option value={6}>6 segundos</option><option value={8}>8 segundos</option>
+        <select value={value.duracao} onChange={(e) => onChange({ ...value, duracao: Number(e.target.value) as 8 | 12 | 16 })}>
+          <option value={8}>8 segundos · breve</option><option value={12}>12 segundos · recomendado</option><option value={16}>16 segundos · contemplativo</option>
         </select>
+        <small>Mais tempo para apreciar cada imagem e ler as frases. As transições são suaves.</small>
       </label>
 
       <label className="pw-field">Frase inicial
