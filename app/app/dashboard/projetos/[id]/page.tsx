@@ -7,6 +7,8 @@ import ModalSelecao from "../../../components/ModalSelecao";
 import ProjectShareCenter from "../../ProjectShareCenter";
 import ProjectPresetSave from "../../ProjectPresetSave";
 import ProjectPhotoManager from "../../ProjectPhotoManager";
+import ProjectCinematicSettings from "../../ProjectCinematicSettings";
+import { lerAbertura, type ConfigAbertura } from "../../../../lib/cinematic-intro";
 import ConfirmDialog from "../../../components/ConfirmDialog";
 import { ArrowLeftIcon, ArrowRightIcon, CloseIcon, DragHandleIcon, ImageIcon, MoreIcon, PlusIcon } from "../../../components/FoturaIcons";
 import { createClient } from "../../../../lib/supabase-client";
@@ -21,7 +23,7 @@ type Projeto={
  id:string;user_id:string;cliente_id:string|null;nome:string;descricao:string|null;slug:string;capa_galeria_id:string|null;capa_arquivo:string|null;capaUrl:string|null;
  prova:boolean;limite:number;prazo:string|null;link_ate:string|null;tem_senha:boolean;venda_extras_ativa:boolean;preco_foto_extra_centavos:number|null;
  download_ativo:boolean;download_individual:boolean;download_completo:boolean;download_tamanho:"original"|"web";download_pin_configurado:boolean;
- watermark_ativo:boolean;watermark_texto:string|null;watermark_opacidade:number;assistente_ativo:boolean;criado_em:string;atualizado_em:string;publicRef:string;
+ watermark_ativo:boolean;watermark_texto:string|null;watermark_opacidade:number;assistente_ativo:boolean;abertura_config?:unknown;criado_em:string;atualizado_em:string;publicRef:string;
 };
 type Comercial={planoCodigo:string;assinaturaAtiva:boolean;stripeRecebimentosAtivo:boolean;vendaFotosDisponivel:boolean};
 type Dados={projeto:Projeto;cliente:Cliente|null;clientes:Cliente[];pastas:Pasta[];vendas:Venda[];eventos:Evento[];presets:Preset[];comercial:Comercial};
@@ -60,13 +62,14 @@ export default function ProjetoWorkspacePage(){
  const[senha,setSenha]=useState(""),[vendaExtras,setVendaExtras]=useState(false),[precoExtra,setPrecoExtra]=useState("");
  const[downloadAtivo,setDownloadAtivo]=useState(true),[downloadIndividual,setDownloadIndividual]=useState(true),[downloadCompleto,setDownloadCompleto]=useState(true),[downloadTamanho,setDownloadTamanho]=useState<"original"|"web">("web"),[downloadPin,setDownloadPin]=useState("");
  const[watermarkAtivo,setWatermarkAtivo]=useState(false),[watermarkTexto,setWatermarkTexto]=useState(""),[watermarkOpacidade,setWatermarkOpacidade]=useState(22),[assistenteAtivo,setAssistenteAtivo]=useState(true);
+ const[abertura,setAbertura]=useState<ConfigAbertura>(()=>lerAbertura(null));
 
  async function token(){const{data}=await supabase.auth.getSession();return data.session?.access_token||""}
  function aplicarForm(p:Projeto){
   setNome(p.nome);setDescricao(p.descricao||"");setClienteId(p.cliente_id||"");setProva(p.prova);setLimite(String(p.limite||0));setPrazo(p.prazo||"");setLinkAte(p.link_ate||"");
   setVendaExtras(p.venda_extras_ativa);setPrecoExtra(p.preco_foto_extra_centavos?String((p.preco_foto_extra_centavos/100).toFixed(2)).replace(".",","):"");
   setDownloadAtivo(p.download_ativo);setDownloadIndividual(p.download_individual);setDownloadCompleto(p.download_completo);setDownloadTamanho(p.download_tamanho);
-  setWatermarkAtivo(p.watermark_ativo);setWatermarkTexto(p.watermark_texto||"");setWatermarkOpacidade(p.watermark_opacidade||22);setAssistenteAtivo(p.assistente_ativo);
+  setWatermarkAtivo(p.watermark_ativo);setWatermarkTexto(p.watermark_texto||"");setWatermarkOpacidade(p.watermark_opacidade||22);setAssistenteAtivo(p.assistente_ativo);setAbertura(lerAbertura(p.abertura_config));
  }
  async function carregar(){
   setCarregando(true);setErro("");
@@ -195,7 +198,7 @@ export default function ProjetoWorkspacePage(){
    const preco=vendaExtras?Math.round(Number(precoExtra.replace(",","."))*100):null;
    const body:Record<string,unknown>={
     projeto:id,nome:nome.trim(),descricao:descricao.trim()||null,clienteId:clienteId||null,prova,limite:Math.max(0,parseInt(limite||"0",10)||0),prazo:prazo||null,linkAte:linkAte||null,
-    vendaExtrasAtiva:dados.comercial.vendaFotosDisponivel&&vendaExtras,precoFotoExtraCentavos:dados.comercial.vendaFotosDisponivel?preco:null,downloadAtivo,downloadIndividual,downloadCompleto,downloadTamanho,watermarkAtivo,watermarkTexto:watermarkTexto||null,watermarkOpacidade,assistenteAtivo
+    vendaExtrasAtiva:dados.comercial.vendaFotosDisponivel&&vendaExtras,precoFotoExtraCentavos:dados.comercial.vendaFotosDisponivel?preco:null,downloadAtivo,downloadIndividual,downloadCompleto,downloadTamanho,watermarkAtivo,watermarkTexto:watermarkTexto||null,watermarkOpacidade,assistenteAtivo,abertura
    };
    if(senha.trim())body.senha=senha.trim();
    if(downloadPin.trim())body.downloadPin=downloadPin.trim();
@@ -278,6 +281,7 @@ export default function ProjetoWorkspacePage(){
 
   {aba==="configuracoes"&&<section className="pw-section"><div className="pw-config-grid">
    <div className="pw-config-card"><span>PROJETO</span><h3>Identidade e organização</h3><label className="pw-field">Nome<input value={nome} onChange={e=>setNome(e.target.value)}/></label><label className="pw-field">Descrição<textarea value={descricao} onChange={e=>setDescricao(e.target.value)} placeholder="Opcional"/></label><label className="pw-field">Cliente<select value={clienteId} onChange={e=>setClienteId(e.target.value)}><option value="">Sem cliente vinculado</option>{dados.clientes.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}</select></label><div className="pw-cover-config"><div>{p.capaUrl?<img src={p.capaUrl} alt=""/>:<span>Sem capa</span>}</div><button onClick={()=>void abrirCapa()} disabled={!dados.pastas.length}>Escolher capa do projeto</button></div><p className="pw-note">A capa do projeto aparece nas pastas que ainda não têm uma capa própria.</p></div>
+   <ProjectCinematicSettings projeto={id} nome={nome} pastas={dados.pastas} value={abertura} onChange={setAbertura} token={token}/>
    <div className="pw-config-card"><span>PROVA</span><h3>Seleção do cliente</h3><Toggle label="Ativar prova e seleção" value={prova} set={setProva}/><label className="pw-field">Limite de fotos por pasta<input type="number" min="0" value={limite} onChange={e=>setLimite(e.target.value)}/><small>0 = sem limite. O limite é aplicado individualmente a cada pasta.</small></label><label className="pw-field">Prazo da seleção<input type="date" value={prazo} onChange={e=>setPrazo(e.target.value)}/></label><label className="pw-field">Validade do link<input type="date" value={linkAte} onChange={e=>setLinkAte(e.target.value)}/></label><label className="pw-field">Nova senha <small>{p.tem_senha?"Senha configurada. Deixe vazio para manter.":"Opcional"}</small><input type="password" value={senha} onChange={e=>setSenha(e.target.value)} placeholder={p.tem_senha?"••••••":"Senha do projeto"}/></label>{p.tem_senha&&<button className="danger-lite" onClick={()=>void removerSenha()}>Remover senha</button>}</div>
    <div className="pw-config-card"><span>FOTOS EXTRAS</span><h3>Monetização da seleção</h3><Toggle label="Permitir compra de fotos adicionais" value={vendaExtras&&dados.comercial.vendaFotosDisponivel} set={setVendaExtras} disabled={!dados.comercial.vendaFotosDisponivel}/><label className="pw-field">Preço por foto extra<input value={precoExtra} onChange={e=>setPrecoExtra(e.target.value.replace(/[^0-9,.]/g,""))} placeholder="Ex: 8,00" disabled={!vendaExtras||!dados.comercial.vendaFotosDisponivel}/></label>{dados.comercial.vendaFotosDisponivel?<p className="pw-note">A compra de fotos extras está pronta para uso neste projeto.</p>:<p className="pw-note commercial-warning">{!dados.comercial.assinaturaAtiva?"Fotos extras pagas exigem um plano ativo.":!dados.comercial.stripeRecebimentosAtivo?"Conecte os recebimentos pelo Stripe antes de ativar vendas de fotos extras.":"As vendas de fotos extras ainda não estão disponíveis nesta conta."}</p>}</div>
    <div className="pw-config-card"><span>DOWNLOADS</span><h3>Permissões de entrega</h3><Toggle label="Permitir downloads" value={downloadAtivo} set={setDownloadAtivo}/><Toggle label="Foto individual" value={downloadIndividual} set={setDownloadIndividual} disabled={!downloadAtivo}/><Toggle label="Pasta completa" value={downloadCompleto} set={setDownloadCompleto} disabled={!downloadAtivo}/><label className="pw-field">Qualidade<select value={downloadTamanho} onChange={e=>setDownloadTamanho(e.target.value as "original"|"web")} disabled={!downloadAtivo}><option value="web">Web / compartilhamento · recomendado</option><option value="original">Original · alto consumo de banda</option></select></label>{downloadAtivo&&downloadTamanho==="original"&&<p className="pw-note commercial-warning">Arquivos originais consomem muito mais banda do Storage. Use esta opção apenas quando a entrega em resolução integral for indispensável.</p>}<label className="pw-field">Novo PIN <small>{p.download_pin_configurado?"PIN configurado. Deixe vazio para manter.":"Opcional · 4 a 8 dígitos"}</small><input inputMode="numeric" value={downloadPin} onChange={e=>setDownloadPin(e.target.value.replace(/\D/g,"").slice(0,8))}/></label>{p.download_pin_configurado&&<button className="danger-lite" onClick={()=>void removerPin()}>Remover PIN</button>}</div>
