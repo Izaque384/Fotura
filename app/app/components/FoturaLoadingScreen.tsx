@@ -1,24 +1,14 @@
-"use client";
-
 export default function FoturaLoadingScreen() {
   return (
     <main className="fotura-loading" role="status" aria-live="polite" aria-label="Carregando Fotura">
-      <div className="fotura-loading__ambient fotura-loading__ambient--one" />
-      <div className="fotura-loading__ambient fotura-loading__ambient--two" />
-
       <section className="fotura-loading__content">
-        <div className="fotura-loading__mark" aria-hidden="true">
-          <span className="fotura-loading__orbit fotura-loading__orbit--outer" />
-          <span className="fotura-loading__orbit fotura-loading__orbit--inner" />
-          <span className="fotura-loading__core" />
-        </div>
+        <div className="fotura-loading__halo" aria-hidden="true" />
+        <div className="fotura-loading__logo" aria-hidden="true" />
 
         <div className="fotura-loading__brand">FOTURA</div>
-        <p className="fotura-loading__message">Preparando sua experiência</p>
+        <p className="fotura-loading__message">Preparando seu espaço</p>
 
-        <div className="fotura-loading__progress" aria-hidden="true">
-          <span />
-        </div>
+        <div className="fotura-loading__progress" aria-hidden="true"><span /></div>
       </section>
 
       <style>{`
@@ -26,145 +16,90 @@ export default function FoturaLoadingScreen() {
           position: fixed;
           inset: 0;
           z-index: 99999;
-          min-height: 100dvh;
           display: grid;
           place-items: center;
+          min-height: 100dvh;
           overflow: hidden;
-          background:
-            radial-gradient(circle at 50% 42%, rgba(31, 50, 102, .16), transparent 34%),
-            linear-gradient(180deg, var(--ft-bg-start) 0%, var(--ft-bg-end) 100%);
-          color: var(--ft-text);
+          background: #111222;
+          color: #f8f7ff;
           font-family: var(--font-sora), Sora, system-ui, sans-serif;
         }
-
-        .fotura-loading__ambient {
-          position: absolute;
-          width: 340px;
-          height: 340px;
-          border-radius: 50%;
-          filter: blur(90px);
-          opacity: .1;
-          pointer-events: none;
-        }
-
-        .fotura-loading__ambient--one {
-          top: -150px;
-          left: -120px;
-          background: var(--ft-brand-blue);
-        }
-
-        .fotura-loading__ambient--two {
-          right: -140px;
-          bottom: -170px;
-          background: var(--ft-brand-purple);
-        }
-
         .fotura-loading__content {
           position: relative;
-          z-index: 1;
           display: flex;
-          width: min(320px, calc(100vw - 48px));
           flex-direction: column;
           align-items: center;
+          width: min(320px, calc(100vw - 48px));
           text-align: center;
+          isolation: isolate;
         }
-
-        .fotura-loading__mark {
-          position: relative;
-          width: 74px;
-          height: 74px;
-          margin-bottom: 24px;
-        }
-
-        .fotura-loading__orbit,
-        .fotura-loading__core {
+        .fotura-loading__halo {
           position: absolute;
+          top: -36px;
+          left: 50%;
+          z-index: -1;
+          width: 190px;
+          height: 190px;
+          transform: translateX(-50%);
           border-radius: 50%;
+          background: radial-gradient(circle, rgba(82, 69, 230, .16) 0%, rgba(18, 17, 44, 0) 72%);
+          pointer-events: none;
         }
-
-        .fotura-loading__orbit--outer {
-          inset: 0;
-          border: 1px solid rgba(122, 127, 154, .22);
-          border-top-color: rgba(17, 150, 252, .95);
-          border-right-color: rgba(93, 13, 250, .65);
-          animation: fotura-spin 1.45s linear infinite;
+        .fotura-loading__logo {
+          width: 88px;
+          height: 88px;
+          margin-bottom: 18px;
+          background: url("/favicon.svg") center / contain no-repeat;
+          animation: fotura-loading-appear .65s ease-out both;
         }
-
-        .fotura-loading__orbit--inner {
-          inset: 11px;
-          border: 1px solid rgba(122, 127, 154, .16);
-          border-bottom-color: rgba(93, 13, 250, .9);
-          animation: fotura-spin-reverse 1.9s linear infinite;
-        }
-
-        .fotura-loading__core {
-          inset: 26px;
-          background: linear-gradient(135deg, var(--ft-brand-blue), var(--ft-brand-purple));
-          box-shadow: 0 0 18px rgba(74, 108, 247, .22);
-          animation: fotura-pulse 1.8s ease-in-out infinite;
-        }
-
         .fotura-loading__brand {
           margin-left: .18em;
-          font-size: 18px;
+          font-size: 17px;
           font-weight: 700;
+          line-height: 1.35;
           letter-spacing: .22em;
-          background: linear-gradient(90deg, #d9efff 0%, var(--ft-text) 45%, #ded4ff 100%);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
         }
-
         .fotura-loading__message {
-          margin: 9px 0 20px;
-          color: var(--ft-text-muted);
+          margin: 9px 0 27px;
           font-size: 12px;
           font-weight: 400;
+          line-height: 1.5;
           letter-spacing: .01em;
+          color: #a9aec6;
         }
-
         .fotura-loading__progress {
           position: relative;
-          width: 152px;
-          height: 2px;
           overflow: hidden;
+          width: 112px;
+          height: 2px;
           border-radius: 999px;
-          background: rgba(122, 127, 154, .13);
+          background: rgba(197, 197, 233, .14);
         }
-
         .fotura-loading__progress span {
-          position: absolute;
-          inset: 0 auto 0 0;
-          width: 46%;
+          display: block;
+          width: 36%;
+          height: 100%;
           border-radius: inherit;
-          background: linear-gradient(90deg, var(--ft-brand-blue), var(--ft-brand-purple));
-          animation: fotura-progress 1.55s cubic-bezier(.4, 0, .2, 1) infinite;
+          background: linear-gradient(90deg, #1196fc, #6550fa);
+          animation: fotura-loading-progress 1.55s cubic-bezier(.4, 0, .2, 1) infinite;
         }
-
-        @keyframes fotura-spin { to { transform: rotate(360deg); } }
-        @keyframes fotura-spin-reverse { to { transform: rotate(-360deg); } }
-        @keyframes fotura-pulse {
-          0%, 100% { transform: scale(.84); opacity: .72; }
-          50% { transform: scale(1); opacity: 1; }
+        @keyframes fotura-loading-progress {
+          0% { transform: translateX(-100%); opacity: .3; }
+          25% { opacity: 1; }
+          75% { opacity: 1; }
+          100% { transform: translateX(310%); opacity: .3; }
         }
-        @keyframes fotura-progress {
-          0% { transform: translateX(-115%); opacity: 0; }
-          18% { opacity: 1; }
-          82% { opacity: 1; }
-          100% { transform: translateX(330%); opacity: 0; }
+        @keyframes fotura-loading-appear {
+          from { opacity: 0; transform: translateY(7px) scale(.96); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
-
         @media (max-width: 640px) {
-          .fotura-loading__mark { width: 66px; height: 66px; margin-bottom: 21px; }
-          .fotura-loading__orbit--inner { inset: 10px; }
-          .fotura-loading__core { inset: 23px; }
-          .fotura-loading__brand { font-size: 17px; }
+          .fotura-loading__logo { width: 80px; height: 80px; margin-bottom: 16px; }
+          .fotura-loading__brand { font-size: 16px; }
         }
-
         @media (prefers-reduced-motion: reduce) {
-          .fotura-loading__orbit,
-          .fotura-loading__core,
-          .fotura-loading__progress span { animation-duration: 4s; }
+          .fotura-loading__logo,
+          .fotura-loading__progress span { animation: none; }
         }
       `}</style>
     </main>
