@@ -11,7 +11,9 @@ test("manifesto do PWA mantém cores e ícones da nova abertura", async () => {
   expect(manifest.start_url).toBe("/dashboard");
 
   for (const size of [192, 512]) {
-    const arquivo = path.join(root, `public/icon-${size}.png`);
+    const icon = manifest.icons.find((item: { sizes: string }) => item.sizes === `${size}x${size}`);
+    expect(icon?.src).toBe(`/fotura-pwa-${size}-20261022.png`);
+    const arquivo = path.join(root, "public", icon.src.slice(1));
     const foto = sharp(arquivo);
     const metadata = await foto.metadata();
     expect(metadata.width).toBe(size);
@@ -22,7 +24,7 @@ test("manifesto do PWA mantém cores e ícones da nova abertura", async () => {
   }
 
   expect(manifest.icons.length).toBeGreaterThanOrEqual(2);
-  expect(manifest.icons.some((item: { src: string; sizes: string }) => item.sizes === "512x512" && item.src.includes("?v="))).toBe(true);
+  expect(manifest.icons.some((item: { src: string; sizes: string }) => item.sizes === "512x512" && item.src.startsWith("/fotura-pwa-"))).toBe(true);
 });
 
 test("dashboard usa o mesmo carregamento do restante do Fotura", async () => {
