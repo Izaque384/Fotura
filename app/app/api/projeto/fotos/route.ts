@@ -62,10 +62,11 @@ export async function POST(req:NextRequest){
  if(!dest)return json({error:"Pasta de destino não encontrada neste projeto."},404);
  // Nunca movimentar arquivos cuja seleção, venda ou entrega já possa depender do nome e da pasta.
  if(origem.etapa!=="prova"||dest.etapa!=="prova")return json({error:"Só é possível mover fotos entre pastas ainda em prova, antes da entrega."},409);
- const [{data:selecoes},{data:vendas}]=await Promise.all([
+ const [{data:selecoes,error:erroSelecoes},{data:vendas,error:erroVendas}]=await Promise.all([
    db.from("selecoes").select("galeria").in("galeria",[origem.id,dest.id]).limit(1),
    db.from("vendas_fotos").select("id").in("galeria",[origem.id,dest.id]).limit(1),
  ]);
+ if(erroSelecoes||erroVendas)return json({error:"Não foi possível validar o histórico das pastas. Tente novamente."},503);
  if((selecoes??[]).length||(vendas??[]).length)return json({error:"Essas pastas já possuem seleções ou vendas. Mantenha a organização atual para proteger o histórico do cliente."},409);
  const [srcNames,dstNames]=await Promise.all([nomesNaPasta(db,user.id,origem.id),nomesNaPasta(db,user.id,dest.id)]);
  if(b.fotos.some(n=>!srcNames.has(n)||dstNames.has(n)))return json({error:"Alguma foto não existe na origem ou já tem o mesmo nome no destino."},409);
@@ -75,18 +76,18 @@ export async function POST(req:NextRequest){
  for(const nome of b.fotos){
   const de=`${user.id}/${origem.id}/${nome}`,para=`${user.id}/${dest.id}/${nome}`;
   const um=await db.storage.from("fotos").move(de,para);
-  if(um.error)return json({error:"Falha ao mover arquivo. Atualize a lista antes de tentar novamente.",movidas},movidas.length?207:500);
+  if(um.error)return json({error:"Falha ao mover arquivo. Atualize a lista antes de tentar novamente.",movidas},500);
   let mini=false;
   if(thumbNames.has(nome)){
    const thumb=await db.storage.from("fotos").move(`${user.id}/${origem.id}/thumbs/${nome}`,`${user.id}/${dest.id}/thumbs/${nome}`);
-   if(thumb.error){await db.storage.from("fotos").move(para,de);return json({error:"Falha ao mover a miniatura. A operação foi interrompida.",movidas},movidas.length?207:500)}
+   if(thumb.error){await db.storage.from("fotos").move(para,de);return json({error:"Falha ao mover a miniatura. A operação foi interrompida.",movidas},500)}
    mini=true;
   }
   const meta=await db.from("galeria_foto_metadata").update({galeria_id:dest.id}).eq("galeria_id",origem.id).eq("user_id",user.id).eq("variante","principal").eq("nome",nome);
   if(meta.error){
    await db.storage.from("fotos").move(para,de);
    if(mini)await db.storage.from("fotos").move(`${user.id}/${dest.id}/thumbs/${nome}`,`${user.id}/${origem.id}/thumbs/${nome}`);
-   return json({error:"Falha ao atualizar os metadados. Operação interrompida.",movidas},movidas.length?207:500);
+   return json({error:"Falha ao atualizar os metadados. Operação interrompida.",movidas},500);
   }
   if(origem.capa===nome)await db.from("galerias").update({capa:null}).eq("id",origem.id).eq("user_id",user.id);
   await db.from("galeria_projetos").update({capa_arquivo:null,capa_galeria_id:null}).eq("id",b.projeto).eq("user_id",user.id).eq("capa_galeria_id",origem.id).eq("capa_arquivo",nome);
