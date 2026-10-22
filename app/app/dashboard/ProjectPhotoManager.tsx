@@ -7,7 +7,7 @@ type Foto={nome:string;thumb:string|null};
 export default function ProjectPhotoManager({projetoId,pastas,pastaInicial,fechar,atualizar}:{projetoId:string;pastas:Pasta[];pastaInicial:string;fechar:()=>void;atualizar:()=>void}){
  const supabase=useMemo(()=>createClient(),[]);
  const [pasta,setPasta]=useState(pastaInicial),[destino,setDestino]=useState(""),[fotos,setFotos]=useState<Foto[]>([]),[selecionadas,setSelecionadas]=useState<string[]>([]);
- const [carregando,setCarregando]=useState(false),[busy,setBusy]=useState(false),[aviso,setAviso]=useState(""),[erro,setErro]=useState(false),[proximo,setProximo]=useState<number|null>(null),[capa,setCapa]=useState<string|null>(null);
+ const [alterou,setAlterou]=useState(false),[carregando,setCarregando]=useState(false),[busy,setBusy]=useState(false),[aviso,setAviso]=useState(""),[erro,setErro]=useState(false),[proximo,setProximo]=useState<number|null>(null),[capa,setCapa]=useState<string|null>(null);
  const origem=pastas.find(x=>x.id===pasta);const destinos=pastas.filter(x=>x.id!==pasta&&x.etapa==="prova");
  async function token(){return (await supabase.auth.getSession()).data.session?.access_token??""}
  async function listar(id:string,offset=0){
@@ -19,7 +19,8 @@ export default function ProjectPhotoManager({projetoId,pastas,pastaInicial,fecha
   }catch(e){setErro(true);setAviso(e instanceof Error?e.message:"Erro ao listar fotos.")}finally{setCarregando(false)}
  }
  useEffect(()=>{void listar(pasta)},[pasta,projetoId]);
- useEffect(()=>{function esc(e:KeyboardEvent){if(e.key==="Escape"&&!busy)fechar()}window.addEventListener("keydown",esc);return()=>window.removeEventListener("keydown",esc)},[busy,fechar]);
+ function encerrar(){if(alterou)atualizar();fechar()}
+ useEffect(()=>{function esc(e:KeyboardEvent){if(e.key==="Escape"&&!busy){if(alterou)atualizar();fechar()}}window.addEventListener("keydown",esc);return()=>window.removeEventListener("keydown",esc)},[busy,fechar,alterou,atualizar]);
  function alternar(nome:string){setSelecionadas(a=>a.includes(nome)?a.filter(n=>n!==nome):[...a,nome])}
  async function acao(operacao:"capa"|"mover"){
   setErro(false);setAviso("");setBusy(true);
@@ -27,19 +28,19 @@ export default function ProjectPhotoManager({projetoId,pastas,pastaInicial,fecha
    if(operacao==="mover"&&(!destino||selecionadas.length>25))throw Error("Escolha a pasta de destino e até 25 fotos por operação.");
    const access=await token();
    const r=await fetch("/api/projeto/fotos",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${access}`},body:JSON.stringify(operacao==="capa"?{acao:"capa",projeto:projetoId,pasta,foto:selecionadas[0]}:{acao:"mover",projeto:projetoId,pasta,destino,fotos:selecionadas})});
-   const data=await r.json();if(!r.ok){if((data.movidas??[]).length){setAviso(`${data.movidas.length} fotos foram movidas, mas houve uma falha. Atualize o painel.`);await listar(pasta);atualizar()}throw Error(data.error||"Não foi possível concluir.")}
-   setAviso(operacao==="capa"?"Capa da pasta atualizada.":`${data.movidas.length} foto(s) movida(s) com sucesso.`);setSelecionadas([]);await listar(pasta);atualizar();
+   const data=await r.json();if(!r.ok){if((data.movidas??[]).length){setAviso(`${data.movidas.length} fotos foram movidas, mas houve uma falha. Atualize o painel.`);await listar(pasta);setAlterou(true)}throw Error(data.error||"Não foi possível concluir.")}
+   setAviso(operacao==="capa"?"Capa da pasta atualizada.":`${data.movidas.length} foto(s) movida(s) com sucesso.`);setSelecionadas([]);await listar(pasta);setAlterou(true);
   }catch(e){setErro(true);setAviso(e instanceof Error?e.message:"Erro.")}finally{setBusy(false)}
  }
- return <div className="ft-photo-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)fechar()}}>
+ return <div className="ft-photo-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)encerrar()}}>
   <section className="ft-photo-manager" role="dialog" aria-modal="true" aria-label="Gerenciar fotos do projeto">
-   <header><div><small>ORGANIZAÇÃO DE FOTOS</small><h2>Gerenciar fotos</h2><p>Selecione fotos para definir a capa ou movê-las entre pastas antes da seleção do cliente.</p></div><button type="button" onClick={fechar} disabled={busy} aria-label="Fechar">✕</button></header>
+   <header><div><small>ORGANIZAÇÃO DE FOTOS</small><h2>Gerenciar fotos</h2><p>Selecione fotos para definir a capa ou movê-las entre pastas antes da seleção do cliente.</p></div><button type="button" onClick={encerrar} disabled={busy} aria-label="Fechar">✕</button></header>
    <div className="ft-photo-controls"><label>Pasta de origem<select value={pasta} disabled={busy} onChange={e=>{setPasta(e.target.value);setDestino("");setAviso("");setErro(false)}}>{pastas.map(x=><option key={x.id} value={x.id}>{x.titulo} · {x.qtd} fotos</option>)}</select></label><label>Destino (para mover)<select value={destino} disabled={busy||origem?.etapa!=="prova"} onChange={e=>setDestino(e.target.value)}><option value="">Escolher outra pasta</option>{destinos.map(x=><option key={x.id} value={x.id}>{x.titulo}</option>)}</select></label></div>
    <div className="ft-photo-toolbar"><span>{selecionadas.length} selecionada(s) · {fotos.length} carregada(s)</span><button type="button" onClick={()=>setSelecionadas(fotos.map(f=>f.nome))} disabled={busy||!fotos.length}>Selecionar visíveis</button><button type="button" onClick={()=>setSelecionadas([])} disabled={busy||!selecionadas.length}>Limpar seleção</button></div>
    {origem?.etapa!=="prova"&&<p className="ft-photo-warning">Esta pasta já está em preparação ou entrega. A movimentação está bloqueada para preservar os arquivos do cliente.</p>}
    {aviso&&<p className={"ft-photo-message"+(erro?" err":"")} role="status">{aviso}</p>}
    <div className="ft-photo-grid">
-    {fotos.map(f=><button className={"ft-photo-tile"+(selecionadas.includes(f.nome)?" selected":"")} type="button" key={f.nome} onClick={()=>alternar(f.nome)} aria-pressed={selecionadas.includes(f.nome)} disabled={busy}><div className="ft-photo-preview">{f.thumb?<img src={f.thumb} alt="" loading="lazy"/>:<span>Foto</span>}{capa===f.nome&&<span className="ft-photo-coverflag">Capa</span>}</div><div className="ft-photo-name"><input type="checkbox" readOnly checked={selecionadas.includes(f.nome)} aria-label={`Selecionar ${f.nome}`} tabIndex={-1}/><span title={f.nome}>{f.nome}</span></div></button>)}
+    {fotos.map(f=><button className={"ft-photo-tile"+(selecionadas.includes(f.nome)?" selected":"")} type="button" key={f.nome} onClick={()=>alternar(f.nome)} aria-pressed={selecionadas.includes(f.nome)} disabled={busy}><div className="ft-photo-preview">{f.thumb?<img src={f.thumb} alt="" loading="lazy"/>:<span>Foto</span>}{capa===f.nome&&<span className="ft-photo-coverflag">Capa</span>}</div><div className="ft-photo-name"><span className="ft-photo-check" aria-hidden="true">{selecionadas.includes(f.nome)?"☑":"☐"}</span><span title={f.nome}>{f.nome}</span></div></button>)}
     {!carregando&&!fotos.length&&<p>Nenhuma foto nesta pasta.</p>}
    </div>
    {proximo!==null&&<button className="ft-photo-more" type="button" disabled={carregando||busy} onClick={()=>void listar(pasta,proximo)}>{carregando?"Carregando…":"Carregar mais fotos"}</button>}
@@ -51,7 +52,7 @@ export default function ProjectPhotoManager({projetoId,pastas,pastaInicial,fecha
 .ft-photo-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ft-photo-controls label{display:grid;gap:5px;color:#676d87;font-size:11px;font-weight:700}.ft-photo-controls select{min-width:0;max-width:100%;padding:10px;border:1px solid #dcd5e9;border-radius:9px;color:#343851;background:#faf9fd}
 .ft-photo-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 0;font-size:11px;color:#777d96}.ft-photo-toolbar button{border:0;background:transparent;color:#6151ab;font-weight:750;cursor:pointer}
 .ft-photo-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;min-height:90px}.ft-photo-grid>p{grid-column:1/-1;text-align:center;color:#85899b}.ft-photo-tile{min-width:0;text-align:left;border:2px solid transparent;border-radius:10px;background:#f6f3fa;padding:5px;cursor:pointer}.ft-photo-tile.selected{border-color:#7860dc;background:#ede8fc}.ft-photo-preview{position:relative;aspect-ratio:4/3;display:grid;place-items:center;overflow:hidden;border-radius:7px;background:#e6e0ec;color:#85839a}.ft-photo-preview img{height:100%;width:100%;object-fit:cover}.ft-photo-coverflag{position:absolute;top:5px;left:5px;padding:3px 7px;border-radius:8px;color:#fff;background:#5c4caa;font-size:9px}
-.ft-photo-name{display:flex;gap:6px;align-items:center;padding:6px 2px 2px}.ft-photo-name span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:10px}.ft-photo-name input{accent-color:#6a54c5;pointer-events:none}
+.ft-photo-name{display:flex;gap:6px;align-items:center;padding:6px 2px 2px}.ft-photo-name span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:10px}.ft-photo-name .ft-photo-check{font-size:15px;color:#6a54c5;line-height:1}
 .ft-photo-message,.ft-photo-warning{padding:10px;border-radius:8px;background:#ede9fa;color:#6351ad;font-size:11px}.ft-photo-message.err,.ft-photo-warning{background:#fff1de;color:#9a6116}
 .ft-photo-more{display:block;margin:12px auto;padding:8px 13px;border:1px solid #d8d0e5;border-radius:9px;background:#fff;color:#5f4fa9;cursor:pointer}
 .ft-photo-manager footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:16px;margin-top:16px;border-top:1px solid #e9e3f0}.ft-photo-manager footer small{color:#84869b;font-size:10px;max-width:400px}.ft-photo-manager footer>div{display:flex;gap:8px}.ft-photo-manager footer button{min-height:38px;border:1px solid #d8d1e4;border-radius:9px;padding:9px 12px;background:#fff;color:#605682;font-size:11px;font-weight:700;white-space:nowrap}.ft-photo-manager footer button.primary{border:0;color:#fff;background:#624cc2}.ft-photo-manager footer button:disabled{opacity:.5}
