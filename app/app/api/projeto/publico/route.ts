@@ -7,6 +7,7 @@ import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { dataCalendarioExpirada } from "../../../../lib/date-only";
 import { planoFotura } from "../../../../lib/billing-plans";
 import { estiloHeroEfetivo, heroPresetDataUrl } from "../../../../lib/gallery-hero";
+import { lerAbertura, type FotoAberturaPublica } from "../../../../lib/cinematic-intro";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest) {
 
   const supabase = createServiceClient();
   const { data: p, error } = await supabase.from("galeria_projetos")
-    .select("id,user_id,nome,descricao,slug,capa_galeria_id,capa_arquivo,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade,assistente_ativo")
+    .select("id,user_id,nome,descricao,slug,capa_galeria_id,capa_arquivo,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade,assistente_ativo,abertura_config")
     .eq("id", resolvido.id).maybeSingle();
   if (error || !p) return baseJson({ error: "Projeto não encontrado." }, 404);
 
@@ -93,6 +94,30 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Nunca assinar ou revelar fotografias antes da senha e da validade do link.
+  // Também não exibir arquivos de pastas que foram ocultadas após a configuração.
+  const abertura = lerAbertura(p.abertura_config);
+  const fotosAbertura: FotoAberturaPublica[] = [];
+  if (abertura.ativo && desbloqueada && !linkExpirado) {
+    const idsVisiveis = new Set((pastas ?? []).map((g) => String(g.id)));
+    const candidatas = abertura.fotos.filter((foto) => idsVisiveis.has(foto.pastaId));
+    if (candidatas.length) {
+      const caminhos = candidatas.map((foto) => `${p.user_id}/${foto.pastaId}/thumbs/${foto.arquivo}`);
+      const { data: assinadas } = await supabase.storage.from("fotos").createSignedUrls(caminhos, 10 * 60);
+      const urls = new Map((assinadas ?? []).filter((i) => i.path && i.signedUrl).map((i) => [i.path!, i.signedUrl!]));
+      for (let i = 0; i < candidatas.length; i++) {
+        const foto = candidatas[i];
+        const url = urls.get(caminhos[i]);
+        if (url) fotosAbertura.push({ ...foto, url });
+      }
+    }
+  }
+  const aberturaPublica = {
+    ...abertura,
+    ativo: abertura.ativo && desbloqueada && !linkExpirado && fotosAbertura.length > 0,
+    fotos: fotosAbertura,
+  };
+
   const response = baseJson({
     projeto: {
       id: String(p.id),
@@ -118,6 +143,7 @@ export async function GET(req: NextRequest) {
       watermarkTexto: (p.watermark_texto as string | null) ?? null,
       watermarkOpacidade: Number(p.watermark_opacidade ?? 22),
       assistenteAtivo: Boolean(p.assistente_ativo),
+      abertura: aberturaPublica,
     },
     perfil: perfil ? {
       nome: (perfil.nome_estudio as string | null) ?? null,

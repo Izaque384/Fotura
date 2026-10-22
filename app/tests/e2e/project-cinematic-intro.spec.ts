@@ -1,0 +1,71 @@
+import { expect, test } from "@playwright/test";
+import { lerAbertura, validarAbertura } from "../../lib/cinematic-intro";
+
+const uuid = "1e86ef4c-501b-46e8-8ea9-8032554e9d9c";
+const folder = "304c3059-9afd-492f-ac93-8d286840f16e";
+const transparentPixel = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=";
+
+const exemplo = {
+  projeto: {
+    id: uuid,
+    nome: "Casamento de Ana e Pedro",
+    descricao: "Uma tarde para lembrar",
+    publicRef: "casamento-ana-pedro-1e86ef4c",
+    capaUrl: null,
+    temSenha: false,
+    desbloqueado: true,
+    linkExpirado: false,
+    abertura: {
+      ativo: true,
+      estilo: "cinematografico",
+      duracao: 6,
+      frase: "Alguns momentos merecem ser revividos.",
+      fotos: [{ pastaId: folder, arquivo: "foto-01.jpg", url: transparentPixel }],
+      versao: "2026-10-22T14:30:00.000Z",
+    },
+  },
+  perfil: { nome: "Ateliê", logo: null, cor: "#111222" },
+  pastas: [{ id: folder, titulo: "Cerimônia", ordem: 0, etapa: "entrega", thumbnailUrl: transparentPixel }],
+};
+
+test("valida duração, fotos e mantém a configuração desativada por padrão", () => {
+  expect(lerAbertura(null).ativo).toBe(false);
+  expect(validarAbertura({ ...exemplo.projeto.abertura, fotos: [] })).toBeNull();
+  expect(validarAbertura({ ...exemplo.projeto.abertura, duracao: 150 })).toBeNull();
+  expect(validarAbertura({ ...exemplo.projeto.abertura, fotos: [{ pastaId: folder, arquivo: "../segredo" }] })).toBeNull();
+  expect(validarAbertura({ ...exemplo.projeto.abertura })?.ativo).toBe(true);
+});
+
+test("abertura aparece uma vez e pode ser pulada no primeiro acesso ao projeto", async ({ page }) => {
+  await page.route("**/api/projeto/publico?**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(exemplo) }));
+  await page.goto("/p/casamento-ana-pedro-1e86ef4c");
+  const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
+  await expect(tela).toBeVisible();
+  await expect(page.getByText("Alguns momentos merecem ser revividos.")).toBeVisible();
+  await page.getByRole("button", { name: /Pular introdução/ }).click();
+  await expect(tela).toHaveCount(0);
+  await expect(page.getByText("Escolha uma galeria")).toBeVisible();
+  await page.reload();
+  await expect(tela).toHaveCount(0);
+  await expect(page.getByText("Escolha uma galeria")).toBeVisible();
+});
+
+test("projeto protegido não exibe fotos da introdução antes de desbloquear", async ({ page }) => {
+  await page.route("**/api/projeto/publico?**", (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ ...exemplo, projeto: { ...exemplo.projeto, temSenha: true, desbloqueado: false, abertura: { ...exemplo.projeto.abertura, ativo: false, fotos: [] } }, pastas: [] }),
+  }));
+  await page.goto("/p/casamento-ana-pedro-1e86ef4c");
+  await expect(page.getByText("PROJETO PROTEGIDO")).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Apresentação do projeto" })).toHaveCount(0);
+});
+
+test("projeto sem abertura continua indo diretamente para as galerias", async ({ page }) => {
+  await page.route("**/api/projeto/publico?**", (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ ...exemplo, projeto: { ...exemplo.projeto, abertura: { ...exemplo.projeto.abertura, ativo: false } } }),
+  }));
+  await page.goto("/p/casamento-ana-pedro-1e86ef4c");
+  await expect(page.getByRole("dialog", { name: "Apresentação do projeto" })).toHaveCount(0);
+  await expect(page.getByText("Escolha uma galeria")).toBeVisible();
+});
