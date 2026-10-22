@@ -7,6 +7,8 @@ import type { ProjectClientContext } from "../../g/[slug]/gallery-types";
 import PublicProjectHero from "../../components/PublicProjectHero";
 import { loadGalleryGrid } from "../../g/[slug]/gallery-image-cache";
 import { ArrowRightIcon } from "../../components/FoturaIcons";
+import ProjectCinematicIntro from "../../components/ProjectCinematicIntro";
+import type { AberturaPublica } from "../../../lib/cinematic-intro";
 
 type ProjetoPublico = {
   id:string;
@@ -17,6 +19,7 @@ type ProjetoPublico = {
   temSenha:boolean;
   desbloqueado:boolean;
   linkExpirado:boolean;
+  abertura?:AberturaPublica;
 };
 type Perfil={nome:string|null;logo:string|null;cor:string|null};
 type Pasta={id:string;titulo:string;ordem:number;etapa:string;thumbnailUrl:string|null};
@@ -31,6 +34,7 @@ export default function ProjetoClientePage(){
   const[senhaErro,setSenhaErro]=useState("");
   const[validando,setValidando]=useState(false);
   const[pastaAtiva,setPastaAtiva]=useState("");
+  const[introAberta,setIntroAberta]=useState(false);
   const scrollPastas=useRef<Map<string,number>>(new Map());
 
   async function carregar(){
@@ -45,6 +49,15 @@ export default function ProjetoClientePage(){
       const solicitada=query.get("pasta");
       const ativa=payload.pastas.some(p=>p.id===solicitada)?solicitada!:"";
       setPastaAtiva(ativa);
+      let jaViu = false;
+      try {
+        jaViu = localStorage.getItem(`fotura_abertura_${payload.projeto.id}`) === payload.projeto.abertura?.versao;
+      } catch { /* navegação privada: a abertura continua opcional e pode ser pulada */ }
+      setIntroAberta(Boolean(
+        payload.projeto.abertura?.ativo && payload.projeto.abertura.fotos.length > 0 &&
+        !ativa && !solicitada && payload.projeto.desbloqueado && !payload.projeto.linkExpirado &&
+        payload.pastas.length > 0 && !jaViu
+      ));
       if(payload.projeto.publicRef&&window.location.pathname!==`/p/${payload.projeto.publicRef}`){
         if(ativa)query.set("pasta",ativa);else query.delete("pasta");
         window.history.replaceState(window.history.state,"",`/p/${payload.projeto.publicRef}${query.toString()?`?${query.toString()}`:""}`);
@@ -115,6 +128,12 @@ export default function ProjetoClientePage(){
   if(dados.projeto.linkExpirado)return <Estado titulo="Este link expirou" texto="O prazo de acesso a este projeto terminou. Entre em contato com o fotógrafo para reabri-lo."/>;
   if(dados.projeto.temSenha&&!dados.projeto.desbloqueado)return <div className="pc-gate"><style>{css}</style><div className="pc-gate-card">{dados.perfil.logo&&<img className="pc-logo" src={dados.perfil.logo} alt=""/>}<span>PROJETO PROTEGIDO</span><h1>{dados.projeto.nome}</h1><p>Digite a senha enviada pelo fotógrafo para acessar todas as galerias deste projeto.</p><input type="password" value={senha} onChange={e=>{setSenha(e.target.value);setSenhaErro("")}} onKeyDown={e=>{if(e.key==="Enter")void entrar()}} autoFocus placeholder="Senha"/>{senhaErro&&<div className="pc-error">{senhaErro}</div>}<button onClick={()=>void entrar()} disabled={validando}>{validando?"Verificando…":"Entrar"}</button><small>Feito com <b>Fotura</b></small></div></div>;
   if(!dados.pastas.length)return <Estado titulo={dados.projeto.nome} texto="Este projeto ainda não possui galerias de fotos publicadas."/>;
+  if(!pastaAtiva && introAberta && dados.projeto.abertura?.ativo)return <ProjectCinematicIntro
+    projetoNome={dados.projeto.nome} studioNome={dados.perfil.nome} config={dados.projeto.abertura}
+    onFinish={()=>{
+      try { localStorage.setItem(`fotura_abertura_${dados.projeto.id}`, dados.projeto.abertura?.versao || "1"); } catch {}
+      setIntroAberta(false);
+    }} />;
   if(!pastaAtiva)return <ProjetoHome dados={dados} onOpen={trocarPasta} onPrefetch={id=>void loadGalleryGrid(id)}/>;
   if(!context)return <Estado texto="Preparando projeto…"/>;
 
