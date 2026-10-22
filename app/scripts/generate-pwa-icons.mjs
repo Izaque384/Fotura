@@ -1,7 +1,7 @@
 /** Atualiza os ícones estáticos do PWA a partir da marca vetorial oficial.
  * Executado no prebuild/predev para que a splash do Android use a arte atual.
  */
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 
@@ -12,7 +12,7 @@ const vetor = await readFile(path.join(dir, "favicon.svg"));
 
 for (const tamanho of [192, 512]) {
   // SVG contém margens originais; trim() remove somente a área transparente.
-  const logo = await sharp(vetor, { density: 360 })
+  const logo = await sharp(vetor)
     .trim()
     .resize({ width: Math.round(tamanho * 0.54) })
     .png()
@@ -39,8 +39,6 @@ for (const tamanho of [192, 512]) {
     .png({ compressionLevel: 9 })
     .toBuffer();
 
-  await import("node:fs/promises").then(({ writeFile }) =>
-    writeFile(path.join(dir, `icon-${tamanho}.png`), imagem)
-  );
+  await writeFile(path.join(dir, `icon-${tamanho}.png`), imagem);
   console.log(`PWA Fotura: ícone ${tamanho}x${tamanho} atualizado.`);
 }
