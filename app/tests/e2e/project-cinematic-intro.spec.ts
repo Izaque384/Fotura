@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import fs from "node:fs";
 import { lerAbertura, validarAbertura } from "../../lib/cinematic-intro";
 
 const uuid = "1e86ef4c-501b-46e8-8ea9-8032554e9d9c";
@@ -18,7 +19,7 @@ const exemplo = {
     abertura: {
       ativo: true,
       estilo: "cinematografico",
-      duracao: 6,
+      duracao: 30,
       frase: "Alguns momentos merecem ser revividos.",
       fotos: [{ pastaId: folder, arquivo: "foto-01.jpg", url: transparentPixel }],
       versao: "2026-10-22T14:30:00.000Z",
@@ -30,18 +31,20 @@ const exemplo = {
 
 test("valida duração, fotos e mantém a configuração desativada por padrão", () => {
   expect(lerAbertura(null).ativo).toBe(false);
-  expect(lerAbertura(null).duracao).toBe(12);
-  expect(lerAbertura({ duracao: 6 }).duracao).toBe(12);
-  expect(lerAbertura({ duracao: 4 }).duracao).toBe(8);
-  expect(lerAbertura({ duracao: 8 }).duracao).toBe(8);
-  expect(validarAbertura({ ...exemplo.projeto.abertura, duracao: 16 })?.duracao).toBe(16);
+  expect(lerAbertura(null).duracao).toBe(21);
+  expect(lerAbertura({ duracao: 6 }).duracao).toBe(21);
+  expect(lerAbertura({ duracao: 4 }).duracao).toBe(15);
+  expect(lerAbertura({ duracao: 8 }).duracao).toBe(15);
+  expect(lerAbertura({ duracao: 12 }).duracao).toBe(21);
+  expect(lerAbertura({ duracao: 16 }).duracao).toBe(30);
+  expect(validarAbertura({ ...exemplo.projeto.abertura, duracao: 30 })?.duracao).toBe(30);
   expect(validarAbertura({ ...exemplo.projeto.abertura, fotos: [] })).toBeNull();
   expect(validarAbertura({ ...exemplo.projeto.abertura, duracao: 150 })).toBeNull();
   expect(validarAbertura({ ...exemplo.projeto.abertura, fotos: [{ pastaId: folder, arquivo: "../segredo" }] })).toBeNull();
   expect(validarAbertura({ ...exemplo.projeto.abertura })?.ativo).toBe(true);
 });
 
-test("abertura aparece uma vez e pode ser pulada no primeiro acesso ao projeto", async ({ page }) => {
+test("abertura reaparece no link em cada visita, e permite voltar, avançar e pular", async ({ page }) => {
   await page.route("**/api/projeto/publico?**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(exemplo) }));
   await page.goto("/p/casamento-ana-pedro-1e86ef4c");
   const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
@@ -49,12 +52,24 @@ test("abertura aparece uma vez e pode ser pulada no primeiro acesso ao projeto",
   await expect(page.getByText("Alguns momentos merecem ser revividos.")).toBeVisible();
   await expect(page.locator(".fci-intro h1.fci-title")).toHaveCSS("color", "rgb(255, 255, 255)");
   await expect(page.locator(".fci-eyebrow")).toHaveCSS("color", "rgb(246, 244, 255)");
-  await expect(page.locator(".fci-images img")).toHaveCSS("transition-duration", "1.8s");
+  await expect(page.locator(".fci-images img")).toHaveCSS("transition-duration", "2.15s");
+  await expect(page.getByText("1 de 3")).toBeVisible();
+  await page.getByRole("button", { name: "Avançar para próxima cena" }).click();
+  await expect(tela.getByRole("heading", { name: exemplo.projeto.nome })).toBeVisible();
+  await expect(page.getByText("2 de 3")).toBeVisible();
+  await page.getByRole("button", { name: "Voltar à cena anterior" }).click();
+  await expect(tela.getByRole("heading", { name: exemplo.projeto.abertura.frase })).toBeVisible();
+  await page.getByRole("button", { name: "Avançar para próxima cena" }).click();
+  await page.getByRole("button", { name: "Avançar para próxima cena" }).click();
+  await expect(tela.getByText("Sua história começa aqui.")).toBeVisible();
+  await expect(tela.getByRole("button", { name: "Explorar fotografias" })).toBeVisible();
   await page.getByRole("button", { name: /Pular introdução/ }).click();
   await expect(tela).toHaveCount(0);
   await expect(page.getByText("Escolha uma galeria")).toBeVisible();
   await page.reload();
-  await expect(tela).toHaveCount(0);
+  await expect(tela).toBeVisible();
+  await expect(tela.getByText("1 de 3")).toBeVisible();
+  await page.getByRole("button", { name: /Pular introdução/ }).click();
   await expect(page.getByText("Escolha uma galeria")).toBeVisible();
 });
 
@@ -76,4 +91,15 @@ test("projeto sem abertura continua indo diretamente para as galerias", async ({
   await page.goto("/p/casamento-ana-pedro-1e86ef4c");
   await expect(page.getByRole("dialog", { name: "Apresentação do projeto" })).toHaveCount(0);
   await expect(page.getByText("Escolha uma galeria")).toBeVisible();
+});
+
+
+test("prévia usa portal e atualiza links das fotografias antes de reproduzir", () => {
+  const componente = fs.readFileSync("app/components/ProjectCinematicIntro.tsx", "utf8");
+  const editor = fs.readFileSync("app/dashboard/ProjectCinematicSettings.tsx", "utf8");
+  expect(componente).toContain('import { createPortal } from "react-dom"');
+  expect(componente).toContain("document.body");
+  expect(editor).toContain("porPasta[pastaId] = await buscar(pastaId)");
+  expect(editor).toContain("setPasta((anterior)");
+  expect(editor).toContain('setPreview(selecionadas)');
 });
