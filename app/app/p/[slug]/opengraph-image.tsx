@@ -1,8 +1,12 @@
 import { ImageResponse } from "next/og";
+import sharp from "sharp";
 import { resolvePublicProjectRef } from "../../../lib/project-public-ref.server";
 import { createServiceClient } from "../../../lib/supabase-server";
+import { dataCalendarioExpirada } from "../../../lib/date-only";
+import { podeExibirCapaOG } from "../../../lib/project-og-cover";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -41,20 +45,95 @@ export default async function Image({
   let estudio = "Fotura";
   let cor = "#17152b";
   let logoUrl: string | null = null;
+  let capa: string | null = null;
 
   if (projeto) {
     titulo = projeto.nome;
 
     const supabase = createServiceClient();
-    const { data: perfil } = await supabase
-      .from("perfis")
-      .select("nome_estudio,logo_url,cor_hero")
-      .eq("id", projeto.userId)
-      .maybeSingle();
+    const [{ data: perfil }, { data: dadosProjeto }] = await Promise.all([
+      supabase.from("perfis")
+        .select("nome_estudio,logo_url,cor_hero")
+        .eq("id", projeto.userId).maybeSingle(),
+      supabase.from("galeria_projetos")
+        .select("capa_galeria_id,capa_arquivo,tem_senha,og_capa_autorizada,link_ate")
+        .eq("id", projeto.id).eq("user_id", projeto.userId).maybeSingle(),
+    ]);
 
     estudio = String(perfil?.nome_estudio || "Fotura");
     cor = String(perfil?.cor_hero || "#17152b");
     logoUrl = (perfil?.logo_url as string | null) ?? null;
+
+    const pastaId = dadosProjeto?.capa_galeria_id;
+    const arquivo = dadosProjeto?.capa_arquivo;
+    if (pastaId && arquivo && !arquivo.includes("/") && !arquivo.includes("\\\\")) {
+      const { data: pasta } = await supabase.from("galerias")
+        .select("id").eq("id", pastaId).eq("projeto_id", projeto.id)
+        .eq("user_id", projeto.userId).eq("visivel", true).maybeSingle();
+
+      if (podeExibirCapaOG({
+        temSenha: Boolean(dadosProjeto?.tem_senha),
+        autorizada: Boolean(dadosProjeto?.og_capa_autorizada),
+        expirada: dataCalendarioExpirada(dadosProjeto?.link_ate ?? null),
+        capaConfigurada: true,
+        pastaPublicada: Boolean(pasta),
+      })) {
+        // O Storage continua privado; a imagem não expõe URLs assinadas nem
+        // quaisquer outras fotografias. Só esta capa é renderizada pelo servidor.
+        const caminho = `${projeto.userId}/${pastaId}/thumbs/${arquivo}`;
+        const { data: blob } = await supabase.storage.from("fotos").download(caminho);
+        if (blob && blob.size <= 12_000_000) {
+          try {
+            const foto = await sharp(Buffer.from(await blob.arrayBuffer()))
+              .rotate().resize(1200, 630, { fit: "cover", position: "attention" })
+              .jpeg({ quality: 82, progressive: true }).toBuffer();
+            capa = `data:image/jpeg;base64,${foto.toString("base64")}`;
+          } catch {
+            // Thumb removida ou ilegível: retorna a arte padrão já existente.
+          }
+        }
+      }
+    }
+  }
+
+  if (capa) {
+    return new ImageResponse(
+      <div style={{
+        width: "100%", height: "100%", position: "relative", overflow: "hidden",
+        display: "flex", alignItems: "flex-end",
+        backgroundColor: "#10111e", fontFamily: "Arial, sans-serif",
+      }}>
+        <img src={capa} alt="" style={{
+          position: "absolute", left: 0, top: 0, width: "100%", height: "100%",
+          objectFit: "cover",
+        }} />
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "linear-gradient(180deg, rgba(9,10,19,.08) 5%, rgba(9,10,19,.17) 38%, rgba(9,10,19,.90) 100%)",
+        }} />
+        <div style={{
+          position: "relative", display: "flex", flexDirection: "column",
+          justifyContent: "flex-end", padding: "56px 72px", width: "100%",
+          color: "#fff",
+        }}>
+          <div style={{
+            display: "flex", fontSize: 21, fontWeight: 700,
+            letterSpacing: 1.3, color: "#f3f0ff",
+          }}>{estudio}</div>
+          <div style={{
+            display: "flex", maxWidth: 1000, marginTop: 16,
+            fontSize: titulo.length > 60 ? 42 : titulo.length > 34 ? 50 : 61,
+            lineHeight: 1.1, letterSpacing: -1.1, fontWeight: 750,
+            overflowWrap: "break-word",
+          }}>{titulo}</div>
+          <div style={{
+            display: "flex", width: 72, height: 4, marginTop: 28,
+            borderRadius: 999, backgroundColor: "#ffffff",
+          }} />
+        </div>
+      </div>,
+      size,
+    );
   }
 
   const logo = await carregarLogo(logoUrl);
