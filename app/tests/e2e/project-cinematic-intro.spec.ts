@@ -73,7 +73,8 @@ test("abertura reaparece no link em cada visita, e permite voltar, avançar e pu
   await expect(tela.getByRole("heading", { name: exemplo.projeto.abertura.frase })).toBeVisible();
   await page.mouse.click(direita, y);
   await page.mouse.click(direita, y);
-  await expect(tela.getByText("Sua história começa aqui.")).toBeVisible();
+  await expect(tela.getByText(exemplo.projeto.descricao)).toBeVisible();
+  await expect(tela.getByText("Sua história começa aqui.")).toHaveCount(0);
   // A última cena também avança para a galeria, sem mostrar CTA.
   await page.mouse.click(direita, y);
   await expect(tela).toHaveCount(0);
@@ -99,8 +100,43 @@ test("navegação por áreas funciona no viewport mobile e pelas setas do teclad
   await expect(tela.getByRole("heading", { name: exemplo.projeto.nome })).toBeVisible();
   await page.keyboard.press("ArrowLeft");
   await expect(tela.getByRole("heading", { name: exemplo.projeto.abertura.frase })).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expect(tela.getByText(exemplo.projeto.descricao)).toBeVisible();
   await page.getByRole("button", { name: /Pular introdução/ }).click();
   await expect(tela).toHaveCount(0);
+});
+
+test("terceira cena sem descrição não usa texto genérico", async ({ page }) => {
+  await page.route("**/api/projeto/publico?**", (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ ...exemplo, projeto: { ...exemplo.projeto, descricao: "   " } }),
+  }));
+  await page.goto("/p/casamento-ana-pedro-1e86ef4c");
+  const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
+  await expect(tela).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expect(tela.getByText("SUAS FOTOGRAFIAS")).toBeVisible();
+  await expect(tela.locator(".fci-description")).toHaveCount(0);
+  await expect(tela.getByText("Sua história começa aqui.")).toHaveCount(0);
+});
+
+test("terceira cena suporta descrições extensas sem cortar texto", async ({ page }) => {
+  const descricaoLonga = "Descrição personalizada para o cliente. ".repeat(14).trim();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("**/api/projeto/publico?**", (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ ...exemplo, projeto: { ...exemplo.projeto, descricao: descricaoLonga } }),
+  }));
+  await page.goto("/p/casamento-ana-pedro-1e86ef4c");
+  await expect(page.getByRole("dialog", { name: "Apresentação do projeto" })).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  const descricao = page.locator(".fci-description");
+  await expect(descricao).toHaveText(descricaoLonga);
+  await expect(descricao).toHaveCSS("overflow-y", "auto");
+  await expect(descricao).toHaveCSS("white-space", "pre-line");
 });
 
 test("projeto protegido não exibe fotos da introdução antes de desbloquear", async ({ page }) => {

@@ -9,13 +9,14 @@ type Preview = { nome: string; url: string };
 type Props = {
   projeto: string;
   nome: string;
+  descricao: string;
   pastas: Pasta[];
   value: ConfigAbertura;
   onChange: (value: ConfigAbertura) => void;
   token: () => Promise<string>;
 };
 
-export default function ProjectCinematicSettings({ projeto, nome, pastas, value, onChange, token }: Props) {
+export default function ProjectCinematicSettings({ projeto, nome, descricao, pastas, value, onChange, token }: Props) {
   const publicadas = pastas.filter((p) => p.visivel && p.qtd > 0);
   const idsPublicadas = publicadas.map((p) => p.id).join("|");
   const [pasta, setPasta] = useState(publicadas[0]?.id ?? "");
@@ -107,7 +108,7 @@ export default function ProjectCinematicSettings({ projeto, nome, pastas, value,
       <style>{css}</style>
       <span>EXPERIÊNCIA DO CLIENTE</span>
       <h3>Abertura cinematográfica</h3>
-      <p className="pw-note">Apresente o projeto com fotos e uma frase antes das galerias. A abertura é opcional e pode ser pulada pelo cliente.</p>
+      <p className="pw-note">Apresente o projeto com fotos, uma frase inicial e sua descrição na terceira tela. A abertura é opcional e pode ser pulada pelo cliente.</p>
 
       <label className="fcs-toggle">
         <input type="checkbox" checked={value.ativo} onChange={(e) => {
@@ -169,7 +170,7 @@ export default function ProjectCinematicSettings({ projeto, nome, pastas, value,
       <button type="button" className="fcs-preview" disabled={!value.fotos.length || preparandoPreview} onClick={() => void verPreview()}>{preparandoPreview ? "Preparando prévia…" : "Visualizar prévia da abertura →"}</button>
       <p className="pw-note">Para publicar, use o botão “Salvar configurações” abaixo. A abertura aparece em cada novo acesso ao link principal; o cliente pode voltar, avançar ou pular.</p>
     </div>
-    {preview && <ProjectCinematicIntro projetoNome={nome} studioNome={null}
+    {preview && <ProjectCinematicIntro projetoNome={nome} projetoDescricao={descricao} studioNome={null}
       config={{ ...value, ativo: true, fotos: preview }} onFinish={() => setPreview(null)} preview />}
   </>;
 }
