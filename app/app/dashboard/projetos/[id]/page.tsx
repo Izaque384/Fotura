@@ -484,14 +484,18 @@ const css=`
  .pw-folder-actions{grid-column:2/-1;justify-content:flex-end}
 }
 @media(max-width:720px){
- .pw-shell{padding:76px 14px 56px}
+ .pw-shell{box-sizing:border-box;width:100%;min-width:0;padding:76px 14px 56px}
  .pw-head{align-items:flex-start;flex-direction:column;gap:14px}
  .pw-head h1{white-space:normal;font-size:24px}
  .pw-head-actions{width:100%;justify-content:flex-end}
  .pw-head-actions>.primary{flex:1}
  .pw-tabs{gap:16px}
- .pw-project-summary{grid-template-columns:1fr}
- .pw-summary-cover{min-height:170px}
+ .pw-overview-grid{grid-template-columns:minmax(0,1fr);min-width:0}
+ .pw-overview-card,.pw-project-summary,.pw-summary-copy{min-width:0;max-width:100%;box-sizing:border-box}
+ .pw-project-summary{grid-template-columns:minmax(0,1fr);gap:14px}
+ .pw-summary-cover{display:block;box-sizing:border-box;width:100%;max-width:100%;height:clamp(190px,55vw,270px);min-height:0;overflow:hidden}
+ .pw-summary-cover img{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
+ .pw-summary-copy{overflow-wrap:anywhere}
  .pw-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
  .pw-section{padding:14px}
  .pw-section-head{align-items:flex-start;flex-direction:column}
