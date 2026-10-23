@@ -16,7 +16,6 @@ export default function PublicProjectLoadingScreen() {
         <div className="fpl-brand">FOTURA</div>
         <div className="fpl-rule" aria-hidden="true" />
 
-        <h1 className="fpl-title">Cada momento merece ser revivido.</h1>
         <p className="fpl-description">Preparando suas fotografias...</p>
 
         <div className="fpl-progress" aria-hidden="true"><span /></div>
@@ -114,20 +113,8 @@ export default function PublicProjectLoadingScreen() {
           margin: 28px 0;
           background: linear-gradient(90deg, transparent, rgba(209, 203, 255, .78), transparent);
         }
-        .fpl-title {
-          max-width: 480px;
-          margin: 0;
-          font-size: clamp(27px, 4.3vw, 42px);
-          font-weight: 500;
-          line-height: 1.23;
-          letter-spacing: -.04em;
-          color: #fff !important;
-          text-wrap: balance;
-          text-shadow: 0 5px 26px rgba(0,0,0,.2);
-          animation: fpl-enter .85s .12s ease-out both;
-        }
         .fpl-description {
-          margin: 19px 0 0;
+          margin: 6px 0 0;
           color: #b4b7ce;
           font-size: 13px;
           font-weight: 400;
@@ -180,12 +167,11 @@ export default function PublicProjectLoadingScreen() {
           .fpl-mark { width: 86px; height: 86px; }
           .fpl-symbol { width: 56px; height: 56px; }
           .fpl-rule { margin: 25px 0; }
-          .fpl-title { font-size: clamp(27px, 7vw, 36px); }
           .fpl-description { font-size: 12px; }
           .fpl-footnote { font-size: 9px; letter-spacing: .18em; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .fpl-mark-glow, .fpl-symbol, .fpl-title, .fpl-progress span { animation: none !important; }
+          .fpl-mark-glow, .fpl-symbol, .fpl-progress span { animation: none !important; }
           .fpl-progress span { width: 100%; opacity: .7; }
         }
       `}</style>
