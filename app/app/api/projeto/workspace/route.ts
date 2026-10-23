@@ -34,7 +34,7 @@ function slugify(valor: string) {
 async function projetoDoUsuario(projeto: string, userId: string) {
   const supabase = createServiceClient();
   const { data } = await supabase.from("galeria_projetos")
-    .select("id,user_id,cliente_id,nome,descricao,slug,capa_galeria_id,capa_arquivo,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade,assistente_ativo,abertura_config,config_revisada_em,criado_em,atualizado_em")
+    .select("id,user_id,cliente_id,nome,descricao,slug,capa_galeria_id,capa_arquivo,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade,assistente_ativo,abertura_config,og_capa_autorizada,config_revisada_em,criado_em,atualizado_em")
     .eq("id", projeto).eq("user_id", userId).maybeSingle();
   return data ?? null;
 }
@@ -205,6 +205,7 @@ type PatchBody = {
   watermarkOpacidade?: number;
   assistenteAtivo?: boolean;
   abertura?: unknown;
+  ogCapaAutorizada?: boolean;
   capaPastaId?: string | null;
   capaArquivo?: string | null;
   removerCapa?: boolean;
@@ -270,6 +271,7 @@ export async function PATCH(req: NextRequest) {
     update.watermark_opacidade = op;
   }
   if (typeof body.assistenteAtivo === "boolean") update.assistente_ativo = body.assistenteAtivo;
+  if (typeof body.ogCapaAutorizada === "boolean") update.og_capa_autorizada = body.ogCapaAutorizada;
   if (body.abertura !== undefined) {
     const abertura = validarAbertura(body.abertura);
     if (!abertura) return json({ error: "Configuração da abertura inválida. Escolha até três fotos e revise os campos." }, 400);
