@@ -56,7 +56,8 @@ test("abertura reaparece no link em cada visita, e permite voltar, avançar e pu
   await expect(tela.locator(".fci-progress i")).toHaveCount(3);
   await expect(tela.locator(".fci-bottom")).toBeVisible();
   await expect(tela.getByText("UMA EXPERIÊNCIA FOTURA")).toHaveCount(0);
-  await expect(tela.getByText("Voltar")).toHaveCount(0);
+  await expect(tela.locator(".fci-controls")).toHaveCount(0);
+  await expect(tela.locator(".fci-bottom")).toHaveText("");
   await expect(tela.getByText("3 de 3")).toHaveCount(0);
   await expect(tela.getByText("Explorar fotografias")).toHaveCount(0);
   // O único botão visível é o de pular a introdução, no canto superior.
