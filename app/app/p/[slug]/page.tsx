@@ -49,14 +49,12 @@ export default function ProjetoClientePage(){
       const solicitada=query.get("pasta");
       const ativa=payload.pastas.some(p=>p.id===solicitada)?solicitada!:"";
       setPastaAtiva(ativa);
-      let jaViu = false;
-      try {
-        jaViu = localStorage.getItem(`fotura_abertura_${payload.projeto.id}`) === payload.projeto.abertura?.versao;
-      } catch { /* navegação privada: a abertura continua opcional e pode ser pulada */ }
+      // Abertura em toda nova visita ao link principal, sem lembrar se o cliente
+      // já assistiu. Links diretos de pastas continuam levando ao destino solicitado.
       setIntroAberta(Boolean(
         payload.projeto.abertura?.ativo && payload.projeto.abertura.fotos.length > 0 &&
         !ativa && !solicitada && payload.projeto.desbloqueado && !payload.projeto.linkExpirado &&
-        payload.pastas.length > 0 && !jaViu
+        payload.pastas.length > 0
       ));
       if(payload.projeto.publicRef&&window.location.pathname!==`/p/${payload.projeto.publicRef}`){
         if(ativa)query.set("pasta",ativa);else query.delete("pasta");
@@ -130,10 +128,7 @@ export default function ProjetoClientePage(){
   if(!dados.pastas.length)return <Estado titulo={dados.projeto.nome} texto="Este projeto ainda não possui galerias de fotos publicadas."/>;
   if(!pastaAtiva && introAberta && dados.projeto.abertura?.ativo)return <ProjectCinematicIntro
     projetoNome={dados.projeto.nome} studioNome={dados.perfil.nome} config={dados.projeto.abertura}
-    onFinish={()=>{
-      try { localStorage.setItem(`fotura_abertura_${dados.projeto.id}`, dados.projeto.abertura?.versao || "1"); } catch {}
-      setIntroAberta(false);
-    }} />;
+    onFinish={()=>setIntroAberta(false)} />;
   if(!pastaAtiva)return <ProjetoHome dados={dados} onOpen={trocarPasta} onPrefetch={id=>void loadGalleryGrid(id)}/>;
   if(!context)return <Estado texto="Preparando projeto…"/>;
 
