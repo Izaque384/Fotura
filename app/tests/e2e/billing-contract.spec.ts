@@ -48,7 +48,7 @@ test.describe("contrato de planos e armazenamento", () => {
   });
 
 
-  test("capa compartilhada do projeto respeita o entitlement do hero", () => {
+  test("hero premium respeita o plano; capa do compartilhamento tem consentimento independente", () => {
     const signed = fs.readFileSync(
       path.join(process.cwd(), "app", "api", "fotos", "signed", "route.ts"),
       "utf8",
@@ -72,7 +72,8 @@ test.describe("contrato de planos e armazenamento", () => {
     expect(projetoPublico).toContain("plano.recursos.heroFotoGaleria");
     expect(projetoPublico).toContain("capa_galeria_id");
     expect(projetoPublico).toContain("capa_arquivo");
-    expect(workspace).toContain("A capa do projeto aparece nas pastas que ainda não têm uma capa própria.");
+    expect(workspace).toContain("A capa do projeto aparece nas pastas que ainda não têm uma capa própria e na prévia do link compartilhado no WhatsApp.");
+    expect(workspace).toContain("Mostrar capa no compartilhamento, mesmo com senha");
     expect(perfil).toContain("Usar a capa do projeto como fundo do hero");
     expect(perfil).not.toContain('router.push("/dashboard/heros")');
   });
