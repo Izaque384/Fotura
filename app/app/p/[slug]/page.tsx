@@ -8,6 +8,7 @@ import PublicProjectHero from "../../components/PublicProjectHero";
 import { loadGalleryGrid } from "../../g/[slug]/gallery-image-cache";
 import { ArrowRightIcon } from "../../components/FoturaIcons";
 import ProjectCinematicIntro from "../../components/ProjectCinematicIntro";
+import PublicProjectLoadingScreen from "../../components/PublicProjectLoadingScreen";
 import type { AberturaPublica } from "../../../lib/cinematic-intro";
 
 type ProjetoPublico = {
@@ -121,7 +122,7 @@ export default function ProjetoClientePage(){
     };
   },[dados,pastaAtiva]);
 
-  if(carregando)return <Estado texto="Carregando projeto…"/>;
+  if(carregando)return <PublicProjectLoadingScreen />;
   if(erro||!dados)return <Estado texto={erro||"Projeto indisponível."}/>;
   if(dados.projeto.linkExpirado)return <Estado titulo="Este link expirou" texto="O prazo de acesso a este projeto terminou. Entre em contato com o fotógrafo para reabri-lo."/>;
   if(dados.projeto.temSenha&&!dados.projeto.desbloqueado)return <div className="pc-gate"><style>{css}</style><div className="pc-gate-card">{dados.perfil.logo&&<img className="pc-logo" src={dados.perfil.logo} alt=""/>}<span>PROJETO PROTEGIDO</span><h1>{dados.projeto.nome}</h1><p>Digite a senha enviada pelo fotógrafo para acessar todas as galerias deste projeto.</p><input type="password" value={senha} onChange={e=>{setSenha(e.target.value);setSenhaErro("")}} onKeyDown={e=>{if(e.key==="Enter")void entrar()}} autoFocus placeholder="Senha"/>{senhaErro&&<div className="pc-error">{senhaErro}</div>}<button onClick={()=>void entrar()} disabled={validando}>{validando?"Verificando…":"Entrar"}</button><small>Feito com <b>Fotura</b></small></div></div>;
