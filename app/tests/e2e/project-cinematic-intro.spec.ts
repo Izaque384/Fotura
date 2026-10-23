@@ -139,6 +139,33 @@ test("terceira cena suporta descrições extensas sem cortar texto", async ({ pa
   await expect(descricao).toHaveCSS("white-space", "pre-line");
 });
 
+test("cabe nome completo do estúdio no topo mobile e botão pular é discreto", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 720 });
+  const nomeEstudio = "ALVOR FOTOGRAFIA E FILMES";
+  await page.route("**/api/projeto/publico?**", (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ ...exemplo, perfil: { ...exemplo.perfil, nome: nomeEstudio } }),
+  }));
+  await page.goto("/p/casamento-ana-pedro-1e86ef4c");
+  const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
+  await expect(tela).toBeVisible();
+  const estudio = tela.locator(".fci-studio");
+  const pular = tela.getByRole("button", { name: "Pular introdução" });
+  await expect(estudio).toHaveText(nomeEstudio);
+  await expect(estudio).toHaveCSS("white-space", "normal");
+  await expect(estudio).toHaveCSS("text-overflow", "clip");
+  await expect(pular).toBeVisible();
+  const box = await estudio.boundingBox();
+  const btn = await pular.boundingBox();
+  expect(box).not.toBeNull();
+  expect(btn).not.toBeNull();
+  expect(box!.x + box!.width).toBeLessThanOrEqual(btn!.x + 1);
+  expect(box!.height).toBeGreaterThan(20);
+  await expect(pular).toHaveCSS("outline-style", "none");
+  await pular.click();
+  await expect(tela).toHaveCount(0);
+});
+
 test("projeto protegido não exibe fotos da introdução antes de desbloquear", async ({ page }) => {
   await page.route("**/api/projeto/publico?**", (route) => route.fulfill({
     status: 200, contentType: "application/json",
