@@ -17,12 +17,20 @@ type Props = {
 
 export default function ProjectCinematicSettings({ projeto, nome, pastas, value, onChange, token }: Props) {
   const publicadas = pastas.filter((p) => p.visivel && p.qtd > 0);
+  const idsPublicadas = publicadas.map((p) => p.id).join("|");
   const [pasta, setPasta] = useState(publicadas[0]?.id ?? "");
   const [fotos, setFotos] = useState<Preview[]>([]);
   const [cache, setCache] = useState<Record<string, Preview[]>>({});
   const [carregando, setCarregando] = useState(false);
   const [aviso, setAviso] = useState("");
   const [preview, setPreview] = useState<FotoAberturaPublica[] | null>(null);
+  const [preparandoPreview, setPreparandoPreview] = useState(false);
+  // As pastas chegam após o carregamento do projeto. Atualize a seleção inicial.
+  useEffect(() => {
+    setPasta((anterior) => idsPublicadas.split("|").includes(anterior) ? anterior : publicadas[0]?.id ?? "");
+    // A lista de ids é a chave estável desta dependência.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idsPublicadas]);
 
   async function buscar(pastaId: string): Promise<Preview[]> {
     const access = await token();
@@ -69,20 +77,29 @@ export default function ProjectCinematicSettings({ projeto, nome, pastas, value,
   }
 
   async function verPreview() {
+    if (preparandoPreview) return;
+    setPreparandoPreview(true);
     try {
       setAviso("");
-      const porPasta: Record<string, Preview[]> = { ...cache };
+      // URLs assinadas expiram. Recarregar as imagens sempre antes da prévia
+      // evita fotos quebradas depois de alguns minutos editando o projeto.
+      const porPasta: Record<string, Preview[]> = {};
       for (const pastaId of [...new Set(value.fotos.map((f) => f.pastaId))]) {
-        if (!porPasta[pastaId]) porPasta[pastaId] = await buscar(pastaId);
+        porPasta[pastaId] = await buscar(pastaId);
       }
       setCache((anterior) => ({ ...anterior, ...porPasta }));
       const selecionadas = value.fotos.map((foto) => {
         const url = porPasta[foto.pastaId]?.find((f) => f.nome === foto.arquivo)?.url;
         return url ? { ...foto, url } : null;
       }).filter((f): f is FotoAberturaPublica => f !== null);
-      if (!selecionadas.length) throw new Error("Selecione fotografias disponíveis para visualizar.");
+      if (!selecionadas.length || selecionadas.length !== value.fotos.length)
+        throw new Error("Alguma foto não está mais disponível. Revise a seleção da abertura.");
       setPreview(selecionadas);
-    } catch (e) { setAviso(e instanceof Error ? e.message : "Não foi possível abrir a prévia."); }
+    } catch (e) {
+      setAviso(e instanceof Error ? e.message : "Não foi possível abrir a prévia.");
+    } finally {
+      setPreparandoPreview(false);
+    }
   }
 
   return <>
@@ -109,10 +126,10 @@ export default function ProjectCinematicSettings({ projeto, nome, pastas, value,
       </label>
 
       <label className="pw-field">Duração
-        <select value={value.duracao} onChange={(e) => onChange({ ...value, duracao: Number(e.target.value) as 8 | 12 | 16 })}>
-          <option value={8}>8 segundos · breve</option><option value={12}>12 segundos · recomendado</option><option value={16}>16 segundos · contemplativo</option>
+        <select value={value.duracao} onChange={(e) => onChange({ ...value, duracao: Number(e.target.value) as 15 | 21 | 30 })}>
+          <option value={15}>15 segundos · tranquilo</option><option value={21}>21 segundos · recomendado</option><option value={30}>30 segundos · contemplativo</option>
         </select>
-        <small>Mais tempo para apreciar cada imagem e ler as frases. As transições são suaves.</small>
+        <small>De 5 a 10 segundos por cena, com transições suaves. O cliente pode voltar ou avançar a qualquer momento.</small>
       </label>
 
       <label className="pw-field">Frase inicial
@@ -149,8 +166,8 @@ export default function ProjectCinematicSettings({ projeto, nome, pastas, value,
       </div>}
       {aviso && <p role="alert" className="fcs-alert">{aviso}</p>}
       {value.ativo && !value.fotos.length && <p className="fcs-alert">Selecione ao menos uma fotografia para ativar.</p>}
-      <button type="button" className="fcs-preview" disabled={!value.fotos.length} onClick={() => void verPreview()}>Visualizar prévia da abertura →</button>
-      <p className="pw-note">Para publicar, use o botão “Salvar configurações” abaixo. O cliente poderá pular a introdução; ela não bloqueará o acesso às galerias.</p>
+      <button type="button" className="fcs-preview" disabled={!value.fotos.length || preparandoPreview} onClick={() => void verPreview()}>{preparandoPreview ? "Preparando prévia…" : "Visualizar prévia da abertura →"}</button>
+      <p className="pw-note">Para publicar, use o botão “Salvar configurações” abaixo. A abertura aparece em cada novo acesso ao link principal; o cliente pode voltar, avançar ou pular.</p>
     </div>
     {preview && <ProjectCinematicIntro projetoNome={nome} studioNome={null}
       config={{ ...value, ativo: true, fotos: preview }} onFinish={() => setPreview(null)} preview />}
