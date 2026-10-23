@@ -114,6 +114,7 @@ test("terceira cena sem descrição não usa texto genérico", async ({ page }) 
   }));
   await page.goto("/p/casamento-ana-pedro-1e86ef4c");
   const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
+  await expect(tela).toBeVisible();
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("ArrowRight");
   await expect(tela.getByText("SUAS FOTOGRAFIAS")).toBeVisible();
@@ -129,6 +130,7 @@ test("terceira cena suporta descrições extensas sem cortar texto", async ({ pa
     body: JSON.stringify({ ...exemplo, projeto: { ...exemplo.projeto, descricao: descricaoLonga } }),
   }));
   await page.goto("/p/casamento-ana-pedro-1e86ef4c");
+  await expect(page.getByRole("dialog", { name: "Apresentação do projeto" })).toBeVisible();
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("ArrowRight");
   const descricao = page.locator(".fci-description");
