@@ -127,7 +127,7 @@ export default function ProjetoClientePage(){
   if(dados.projeto.temSenha&&!dados.projeto.desbloqueado)return <div className="pc-gate"><style>{css}</style><div className="pc-gate-card">{dados.perfil.logo&&<img className="pc-logo" src={dados.perfil.logo} alt=""/>}<span>PROJETO PROTEGIDO</span><h1>{dados.projeto.nome}</h1><p>Digite a senha enviada pelo fotógrafo para acessar todas as galerias deste projeto.</p><input type="password" value={senha} onChange={e=>{setSenha(e.target.value);setSenhaErro("")}} onKeyDown={e=>{if(e.key==="Enter")void entrar()}} autoFocus placeholder="Senha"/>{senhaErro&&<div className="pc-error">{senhaErro}</div>}<button onClick={()=>void entrar()} disabled={validando}>{validando?"Verificando…":"Entrar"}</button><small>Feito com <b>Fotura</b></small></div></div>;
   if(!dados.pastas.length)return <Estado titulo={dados.projeto.nome} texto="Este projeto ainda não possui galerias de fotos publicadas."/>;
   if(!pastaAtiva && introAberta && dados.projeto.abertura?.ativo)return <ProjectCinematicIntro
-    projetoNome={dados.projeto.nome} studioNome={dados.perfil.nome} config={dados.projeto.abertura}
+    projetoNome={dados.projeto.nome} projetoDescricao={dados.projeto.descricao} studioNome={dados.perfil.nome} config={dados.projeto.abertura}
     onFinish={()=>setIntroAberta(false)} />;
   if(!pastaAtiva)return <ProjetoHome dados={dados} onOpen={trocarPasta} onPrefetch={id=>void loadGalleryGrid(id)}/>;
   if(!context)return <Estado texto="Preparando projeto…"/>;
