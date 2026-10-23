@@ -19,6 +19,7 @@ export default function ProjectCinematicIntro({ projetoNome, studioNome, config,
   const terminarRef = useRef(onFinish);
   const botaoRef = useRef<HTMLButtonElement>(null);
   useEffect(() => { terminarRef.current = onFinish; }, [onFinish]);
+  useEffect(() => { if (montado) botaoRef.current?.focus(); }, [montado]);
 
   useEffect(() => {
     setMontado(true);
