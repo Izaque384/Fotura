@@ -53,24 +53,54 @@ test("abertura reaparece no link em cada visita, e permite voltar, avançar e pu
   await expect(page.locator(".fci-intro h1.fci-title")).toHaveCSS("color", "rgb(255, 255, 255)");
   await expect(page.locator(".fci-eyebrow")).toHaveCSS("color", "rgb(246, 244, 255)");
   await expect(page.locator(".fci-images img")).toHaveCSS("transition-duration", "2.15s");
-  await expect(page.getByText("1 de 3")).toBeVisible();
-  await page.getByRole("button", { name: "Avançar para próxima cena" }).click();
+  await expect(tela.locator(".fci-progress i")).toHaveCount(3);
+  await expect(tela.locator(".fci-bottom")).toBeVisible();
+  await expect(tela.getByText("UMA EXPERIÊNCIA FOTURA")).toHaveCount(0);
+  await expect(tela.locator(".fci-controls")).toHaveCount(0);
+  await expect(tela.locator(".fci-bottom")).toHaveText("");
+  await expect(tela.getByText("3 de 3")).toHaveCount(0);
+  await expect(tela.getByText("Explorar fotografias")).toHaveCount(0);
+  // O único botão visível é o de pular a introdução, no canto superior.
+  await expect(tela.getByRole("button")).toHaveCount(1);
+
+  const viewport = page.viewportSize()!;
+  const esquerda = viewport.width * 0.24;
+  const direita = viewport.width * 0.76;
+  const y = viewport.height * 0.55;
+  await page.mouse.click(direita, y);
   await expect(tela.getByRole("heading", { name: exemplo.projeto.nome })).toBeVisible();
-  await expect(page.getByText("2 de 3")).toBeVisible();
-  await page.getByRole("button", { name: "Voltar à cena anterior" }).click();
+  await page.mouse.click(esquerda, y);
   await expect(tela.getByRole("heading", { name: exemplo.projeto.abertura.frase })).toBeVisible();
-  await page.getByRole("button", { name: "Avançar para próxima cena" }).click();
-  await page.getByRole("button", { name: "Avançar para próxima cena" }).click();
+  await page.mouse.click(direita, y);
+  await page.mouse.click(direita, y);
   await expect(tela.getByText("Sua história começa aqui.")).toBeVisible();
-  await expect(tela.getByRole("button", { name: "Explorar fotografias" })).toBeVisible();
-  await page.getByRole("button", { name: /Pular introdução/ }).click();
+  // A última cena também avança para a galeria, sem mostrar CTA.
+  await page.mouse.click(direita, y);
   await expect(tela).toHaveCount(0);
   await expect(page.getByText("Escolha uma galeria")).toBeVisible();
   await page.reload();
   await expect(tela).toBeVisible();
-  await expect(tela.getByText("1 de 3")).toBeVisible();
+  await expect(tela.getByRole("heading", { name: exemplo.projeto.abertura.frase })).toBeVisible();
   await page.getByRole("button", { name: /Pular introdução/ }).click();
   await expect(page.getByText("Escolha uma galeria")).toBeVisible();
+});
+
+test("navegação por áreas funciona no viewport mobile e pelas setas do teclado", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("**/api/projeto/publico?**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(exemplo) }));
+  await page.goto("/p/casamento-ana-pedro-1e86ef4c");
+  const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
+  await expect(tela).toBeVisible();
+  await page.mouse.click(320, 430);
+  await expect(tela.getByRole("heading", { name: exemplo.projeto.nome })).toBeVisible();
+  await page.mouse.click(70, 430);
+  await expect(tela.getByRole("heading", { name: exemplo.projeto.abertura.frase })).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await expect(tela.getByRole("heading", { name: exemplo.projeto.nome })).toBeVisible();
+  await page.keyboard.press("ArrowLeft");
+  await expect(tela.getByRole("heading", { name: exemplo.projeto.abertura.frase })).toBeVisible();
+  await page.getByRole("button", { name: /Pular introdução/ }).click();
+  await expect(tela).toHaveCount(0);
 });
 
 test("projeto protegido não exibe fotos da introdução antes de desbloquear", async ({ page }) => {
