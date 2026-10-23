@@ -30,7 +30,7 @@ test("carregamento público é cinematográfico, responsivo e não depende de fo
   await page.goto("/p/ensaio-1e86ef4c");
   const status = page.getByRole("status", { name: "Carregando projeto fotográfico" });
   await expect(status).toBeVisible();
-  await expect(status.getByRole("heading", { name: "Cada momento merece ser revivido." })).toBeVisible();
+  await expect(status.getByText("Cada momento merece ser revivido.")).toHaveCount(0);
   await expect(status.getByText("Preparando suas fotografias...")).toBeVisible();
   await expect(status.locator(".fpl-progress span")).toHaveCount(1);
   await expect(status).toHaveCSS("background-color", "rgb(13, 14, 25)");
