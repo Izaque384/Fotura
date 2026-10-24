@@ -1,17 +1,25 @@
 export type EstiloAbertura = "cinematografico" | "minimalista" | "editorial";
 
 export type FotoAbertura = { pastaId: string; arquivo: string };
+export type FundoAbertura = "fotos" | "video";
+export const VIDEO_ABERTURA_BUCKET = "abertura-videos";
+export const VIDEO_ABERTURA_MAX_BYTES = 25 * 1024 * 1024;
+export function caminhoVideoValido(path: unknown): path is string {
+  return typeof path === "string" && /^[0-9a-f-]{36}\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.mp4$/i.test(path);
+}
 export type ConfigAbertura = {
   ativo: boolean;
   estilo: EstiloAbertura;
   duracao: 15 | 21 | 30;
   frase: string;
   fotos: FotoAbertura[];
+  fundo: FundoAbertura;
+  video: string | null;
   versao: string;
 };
 
 export type FotoAberturaPublica = FotoAbertura & { url: string };
-export type AberturaPublica = Omit<ConfigAbertura, "fotos"> & { fotos: FotoAberturaPublica[] };
+export type AberturaPublica = Omit<ConfigAbertura, "fotos"> & { fotos: FotoAberturaPublica[]; videoUrl?: string | null };
 
 export const ABERTURA_PADRAO: ConfigAbertura = {
   ativo: false,
@@ -19,6 +27,8 @@ export const ABERTURA_PADRAO: ConfigAbertura = {
   duracao: 21,
   frase: "Alguns momentos merecem ser revividos.",
   fotos: [],
+  fundo: "fotos",
+  video: null,
   versao: "1",
 };
 
@@ -50,6 +60,8 @@ export function lerAbertura(valor: unknown): ConfigAbertura {
     duracao: duracaoSuave(c.duracao),
     frase: typeof c.frase === "string" ? c.frase.slice(0, 140) : ABERTURA_PADRAO.frase,
     fotos,
+    fundo: c.fundo === "video" ? "video" : "fotos",
+    video: caminhoVideoValido(c.video) ? c.video : null,
     versao: typeof c.versao === "string" ? c.versao.slice(0, 40) : "1",
   };
 }
@@ -64,5 +76,8 @@ export function validarAbertura(valor: unknown): ConfigAbertura | null {
   if (config.fotos.length !== v.fotos.length) return null;
   const unicos = new Set(config.fotos.map((f) => `${f.pastaId}/${f.arquivo}`));
   if (unicos.size !== config.fotos.length || (config.ativo && config.fotos.length === 0)) return null;
+  if (v.fundo !== undefined && v.fundo !== "fotos" && v.fundo !== "video") return null;
+  if (v.video !== undefined && v.video !== null && !caminhoVideoValido(v.video)) return null;
+  if (config.ativo && config.fundo === "video" && !config.video) return null;
   return { ...config, frase: config.frase.trim(), versao: new Date().toISOString() };
 }
