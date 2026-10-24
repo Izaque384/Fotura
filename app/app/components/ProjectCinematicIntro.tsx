@@ -17,6 +17,9 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
   const [etapa, setEtapa] = useState(0);
   const [pausado, setPausado] = useState(false);
   const [montado, setMontado] = useState(false);
+  const [permiteVideo, setPermiteVideo] = useState(false);
+  const [videoPronto, setVideoPronto] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const terminarRef = useRef(onFinish);
   const telaRef = useRef<HTMLElement>(null);
   useEffect(() => { terminarRef.current = onFinish; }, [onFinish]);
@@ -37,6 +40,13 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
     window.addEventListener("keydown", onKey);
     const preferirMenosMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (preferirMenosMovimento) setPausado(true);
+    // Modo economia, rede lenta e movimento reduzido recebem imagens estáticas.
+    const connection = (navigator as Navigator & {
+      connection?: { saveData?: boolean; effectiveType?: string };
+    }).connection;
+    const economica = Boolean(connection?.saveData) ||
+      ["slow-2g", "2g", "3g"].includes(connection?.effectiveType ?? "");
+    setPermiteVideo(!preferirMenosMovimento && !economica);
     return () => {
       document.body.style.overflow = anterior;
       focoAnterior?.focus();
@@ -80,6 +90,7 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
   }, [etapa]);
 
   const fotos = config.fotos.slice(0, config.estilo === "minimalista" ? 1 : 3);
+  const videoAtivo = config.fundo === "video" && Boolean(config.videoUrl) && permiteVideo;
   const descricao = projetoDescricao?.trim() || "";
   const textos = [
     config.frase || "Alguns momentos merecem ser revividos.",
@@ -116,6 +127,21 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
             className={i === (etapa % fotos.length) ? "visible" : ""}
             style={{ animationDuration: `${config.duracao}s` }} />
         ))}
+        {videoAtivo && (
+          <video ref={videoRef} className={`fci-video${videoPronto ? " visible" : ""}`}
+            src={config.videoUrl ?? undefined}
+            poster={fotos[0]?.url}
+            autoPlay muted loop playsInline preload="metadata" aria-hidden="true"
+            onPlaying={() => setVideoPronto(true)}
+            onWaiting={() => setVideoPronto(false)}
+            onError={() => { setPermiteVideo(false); setVideoPronto(false); }}
+            onCanPlay={() => {
+              void videoRef.current?.play().catch(() => {
+                setPermiteVideo(false); setVideoPronto(false);
+              });
+            }}
+          />
+        )}
         <div className="fci-shade" />
       </div>
       <div className="fci-top">
@@ -142,7 +168,9 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
 
 const css = `
 .fci-intro{position:fixed;inset:0;z-index:100000;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#0b0b12;color:#fff;font-family:var(--font-sora),system-ui,sans-serif;cursor:pointer;touch-action:manipulation}
-.fci-images,.fci-images img,.fci-shade{position:absolute;inset:0;width:100%;height:100%}
+.fci-images,.fci-images img,.fci-shade,.fci-video{position:absolute;inset:0;width:100%;height:100%}
+.fci-video{object-fit:cover;opacity:0;transition:opacity 1.1s ease;pointer-events:none}
+.fci-video.visible{opacity:1}
 .fci-images img{object-fit:cover;opacity:0;transform:scale(1.015);transition:opacity 2.15s cubic-bezier(.22,1,.36,1);animation:fci-zoom linear both;will-change:transform}
 .fci-images img.visible{opacity:1}
 .fci-minimalista .fci-images img{opacity:1}
@@ -168,5 +196,5 @@ const css = `
 @keyframes fci-zoom{from{transform:scale(1.015)}to{transform:scale(1.075)}}
 @keyframes fci-fade{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:650px){.fci-top{padding:24px 18px;gap:12px}.fci-studio{font-size:11px;max-width:calc(100% - 150px);flex:1;letter-spacing:.13em;line-height:1.55;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word}.fci-center{padding:14px}.fci-intro h1.fci-title{font-size:clamp(32px,9.5vw,54px)}.fci-intro .fci-description{font-size:clamp(21px,5.5vw,28px);max-height:56vh}.fci-intro .fci-description-long{font-size:clamp(18px,4.5vw,22px)}.fci-eyebrow{letter-spacing:.15em}.fci-bottom{bottom:24px}}
-@media(prefers-reduced-motion:reduce){.fci-images img,.fci-title,.fci-description,.fci-progress i{animation:none!important;transition:none!important}.fci-images img{transform:none!important}}
+@media(prefers-reduced-motion:reduce){.fci-images img,.fci-title,.fci-description,.fci-progress i,.fci-video{animation:none!important;transition:none!important}.fci-images img{transform:none!important}}
 `;
