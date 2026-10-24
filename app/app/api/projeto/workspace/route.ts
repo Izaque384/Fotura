@@ -8,7 +8,7 @@ import { registrarErro } from "../../../../lib/observability";
 import { uuidValido } from "../../../../lib/validation";
 import { ordemFotosValida, type OrdemFotos } from "../../../../lib/gallery-photo-order";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
-import { lerAbertura, validarAbertura } from "../../../../lib/cinematic-intro";
+import { lerAbertura, validarAbertura, caminhoVideoValido, VIDEO_ABERTURA_BUCKET, VIDEO_ABERTURA_MAX_BYTES } from "../../../../lib/cinematic-intro";
 import { MODELOS_PROJETO,modeloValido,configProjeto } from "../../../../lib/project-templates";
 
 export const dynamic = "force-dynamic";
@@ -275,6 +275,19 @@ export async function PATCH(req: NextRequest) {
   if (body.abertura !== undefined) {
     const abertura = validarAbertura(body.abertura);
     if (!abertura) return json({ error: "Configuração da abertura inválida. Escolha até três fotos e revise os campos." }, 400);
+    if (abertura.video) {
+      const path = abertura.video;
+      if (!caminhoVideoValido(path) || !path.startsWith(`${user.id}/${body.projeto}/`))
+        return json({ error: "O vídeo não pertence a este projeto." }, 403);
+      const nome = path.split("/").pop()!;
+      const { data: objetos, error: videoErro } = await supabase.storage.from(VIDEO_ABERTURA_BUCKET)
+        .list(`${user.id}/${body.projeto}`, { search: nome, limit: 100 });
+      const video = objetos?.find((item) => item.id && item.name === nome);
+      const bytes = Number(video?.metadata?.size ?? 0);
+      if (videoErro || !video || bytes <= 0 || bytes > VIDEO_ABERTURA_MAX_BYTES ||
+        String(video.metadata?.mimetype ?? "") !== "video/mp4")
+        return json({ error: "Vídeo de abertura inválido ou indisponível. Envie um MP4 de até 25 MB." }, 400);
+    }
     if (abertura.ativo && abertura.fotos.length) {
       const ids = [...new Set(abertura.fotos.map((foto) => foto.pastaId))];
       const { data: permitidas, error: pastasErro } = await supabase.from("galerias").select("id")
@@ -320,6 +333,13 @@ export async function PATCH(req: NextRequest) {
 
   const { error } = await supabase.from("galeria_projetos").update(update).eq("id", body.projeto).eq("user_id", user.id);
   if (error) return json({ error: "Não foi possível salvar o projeto." }, 500);
+  // A exclusão do MP4 antigo só ocorre depois de a nova configuração ter sido salva.
+  if (body.abertura !== undefined) {
+    const antigo = lerAbertura(p.abertura_config).video;
+    const atual = lerAbertura(update.abertura_config).video;
+    if (antigo && antigo !== atual && antigo.startsWith(`${user.id}/${body.projeto}/`))
+      await supabase.storage.from(VIDEO_ABERTURA_BUCKET).remove([antigo]);
+  }
   // Os controles de prova e entrega são globais no workspace: manter cada pasta alinhada.
   const camposPasta = ["prova","limite","prazo","link_ate","download_ativo","download_individual","download_completo","download_tamanho","download_pin_hash","watermark_ativo","watermark_texto","watermark_opacidade","assistente_ativo"];
   const atualizarPastas = Object.fromEntries(Object.entries(update).filter(([campo])=>camposPasta.includes(campo)));
@@ -536,6 +556,17 @@ export async function POST(req: NextRequest) {
       return json({ error: "Digite o nome exato do projeto para confirmar a exclusão." }, 400);
     }
 
+    // Não excluir o registro sem primeiro remover os vídeos privados. A limpeza
+    // das fotografias continua na fila persistente das galerias.
+    const prefixo = `${user.id}/${body.projetoId}`;
+    const { data: arquivosVideo, error: listaVideoErro } = await supabase.storage.from(VIDEO_ABERTURA_BUCKET)
+      .list(prefixo, { limit: 100 });
+    if (listaVideoErro) return json({ error: "Não foi possível verificar os vídeos antes da exclusão." }, 503);
+    const caminhosVideo = (arquivosVideo ?? []).filter((item) => item.id).map((item) => `${prefixo}/${item.name}`);
+    if (caminhosVideo.length) {
+      const { error: apagarVideoErro } = await supabase.storage.from(VIDEO_ABERTURA_BUCKET).remove(caminhosVideo);
+      if (apagarVideoErro) return json({ error: "Não foi possível excluir os vídeos do projeto." }, 503);
+    }
     const { data: galeriasRemovidas, error: exclusaoError } = await supabase.rpc("excluir_projeto_backend", {
       p_projeto: body.projetoId,
       p_user_id: user.id,
