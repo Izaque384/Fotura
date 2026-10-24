@@ -7,7 +7,7 @@ import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { dataCalendarioExpirada } from "../../../../lib/date-only";
 import { planoFotura } from "../../../../lib/billing-plans";
 import { estiloHeroEfetivo, heroPresetDataUrl } from "../../../../lib/gallery-hero";
-import { lerAbertura, type FotoAberturaPublica } from "../../../../lib/cinematic-intro";
+import { lerAbertura, caminhoVideoValido, VIDEO_ABERTURA_BUCKET, type FotoAberturaPublica } from "../../../../lib/cinematic-intro";
 
 export const dynamic = "force-dynamic";
 
@@ -112,10 +112,19 @@ export async function GET(req: NextRequest) {
       }
     }
   }
+  let videoUrl: string | null = null;
+  if (abertura.ativo && abertura.fundo === "video" && desbloqueada && !linkExpirado &&
+      caminhoVideoValido(abertura.video) && abertura.video.startsWith(`${p.user_id}/${p.id}/`)) {
+    const { data } = await supabase.storage.from(VIDEO_ABERTURA_BUCKET).createSignedUrl(abertura.video, 10 * 60);
+    videoUrl = data?.signedUrl ?? null;
+  }
   const aberturaPublica = {
     ...abertura,
+    // As fotos continuam disponíveis como fallback para vídeo bloqueado ou lento.
     ativo: abertura.ativo && desbloqueada && !linkExpirado && fotosAbertura.length > 0,
+    video: null, // Nunca expor o caminho interno do armazenamento.
     fotos: fotosAbertura,
+    videoUrl,
   };
 
   const response = baseJson({

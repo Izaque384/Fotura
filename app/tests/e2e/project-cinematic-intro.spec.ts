@@ -194,5 +194,56 @@ test("prévia usa portal e atualiza links das fotografias antes de reproduzir", 
   expect(componente).toContain("document.body");
   expect(editor).toContain("porPasta[pastaId] = await buscar(pastaId)");
   expect(editor).toContain("setPasta((anterior)");
-  expect(editor).toContain('setPreview(selecionadas)');
+  expect(editor).toContain("setPreview({ fotos: selecionadas, videoUrl })");
+});
+
+test("configura vídeo sem permitir caminhos arbitrários nem remover o fallback fotográfico", () => {
+  const user = "bd405340-330c-4118-9279-5e4e53c7a516";
+  const project = "b522c88a-8bb1-41b8-93b9-46f0d21627b3";
+  const object = "36e51be3-3e7a-4423-bfd7-e23f78892ec0";
+  const path = `${user}/${project}/${object}.mp4`;
+  const base = exemplo.projeto.abertura;
+  expect(validarAbertura({ ...base, fundo: "video", video: path })?.video).toBe(path);
+  expect(validarAbertura({ ...base, fundo: "video", video: path })?.fundo).toBe("video");
+  expect(validarAbertura({ ...base, fundo: "video", video: null })).toBeNull();
+  expect(validarAbertura({ ...base, fundo: "video", video: "../../secret.mp4" })).toBeNull();
+  expect(validarAbertura({ ...base, fundo: "video", video: "https://outro.site/video.mp4" })).toBeNull();
+  expect(lerAbertura({ ...base, fundo: "video", video: path }).fotos).toHaveLength(1);
+  expect(lerAbertura(base).fundo).toBe("fotos");
+});
+
+test("movimento reduzido mantém as três cenas e impede o download do vídeo", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.route("**/api/projeto/publico?**", (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      ...exemplo,
+      projeto: { ...exemplo.projeto, abertura: {
+        ...exemplo.projeto.abertura, fundo: "video", video: null,
+        videoUrl: "https://cdn.example.invalid/video.mp4",
+      } },
+    }),
+  }));
+  await page.goto("/p/casamento-ana-pedro-1e86ef4c");
+  const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
+  await expect(tela).toBeVisible();
+  await expect(tela.locator(".fci-video")).toHaveCount(0);
+  await expect(tela.locator(".fci-images img")).toHaveCount(1);
+  await page.keyboard.press("ArrowRight");
+  await expect(tela.getByRole("heading", { name: exemplo.projeto.nome })).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await expect(tela.getByText(exemplo.projeto.descricao)).toBeVisible();
+  await page.getByRole("button", { name: "Pular introdução" }).click();
+  await expect(tela).toHaveCount(0);
+});
+
+test("o upload do vídeo exige autorização e os projetos privados não recebem URL antecipadamente", () => {
+  const apiPublica = fs.readFileSync("app/api/projeto/publico/route.ts", "utf8");
+  const endpoint = fs.readFileSync("app/api/projeto/video/route.ts", "utf8");
+  expect(apiPublica).toContain('abertura.fundo === "video" && desbloqueada && !linkExpirado');
+  expect(apiPublica).toContain("video: null");
+  expect(endpoint).toContain("requisicaoMesmoOrigin(req)");
+  expect(endpoint).toContain("createSignedUploadUrl(path)");
+  expect(endpoint).toContain("registrar_video_abertura_upload_backend");
+  expect(endpoint).toContain("VIDEO_ABERTURA_MAX_BYTES");
 });
