@@ -18,7 +18,7 @@ test("link de projeto publica título, capa e imagem social estável", () => {
 });
 
 test("capa nunca é exposta em projetos protegidos, expirados ou pastas ocultas", () => {
-  expect(resolver).toContain("if (!protegido && !expirado && project.capa_galeria_id && project.capa_arquivo)");
+  expect(resolver).toContain("if ((!protegido || Boolean(project.og_capa_autorizada)) && !expirado && project.capa_galeria_id && project.capa_arquivo)");
   expect(resolver).toContain('.eq("projeto_id", String(project.id))');
   expect(resolver).toContain('.eq("visivel", true)');
   expect(resolver).toContain('!arquivo.includes("..")');
@@ -31,4 +31,24 @@ test("rota da capa rejeita referências inválidas ou inexistentes", async ({ re
   expect(malformed.status()).toBe(404);
   const unknown = await request.get("/p/nao-existe-este-projeto-00000000/share-image");
   expect(unknown.status()).toBe(404);
+});
+
+test("WhatsApp recebe metadados no head sem depender da renderização do navegador", async ({ request }) => {
+  const response = await request.get("/p/projeto-inexistente-00000000", {
+    headers: { "user-agent": "WhatsApp/2.24.16.10 A" },
+  });
+  expect(response.ok()).toBeTruthy();
+  const html = await response.text();
+  const head = html.split("</head>")[0];
+  expect(head).toContain('property="og:title"');
+  expect(head).toContain('property="og:image"');
+  expect(head).not.toContain('<body');
+});
+
+test("bot de compartilhamento reconhecido e limite JPEG configurados", () => {
+  const nextConfig = fs.readFileSync("next.config.ts", "utf8");
+  expect(nextConfig).toContain("htmlLimitedBots:");
+  expect(nextConfig).toContain("WhatsApp");
+  expect(imageRoute).toContain("image.length > 600_000");
+  expect(metadata).toContain('"https://foturax.com.br/opengraph-image"');
 });
