@@ -5,6 +5,7 @@ import { dataCalendarioExpirada } from "./date-only";
 
 export type ProjectSocialPreview = {
   publicRef: string;
+  userId: string;
   nome: string;
   descricao: string | null;
   protegido: boolean;
@@ -53,6 +54,7 @@ export async function loadProjectSocialPreview(ref: string): Promise<ProjectSoci
 
     return {
       publicRef: resolved.publicRef,
+      userId: String(project.user_id),
       nome: String(project.nome || "Projeto"),
       descricao: !protegido && !expirado ? (project.descricao as string | null) : null,
       protegido,
