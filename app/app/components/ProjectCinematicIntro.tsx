@@ -28,6 +28,7 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
   const [montado, setMontado] = useState(false);
   const [permiteVideo, setPermiteVideo] = useState(false);
   const [videoPronto, setVideoPronto] = useState(false);
+  const [usarFotosFallback, setUsarFotosFallback] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const terminarRef = useRef(onFinish);
   const telaRef = useRef<HTMLElement>(null);
@@ -55,6 +56,10 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
     }).connection;
     const economica = Boolean(connection?.saveData) ||
       ["slow-2g", "2g", "3g"].includes(connection?.effectiveType ?? "");
+    // No modo vídeo, nenhuma foto aparece enquanto o MP4 está carregando.
+    // Só habilitamos as imagens caso o aparelho solicite uma alternativa.
+    setVideoPronto(false);
+    setUsarFotosFallback(preferirMenosMovimento || economica);
     setPermiteVideo(!preferirMenosMovimento && !economica);
     return () => {
       document.body.style.overflow = anterior;
@@ -99,7 +104,9 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
   }, [etapa]);
 
   const fotos = config.fotos.slice(0, config.estilo === "minimalista" ? 1 : 3);
-  const videoAtivo = config.fundo === "video" && Boolean(config.videoUrl) && permiteVideo;
+  const temVideoConfigurado = config.fundo === "video" && Boolean(config.videoUrl);
+  const mostrarFotos = !temVideoConfigurado || usarFotosFallback;
+  const videoAtivo = temVideoConfigurado && permiteVideo && !usarFotosFallback;
   const descricao = projetoDescricao?.trim() || "";
   const textos = [
     config.frase || "Alguns momentos merecem ser revividos.",
@@ -131,7 +138,7 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
         Use também as setas do teclado. Na última cena, avance para abrir as fotografias.
       </span>
       <div className="fci-images" aria-hidden="true">
-        {fotos.map((foto, i) => (
+        {mostrarFotos && fotos.map((foto, i) => (
           <img key={`${foto.pastaId}/${foto.arquivo}`} src={foto.url} alt="" loading="eager"
             className={i === (etapa % fotos.length) ? "visible" : ""}
             style={{ animationDuration: `${config.duracao}s` }} />
@@ -139,14 +146,12 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
         {videoAtivo && (
           <video ref={videoRef} className={`fci-video${videoPronto ? " visible" : ""}`}
             src={config.videoUrl ?? undefined}
-            poster={fotos[0]?.url}
             autoPlay muted loop playsInline preload="metadata" aria-hidden="true"
             onPlaying={() => setVideoPronto(true)}
-            onWaiting={() => setVideoPronto(false)}
-            onError={() => { setPermiteVideo(false); setVideoPronto(false); }}
+            onError={() => { setPermiteVideo(false); setVideoPronto(false); setUsarFotosFallback(true); }}
             onCanPlay={() => {
               void videoRef.current?.play().catch(() => {
-                setPermiteVideo(false); setVideoPronto(false);
+                setPermiteVideo(false); setVideoPronto(false); setUsarFotosFallback(true);
               });
             }}
           />
