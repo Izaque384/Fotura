@@ -148,7 +148,6 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
             src={config.videoUrl ?? undefined}
             autoPlay muted loop playsInline preload="metadata" aria-hidden="true"
             onPlaying={() => setVideoPronto(true)}
-            // Durante buffering conservamos o último frame do vídeo, sem mostrar fotos.
             onError={() => { setPermiteVideo(false); setVideoPronto(false); setUsarFotosFallback(true); }}
             onCanPlay={() => {
               void videoRef.current?.play().catch(() => {
