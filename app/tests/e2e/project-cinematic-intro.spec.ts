@@ -234,6 +234,40 @@ test("configura vídeo sem permitir caminhos arbitrários nem remover o fallback
   expect(lerAbertura(base).fundo).toBe("fotos");
 });
 
+test("vídeo não exibe a fotografia da capa enquanto carrega ou durante buffering", async ({ page }) => {
+  const videoUrl = "https://cdn.example.invalid/cinematic.mp4";
+  let responderVideo: (() => void) | undefined;
+  await page.route("**/cinematic.mp4", async (route) => {
+    await new Promise<void>((resolve) => { responderVideo = resolve; });
+    await route.abort().catch(() => {});
+  });
+  await page.route("**/api/projeto/publico?**", (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      ...exemplo,
+      projeto: { ...exemplo.projeto, abertura: {
+        ...exemplo.projeto.abertura,
+        fundo: "video", video: null, videoUrl,
+      } },
+    }),
+  }));
+  await page.goto("/p/casamento-ana-pedro-1e86ef4c", { waitUntil: "domcontentloaded" });
+  const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
+  const video = tela.locator(".fci-video");
+  await expect(video).toHaveCount(1);
+  await expect(tela.locator(".fci-images img")).toHaveCount(0);
+  await expect(video).not.toHaveAttribute("poster");
+  await video.dispatchEvent("playing");
+  await expect(video).toHaveClass(/visible/);
+  await video.dispatchEvent("waiting");
+  await expect(video).toHaveClass(/visible/);
+  await expect(tela.locator(".fci-images img")).toHaveCount(0);
+  await video.dispatchEvent("error");
+  await expect(video).toHaveCount(0);
+  await expect(tela.locator(".fci-images img")).toHaveCount(1);
+  responderVideo?.();
+});
+
 test("movimento reduzido mantém as três cenas e impede o download do vídeo", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.route("**/api/projeto/publico?**", (route) => route.fulfill({
