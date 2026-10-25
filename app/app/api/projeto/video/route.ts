@@ -5,6 +5,7 @@ import { caminhoVideoValido, VIDEO_ABERTURA_BUCKET, VIDEO_ABERTURA_MAX_BYTES, le
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
+import { contextoPlano } from "../../../../lib/billing-usage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ const json = (data: unknown, status = 200) =>
 
 async function dono(req: NextRequest, projeto: string) {
   if (!uuidValido(projeto)) return null;
-  const access = req.headers.get("authorization")?.match(/^Bearer\\s+(.+)$/i)?.[1];
+  const access = req.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
   if (!access) return null;
   const db = createServiceClient();
   const { data: auth, error } = await db.auth.getUser(access);
@@ -61,6 +62,13 @@ export async function POST(req: NextRequest) {
     const limite = Number(quota?.limite_bytes ?? 0);
     if (quotaErro || quota?.bloqueado || (limite > 0 && usados + bytes > limite))
       return json({ error: "A franquia mensal de envios não permite este vídeo. Consulte seu plano." }, 403);
+
+    // A franquia mensal de upload não substitui o limite de armazenamento do plano.
+    const contexto = await contextoPlano(db, userId).catch(() => null);
+    if (!contexto) return json({ error: "Não foi possível verificar o limite de armazenamento." }, 503);
+    const limiteGb = contexto.limites.armazenamento.limiteGb;
+    if (limiteGb !== null && contexto.uso.armazenamentoBytes + bytes > limiteGb * 1024 * 1024 * 1024)
+      return json({ error: "O vídeo ultrapassaria o limite de armazenamento do seu plano." }, 403);
 
     const prefixo = `${userId}/${projeto.id}`;
     const { data: existentes, error: listErro } = await db.storage.from(VIDEO_ABERTURA_BUCKET)

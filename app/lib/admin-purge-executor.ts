@@ -1,11 +1,12 @@
 import "server-only";
 import { createServiceClient } from "./supabase-server";
+import { VIDEO_ABERTURA_BUCKET } from "./cinematic-intro";
 
 const STORAGE_BATCH = 100;
 const STATUS_STRIPE_ATIVOS = new Set(["active", "trialing", "past_due"]);
 
 export type PurgeExecucaoResultado = {
-  storageRemovido: { fotos: number; marca: number };
+  storageRemovido: { fotos: number; marca: number; videosAbertura: number };
   banco: Record<string, number>;
   authRemovido: boolean;
 };
@@ -45,7 +46,7 @@ async function listarArquivosRecursivo(
 
 async function removerPrefixoStorage(
   supabase: ReturnType<typeof createServiceClient>,
-  bucket: "fotos" | "marca",
+  bucket: "fotos" | "marca" | typeof VIDEO_ABERTURA_BUCKET,
   userId: string,
 ) {
   const arquivos = await listarArquivosRecursivo(supabase, bucket, userId);
@@ -105,13 +106,15 @@ export async function executarPurgeDefinitivo({
   }
 
   let etapa = String(purge.execucao_etapa ?? "nao_iniciada");
-  const resultado: PurgeExecucaoResultado = { storageRemovido: { fotos: 0, marca: 0 }, banco: {}, authRemovido: false };
+  const resultado: PurgeExecucaoResultado = { storageRemovido: { fotos: 0, marca: 0, videosAbertura: 0 }, banco: {}, authRemovido: false };
 
   try {
     if (["nao_iniciada", "falhou", "storage"].includes(etapa)) {
       await checkpoint(supabase, userId, "storage");
       resultado.storageRemovido.fotos = await removerPrefixoStorage(supabase, "fotos", userId);
       resultado.storageRemovido.marca = await removerPrefixoStorage(supabase, "marca", userId);
+      // Vídeos privados também precisam ser removidos antes da exclusão do usuário.
+      resultado.storageRemovido.videosAbertura = await removerPrefixoStorage(supabase, VIDEO_ABERTURA_BUCKET, userId);
       await checkpoint(supabase, userId, "banco");
       etapa = "banco";
     }
