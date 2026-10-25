@@ -10,6 +10,8 @@ const BASE_DIRECTIVES = [
   "style-src 'self' 'unsafe-inline'",
   "script-src-attr 'none'",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  // Upload local e reprodução de MP4 privado assinado pelo Supabase.
+  "media-src 'self' blob: https://*.supabase.co",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "upgrade-insecure-requests",

@@ -247,3 +247,20 @@ test("o upload do vídeo exige autorização e os projetos privados não recebem
   expect(endpoint).toContain("registrar_video_abertura_upload_backend");
   expect(endpoint).toContain("VIDEO_ABERTURA_MAX_BYTES");
 });
+
+test("vídeos exigem um Bearer válido e respeitam a franquia de armazenamento", () => {
+  const endpoint = fs.readFileSync("app/api/projeto/video/route.ts", "utf8");
+  expect(endpoint).toContain(String.raw`match(/^Bearer\s+(.+)$/i)`);
+  expect(endpoint).not.toContain(String.raw`match(/^Bearer\\s+(.+)$/i)`);
+  expect(endpoint).toContain("contextoPlano(db, userId)");
+  expect(endpoint).toContain("contexto.uso.armazenamentoBytes + bytes");
+});
+
+test("exclusão definitiva limpa vídeos e o limite do plano os contabiliza", () => {
+  const purge = fs.readFileSync("lib/admin-purge-executor.ts", "utf8");
+  const migracao = fs.readFileSync("../supabase/migrations/20261025150000_count_cinematic_videos_in_storage.sql", "utf8");
+  expect(purge).toContain("storageRemovido.videosAbertura = await removerPrefixoStorage");
+  expect(purge).toContain("VIDEO_ABERTURA_BUCKET");
+  expect(migracao).toContain("'abertura-videos'");
+  expect(migracao).toContain("billing_usage_backend");
+});

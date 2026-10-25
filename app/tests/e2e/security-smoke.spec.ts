@@ -147,6 +147,7 @@ test("headers essenciais permanecem ativos", async ({ request }) => {
   const csp = resposta.headers()["content-security-policy"];
   expect(csp).toContain("default-src 'self'");
   expect(csp).toContain("object-src 'none'");
+  expect(csp).toContain("media-src 'self' blob: https://*.supabase.co");
   expect(csp).toContain("frame-ancestors 'none'");
   expect(csp).toContain("script-src-attr 'none'");
   expect(resposta.headers()["referrer-policy"]).toBe("strict-origin-when-cross-origin");
@@ -161,6 +162,7 @@ test("rotas sensíveis usam nonce sem unsafe-inline em script-src", async ({ req
   expect(scriptSrc).toBeTruthy();
   expect(scriptSrc).not.toContain("'unsafe-inline'");
   expect(csp).toContain("style-src 'self' 'unsafe-inline'");
+  expect(csp).toContain("media-src 'self' blob: https://*.supabase.co");
 
   const nonce = csp.match(/'nonce-([^']+)'/)?.[1];
   expect(nonce).toBeTruthy();
