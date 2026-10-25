@@ -26,7 +26,7 @@ export async function loadProjectSocialPreview(ref: string): Promise<ProjectSoci
 
     const supabase = createServiceClient();
     const { data: project, error } = await supabase.from("galeria_projetos")
-      .select("id,user_id,nome,descricao,tem_senha,link_ate,capa_galeria_id,capa_arquivo")
+      .select("id,user_id,nome,descricao,tem_senha,link_ate,capa_galeria_id,capa_arquivo,og_capa_autorizada")
       .eq("id", resolved.id)
       .maybeSingle();
     if (error || !project) return null;
@@ -35,7 +35,7 @@ export async function loadProjectSocialPreview(ref: string): Promise<ProjectSoci
     const expirado = dataCalendarioExpirada(project.link_ate as string | null);
     let capaPath: string | null = null;
 
-    if (!protegido && !expirado && project.capa_galeria_id && project.capa_arquivo) {
+    if ((!protegido || Boolean(project.og_capa_autorizada)) && !expirado && project.capa_galeria_id && project.capa_arquivo) {
       const arquivo = String(project.capa_arquivo);
       // Disallow directory traversal / arbitrary storage objects.
       const arquivoSeguro = arquivo.length <= 255 &&
