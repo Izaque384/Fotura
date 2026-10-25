@@ -173,10 +173,15 @@ test.describe("arquitetura centrada em projetos", () => {
   });
 
   test("Open Graph do projeto depende apenas do projeto e identidade do fotógrafo", () => {
-    const og = read("app/p/[slug]/opengraph-image.tsx");
-    expect(og).toContain('select("nome_estudio,logo_url,cor_hero")');
-    expect(og).toContain("backgroundColor: cor");
-    expect(og).toContain("projeto.nome");
+    const og = read("app/p/[slug]/share-image/route.ts");
+    const project = read("lib/project-social-preview.server.ts");
+    const layout = read("app/p/[slug]/layout.tsx");
+    expect(og).toContain('storage');
+    expect(og).toContain('from("fotos").download(preview.capaPath)');
+    expect(og).toContain('if (!preview?.capaPath) return unavailable()');
+    expect(project).toContain('.eq("visivel", true)');
+    expect(layout).toContain('select("nome_estudio")');
+    expect(layout).toContain("preview.nome");
     expect(og).not.toContain("cliente_id");
   });
 

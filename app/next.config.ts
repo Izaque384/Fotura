@@ -21,6 +21,9 @@ const noIndexHeader = {
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Social-preview scrapers need the Open Graph tags inside <head>, not streamed into <body>.
+  // Keep streaming for regular browsers to avoid delaying the client experience.
+  htmlLimitedBots: /Googlebot|Bingbot|Twitterbot|Slackbot|LinkedInBot|facebookexternalhit|Facebot|WhatsApp|TelegramBot|Discordbot|Pinterest|Applebot/i,
   async headers() {
     return [
       {
