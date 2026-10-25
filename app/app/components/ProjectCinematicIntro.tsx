@@ -27,9 +27,9 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
   const [pausado, setPausado] = useState(false);
   const [montado, setMontado] = useState(false);
   const [permiteVideo, setPermiteVideo] = useState(false);
-  const [videoPronto, setVideoPronto] = useState(false);
   const [usarFotosFallback, setUsarFotosFallback] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const tentouReproduzirRef = useRef(false);
   const terminarRef = useRef(onFinish);
   const telaRef = useRef<HTMLElement>(null);
   useEffect(() => { terminarRef.current = onFinish; }, [onFinish]);
@@ -41,7 +41,8 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
     const focoAnterior = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     document.body.style.overflow = "hidden";
 
-    const imagens = config.fotos.slice(0, 3).map((foto) => {
+    // Prioriza a transferência do MP4 no iPhone, em vez de baixar fotos em paralelo.
+    const imagens = (config.fundo === "video" ? [] : config.fotos.slice(0, 3)).map((foto) => {
       const img = new window.Image();
       img.src = foto.url;
       return img;
@@ -58,7 +59,7 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
       ["slow-2g", "2g", "3g"].includes(connection?.effectiveType ?? "");
     // No modo vídeo, nenhuma foto aparece enquanto o MP4 está carregando.
     // Só habilitamos as imagens caso o aparelho solicite uma alternativa.
-    setVideoPronto(false);
+    tentouReproduzirRef.current = false;
     setUsarFotosFallback(preferirMenosMovimento || economica);
     setPermiteVideo(!preferirMenosMovimento && !economica);
     return () => {
@@ -67,7 +68,7 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
       window.removeEventListener("keydown", onKey);
       imagens.forEach((img) => { img.src = ""; });
     };
-  }, [config.fotos]);
+  }, [config.fotos, config.fundo]);
 
   // Cada etapa tem seu próprio temporizador. Avançar e voltar reinicia o tempo
   // da nova cena; o usuário não perde frases porque o relógio continuou correndo.
@@ -144,14 +145,27 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
             style={{ animationDuration: `${config.duracao}s` }} />
         ))}
         {videoAtivo && (
-          <video ref={videoRef} className={`fci-video${videoPronto ? " visible" : ""}`}
+          <video ref={videoRef} className="fci-video"
             src={config.videoUrl ?? undefined}
-            autoPlay muted loop playsInline preload="metadata" aria-hidden="true"
-            onPlaying={() => setVideoPronto(true)}
-            onError={() => { setPermiteVideo(false); setVideoPronto(false); setUsarFotosFallback(true); }}
+            autoPlay muted loop playsInline preload="auto" aria-hidden="true"
+            onError={() => { setPermiteVideo(false); setUsarFotosFallback(true); }}
             onCanPlay={() => {
-              void videoRef.current?.play().catch(() => {
-                setPermiteVideo(false); setVideoPronto(false); setUsarFotosFallback(true);
+              const video = videoRef.current;
+              if (!video || !video.paused || tentouReproduzirRef.current) return;
+              tentouReproduzirRef.current = true;
+              // O Safari pode cancelar a primeira Promise de play() durante o carregamento;
+              // isso não significa que o MP4 falhou e não deve acionar o fallback.
+              void video.play().catch((erro: unknown) => {
+                const nome = erro && typeof erro === "object" && "name" in erro
+                  ? String(erro.name) : "";
+                if (nome === "AbortError") {
+                  tentouReproduzirRef.current = false;
+                  return;
+                }
+                if (nome === "NotAllowedError" || nome === "NotSupportedError") {
+                  setPermiteVideo(false);
+                  setUsarFotosFallback(true);
+                }
               });
             }}
           />
@@ -183,8 +197,7 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
 const css = `
 .fci-intro{position:fixed;inset:0;z-index:100000;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#0b0b12;color:#fff;font-family:var(--font-sora),system-ui,sans-serif;cursor:pointer;touch-action:manipulation}
 .fci-images,.fci-images img,.fci-shade,.fci-video{position:absolute;inset:0;width:100%;height:100%}
-.fci-video{object-fit:cover;opacity:0;transition:opacity 1.1s ease;pointer-events:none}
-.fci-video.visible{opacity:1}
+.fci-video{object-fit:cover;opacity:1;background:#0b0b12;pointer-events:none}
 .fci-images img{object-fit:cover;opacity:0;transform:scale(1.015);transition:opacity 2.15s cubic-bezier(.22,1,.36,1);animation:fci-zoom linear both;will-change:transform}
 .fci-images img.visible{opacity:1}
 .fci-minimalista .fci-images img{opacity:1}
