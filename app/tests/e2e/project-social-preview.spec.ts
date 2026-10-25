@@ -9,7 +9,7 @@ test("link de projeto publica título, capa e imagem social estável", () => {
   expect(metadata).toContain("export async function generateMetadata");
   expect(metadata).toContain("loadProjectSocialPreview(slug)");
   expect(metadata).toContain("openGraph:");
-  expect(metadata).toContain("images,");
+  expect(metadata).toContain("type: preview.capaPath");
   expect(metadata).toContain('"summary_large_image"');
   expect(metadata).toContain("/share-image");
   expect(imageRoute).toContain("resize(1200, 630");
