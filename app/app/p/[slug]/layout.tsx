@@ -22,12 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const { data: perfil } = await createServiceClient().from("perfis")
-    .select("nome_estudio").eq("id", (await (async () => {
-      // Profile lookup is optional: projects remain shareable if the studio name is unavailable.
-      const projeto = await import("../../../lib/project-public-ref.server");
-      const resolved = await projeto.resolvePublicProjectRef(slug);
-      return resolved?.userId || "00000000-0000-0000-0000-000000000000";
-    })())).maybeSingle();
+    .select("nome_estudio").eq("id", preview.userId).maybeSingle();
   const estudio = String(perfil?.nome_estudio || "Fotura");
   const title = `${preview.nome} — ${estudio}`;
   const description = preview.protegido
