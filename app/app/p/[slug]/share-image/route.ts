@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import sharp from "sharp";
-import { createServiceClient } from "../../../../../lib/supabase-server";
-import { loadProjectSocialPreview } from "../../../../../lib/project-social-preview.server";
+import { createServiceClient } from "../../../../lib/supabase-server";
+import { loadProjectSocialPreview } from "../../../../lib/project-social-preview.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
