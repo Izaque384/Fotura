@@ -30,7 +30,7 @@ test.describe("pré-lançamento Fotura",()=>{
     }
     const projeto=read("app/p/[slug]/layout.tsx");
     const galeria=read("app/g/[slug]/layout.tsx");
-    expect(projeto).toContain("index:false");
+    expect(projeto).toMatch(/index:\\s*false/);
     expect(galeria).toContain("index: false");
   });
 
