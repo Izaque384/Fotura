@@ -27,11 +27,16 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
     const { data, error } = await createServiceClient().storage
       .from("fotos").download(preview.capaPath);
     if (error || !data || data.size > 15 * 1024 * 1024) return unavailable();
-    const image = await sharp(Buffer.from(await data.arrayBuffer()))
-      .rotate()
+    const original = Buffer.from(await data.arrayBuffer());
+    const compress = (quality: number) => sharp(original).rotate()
       .resize(1200, 630, { fit: "cover", position: "centre" })
-      .jpeg({ quality: 82, mozjpeg: true })
+      .jpeg({ quality, mozjpeg: true })
       .toBuffer();
+    // WhatsApp requires a small OG image. Keep the JPEG under 600 KB.
+    let image = await compress(72);
+    if (image.length > 550_000) image = await compress(55);
+    if (image.length > 550_000) image = await compress(38);
+    if (image.length > 600_000) return unavailable();
     return new Response(new Uint8Array(image), {
       status: 200,
       headers: {
