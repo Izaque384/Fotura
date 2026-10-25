@@ -41,17 +41,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const url = `https://foturax.com.br${path}`;
   const imageUrl = preview.capaPath
     ? `https://foturax.com.br/p/${encodeURIComponent(preview.publicRef)}/share-image`
-    : null;
-  const images = imageUrl
-    ? [{ url: imageUrl, width: 1200, height: 630, alt: `Capa do projeto ${preview.nome}`, type: "image/jpeg" }]
-    : [];
+    : "https://foturax.com.br/opengraph-image";
+  const images = [{ url: imageUrl, width: 1200, height: 630, alt: preview.capaPath ? `Capa do projeto ${preview.nome}` : "Fotura", type: preview.capaPath ? "image/jpeg" : "image/png" }];
 
   return {
     title: { absolute: title },
     description,
     alternates: { canonical: url },
     openGraph: { title, description, url, siteName: "Fotura", locale: ogLocale(locale), type: "website", images },
-    twitter: { card: imageUrl ? "summary_large_image" : "summary", title, description, images: imageUrl ? [imageUrl] : [] },
+    twitter: { card: "summary_large_image", title, description, images: [imageUrl] },
     robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
   };
 }
