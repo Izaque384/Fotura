@@ -260,9 +260,11 @@ test("vídeo não exibe a fotografia da capa enquanto carrega ou durante bufferi
   // O elemento deve ser visível ANTES de 'playing' para que o Safari permita autoplay.
   await expect(video).toHaveCSS("opacity", "1");
   await expect(video).toHaveCSS("background-color", "rgb(11, 11, 18)");
-  await expect(video).toHaveAttribute("autoplay", "");
-  await expect(video).toHaveAttribute("muted", "");
-  await expect(video).toHaveAttribute("playsinline", "");
+  expect(await video.evaluate((el) => ({
+    autoplay: (el as HTMLVideoElement).autoplay,
+    muted: (el as HTMLVideoElement).muted,
+    playsInline: (el as HTMLVideoElement).playsInline,
+  }))).toEqual({ autoplay: true, muted: true, playsInline: true });
   await video.dispatchEvent("waiting");
   await expect(video).toHaveCSS("opacity", "1");
   await expect(tela.locator(".fci-images img")).toHaveCount(0);
