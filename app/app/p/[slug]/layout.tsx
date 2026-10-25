@@ -16,8 +16,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {
       title: { absolute: genericTitle },
       robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
-      openGraph: { title: genericTitle, images: [] },
-      twitter: { card: "summary", images: [] },
+      openGraph: { title: genericTitle, images: [{ url: "https://foturax.com.br/opengraph-image", width: 1200, height: 630, type: "image/png" }] },
+      twitter: { card: "summary_large_image", images: ["https://foturax.com.br/opengraph-image"] },
     };
   }
 
