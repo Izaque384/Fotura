@@ -235,9 +235,9 @@ test("configura vídeo sem permitir caminhos arbitrários nem remover o fallback
 });
 
 test("vídeo não exibe a fotografia da capa enquanto carrega ou durante buffering", async ({ page }) => {
-  const videoUrl = "https://cdn.example.invalid/cinematic.mp4";
+  const videoUrl = "https://example.supabase.co/storage/v1/object/sign/abertura-videos/cinematic.mp4?token=test";
   let responderVideo: (() => void) | undefined;
-  await page.route("**/cinematic.mp4", async (route) => {
+  await page.route("**/cinematic.mp4?**", async (route) => {
     await new Promise<void>((resolve) => { responderVideo = resolve; });
     await route.abort().catch(() => {});
   });
