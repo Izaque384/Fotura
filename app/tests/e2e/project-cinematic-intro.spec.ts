@@ -257,15 +257,69 @@ test("vídeo não exibe a fotografia da capa enquanto carrega ou durante bufferi
   await expect(video).toHaveCount(1);
   await expect(tela.locator(".fci-images img")).toHaveCount(0);
   await expect(video).not.toHaveAttribute("poster");
-  await video.dispatchEvent("playing");
-  await expect(video).toHaveClass(/visible/);
+  // O elemento deve ser visível ANTES de 'playing' para que o Safari permita autoplay.
+  await expect(video).toHaveCSS("opacity", "1");
+  await expect(video).toHaveCSS("background-color", "rgb(11, 11, 18)");
+  await expect(video).toHaveAttribute("autoplay", "");
+  await expect(video).toHaveAttribute("muted", "");
+  await expect(video).toHaveAttribute("playsinline", "");
   await video.dispatchEvent("waiting");
-  await expect(video).toHaveClass(/visible/);
+  await expect(video).toHaveCSS("opacity", "1");
   await expect(tela.locator(".fci-images img")).toHaveCount(0);
   await video.dispatchEvent("error");
   await expect(video).toHaveCount(0);
   await expect(tela.locator(".fci-images img")).toHaveCount(1);
   responderVideo?.();
+});
+
+test("Safari: interrupção temporária do autoplay não troca o vídeo por fotos", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    HTMLMediaElement.prototype.play = () => Promise.reject(
+      new DOMException("The play() request was interrupted", "AbortError")
+    );
+  });
+  await page.route("**/cinematic.mp4?**", async () => {});
+  await page.route("**/api/projeto/publico?**", (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ ...exemplo, projeto: { ...exemplo.projeto, abertura: {
+      ...exemplo.projeto.abertura, fundo: "video",
+      videoUrl: "https://example.supabase.co/storage/v1/object/sign/abertura-videos/cinematic.mp4?token=test",
+    } } }),
+  }));
+  await page.goto("/p/casamento-ana-pedro-1e86ef4c", { waitUntil: "domcontentloaded" });
+  const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
+  const video = tela.locator(".fci-video");
+  await expect(video).toHaveCount(1);
+  await video.dispatchEvent("canplay");
+  await expect(video).toHaveCSS("opacity", "1");
+  await expect(tela.locator(".fci-images img")).toHaveCount(0);
+  await expect(tela.getByRole("button")).toHaveCount(1); // apenas pular, sem reprodução manual
+});
+
+test("Safari: bloqueio real do autoplay preserva fotos como fallback, sem adicionar botão", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    HTMLMediaElement.prototype.play = () => Promise.reject(
+      new DOMException("Autoplay is not allowed", "NotAllowedError")
+    );
+  });
+  await page.route("**/cinematic.mp4?**", async () => {});
+  await page.route("**/api/projeto/publico?**", (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ ...exemplo, projeto: { ...exemplo.projeto, abertura: {
+      ...exemplo.projeto.abertura, fundo: "video",
+      videoUrl: "https://example.supabase.co/storage/v1/object/sign/abertura-videos/cinematic.mp4?token=test",
+    } } }),
+  }));
+  await page.goto("/p/casamento-ana-pedro-1e86ef4c", { waitUntil: "domcontentloaded" });
+  const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
+  const video = tela.locator(".fci-video");
+  await expect(video).toHaveCount(1);
+  await video.dispatchEvent("canplay");
+  await expect(video).toHaveCount(0);
+  await expect(tela.locator(".fci-images img")).toHaveCount(1);
+  await expect(tela.getByRole("button")).toHaveCount(1);
 });
 
 test("movimento reduzido mantém as três cenas e impede o download do vídeo", async ({ page }) => {
