@@ -2,7 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { Newsreader } from "next/font/google";
 import type { AberturaPublica } from "../../lib/cinematic-intro";
+
+// Fonte editorial reservada aos textos longos da introdução, sem alterar os títulos.
+const introDescriptionFont = Newsreader({
+  subsets: ["latin"],
+  weight: "300",
+  display: "swap",
+  variable: "--font-intro-editorial",
+});
 
 type Props = {
   projetoNome: string;
@@ -102,7 +111,7 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
     <section
       ref={telaRef}
       tabIndex={-1}
-      className={`fci-intro fci-${config.estilo}`}
+      className={`${introDescriptionFont.variable} fci-intro fci-${config.estilo}`}
       role="dialog"
       aria-modal="true"
       aria-label="Apresentação do projeto"
@@ -185,8 +194,8 @@ const css = `
 .fci-center{position:relative;max-width:min(900px,90vw);padding:32px;text-align:center;z-index:1}
 .fci-eyebrow{color:#f6f4ff!important;font-size:clamp(10px,1.3vw,13px);letter-spacing:.24em;opacity:.94;margin-bottom:24px;font-weight:600}
 .fci-intro h1.fci-title{color:#fff!important;font-weight:500;letter-spacing:-.038em;font-size:clamp(38px,7vw,86px);line-height:1.17;text-wrap:balance;text-shadow:0 4px 24px rgba(0,0,0,.85),0 2px 6px #000;animation:fci-fade 1.25s ease both}
-.fci-intro .fci-description{margin:0 auto;max-width:780px;max-height:54vh;padding:0 8px;overflow-y:auto;overscroll-behavior:contain;overflow-wrap:anywhere;white-space:pre-line;color:#fff!important;font-size:clamp(23px,3.3vw,41px);font-weight:450;line-height:1.4;letter-spacing:-.018em;text-wrap:pretty;text-shadow:0 4px 24px rgba(0,0,0,.85),0 2px 6px #000;animation:fci-fade 1.25s ease both}
-.fci-intro .fci-description-long{font-size:clamp(19px,2.4vw,30px);line-height:1.5}
+.fci-intro .fci-description{margin:0 auto;max-width:720px;max-height:54vh;padding:0 8px;overflow-y:auto;overscroll-behavior:contain;overflow-wrap:anywhere;white-space:pre-line;color:#fff!important;font-family:var(--font-intro-editorial),"Iowan Old Style",Baskerville,Georgia,serif!important;font-size:clamp(23px,2.6vw,34px);font-weight:300;line-height:1.52;letter-spacing:.005em;text-wrap:pretty;text-shadow:0 3px 18px rgba(0,0,0,.9),0 1px 5px #000;animation:fci-fade 1.25s ease both}
+.fci-intro .fci-description-long{font-size:clamp(20px,2.2vw,28px);line-height:1.56}
 .fci-bottom{position:absolute;bottom:clamp(24px,5vw,56px);left:0;right:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2}
 .fci-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .fci-progress{display:flex;gap:6px}
@@ -195,6 +204,6 @@ const css = `
 .fci-progress i.complete{background:#ffffffaa}
 @keyframes fci-zoom{from{transform:scale(1.015)}to{transform:scale(1.075)}}
 @keyframes fci-fade{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:650px){.fci-top{padding:24px 18px;gap:12px}.fci-studio{font-size:11px;max-width:calc(100% - 150px);flex:1;letter-spacing:.13em;line-height:1.55;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word}.fci-center{padding:14px}.fci-intro h1.fci-title{font-size:clamp(32px,9.5vw,54px)}.fci-intro .fci-description{font-size:clamp(21px,5.5vw,28px);max-height:56vh}.fci-intro .fci-description-long{font-size:clamp(18px,4.5vw,22px)}.fci-eyebrow{letter-spacing:.15em}.fci-bottom{bottom:24px}}
+@media(max-width:650px){.fci-top{padding:24px 18px;gap:12px}.fci-studio{font-size:11px;max-width:calc(100% - 150px);flex:1;letter-spacing:.13em;line-height:1.55;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word}.fci-center{padding:14px}.fci-intro h1.fci-title{font-size:clamp(32px,9.5vw,54px)}.fci-intro .fci-description{max-width:min(100%,36rem);font-size:clamp(21px,5.1vw,25px);line-height:1.47;max-height:56dvh}.fci-intro .fci-description-long{font-size:clamp(19px,4.6vw,22px);line-height:1.5}.fci-eyebrow{letter-spacing:.15em}.fci-bottom{bottom:24px}}
 @media(prefers-reduced-motion:reduce){.fci-images img,.fci-title,.fci-description,.fci-progress i,.fci-video{animation:none!important;transition:none!important}.fci-images img{transform:none!important}}
 `;

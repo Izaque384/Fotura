@@ -139,6 +139,28 @@ test("terceira cena suporta descrições extensas sem cortar texto", async ({ pa
   await expect(descricao).toHaveCSS("white-space", "pre-line");
 });
 
+test("descrição da abertura usa tipografia editorial leve no iPhone sem alterar os títulos", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("**/api/projeto/publico?**", (route) => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ ...exemplo, projeto: { ...exemplo.projeto,
+      descricao: "Uma história de amor, encontros e instantes que merecem ser lembrados por muitos anos." } }),
+  }));
+  await page.goto("/p/casamento-ana-pedro-1e86ef4c");
+  const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
+  await expect(tela).toBeVisible();
+  await expect(tela.locator(".fci-title")).toHaveCSS("font-family", /Sora/i);
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  const descricao = tela.locator(".fci-description");
+  await expect(descricao).toBeVisible();
+  await expect(descricao).toHaveCSS("font-family", /Newsreader/i);
+  await expect(descricao).toHaveCSS("font-weight", "300");
+  const tamanho = await descricao.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  expect(tamanho).toBeGreaterThanOrEqual(21);
+  expect(tamanho).toBeLessThanOrEqual(25);
+});
+
 test("cabe nome completo do estúdio no topo mobile e botão pular é discreto", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 });
   const nomeEstudio = "ALVOR FOTOGRAFIA E FILMES";
