@@ -97,13 +97,14 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
 
   const fotos = config.fotos.slice(0, config.estilo === "minimalista" ? 1 : 3);
   const mostrarFotos = !temVideoConfigurado || usarFotosFallback;
-  const videoAtivo = temVideoConfigurado && !usarFotosFallback;
+  const videoAtivo = temVideoConfigurado;
   useEffect(() => {
     if (!montado || !videoAtivo) return;
     const video = videoRef.current;
     if (!video) return;
     let desmontado = false;
     let pendente = false;
+    let bloqueado = false;
     let tentativas = 0;
     let retry: number | undefined;
     let watchdog: number | undefined;
@@ -114,6 +115,7 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
       if (desmontado) return;
       cancelarRetry();
       cancelarWatchdog();
+      bloqueado = true;
       setVideoTocando(false);
       setUsarFotosFallback(true);
     }
@@ -123,7 +125,7 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
       watchdog = window.setTimeout(fallback, 12000);
     }
     function tentar() {
-      if (desmontado || !video || pendente || !video.paused || document.hidden) return;
+      if (desmontado || bloqueado || !video || pendente || !video.paused || document.hidden) return;
       pendente = true;
       video.defaultMuted = true;
       video.muted = true;
@@ -146,6 +148,8 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
       cancelarRetry();
       cancelarWatchdog();
       tentativas = 0;
+      bloqueado = false;
+      setUsarFotosFallback(false);
       setVideoTocando(true);
     };
     const aoEsperar = () => {
@@ -216,6 +220,13 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
         // A tela inteira é a área de navegação, exceto "Pular introdução".
         // Em desktop e mobile: metade esquerda volta; metade direita avança.
         if ((event.target as HTMLElement).closest(".fci-skip")) return;
+        // Quando autoplay foi negado, o toque já usado para navegar nas cenas
+        // também pode liberar a reprodução no Safari (sem introduzir um botão).
+        if (temVideoConfigurado && usarFotosFallback && videoRef.current && !videoRef.current.error) {
+          const video = videoRef.current;
+          video.muted = true;
+          void video.play().catch(() => {});
+        }
         const rect = event.currentTarget.getBoundingClientRect();
         if (event.clientX < rect.left + rect.width / 2) voltarCena();
         else avancarCena();
@@ -233,7 +244,7 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
             style={{ animationDuration: `${config.duracao}s` }} />
         ))}
         {videoAtivo && (
-          <video ref={videoRef} className="fci-video"
+          <video ref={videoRef} className={`fci-video${usarFotosFallback ? " fci-inactive" : ""}`}
             src={config.videoUrl ?? undefined}
             autoPlay muted loop playsInline preload="auto" aria-hidden="true"
           />
@@ -266,6 +277,7 @@ const css = `
 .fci-intro{position:fixed;inset:0;z-index:100000;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#0b0b12;color:#fff;font-family:var(--font-sora),system-ui,sans-serif;cursor:pointer;touch-action:manipulation}
 .fci-images,.fci-images img,.fci-shade,.fci-video{position:absolute;inset:0;width:100%;height:100%}
 .fci-video{object-fit:cover;opacity:1;background:#0b0b12;pointer-events:none}
+.fci-video.fci-inactive{opacity:0}
 .fci-images img{object-fit:cover;opacity:0;transform:scale(1.015);transition:opacity 2.15s cubic-bezier(.22,1,.36,1);animation:fci-zoom linear both;will-change:transform}
 .fci-images img.visible{opacity:1}
 .fci-minimalista .fci-images img{opacity:1}
