@@ -5,6 +5,7 @@ import type { ConfigAbertura, FotoAbertura, FotoAberturaPublica } from "../../li
 import ProjectCinematicIntro from "../components/ProjectCinematicIntro";
 import { createClient } from "../../lib/supabase-client";
 import { VIDEO_ABERTURA_BUCKET, VIDEO_ABERTURA_MAX_BYTES } from "../../lib/cinematic-intro";
+import { validarMp4ParaWeb } from "../../lib/mp4-compatibility";
 
 type Pasta = { id: string; titulo: string; visivel: boolean; qtd: number };
 type Preview = { nome: string; url: string };
@@ -127,6 +128,10 @@ export default function ProjectCinematicSettings({ projeto, nome, descricao, pas
     setEnviandoVideo(true);
     let criado: string | null = null;
     try {
+      // A extensão MP4 e a duração não comprovam o codec: validar os átomos
+      // do arquivo antes de autorizar a publicação para dispositivos diferentes.
+      const incompatibilidade = validarMp4ParaWeb(new Uint8Array(await file.arrayBuffer()));
+      if (incompatibilidade) throw new Error(incompatibilidade);
       await validarDuracao(file);
       const access = await token();
       if (!access) throw new Error("Sua sessão expirou.");
