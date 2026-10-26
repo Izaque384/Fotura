@@ -12,6 +12,7 @@ import { lerAbertura, type ConfigAbertura } from "../../../../lib/cinematic-intr
 import ConfirmDialog from "../../../components/ConfirmDialog";
 import { ArrowLeftIcon, ArrowRightIcon, CloseIcon, DragHandleIcon, ImageIcon, MoreIcon, PlusIcon } from "../../../components/FoturaIcons";
 import { createClient } from "../../../../lib/supabase-client";
+import { registrarEventoProduto } from "../../../../lib/product-analytics";
 
 type Cliente={id:string;nome:string;email:string|null;telefone:string|null};
 type Selecao={galeria:string;fotos:string[];finalizada:boolean;comentarios:Record<string,string>;atualizado_em:string|null};
@@ -103,6 +104,7 @@ export default function ProjetoWorkspacePage(){
   event.preventDefault();if(!nomePasta.trim()||criandoPasta)return;setCriandoPasta(true);setAviso("");
   try{
    const d=await post({acao:"criar_pasta",projetoId:id,nome:nomePasta.trim()}) as {pasta:{id:string}};
+   registrarEventoProduto("gallery_created",{token:await token(),entidade:"galeria",entidadeId:d.pasta.id,detalhes:{modo:"nova"}});
    setModalPasta(false);setNomePasta("");router.push(`/upload?galeria=${d.pasta.id}&projeto=${id}`);
   }catch(e){setAviso(e instanceof Error?e.message:"Não foi possível criar a pasta.")}finally{setCriandoPasta(false)}
  }
