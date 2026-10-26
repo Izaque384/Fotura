@@ -24,14 +24,13 @@ type Props = {
 
 export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, studioNome, config, onFinish, preview = false }: Props) {
   const [etapa, setEtapa] = useState(0);
-  const [pausado, setPausado] = useState(false);
+  const [videoTocando, setVideoTocando] = useState(false);
   const [montado, setMontado] = useState(false);
-  const [permiteVideo, setPermiteVideo] = useState(false);
   const [usarFotosFallback, setUsarFotosFallback] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const tentouReproduzirRef = useRef(false);
   const terminarRef = useRef(onFinish);
   const telaRef = useRef<HTMLElement>(null);
+  const temVideoConfigurado = config.fundo === "video" && Boolean(config.videoUrl);
   useEffect(() => { terminarRef.current = onFinish; }, [onFinish]);
   useEffect(() => { if (montado) telaRef.current?.focus({ preventScroll: true }); }, [montado]);
 
@@ -49,19 +48,10 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
     });
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") terminarRef.current(); };
     window.addEventListener("keydown", onKey);
-    const preferirMenosMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (preferirMenosMovimento) setPausado(true);
-    // Modo economia, rede lenta e movimento reduzido recebem imagens estáticas.
-    const connection = (navigator as Navigator & {
-      connection?: { saveData?: boolean; effectiveType?: string };
-    }).connection;
-    const economica = Boolean(connection?.saveData) ||
-      ["slow-2g", "2g", "3g"].includes(connection?.effectiveType ?? "");
-    // No modo vídeo, nenhuma foto aparece enquanto o MP4 está carregando.
-    // Só habilitamos as imagens caso o aparelho solicite uma alternativa.
-    tentouReproduzirRef.current = false;
-    setUsarFotosFallback(preferirMenosMovimento || economica);
-    setPermiteVideo(!preferirMenosMovimento && !economica);
+    // Preferências de economia/rede não impedem a tentativa do vídeo.
+    // O navegador pode impedir autoplay, e somente uma falha real ativa as fotos.
+    setUsarFotosFallback(false);
+    setVideoTocando(false);
     return () => {
       document.body.style.overflow = anterior;
       focoAnterior?.focus();
@@ -73,13 +63,14 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
   // Cada etapa tem seu próprio temporizador. Avançar e voltar reinicia o tempo
   // da nova cena; o usuário não perde frases porque o relógio continuou correndo.
   useEffect(() => {
-    if (pausado) return;
+    // Não consome a apresentação enquanto o MP4 ainda está carregando/bufferizando.
+    if (temVideoConfigurado && !usarFotosFallback && !videoTocando) return;
     const timer = window.setTimeout(() => {
       if (etapa === 2) terminarRef.current();
       else setEtapa((atual) => Math.min(2, atual + 1));
     }, (config.duracao * 1000) / 3);
     return () => window.clearTimeout(timer);
-  }, [config.duracao, etapa, pausado]);
+  }, [config.duracao, etapa, temVideoConfigurado, usarFotosFallback, videoTocando]);
 
   function voltarCena() { setEtapa((atual) => Math.max(0, atual - 1)); }
   function avancarCena() {
@@ -105,9 +96,106 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
   }, [etapa]);
 
   const fotos = config.fotos.slice(0, config.estilo === "minimalista" ? 1 : 3);
-  const temVideoConfigurado = config.fundo === "video" && Boolean(config.videoUrl);
   const mostrarFotos = !temVideoConfigurado || usarFotosFallback;
-  const videoAtivo = temVideoConfigurado && permiteVideo && !usarFotosFallback;
+  const videoAtivo = temVideoConfigurado && !usarFotosFallback;
+  useEffect(() => {
+    if (!montado || !videoAtivo) return;
+    const video = videoRef.current;
+    if (!video) return;
+    let desmontado = false;
+    let pendente = false;
+    let tentativas = 0;
+    let retry: number | undefined;
+    let watchdog: number | undefined;
+
+    function cancelarRetry() { window.clearTimeout(retry); }
+    function cancelarWatchdog() { window.clearTimeout(watchdog); }
+    function fallback() {
+      if (desmontado) return;
+      cancelarRetry();
+      cancelarWatchdog();
+      setVideoTocando(false);
+      setUsarFotosFallback(true);
+    }
+    function vigiarBuffer() {
+      cancelarWatchdog();
+      // O fundo permanece escuro ao carregar; após uma espera excessiva há fotos.
+      watchdog = window.setTimeout(fallback, 12000);
+    }
+    function tentar() {
+      if (desmontado || !video || pendente || !video.paused || document.hidden) return;
+      pendente = true;
+      video.defaultMuted = true;
+      video.muted = true;
+      void video.play().then(() => { pendente = false; }).catch((erro: unknown) => {
+        pendente = false;
+        if (desmontado) return;
+        const nome = erro instanceof Error ? erro.name : "";
+        if (nome === "NotAllowedError" || nome === "NotSupportedError") {
+          fallback();
+          return;
+        }
+        // AbortError e falhas momentâneas são recuperáveis; não mostrar fotos logo.
+        if (++tentativas <= 5) {
+          cancelarRetry();
+          retry = window.setTimeout(tentar, Math.min(250 * tentativas, 1000));
+        }
+      });
+    }
+    const aoTocar = () => {
+      cancelarRetry();
+      cancelarWatchdog();
+      tentativas = 0;
+      setVideoTocando(true);
+    };
+    const aoEsperar = () => {
+      setVideoTocando(false);
+      vigiarBuffer();
+    };
+    const aoPausar = () => {
+      if (video.ended || document.hidden) return;
+      setVideoTocando(false);
+      cancelarRetry();
+      retry = window.setTimeout(tentar, 200);
+    };
+    const aoVisibilidade = () => {
+      if (document.hidden) {
+        setVideoTocando(false);
+        cancelarWatchdog();
+        cancelarRetry();
+      } else {
+        vigiarBuffer();
+        tentar();
+      }
+    };
+    const aoRetornar = () => { if (!document.hidden) { vigiarBuffer(); tentar(); } };
+    video.addEventListener("playing", aoTocar);
+    video.addEventListener("waiting", aoEsperar);
+    video.addEventListener("stalled", aoEsperar);
+    video.addEventListener("pause", aoPausar);
+    video.addEventListener("canplay", tentar);
+    video.addEventListener("loadeddata", tentar);
+    video.addEventListener("error", fallback);
+    document.addEventListener("visibilitychange", aoVisibilidade);
+    window.addEventListener("pageshow", aoRetornar);
+    vigiarBuffer();
+    tentar();
+    return () => {
+      desmontado = true;
+      cancelarRetry();
+      cancelarWatchdog();
+      video.removeEventListener("playing", aoTocar);
+      video.removeEventListener("waiting", aoEsperar);
+      video.removeEventListener("stalled", aoEsperar);
+      video.removeEventListener("pause", aoPausar);
+      video.removeEventListener("canplay", tentar);
+      video.removeEventListener("loadeddata", tentar);
+      video.removeEventListener("error", fallback);
+      document.removeEventListener("visibilitychange", aoVisibilidade);
+      window.removeEventListener("pageshow", aoRetornar);
+    };
+  }, [montado, videoAtivo, config.videoUrl]);
+
   const descricao = projetoDescricao?.trim() || "";
   const textos = [
     config.frase || "Alguns momentos merecem ser revividos.",
@@ -148,26 +236,6 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
           <video ref={videoRef} className="fci-video"
             src={config.videoUrl ?? undefined}
             autoPlay muted loop playsInline preload="auto" aria-hidden="true"
-            onError={() => { setPermiteVideo(false); setUsarFotosFallback(true); }}
-            onCanPlay={() => {
-              const video = videoRef.current;
-              if (!video || !video.paused || tentouReproduzirRef.current) return;
-              tentouReproduzirRef.current = true;
-              // O Safari pode cancelar a primeira Promise de play() durante o carregamento;
-              // isso não significa que o MP4 falhou e não deve acionar o fallback.
-              void video.play().catch((erro: unknown) => {
-                const nome = erro && typeof erro === "object" && "name" in erro
-                  ? String(erro.name) : "";
-                if (nome === "AbortError") {
-                  tentouReproduzirRef.current = false;
-                  return;
-                }
-                if (nome === "NotAllowedError" || nome === "NotSupportedError") {
-                  setPermiteVideo(false);
-                  setUsarFotosFallback(true);
-                }
-              });
-            }}
           />
         )}
         <div className="fci-shade" />
