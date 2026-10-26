@@ -351,8 +351,10 @@ test("Safari: bloqueio real do autoplay preserva fotos como fallback, sem adicio
   await page.goto("/p/casamento-ana-pedro-1e86ef4c", { waitUntil: "domcontentloaded" });
   const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
   const video = tela.locator(".fci-video");
-  await expect(tela.locator(".fci-images img")).toHaveCount(1);
   await expect(video).toHaveCount(1);
+  // Aciona canplay explicitamente: o arquivo simulado nunca envia bytes reais.
+  await video.dispatchEvent("canplay");
+  await expect(tela.locator(".fci-images img")).toHaveCount(1);
   await expect(video).toHaveCSS("opacity", "0");
   await expect(tela.getByRole("button")).toHaveCount(1);
 });
