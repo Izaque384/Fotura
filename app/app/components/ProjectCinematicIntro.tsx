@@ -116,6 +116,7 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
       cancelarRetry();
       cancelarWatchdog();
       bloqueado = true;
+      video.style.opacity = "";
       setVideoTocando(false);
       setUsarFotosFallback(true);
     }
@@ -225,7 +226,9 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
         if (temVideoConfigurado && usarFotosFallback && videoRef.current && !videoRef.current.error) {
           const video = videoRef.current;
           video.muted = true;
-          void video.play().catch(() => {});
+          // WebKit só mantém mídia inline reproduzindo se estiver visível.
+          video.style.opacity = "1";
+          void video.play().catch(() => { video.style.opacity = ""; });
         }
         const rect = event.currentTarget.getBoundingClientRect();
         if (event.clientX < rect.left + rect.width / 2) voltarCena();
