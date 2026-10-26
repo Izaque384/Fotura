@@ -116,7 +116,7 @@ export default function ProjectCinematicIntro({ projetoNome, projetoDescricao, s
       cancelarRetry();
       cancelarWatchdog();
       bloqueado = true;
-      video.style.opacity = "";
+      videoRef.current?.style.removeProperty("opacity");
       setVideoTocando(false);
       setUsarFotosFallback(true);
     }
