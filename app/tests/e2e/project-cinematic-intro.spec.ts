@@ -352,7 +352,9 @@ test("Safari: bloqueio real do autoplay preserva fotos como fallback, sem adicio
   const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
   const video = tela.locator(".fci-video");
   await expect(video).toHaveCount(1);
-  // Aciona canplay explicitamente: o arquivo simulado nunca envia bytes reais.
+  // O vídeo sintético não entrega bytes reais: força estado pausado e canplay
+  // para validar a rejeição mockada sem depender do autoplay nativo do Chromium.
+  await video.evaluate((el) => (el as HTMLVideoElement).pause());
   await video.dispatchEvent("canplay");
   await expect(tela.locator(".fci-images img")).toHaveCount(1);
   await expect(video).toHaveCSS("opacity", "0");
@@ -381,6 +383,9 @@ test("iPhone sem botão: toque na própria abertura recupera vídeo com autoplay
   await page.goto("/p/casamento-ana-pedro-1e86ef4c", { waitUntil: "domcontentloaded" });
   const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
   const video = tela.locator(".fci-video");
+  await expect(video).toHaveCount(1);
+  await video.evaluate((el) => (el as HTMLVideoElement).pause());
+  await video.dispatchEvent("canplay");
   await expect(tela.locator(".fci-images img")).toHaveCount(1);
   await expect(video).toHaveCSS("opacity", "0");
   await page.mouse.click(320, 430);
