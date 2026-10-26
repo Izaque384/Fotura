@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import fs from "node:fs";
 import { lerAbertura, validarAbertura } from "../../lib/cinematic-intro";
+import { validarMp4ParaWeb } from "../../lib/mp4-compatibility";
 
 const uuid = "1e86ef4c-501b-46e8-8ea9-8032554e9d9c";
 const folder = "304c3059-9afd-492f-ac93-8d286840f16e";
@@ -42,6 +43,38 @@ test("valida duração, fotos e mantém a configuração desativada por padrão"
   expect(validarAbertura({ ...exemplo.projeto.abertura, duracao: 150 })).toBeNull();
   expect(validarAbertura({ ...exemplo.projeto.abertura, fotos: [{ pastaId: folder, arquivo: "../segredo" }] })).toBeNull();
   expect(validarAbertura({ ...exemplo.projeto.abertura })?.ativo).toBe(true);
+});
+
+test("verifica codec real H.264 e MP4 Fast Start, não só a extensão", () => {
+  function box(type: string, body: Uint8Array): Uint8Array {
+    const out = new Uint8Array(8 + body.length);
+    new DataView(out.buffer).setUint32(0, out.length);
+    out.set([...type].map((x) => x.charCodeAt(0)), 4);
+    out.set(body, 8);
+    return out;
+  }
+  function concat(...items: Uint8Array[]): Uint8Array {
+    const result = new Uint8Array(items.reduce((n, item) => n + item.length, 0));
+    let offset = 0;
+    for (const item of items) { result.set(item, offset); offset += item.length; }
+    return result;
+  }
+  function video(codec: string) {
+    const ftyp = box("ftyp", new Uint8Array([105,115,111,109,0,0,0,1]));
+    const sample = box(codec, new Uint8Array(12));
+    const stsdPayload = new Uint8Array(8 + sample.length);
+    new DataView(stsdPayload.buffer).setUint32(4, 1);
+    stsdPayload.set(sample, 8);
+    const moov = box("moov", box("stsd", stsdPayload));
+    const mdat = box("mdat", new Uint8Array(8));
+    return { ftyp, moov, mdat };
+  }
+  const valido = video("avc1");
+  expect(validarMp4ParaWeb(concat(valido.ftyp, valido.moov, valido.mdat))).toBeNull();
+  const hevc = video("hvc1");
+  expect(validarMp4ParaWeb(concat(hevc.ftyp, hevc.moov, hevc.mdat))).toMatch(/H.264/);
+  expect(validarMp4ParaWeb(concat(valido.ftyp, valido.mdat, valido.moov))).toMatch(/Fast Start/);
+  expect(validarMp4ParaWeb(new Uint8Array(48))).toMatch(/MP4/);
 });
 
 test("abertura reaparece no link em cada visita, e permite voltar, avançar e pular", async ({ page }) => {
@@ -317,30 +350,35 @@ test("Safari: bloqueio real do autoplay preserva fotos como fallback, sem adicio
   await page.goto("/p/casamento-ana-pedro-1e86ef4c", { waitUntil: "domcontentloaded" });
   const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
   const video = tela.locator(".fci-video");
-  await expect(video).toHaveCount(1);
-  await video.dispatchEvent("canplay");
-  await expect(video).toHaveCount(0);
   await expect(tela.locator(".fci-images img")).toHaveCount(1);
+  await expect(video).toHaveCount(0);
   await expect(tela.getByRole("button")).toHaveCount(1);
 });
 
-test("movimento reduzido mantém as três cenas e impede o download do vídeo", async ({ page }) => {
+test("movimento reduzido e economia de rede não impedem a tentativa do MP4", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "connection", {
+      configurable: true, value: { saveData: true, effectiveType: "3g" },
+    });
+  });
+  await page.route("**/cinematic.mp4?**", async () => {});
   await page.route("**/api/projeto/publico?**", (route) => route.fulfill({
     status: 200, contentType: "application/json",
     body: JSON.stringify({
       ...exemplo,
       projeto: { ...exemplo.projeto, abertura: {
         ...exemplo.projeto.abertura, fundo: "video", video: null,
-        videoUrl: "https://cdn.example.invalid/video.mp4",
+        videoUrl: "https://example.supabase.co/storage/v1/object/sign/abertura-videos/cinematic.mp4?token=test",
       } },
     }),
   }));
   await page.goto("/p/casamento-ana-pedro-1e86ef4c");
   const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
   await expect(tela).toBeVisible();
-  await expect(tela.locator(".fci-video")).toHaveCount(0);
-  await expect(tela.locator(".fci-images img")).toHaveCount(1);
+  await expect(tela.locator(".fci-video")).toHaveCount(1);
+  await expect(tela.locator(".fci-video")).toHaveCSS("opacity", "1");
+  await expect(tela.locator(".fci-images img")).toHaveCount(0);
   await page.keyboard.press("ArrowRight");
   await expect(tela.getByRole("heading", { name: exemplo.projeto.nome })).toBeVisible();
   await page.keyboard.press("ArrowRight");
