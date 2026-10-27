@@ -354,7 +354,10 @@ test("Safari: bloqueio real do autoplay preserva fotos como fallback, sem adicio
   await expect(video).toHaveCount(1);
   // O vídeo sintético não entrega bytes reais: força estado pausado e canplay
   // para validar a rejeição mockada sem depender do autoplay nativo do Chromium.
-  await video.evaluate((el) => (el as HTMLVideoElement).pause());
+  await video.evaluate((el) => {
+    (el as HTMLVideoElement).pause();
+    Object.defineProperty(el, "paused", { configurable: true, get: () => true });
+  });
   await video.dispatchEvent("canplay");
   await expect(tela.locator(".fci-images img")).toHaveCount(1);
   await expect(video).toHaveCSS("opacity", "0");
