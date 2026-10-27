@@ -5,6 +5,7 @@ import { createClient } from "../lib/supabase-client";
 import { registrarEventoProduto, utmAtual } from "../lib/product-analytics";
 import "./landing-editorial.css";
 import LanguageSwitcher from "./components/LanguageSwitcher";
+import LandingCinematicShowcase from "./components/LandingCinematicShowcase";
 import { useI18n } from "./components/I18nProvider";
 import { withLocalePath } from "../lib/i18n";
 import { approvedMonthlyPrice, formatPricingAmount, type PricingCurrency } from "../lib/pricing-markets";
@@ -77,15 +78,6 @@ const fotosGaleria = [
   { url: "https://images.unsplash.com/photo-1769898548207-ec7bb38a7cb8?auto=format&fit=crop&w=1400&q=88" },
   { url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1400&q=88" },
   { url: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1400&q=88" },
-];
-
-const fotosCliente = [
-  { url: "https://images.unsplash.com/photo-1785338016954-2c94ee6c3ff6?auto=format&fit=crop&w=1400&q=88" },
-  { url: "https://images.unsplash.com/photo-1783352117644-11f69ea78256?auto=format&fit=crop&w=1400&q=88" },
-  { url: "https://images.unsplash.com/photo-1785394809415-41f5f6d4041b?auto=format&fit=crop&w=1400&q=88" },
-  { url: "https://images.unsplash.com/photo-1777312378095-44bb1b70f834?auto=format&fit=crop&w=1400&q=88" },
-  { url: "https://images.unsplash.com/photo-1769374072073-bc358149ecee?auto=format&fit=crop&w=1400&q=88" },
-  { url: "https://images.unsplash.com/photo-1758810410416-0d4dd2a7a6cc?auto=format&fit=crop&w=1400&q=88" },
 ];
 
 const fotoFinal =
@@ -285,7 +277,6 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
   const supabase = useMemo(() => createClient(), []);
   const [logado, setLogado] = useState(false);
   const [etapaAtiva, setEtapaAtiva] = useState(0);
-  const [selecionadas, setSelecionadas] = useState<number[]>([0, 3]);
   const [heroCarousel, setHeroCarousel] = useState({ atual: 0, anterior: 0 });
 
   useEffect(() => {
@@ -332,12 +323,6 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
         ...(plano ? { plano } : {}),
       },
     });
-  }
-
-  function alternarSelecao(index: number) {
-    setSelecionadas((atuais) =>
-      atuais.includes(index) ? atuais.filter((item) => item !== index) : [...atuais, index]
-    );
   }
 
   const destinoPrincipal = withLocalePath(logado ? "/dashboard" : "/login?modo=cadastro", locale);
@@ -479,48 +464,7 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
           </div>
         </section>
 
-        <section className="lp2-section">
-          <div className="lp2-shell lp2-gallery">
-            <div className="lp2-gallery-copy">
-              <div className="lp2-kicker">{t("A experiência do seu cliente")}</div>
-              <h2>{t("Seu cliente vê o ensaio. Não o sistema.")}</h2>
-              <p>
-                {t("A experiência foi desenhada para deixar as imagens respirarem. Favoritas e comentários aparecem quando são necessários e saem do caminho quando não são.")}
-              </p>
-              <div className="lp2-gallery-stat">
-                <b>{selecionadas.length}</b>
-                <span>{t("fotos selecionadas nesta demonstração.")}<br />{t("Clique nas imagens para testar.")}</span>
-              </div>
-            </div>
-
-            <div className="lp2-client">
-              <div className="lp2-client-head">
-                <div><small>{t("Galeria de prova")}</small><strong>Marina & Pedro</strong></div>
-                <span className="lp2-client-count">{selecionadas.length} {t("selecionadas")}</span>
-              </div>
-              <div className="lp2-client-grid">
-                {[0, 2, 1, 3, 5, 4].map((fotoIndex, index) => (
-                  <button
-                    type="button"
-                    key={fotoIndex}
-                    aria-label={(selecionadas.includes(index) ? "Remover" : "Selecionar") + " foto " + (index + 1)}
-                    aria-pressed={selecionadas.includes(index)}
-                    onClick={() => alternarSelecao(index)}
-                    className={
-                      "lp2-client-photo" +
-                      (index === 0 ? " tall" : "") +
-                      (index === 3 ? " wide" : "") +
-                      (selecionadas.includes(index) ? " selected" : "")
-                    }
-                    style={{ backgroundImage: 'url("' + fotosCliente[fotoIndex].url + '")' }}
-                  >
-                    <span className="lp2-client-heart">{selecionadas.includes(index) ? "♥" : "♡"}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
+        <LandingCinematicShowcase locale={locale} />
 
         <section className="lp2-pricing" id="planos">
           <div className="lp2-shell">
