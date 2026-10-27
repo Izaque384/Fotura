@@ -387,7 +387,10 @@ test("iPhone sem botão: toque na própria abertura recupera vídeo com autoplay
   const tela = page.getByRole("dialog", { name: "Apresentação do projeto" });
   const video = tela.locator(".fci-video");
   await expect(video).toHaveCount(1);
-  await video.evaluate((el) => (el as HTMLVideoElement).pause());
+  await video.evaluate((el) => {
+    (el as HTMLVideoElement).pause();
+    Object.defineProperty(el, "paused", { configurable: true, get: () => true });
+  });
   await video.dispatchEvent("canplay");
   await expect(tela.locator(".fci-images img")).toHaveCount(1);
   await expect(video).toHaveCSS("opacity", "0");
