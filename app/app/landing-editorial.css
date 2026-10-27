@@ -224,14 +224,14 @@
   gap:56px;
   margin-bottom:48px;
 }
-.lp2-section-head h2,.lp2-gallery-copy h2,.lp2-pricing-head h2,.lp2-faq-intro h2{
+.lp2-section-head h2,.lp2-pricing-head h2,.lp2-faq-intro h2{
   margin:0;
   font-size:clamp(42px,5vw,72px);
   line-height:.98;
   letter-spacing:-3.4px;
   font-weight:650;
 }
-.lp2-section-head p,.lp2-gallery-copy>p,.lp2-pricing-head p,.lp2-faq-intro p{
+.lp2-section-head p,.lp2-pricing-head p,.lp2-faq-intro p{
   margin:0;
   color:#6f7079;
   font-size:14px;
