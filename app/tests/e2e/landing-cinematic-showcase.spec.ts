@@ -4,7 +4,7 @@ test("landing substitui completamente a seleção de fotos pela abertura cinemat
   await page.goto("/pt");
   const secao = page.getByRole("region", { name: "Antes das fotos, uma história." });
   await expect(secao).toBeVisible();
-  await expect(secao.getByText("Vídeo ou fotografias")).toBeVisible();
+  await expect(secao.getByText("Vídeo ou fotografias", { exact: true })).toBeVisible();
   await expect(page.getByText("Seu cliente vê o ensaio. Não o sistema.")).toHaveCount(0);
   await expect(page.locator(".lp2-client-grid")).toHaveCount(0);
   await expect(page.locator(".lp2-client-photo")).toHaveCount(0);
