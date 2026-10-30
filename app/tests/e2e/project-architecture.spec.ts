@@ -222,36 +222,46 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(workspace).toContain("Conecte os recebimentos pelo Stripe");
   });
 
-  test("proteção de egress evita originais automáticos e privilegia thumbnails", () => {
+  test("grade leve e originais só em galeria autorizada, com default original", () => {
     const publicGallery = read("app/g/[slug]/page.tsx");
     const signedPhotos = read("app/api/fotos/signed/route.ts");
     const projectList = read("app/dashboard/projetos/page.tsx");
     const workspaceApi = read("app/api/projeto/workspace/route.ts");
     const publicProjectApi = read("app/api/projeto/publico/route.ts");
     const workspace = read("app/dashboard/projetos/[id]/page.tsx");
-    const migration = read("../supabase/migrations/20261015112000_default_gallery_downloads_to_web.sql");
+    const migration = read("../supabase/migrations/20261030183825_delivery_original_quality_by_default.sql");
 
+    // A grade nunca recebe URLs originais de forma antecipada.
     expect(signedPhotos).toContain("ORIGINAIS_PREASSINADOS_GRADE = 0");
-    expect(signedPhotos).toContain('const originalHabilitado = etapa === "entrega"');
     expect(signedPhotos).toContain('modoParam === "completo" ? "completo" : "grade"');
-    expect(signedPhotos).toContain("Originais não estão habilitados para esta galeria.");
+    expect(signedPhotos).toContain('const preview = thumbAssinada || original');
     expect(signedPhotos).not.toContain("gallery.signed.thumb_fallback");
+
+    // Originais apenas para entregas e apenas com download permitido; PIN
+    // continua exigido para assinar uma foto individual.
+    expect(signedPhotos).toContain('const originalHabilitado = (etapa === "entrega" || !g.prova) && Boolean(g.download_ativo)');
+    expect(signedPhotos).toContain("g.download_pin_hash && !temAcessoDownload(req, galeria)");
+    expect(signedPhotos).toContain("Originais não estão habilitados para esta galeria.");
+    expect(publicGallery).toContain("const entregue=!meta?.prova||meta?.etapa");
+    expect(publicGallery).toContain("setLightboxUrl(null)");
+    expect(publicGallery).toContain("setLightboxUrl(url)");
     expect(publicGallery).not.toContain("agendarPreloadOriginal");
     expect(publicGallery).not.toContain("precarregarOriginal");
-    expect(publicGallery).toContain("Carregar foto em alta resolução");
-    expect(publicGallery).toContain('meta.downloadTamanho==="original"');
+
     expect(projectList).toContain("/thumbs/");
     expect(projectList).not.toContain("const originais=semThumb");
     expect(workspaceApi).toContain("/thumbs/");
     expect(workspaceApi).not.toContain("const originais = semThumb");
     expect(publicProjectApi).toContain("/thumbs/");
     expect(publicProjectApi).not.toContain('caminhos.push(`\${base}/thumbs/\${nome}`,`\${base}/\${nome}`)');
-    expect(workspace).toContain("Web / compartilhamento · recomendado");
-    expect(workspace).toContain("Original · alto consumo de banda");
-    expect(migration).toContain("alter table public.galeria_projetos");
-    expect(migration).toContain("alter table public.galerias");
-    expect(migration).toContain("set default 'web'");
-    expect(migration).toContain("set download_tamanho='web'");
+
+    // Novos projetos entregam originais por padrão, sem prejudicar as thumbs.
+    expect(workspace).toContain("Original · recomendado para entrega");
+    expect(workspace).toContain("Web · 960 px para compartilhamento leve");
+    expect(migration).toContain("ALTER TABLE public.galeria_projetos");
+    expect(migration).toContain("ALTER TABLE public.galerias");
+    expect(migration).toContain("SET DEFAULT 'original'");
+    expect(migration).toContain("SET download_tamanho = 'original'");
   });
 
 });

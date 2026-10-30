@@ -60,7 +60,7 @@ test("galeria mantém espaçamento original e lightbox com controles e download"
   await expect(lightbox.getByRole("button", { name: "Baixar foto original" })).toBeVisible();
   await lightbox.getByRole("button", { name: "Próxima foto" }).click();
   await expect(page.getByRole("dialog", { name: "Foto 2 de 2" })).toBeVisible();
-  await lightbox.getByRole("button", { name: "Fechar foto" }).click();
+  await page.getByRole("dialog", { name: "Foto 2 de 2" }).getByRole("button", { name: "Fechar foto" }).click();
   await expect(page.locator(".gc-lightbox")).toHaveCount(0);
 });
 
