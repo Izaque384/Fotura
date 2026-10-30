@@ -336,6 +336,11 @@ test("Safari: interrupção temporária do autoplay não troca o vídeo por foto
 test("Safari: bloqueio real do autoplay preserva fotos como fallback, sem adicionar botão", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => {
+    // O Chromium pode iniciar o vídeo nativamente antes do efeito React.
+    // Simula o Safari mantendo a mídia pausada desde a montagem.
+    Object.defineProperty(HTMLMediaElement.prototype, "paused", {
+      configurable: true, get: () => true,
+    });
     HTMLMediaElement.prototype.play = () => Promise.reject(
       new DOMException("Autoplay is not allowed", "NotAllowedError")
     );
@@ -367,10 +372,15 @@ test("Safari: bloqueio real do autoplay preserva fotos como fallback, sem adicio
 test("iPhone sem botão: toque na própria abertura recupera vídeo com autoplay bloqueado", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => {
-    let calls = 0;
+    // Bloqueia TODAS as tentativas automáticas e libera apenas pelo gesto,
+    // evitando depender do número de chamadas de play() do navegador.
+    let gestoRecebido = false;
+    document.addEventListener("pointerdown", () => { gestoRecebido = true; }, true);
+    Object.defineProperty(HTMLMediaElement.prototype, "paused", {
+      configurable: true, get: () => true,
+    });
     HTMLMediaElement.prototype.play = function () {
-      calls += 1;
-      if (calls === 1) return Promise.reject(new DOMException("Autoplay is blocked", "NotAllowedError"));
+      if (!gestoRecebido) return Promise.reject(new DOMException("Autoplay is blocked", "NotAllowedError"));
       this.dispatchEvent(new Event("playing"));
       return Promise.resolve();
     };
