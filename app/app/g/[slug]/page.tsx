@@ -47,6 +47,13 @@ export function GaleriaClienteView({routeRefOverride,projectContext}:GaleriaClie
     }
     // A foto em tela cheia solicita diretamente o original. Não exibe a
     // miniatura da grade e não faz a troca visual de baixa para alta definição.
+    const jaCarregado=originaisAquecidos.current.get(foto.nome)?.imagem;
+    if(jaCarregado?.complete&&jaCarregado.naturalWidth>0){
+      setLightboxNome(foto.nome);
+      setLightboxUrl(jaCarregado.src);
+      setLightboxCarregando(false);
+      return;
+    }
     setLightboxUrl(null);
     setLightboxCarregando(true);
     void (async()=>{
