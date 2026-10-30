@@ -86,8 +86,10 @@ test("cliente seleciona, comenta e finaliza uma prova", async ({ page }) => {
   expect(salvamentos.at(-1)?.comentarios["foto-1.jpg"]).toBe("Minha favorita");
 });
 
-test("lightbox abre prévia instantânea e carrega original automaticamente sem baixar a grade", async ({ page }) => {
+test("lightbox usa somente o original sem exibir miniatura intermediária", async ({ page }) => {
   let originaisSolicitados = 0;
+  let liberarOriginal!: () => void;
+  const assinaturaAguardada = new Promise<void>(resolve => { liberarOriginal = resolve; });
   await page.route("**/api/galeria/publica**", async (route) => {
     await route.fulfill({
       status: 200,
@@ -124,7 +126,7 @@ test("lightbox abre prévia instantânea e carrega original automaticamente sem 
     const url = new URL(route.request().url());
     if (url.searchParams.get("arquivo")) {
       originaisSolicitados++;
-      await new Promise(resolve => setTimeout(resolve, 250));
+      await assinaturaAguardada;
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -147,8 +149,11 @@ test("lightbox abre prévia instantânea e carrega original automaticamente sem 
   expect(originaisSolicitados).toBe(0); // a grade não baixa originais
   await page.locator(".gc-card img").click();
   await expect(page.getByRole("dialog", { name: "Foto 1 de 1" })).toBeVisible();
-  await expect(page.locator(".gc-photo img")).toHaveAttribute("src", foto("Miniatura"));
+  // Nenhum <img> de miniatura aparece no lightbox antes da URL do original.
+  await expect(page.locator(".gc-photo img")).toHaveCount(0);
+  await expect(page.getByRole("status", { name: "Carregando fotografia original" })).toBeVisible();
   await expect.poll(() => originaisSolicitados).toBe(1);
+  liberarOriginal();
   await expect(page.locator(".gc-photo img")).toHaveAttribute("src", /Original%20em%20alta/, { timeout: 5000 });
   await expect(page.getByRole("button", { name: "Carregar foto em alta resolução" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Baixar foto original" })).toBeVisible();

@@ -40,28 +40,34 @@ async function abrirGaleria(page: import("@playwright/test").Page) {
   await expect(page.locator(".gc-grid-img")).toHaveCount(2);
 }
 
-test("galeria abre fotos por teclado e apresenta controles claros sem mudar o download", async ({ page }) => {
+test("galeria mantém espaçamento original e lightbox com controles e download", async ({ page }) => {
   await abrirGaleria(page);
-  const primeiro = page.getByRole("button", { name: "Ampliar foto 1" });
-  await expect(primeiro).toBeVisible();
-  await primeiro.focus();
-  await page.keyboard.press("Enter");
+  const primeiraFoto = page.locator(".gc-grid-img").first();
+  await expect(primeiraFoto).toBeVisible();
+  await expect(primeiraFoto).not.toHaveAttribute("role", "button");
+  await expect(primeiraFoto).not.toHaveAttribute("tabindex", "0");
+  const grade=await page.locator(".gc-grid").evaluate(el => ({
+    gap:getComputedStyle(el).gap,
+    padding:getComputedStyle(el).padding,
+  }));
+  expect(grade.gap).toBe("1px");
+  expect(grade.padding).toBe("0px");
+  await primeiraFoto.click();
   const lightbox = page.getByRole("dialog", { name: "Foto 1 de 2" });
   await expect(lightbox).toBeVisible();
   await expect(lightbox.getByText("SUA GALERIA")).toBeVisible();
   await expect(lightbox.getByText("01")).toBeVisible();
   await expect(lightbox.getByRole("button", { name: "Baixar foto original" })).toBeVisible();
-  await expect(lightbox.getByText("Esc para fechar")).toBeVisible();
-  await page.keyboard.press("ArrowRight");
+  await lightbox.getByRole("button", { name: "Próxima foto" }).click();
   await expect(page.getByRole("dialog", { name: "Foto 2 de 2" })).toBeVisible();
-  await page.keyboard.press("Escape");
+  await lightbox.getByRole("button", { name: "Fechar foto" }).click();
   await expect(page.locator(".gc-lightbox")).toHaveCount(0);
 });
 
 test("lightbox mobile evita controles sobrepostos e respeita largura da tela", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await abrirGaleria(page);
-  await page.getByRole("button", { name: "Ampliar foto 1" }).click();
+  await page.locator(".gc-grid-img").first().click();
   const lightbox = page.getByRole("dialog", { name: "Foto 1 de 2" });
   await expect(lightbox).toBeVisible();
   await expect(lightbox.getByText("Deslize para ver outras fotos")).toBeVisible();
