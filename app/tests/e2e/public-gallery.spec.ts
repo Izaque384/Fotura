@@ -220,6 +220,51 @@ test("pré-aquecimento respeita PIN e nunca libera original protegido", async ({
   expect(chamadasOriginal).toBe(0);
 });
 
+test("galeria pequena prepara assinaturas em lote e abre a quinta foto original sem nova assinatura", async ({ page }) => {
+  const nomes=Array.from({length:6},(_,i)=>`foto-${i+1}.jpg`);
+  let lotes=0;
+  const assinaturasAvulsas:string[]=[];
+  await page.route("**/api/galeria/publica**", route=>route.fulfill({
+    status:200,contentType:"application/json",
+    body:JSON.stringify({
+      galeria:{titulo:"Festa",capa:null,prova:false,etapa:"entrega",limite:0,prazo:null,
+        linkAte:null,temSenha:false,desbloqueada:true,linkExpirado:false,downloadAtivo:true,
+        downloadIndividual:true,downloadCompleto:true,downloadTamanho:"original",
+        downloadPinNecessario:false,watermarkAtivo:false,watermarkTexto:null,
+        watermarkOpacidade:22,assistenteAtivo:false},
+      perfil:{nome:"Estúdio Teste",logo:null,cor:"#111111"},selecao:null,listas:[],
+    }),
+  }));
+  await page.route("**/api/fotos/signed**", route=>{
+    const q=new URL(route.request().url()).searchParams;
+    if(q.get("modo")==="originais"){
+      lotes++;
+      return route.fulfill({status:200,contentType:"application/json",
+        body:JSON.stringify({modo:"originais",fotos:nomes.map((nome,i)=>({
+          nome,url:foto(`Original ${i+1}`),thumb:foto(`Original ${i+1}`),
+        }))})});
+    }
+    if(q.has("arquivo")){
+      const nome=q.get("arquivo")!;
+      assinaturasAvulsas.push(nome);
+      return route.fulfill({status:200,contentType:"application/json",
+        body:JSON.stringify({nome,url:foto("Original avulso")})});
+    }
+    return route.fulfill({status:200,contentType:"application/json",
+      body:JSON.stringify({fotos:nomes.map((nome,i)=>({
+        nome,url:foto(`Miniatura ${i+1}`),thumb:foto(`Miniatura ${i+1}`),
+      })),capaUrl:null})});
+  });
+  await page.goto("/g/00000000-0000-4000-8000-000000000057");
+  await expect(page.locator(".gc-grid-img")).toHaveCount(6);
+  await expect.poll(()=>lotes).toBe(1);
+  await page.locator('.gc-grid-img[src*="Miniatura%205"]').click();
+  await expect(page.getByRole("dialog",{name:"Foto 5 de 6"})).toBeVisible();
+  await expect(page.locator(".gc-photo img")).toHaveAttribute("src",/Original%205/);
+  expect(assinaturasAvulsas).not.toContain("foto-5.jpg");
+  await expect(page.locator(".gc-photo img")).not.toHaveCSS("visibility","hidden");
+});
+
 test("galeria de prova não solicita originais antes da entrega", async ({ page }) => {
   let originaisSolicitados = 0;
   await page.route("**/api/galeria/publica**", route => route.fulfill({
