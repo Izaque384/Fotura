@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
   const entregaFinalDeProva = etapa === "entrega" && Boolean(g.prova);
   const base = entregaFinalDeProva ? `${dono}/${galeria}/entrega` : `${dono}/${galeria}`;
   const protegerOriginais = Boolean(g.watermark_ativo) && etapa !== "entrega";
-  const originalHabilitado = etapa === "entrega" && Boolean(g.download_ativo);
+  const originalHabilitado = (etapa === "entrega" || !g.prova) && Boolean(g.download_ativo);
 
   // Uma URL assinada da imagem original também permite salvá-la: manter PIN e
   // permissão de entrega no lightbox, não apenas no endpoint de download.
