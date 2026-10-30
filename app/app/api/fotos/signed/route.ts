@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { temAcessoGaleria } from "../../../../lib/gallery-access";
+import { temAcessoDownload } from "../../../../lib/gallery-download-access";
 import { registrarErro } from "../../../../lib/observability";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { uuidValido } from "../../../../lib/validation";
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galleryError } = await supabase
     .from("galerias")
-    .select("user_id,capa,visivel,link_ate,tem_senha,etapa,prova,ordem_fotos,download_ativo,download_tamanho,watermark_ativo,watermark_texto,watermark_opacidade")
+    .select("user_id,capa,visivel,link_ate,tem_senha,etapa,prova,ordem_fotos,download_ativo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -55,7 +56,14 @@ export async function GET(req: NextRequest) {
   const entregaFinalDeProva = etapa === "entrega" && Boolean(g.prova);
   const base = entregaFinalDeProva ? `${dono}/${galeria}/entrega` : `${dono}/${galeria}`;
   const protegerOriginais = Boolean(g.watermark_ativo) && etapa !== "entrega";
-  const originalHabilitado = etapa === "entrega" && Boolean(g.download_ativo) && g.download_tamanho === "original";
+  const originalHabilitado = (etapa === "entrega" || !g.prova) && Boolean(g.download_ativo);
+
+  // Uma URL assinada da imagem original também permite salvá-la: manter PIN e
+  // permissão de entrega no lightbox, não apenas no endpoint de download.
+  if ((arquivo || modo === "originais" || modo === "completo") &&
+      g.download_pin_hash && !temAcessoDownload(req, galeria)) {
+    return json({ error: "PIN necessário para alta resolução." }, 401);
+  }
 
   if (arquivo) {
     if (arquivo.includes("/") || arquivo.includes("\\") || arquivo === "." || arquivo === "..") {
