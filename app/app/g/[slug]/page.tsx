@@ -150,9 +150,9 @@ export function GaleriaClienteView({routeRefOverride,projectContext}:GaleriaClie
    let cancelado=false;
    const timer=window.setTimeout(()=>{
      void fetch(`/api/fotos/signed?galeria=${encodeURIComponent(slug)}&modo=originais`,{cache:"no-store"})
-       .then(async resposta=>resposta.ok?await resposta.json() as {fotos?:Foto[]}:null)
+       .then(async resposta=>resposta.ok?await resposta.json() as {modo?:string;fotos?:Foto[]}:null)
        .then(dados=>{
-         if(cancelado||!dados?.fotos)return;
+         if(cancelado||dados?.modo!=="originais"||!dados.fotos)return;
          const nomes=new Set(fotos.map(f=>f.nome));
          for(const imagem of dados.fotos){
            if(nomes.has(imagem.nome)&&imagem.url)originaisCache.current.set(imagem.nome,imagem.url);
