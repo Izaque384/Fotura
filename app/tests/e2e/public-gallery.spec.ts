@@ -258,7 +258,7 @@ test("galeria pequena prepara assinaturas em lote e abre a quinta foto original 
   await page.goto("/g/00000000-0000-4000-8000-000000000057");
   await expect(page.locator(".gc-grid-img")).toHaveCount(6);
   await expect.poll(()=>lotes).toBe(1);
-  await page.locator(".gc-grid-img").nth(4).click();
+  await page.locator('.gc-grid-img[src*="Miniatura%205"]').click();
   await expect(page.getByRole("dialog",{name:"Foto 5 de 6"})).toBeVisible();
   await expect(page.locator(".gc-photo img")).toHaveAttribute("src",/Original%205/);
   expect(assinaturasAvulsas).not.toContain("foto-5.jpg");
