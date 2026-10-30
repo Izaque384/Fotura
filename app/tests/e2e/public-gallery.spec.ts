@@ -146,7 +146,9 @@ test("lightbox usa somente o original sem exibir miniatura intermediária", asyn
 
   await page.goto("/g/00000000-0000-4000-8000-000000000002");
   await expect(page.locator(".gc-grid-img")).toHaveAttribute("src", foto("Miniatura"));
-  expect(originaisSolicitados).toBe(0); // a grade não baixa originais
+  // A primeira foto começa a aquecer discretamente após a grade ficar pronta.
+  // A grade continua renderizando apenas a miniatura.
+  await expect.poll(() => originaisSolicitados).toBe(1);
   await page.locator(".gc-card img").click();
   await expect(page.getByRole("dialog", { name: "Foto 1 de 1" })).toBeVisible();
   // Nenhum <img> de miniatura aparece no lightbox antes da URL do original.
@@ -185,11 +187,37 @@ test("entrega com download web ainda exibe original no lightbox", async ({ page 
       body: JSON.stringify({ fotos: [{ nome: "foto.jpg", url: foto("Miniatura"), thumb: foto("Miniatura") }], capaUrl: null }) });
   });
   await page.goto("/g/00000000-0000-4000-8000-000000000012");
-  expect(originaisSolicitados).toBe(0);
-  await page.locator(".gc-card img").click();
   await expect.poll(() => originaisSolicitados).toBe(1);
+  await page.locator(".gc-card img").click();
   await expect(page.locator(".gc-photo img")).toHaveAttribute("src", /Original/);
   await expect(page.getByRole("button", { name: "Baixar foto em qualidade web" })).toBeVisible();
+});
+
+test("pré-aquecimento respeita PIN e nunca libera original protegido", async ({ page }) => {
+  let chamadasOriginal = 0;
+  await page.route("**/api/galeria/publica**", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      galeria: { titulo: "Galeria PIN", capa: null, prova: false, etapa: "entrega", limite: 0,
+        prazo: null, linkAte: null, temSenha: false, desbloqueada: true, linkExpirado: false,
+        downloadAtivo: true, downloadIndividual: true, downloadCompleto: true,
+        downloadTamanho: "original", downloadPinNecessario: true,
+        watermarkAtivo: false, watermarkTexto: null, watermarkOpacidade: 22, assistenteAtivo: false },
+      perfil: {nome:"Estúdio",logo:null,cor:"#14101e"}, selecao:null, listas:[],
+    }),
+  }));
+  await page.route("**/api/fotos/signed**", route => {
+    if(new URL(route.request().url()).searchParams.has("arquivo")) chamadasOriginal++;
+    return route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({fotos:[{nome:"foto.jpg",url:foto("Miniatura"),thumb:foto("Miniatura")}],capaUrl:null}),
+    });
+  });
+  await page.goto("/g/00000000-0000-4000-8000-000000000045");
+  await expect(page.locator(".gc-grid-img")).toHaveCount(1);
+  await page.locator(".gc-grid-img").hover();
+  await page.waitForTimeout(850);
+  expect(chamadasOriginal).toBe(0);
 });
 
 test("galeria de prova não solicita originais antes da entrega", async ({ page }) => {
