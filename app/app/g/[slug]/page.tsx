@@ -30,7 +30,7 @@ export function GaleriaClienteView({routeRefOverride,projectContext}:GaleriaClie
     let cancelado=false;
     // A miniatura aparece imediatamente; apenas a foto aberta solicita o original.
     setLightboxUrl(foto.thumb||foto.url||null);
-    const entregue=meta?.etapa==="entrega"||(!meta?.prova&&meta?.etapa!=="prova");
+    const entregue=!meta?.prova||meta?.etapa==="entrega";
     if(!entregue||!meta?.downloadAtivo){setLightboxCarregando(false);return}
     setLightboxCarregando(true);
     void (async()=>{
