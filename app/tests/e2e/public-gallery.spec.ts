@@ -86,7 +86,7 @@ test("cliente seleciona, comenta e finaliza uma prova", async ({ page }) => {
   expect(salvamentos.at(-1)?.comentarios["foto-1.jpg"]).toBe("Minha favorita");
 });
 
-test("lightbox usa miniatura e só busca original após pedido explícito de HD", async ({ page }) => {
+test("lightbox abre prévia instantânea e carrega original automaticamente sem baixar a grade", async ({ page }) => {
   let originaisSolicitados = 0;
   await page.route("**/api/galeria/publica**", async (route) => {
     await route.fulfill({
@@ -143,22 +143,21 @@ test("lightbox usa miniatura e só busca original após pedido explícito de HD"
   });
 
   await page.goto("/g/00000000-0000-4000-8000-000000000002");
+  await expect(page.locator(".gc-grid-img")).toHaveAttribute("src", foto("Miniatura"));
+  expect(originaisSolicitados).toBe(0); // a grade não baixa originais
   await page.locator(".gc-card img").click();
   await expect(page.getByRole("dialog", { name: "Foto 1 de 1" })).toBeVisible();
   await expect(page.locator(".gc-photo img")).toHaveAttribute("src", foto("Miniatura"));
-  await page.waitForTimeout(500);
-  expect(originaisSolicitados).toBe(0);
-  await page.getByRole("button", { name: "Carregar foto em alta resolução" }).click();
   await expect.poll(() => originaisSolicitados).toBe(1);
-  await expect(page.locator(".gc-photo img")).toHaveAttribute("src", /Original%20em%20alta/, { timeout: 3000 });
+  await expect(page.locator(".gc-photo img")).toHaveAttribute("src", /Original%20em%20alta/, { timeout: 5000 });
+  await expect(page.getByRole("button", { name: "Carregar foto em alta resolução" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Baixar foto original" })).toBeVisible();
 });
 
-test("qualidade web nunca solicita original ao abrir o lightbox", async ({ page }) => {
+test("entrega com download web ainda exibe original no lightbox", async ({ page }) => {
   let originaisSolicitados = 0;
-  await page.route("**/api/galeria/publica**", async route => route.fulfill({
-    status: 200,
-    contentType: "application/json",
+  await page.route("**/api/galeria/publica**", route => route.fulfill({
+    status: 200, contentType: "application/json",
     body: JSON.stringify({
       galeria: {
         titulo: "Entrega econômica", capa: null, prova: false, limite: 0, prazo: null, linkAte: null,
@@ -166,27 +165,53 @@ test("qualidade web nunca solicita original ao abrir o lightbox", async ({ page 
         downloadAtivo: true, downloadIndividual: true, downloadCompleto: true, downloadTamanho: "web",
         downloadPinNecessario: false, watermarkAtivo: false, watermarkTexto: null, watermarkOpacidade: 22, assistenteAtivo: false,
       },
-      perfil: { nome: "Estúdio Teste", logo: null, cor: "#0b0b1a" },
-      selecao: null, listas: [],
+      perfil: { nome: "Estúdio Teste", logo: null, cor: "#0b0b1a" }, selecao: null, listas: [],
     }),
   }));
   await page.route("**/api/fotos/signed**", async route => {
     const url = new URL(route.request().url());
-    if (url.searchParams.get("arquivo") || url.searchParams.get("modo") === "originais") originaisSolicitados++;
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ fotos: [{ nome: "foto.jpg", url: foto("Miniatura"), thumb: foto("Miniatura") }], capaUrl: null }),
-    });
+    if (url.searchParams.get("arquivo")) {
+      originaisSolicitados++;
+      await route.fulfill({ status: 200, contentType: "application/json",
+        body: JSON.stringify({ nome: "foto.jpg", url: foto("Original") }) });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ fotos: [{ nome: "foto.jpg", url: foto("Miniatura"), thumb: foto("Miniatura") }], capaUrl: null }) });
   });
-
   await page.goto("/g/00000000-0000-4000-8000-000000000012");
-  await page.locator(".gc-card img").click();
-  await expect(page.locator(".gc-photo img")).toHaveAttribute("src", foto("Miniatura"));
-  await page.waitForTimeout(500);
   expect(originaisSolicitados).toBe(0);
-  await expect(page.getByRole("button", { name: "Carregar foto em alta resolução" })).toHaveCount(0);
+  await page.locator(".gc-card img").click();
+  await expect.poll(() => originaisSolicitados).toBe(1);
+  await expect(page.locator(".gc-photo img")).toHaveAttribute("src", /Original/);
   await expect(page.getByRole("button", { name: "Baixar foto em qualidade web" })).toBeVisible();
+});
+
+test("galeria de prova não solicita originais antes da entrega", async ({ page }) => {
+  let originaisSolicitados = 0;
+  await page.route("**/api/galeria/publica**", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      galeria: {
+        titulo: "Prova protegida", capa: null, prova: true, etapa: "prova", limite: 0,
+        prazo: null, linkAte: null, temSenha: false, desbloqueada: true, linkExpirado: false,
+        downloadAtivo: true, downloadIndividual: true, downloadCompleto: true,
+        downloadTamanho: "original", downloadPinNecessario: false,
+        watermarkAtivo: true, watermarkTexto: "Estúdio", watermarkOpacidade: 22, assistenteAtivo: false,
+      },
+      perfil: { nome: "Estúdio Teste", logo: null, cor: "#0b0b1a" }, selecao: null, listas: [],
+    }),
+  }));
+  await page.route("**/api/fotos/signed**", async route => {
+    if (new URL(route.request().url()).searchParams.has("arquivo")) originaisSolicitados++;
+    await route.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify({ fotos: [{ nome: "prova.jpg", url: foto("Prévia"), thumb: foto("Prévia") }], capaUrl: null }) });
+  });
+  await page.goto("/g/00000000-0000-4000-8000-000000000013");
+  await page.locator(".gc-card img").click();
+  await expect(page.locator(".gc-photo img")).toHaveAttribute("src", foto("Prévia"));
+  await expect(page.getByRole("button", { name: "Baixar foto original" })).toHaveCount(0);
+  expect(originaisSolicitados).toBe(0);
 });
 
 test("senha incorreta não libera a galeria e senha correta libera", async ({ page }) => {
