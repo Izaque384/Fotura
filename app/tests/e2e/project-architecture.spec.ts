@@ -22,6 +22,36 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(workspace).toContain("Um link para todo o projeto");
   });
 
+  test("configurações usam colunas independentes sem esticar o cartão de identidade", () => {
+    const workspace = read("app/dashboard/projetos/[id]/page.tsx");
+    const configuracoes = workspace.slice(
+      workspace.indexOf('{aba==="configuracoes"&&'),
+      workspace.indexOf('{aba==="vendas"&&')
+    );
+
+    expect(configuracoes).toContain('className="pw-config-column pw-config-column-main"');
+    expect(configuracoes).toContain('className="pw-config-column pw-config-column-experience"');
+    const main = configuracoes.slice(
+      configuracoes.indexOf('pw-config-column-main'),
+      configuracoes.indexOf('pw-config-column-experience')
+    );
+    const experience = configuracoes.slice(configuracoes.indexOf('pw-config-column-experience'));
+    for (const key of ["pw-config-identity", "pw-config-proof", "pw-config-extras"]) {
+      expect(main).toContain(key);
+    }
+    for (const key of ["ProjectCinematicSettings", "pw-config-downloads", "pw-config-protection"]) {
+      expect(experience).toContain(key);
+    }
+    expect(workspace).toContain('.pw-config-column{display:flex;flex-direction:column;gap:14px;min-width:0}');
+    expect(workspace).toContain('.pw-config-grid{display:flex;flex-direction:column;gap:12px}');
+    expect(workspace).toContain('.pw-config-column{display:contents}');
+    for (const order of ["identity{order:1}", "settings{order:2}", "proof{order:3}", "downloads{order:4}", "protection{order:5}", "extras{order:6}"]) {
+      expect(workspace).toContain(order);
+    }
+    expect(configuracoes).toContain('salvarConfiguracoes()');
+    expect(configuracoes).toContain('Excluir projeto');
+  });
+
   test("pastas podem ter capa própria com fallback do projeto", () => {
     const workspace = read("app/dashboard/projetos/[id]/page.tsx");
     const api = read("app/api/projeto/workspace/route.ts");
