@@ -22,34 +22,42 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(workspace).toContain("Um link para todo o projeto");
   });
 
-  test("configurações usam colunas independentes sem esticar o cartão de identidade", () => {
+  test("configurações equilibram cartões e removem modelos reutilizáveis", () => {
     const workspace = read("app/dashboard/projetos/[id]/page.tsx");
+    const projectList = read("app/dashboard/projetos/page.tsx");
     const configuracoes = workspace.slice(
       workspace.indexOf('{aba==="configuracoes"&&'),
       workspace.indexOf('{aba==="vendas"&&')
     );
 
-    expect(configuracoes).toContain('className="pw-config-column pw-config-column-main"');
-    expect(configuracoes).toContain('className="pw-config-column pw-config-column-experience"');
-    const main = configuracoes.slice(
-      configuracoes.indexOf('pw-config-column-main'),
-      configuracoes.indexOf('pw-config-column-experience')
-    );
-    const experience = configuracoes.slice(configuracoes.indexOf('pw-config-column-experience'));
-    for (const key of ["pw-config-identity", "pw-config-proof", "pw-config-extras"]) {
-      expect(main).toContain(key);
+    expect(workspace).not.toContain("ProjectPresetSave");
+    expect(configuracoes).not.toContain("Repetir configurações sem refazer tudo");
+    expect(projectList).not.toContain("/api/projeto/presets");
+    expect(projectList).not.toContain("Meu modelo");
+    expect(projectList).toContain("MODELOS_PROJETO");
+
+    expect(workspace).toContain(".pw-config-grid{column-count:2;column-gap:14px;column-fill:balance;direction:rtl}");
+    expect(workspace).toContain("break-inside:avoid-column");
+    expect(workspace).toContain(".pw-config-grid{display:flex;flex-direction:column;gap:12px;direction:ltr}");
+    expect(configuracoes).not.toContain("pw-config-column-main");
+    expect(configuracoes).not.toContain("pw-config-column-experience");
+    const sectionStart = configuracoes.indexOf("<div className=\"pw-config-grid\">");
+    const titles = [
+      "ProjectCinematicSettings",
+      "pw-config-identity",
+      "pw-config-proof",
+      "pw-config-downloads",
+      "pw-config-protection",
+      "pw-config-extras",
+    ];
+    let previous = sectionStart;
+    for (const title of titles) {
+      const index = configuracoes.indexOf(title);
+      expect(index).toBeGreaterThan(previous);
+      previous = index;
     }
-    for (const key of ["ProjectCinematicSettings", "pw-config-downloads", "pw-config-protection"]) {
-      expect(experience).toContain(key);
-    }
-    expect(workspace).toContain('.pw-config-column{display:flex;flex-direction:column;gap:14px;min-width:0}');
-    expect(workspace).toContain('.pw-config-grid{display:flex;flex-direction:column;gap:12px}');
-    expect(workspace).toContain('.pw-config-column{display:contents}');
-    for (const order of ["identity{order:1}", "settings{order:2}", "proof{order:3}", "downloads{order:4}", "protection{order:5}", "extras{order:6}"]) {
-      expect(workspace).toContain(order);
-    }
-    expect(configuracoes).toContain('salvarConfiguracoes()');
-    expect(configuracoes).toContain('Excluir projeto');
+    expect(configuracoes).toContain("salvarConfiguracoes()");
+    expect(configuracoes).toContain("Excluir projeto");
   });
 
   test("pastas podem ter capa própria com fallback do projeto", () => {
