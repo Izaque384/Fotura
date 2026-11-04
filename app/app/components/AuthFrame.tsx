@@ -14,7 +14,7 @@ const AUTH_STYLES = `
   .ft-auth-main{width:100%;max-width:490px;margin:auto;display:flex;flex-direction:column;justify-content:center;padding:42px 0 28px;container-type:inline-size}
   .ft-auth-eyebrow{color:#585587;font-size:11px;font-weight:700;letter-spacing:0.21em;text-transform:uppercase}
   .ft-auth-title{font-family:Georgia,"Times New Roman",serif!important;font-size:clamp(43px,4.05vw,68px);font-weight:400;letter-spacing:-0.058em;line-height:1.02;margin:16px 0 16px;color:#242336}
-  .ft-auth-title.ft-auth-title--singleline{font-size:clamp(22px,8.8cqw,44px);white-space:nowrap}
+  .ft-auth-title.ft-auth-title--singleline{font-size:clamp(18px,7.4cqw,38px)!important;white-space:nowrap!important;letter-spacing:-.055em;line-height:1.12}
   .ft-auth-intro{color:#787485;font-size:14px;line-height:1.85;max-width:410px;margin:0 0 30px}
   .ft-auth-form{width:100%}
   .ft-auth-label{display:block;color:#3A3B4D;font-size:12px;font-weight:700;margin:0 0 9px}
@@ -138,7 +138,7 @@ export default function AuthFrame({ eyebrow, title, intro, singleLineTitle = fal
 
         <div className="ft-auth-main">
           <span className="ft-auth-eyebrow">{eyebrow}</span>
-          <h1 id="login-title" className={singleLineTitle ? "ft-auth-title ft-auth-title--singleline" : "ft-auth-title"}>{title}</h1>
+          <h1 id="login-title" className={singleLineTitle ? "ft-auth-title ft-auth-title--singleline" : "ft-auth-title"} style={singleLineTitle ? { fontSize: "clamp(18px, 7.4cqw, 38px)", whiteSpace: "nowrap" } : undefined}>{title}</h1>
           {intro && <p className="ft-auth-intro">{intro}</p>}
           {children}
         </div>
