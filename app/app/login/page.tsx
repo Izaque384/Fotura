@@ -19,6 +19,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [senhaVisivel, setSenhaVisivel] = useState(false);
   const [modo, setModo] = useState<"login" | "cadastro">("login");
   const [mensagem, setMensagem] = useState("");
   const [carregando, setCarregando] = useState(false);
@@ -128,6 +129,9 @@ export default function LoginPage() {
   }
 
   const mensagemErro = mensagem.startsWith("Erro");
+  const textoVisibilidade = senhaVisivel
+    ? (locale === "en" ? "Hide password" : locale === "es" ? "Ocultar contraseña" : "Ocultar senha")
+    : (locale === "en" ? "Show password" : locale === "es" ? "Mostrar contraseña" : "Mostrar senha");
 
   return (
     <main className="auth-shell" style={{ minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(180deg,#F5F3FB 0%,#EEEAF8 100%)",fontFamily:"sans-serif",padding:24 }}>
@@ -140,7 +144,20 @@ export default function LoginPage() {
           <input id="login-email" name="email" type="email" autoComplete="email" inputMode="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="seu@email.com" aria-invalid={mensagemErro && !email.trim() ? true : undefined} style={{ width:"100%",padding:"12px 14px",fontSize:14,border:"1.5px solid #D7D0E7",borderRadius:10,background:"#F3EFF9",color:"#21253A",outline:"none",marginBottom:20,boxSizing:"border-box" }} />
 
           <label htmlFor="login-senha" style={{ fontSize:13,color:"#5F657D",display:"block",marginBottom:6 }}>{t("Senha")}</label>
-          <input id="login-senha" name="senha" type="password" autoComplete={modo === "login" ? "current-password" : "new-password"} value={senha} onChange={(e)=>setSenha(e.target.value)} placeholder="••••••••" maxLength={128} aria-describedby={modo === "cadastro" ? "senha-ajuda" : undefined} aria-invalid={mensagemErro && !senha ? true : undefined} style={{ width:"100%",padding:"12px 14px",fontSize:14,border:"1.5px solid #D7D0E7",borderRadius:10,background:"#F3EFF9",color:"#21253A",outline:"none",marginBottom:12,boxSizing:"border-box" }} />
+          <div style={{ position:"relative",marginBottom:12 }}>
+            <input id="login-senha" name="senha" type={senhaVisivel ? "text" : "password"} autoComplete={modo === "login" ? "current-password" : "new-password"} value={senha} onChange={(e)=>setSenha(e.target.value)} placeholder="••••••••" maxLength={128} aria-describedby={modo === "cadastro" ? "senha-ajuda" : undefined} aria-invalid={mensagemErro && !senha ? true : undefined} style={{ width:"100%",padding:"12px 48px 12px 14px",fontSize:14,border:"1.5px solid #D7D0E7",borderRadius:10,background:"#F3EFF9",color:"#21253A",outline:"none",boxSizing:"border-box" }} />
+            <button type="button" onClick={()=>setSenhaVisivel((atual)=>!atual)} aria-label={textoVisibilidade} title={textoVisibilidade} aria-pressed={senhaVisivel} style={{ position:"absolute",right:2,top:0,width:44,height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:"transparent",border:"none",borderRadius:8,color:"#5F657D",cursor:"pointer" }}>
+              {senhaVisivel ? (
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c5 0 8.5 4.1 10 7a13.9 13.9 0 0 1-4 4.8"/><path d="M6.4 6.4A14.5 14.5 0 0 0 2 12c1.5 2.9 5 7 10 7a10.8 10.8 0 0 0 4.1-.8"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M3 3l18 18"/>
+                </svg>
+              ) : (
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              )}
+            </button>
+          </div>
           {modo === "cadastro" && <p id="senha-ajuda" style={{fontSize:11,color:"#8A8CA1",margin:"0 0 18px"}}>{t("Mínimo de 8 caracteres.")}</p>}
 
           {modo === "login" && <div style={{textAlign:"right",marginBottom:24}}><Link href={withLocalePath("/esqueci-senha", locale)} style={{fontSize:12,color:"#4a6cf7",textDecoration:"none"}}>{t("Esqueci minha senha")}</Link></div>}
@@ -157,7 +174,7 @@ export default function LoginPage() {
 
         {mensagem && <p role={mensagemErro ? "alert" : "status"} aria-live={mensagemErro ? "assertive" : "polite"} style={{fontSize:13,textAlign:"center",marginTop:16,color:mensagemErro?"#ef4444":"#22c55e"}}>{t(mensagem)}</p>}
 
-        <p style={{fontSize:13,color:"#73758D",textAlign:"center",marginTop:24}}>{modo === "login" ? t("Não tem conta?") : t("Já tem conta?")} <button type="button" onClick={()=>{setModo(modo === "login" ? "cadastro" : "login");setMensagem("");setSenha("");}} style={{background:"none",border:"none",cursor:"pointer",color:"#4a6cf7",fontSize:"inherit",fontFamily:"inherit",padding:4,textDecoration:"underline"}}>{modo === "login" ? t("Cadastre-se") : t("Fazer login")}</button></p>
+        <p style={{fontSize:13,color:"#73758D",textAlign:"center",marginTop:24}}>{modo === "login" ? t("Não tem conta?") : t("Já tem conta?")} <button type="button" onClick={()=>{setModo(modo === "login" ? "cadastro" : "login");setMensagem("");setSenha("");setSenhaVisivel(false);}} style={{background:"none",border:"none",cursor:"pointer",color:"#4a6cf7",fontSize:"inherit",fontFamily:"inherit",padding:4,textDecoration:"underline"}}>{modo === "login" ? t("Cadastre-se") : t("Fazer login")}</button></p>
       </section>
     </main>
   );
