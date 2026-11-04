@@ -9,6 +9,119 @@ import { normalizeLocale, withLocalePath } from "../../lib/i18n";
 
 const ORIGEM_PRODUCAO = "https://foturax.com.br";
 
+const AUTH_STYLES = \`
+  .ft-auth-page{display:grid;grid-template-columns:minmax(0,43%) minmax(0,57%);min-height:100vh;min-height:100svh;width:100%;background:#F9F7F3;color:#222338}
+  .ft-auth-panel{display:flex;flex-direction:column;min-width:0;min-height:100svh;padding:clamp(28px,4.2vw,66px) clamp(26px,5vw,88px) 30px;box-sizing:border-box}
+  .ft-auth-brand{display:inline-flex;align-items:center;gap:13px;align-self:flex-start;color:#26273B;text-decoration:none}
+  .ft-auth-brand-symbol{display:block;width:45px;height:45px;flex:none;background:url("/favicon.svg") center/contain no-repeat}
+  .ft-auth-brand-name{font-size:24px;font-weight:700;letter-spacing:0.12em}
+  .ft-auth-main{width:100%;max-width:490px;margin:auto;display:flex;flex-direction:column;justify-content:center;padding:42px 0 28px}
+  .ft-auth-eyebrow{color:#585587;font-size:11px;font-weight:700;letter-spacing:0.21em;text-transform:uppercase}
+  .ft-auth-title{font-family:Georgia,"Times New Roman",serif!important;font-size:clamp(43px,4.05vw,68px);font-weight:400;letter-spacing:-0.058em;line-height:1.02;margin:16px 0 16px;color:#242336}
+  .ft-auth-intro{color:#787485;font-size:14px;line-height:1.85;max-width:410px;margin:0 0 30px}
+  .ft-auth-form{width:100%}
+  .ft-auth-label{display:block;color:#3A3B4D;font-size:12px;font-weight:700;margin:0 0 9px}
+  .ft-auth-input{display:block;width:100%;height:56px;padding:0 16px;box-sizing:border-box;border:1px solid #DDD7E3;border-radius:12px;background:#FFFEFC;color:#25263E;font-size:14px;outline:0;transition:border-color .18s,box-shadow .18s}
+  .ft-auth-input::placeholder{color:#9B97A4}
+  .ft-auth-input:focus{border-color:#7564CD;box-shadow:0 0 0 3px rgba(101,84,193,.12)}
+  .ft-auth-input[aria-invalid="true"]{border-color:#B85C65}
+  .ft-auth-email{margin-bottom:22px}
+  .ft-auth-password-wrap{position:relative}
+  .ft-auth-password-input{padding-right:58px}
+  .ft-auth-reveal{position:absolute;right:5px;top:5px;display:flex;align-items:center;justify-content:center;width:46px;height:46px;cursor:pointer;border:0;border-radius:9px;background:transparent;color:#66637B;transition:background .18s}
+  .ft-auth-reveal:hover{background:#EEEAF5;color:#3F3984}
+  .ft-auth-hint{color:#777487;font-size:12px;margin:9px 0 20px}
+  .ft-auth-forgot{display:flex;justify-content:flex-end;margin:13px 0 25px}
+  .ft-auth-link{color:#4D4A98;font-size:12px;font-weight:650;text-decoration:none}
+  .ft-auth-link:hover{text-decoration:underline}
+  .ft-auth-terms{display:flex;align-items:flex-start;gap:11px;margin:19px 0 25px;cursor:pointer}
+  .ft-auth-checkbox{width:18px;height:18px;min-width:18px;margin-top:3px;accent-color:#5652A7}
+  .ft-auth-terms-copy{font-size:12px;line-height:1.7;color:#6A687C}
+  .ft-auth-terms-copy a{color:#4D4A98;text-decoration:underline;text-underline-offset:2px}
+  .ft-auth-submit{width:100%;min-height:55px;padding:13px 24px;border:0;border-radius:12px;background:#292743;color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:background .18s,transform .18s;box-shadow:0 10px 22px rgba(31,27,72,.12)}
+  .ft-auth-submit:hover:not(:disabled){background:#453A83;transform:translateY(-1px)}
+  .ft-auth-submit:disabled{opacity:.58;cursor:wait}
+  .ft-auth-message{font-size:13px;line-height:1.6;margin:17px 0 0;padding:12px 14px;border-radius:10px;background:#EDF6EF;color:#2F694B}
+  .ft-auth-message.error{background:#FFF0EF;color:#A23F48}
+  .ft-auth-switch{display:flex;justify-content:center;align-items:baseline;gap:5px;flex-wrap:wrap;margin:26px 0 0;color:#777487;font-size:13px}
+  .ft-auth-switch button{color:#34316F;text-decoration:underline;text-underline-offset:3px;border:0;background:none;padding:4px;cursor:pointer;font:inherit;font-weight:700}
+  .ft-auth-footer{margin-top:18px;color:#A19AAB;font-size:11px;line-height:1.5}
+  .ft-auth-story{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;min-width:0;min-height:100vh;min-height:100svh;padding:72px clamp(36px,6.6vw,112px);box-sizing:border-box;overflow:hidden;text-align:center;color:#FAF8FF;background:radial-gradient(ellipse at 72% 42%,rgba(123,109,183,.25),transparent 54%),linear-gradient(145deg,#17192F 0%,#252440 55%,#20283F 100%)}
+  .ft-auth-story::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.025),transparent 35%),radial-gradient(ellipse at 80% 95%,rgba(95,133,196,.15),transparent 45%);z-index:-1}
+  .ft-auth-story::after{content:"F";position:absolute;right:-3%;bottom:-20%;font-family:Georgia,"Times New Roman",serif!important;font-size:clamp(360px,43vw,780px);line-height:1;color:rgba(250,248,255,.028);z-index:-1;pointer-events:none}
+  .ft-auth-story-content{width:100%;max-width:820px;position:relative}
+  .ft-auth-story-rule{display:block;width:80px;height:3px;margin:0 0 clamp(52px,9vh,92px);border-radius:99px;background:linear-gradient(90deg,#B5A7F6,#8EBBF5)}
+  .ft-auth-story-kicker{color:#C0B6EE;text-transform:uppercase;letter-spacing:.22em;font-size:11px;font-weight:700;line-height:1.6}
+  .ft-auth-story-title{font-family:Georgia,"Times New Roman",serif!important;font-size:clamp(57px,5.9vw,102px);font-weight:400;letter-spacing:-.055em;line-height:1.035;margin:26px auto 22px;max-width:820px;text-wrap:balance}
+  .ft-auth-story-description{color:#CDC8DE;font-size:14px;line-height:1.8;max-width:430px;margin:0 auto}
+  .ft-auth-story-signature{display:block;color:#AAA4CA;font-size:10px;letter-spacing:.17em;font-weight:700;margin-top:clamp(40px,8vh,86px)}
+  @media(max-width:1100px){
+    .ft-auth-page{grid-template-columns:minmax(0,46%) minmax(0,54%)}
+    .ft-auth-panel{padding-inline:clamp(26px,4.1vw,52px)}
+    .ft-auth-story{padding-inline:38px}
+    .ft-auth-story-title{font-size:clamp(52px,5.8vw,82px)}
+  }
+  @media(max-width:880px){
+    .ft-auth-page{display:block}
+    .ft-auth-panel{min-height:100svh;max-width:640px;margin:0 auto;padding:32px clamp(24px,7vw,70px) 28px}
+    .ft-auth-main{max-width:475px;padding:54px 0 38px}
+    .ft-auth-title{font-size:clamp(45px,8vw,64px)}
+    .ft-auth-story{display:none}
+  }
+  @media(max-width:480px){
+    .ft-auth-panel{padding:25px 24px 24px}
+    .ft-auth-brand-name{font-size:21px}
+    .ft-auth-brand-symbol{width:38px;height:38px}
+    .ft-auth-main{padding:44px 0 30px}
+    .ft-auth-title{font-size:48px;margin:13px 0}
+    .ft-auth-intro{font-size:13px;margin-bottom:25px}
+    .ft-auth-input{height:54px}
+    .ft-auth-footer{text-align:center}
+  }
+\`;
+
+const AUTH_COPY = {
+  pt: {
+    loginKicker:"ACESSO AO ESTÚDIO",
+    signupKicker:"NOVO ESTÚDIO",
+    loginTitle:"Bem-vindo de volta.",
+    signupTitle:"Seu espaço começa aqui.",
+    loginIntro:"Entre para organizar suas galerias e continuar suas entregas com tranquilidade.",
+    signupIntro:"Crie sua conta e apresente seu trabalho com o cuidado que cada fotografia merece.",
+    storyKicker:"GALERIAS · SELEÇÃO · ENTREGA",
+    storyTitle:"O seu olhar merece uma entrega inesquecível.",
+    storyDescription:"Galerias elegantes para transformar fotos em experiências que seus clientes vão guardar.",
+    storySignature:"FOTURA — CADA HISTÓRIA MERECE SER BEM ENTREGUE.",
+    footer:"Feito para valorizar o trabalho de quem fotografa.",
+  },
+  en: {
+    loginKicker:"YOUR STUDIO",
+    signupKicker:"NEW STUDIO",
+    loginTitle:"Welcome back.",
+    signupTitle:"Your space starts here.",
+    loginIntro:"Sign in to organize your galleries and keep delivering with confidence.",
+    signupIntro:"Create an account and present your work with the care every photograph deserves.",
+    storyKicker:"GALLERIES · PROOFING · DELIVERY",
+    storyTitle:"Your vision deserves an unforgettable delivery.",
+    storyDescription:"Beautiful galleries that turn photographs into experiences your clients will treasure.",
+    storySignature:"FOTURA — EVERY STORY DESERVES A BEAUTIFUL DELIVERY.",
+    footer:"Made to celebrate the work of photographers.",
+  },
+  es: {
+    loginKicker:"TU ESTUDIO",
+    signupKicker:"NUEVO ESTUDIO",
+    loginTitle:"Qué bueno verte de nuevo.",
+    signupTitle:"Tu espacio empieza aquí.",
+    loginIntro:"Accede para organizar tus galerías y continuar tus entregas con tranquilidad.",
+    signupIntro:"Crea tu cuenta y presenta tu trabajo con el cuidado que cada fotografía merece.",
+    storyKicker:"GALERÍAS · SELECCIÓN · ENTREGA",
+    storyTitle:"Tu mirada merece una entrega inolvidable.",
+    storyDescription:"Galerías elegantes que convierten fotografías en experiencias para recordar.",
+    storySignature:"FOTURA — CADA HISTORIA MERECE UNA ENTREGA ESPECIAL.",
+    footer:"Creado para valorar el trabajo de quienes fotografían.",
+  },
+} as const;
+
 function senhaCadastroValida(senha: string) {
   return senha.length >= 8 && senha.length <= 128;
 }
@@ -133,49 +246,120 @@ export default function LoginPage() {
     ? (locale === "en" ? "Hide password" : locale === "es" ? "Ocultar contraseña" : "Ocultar senha")
     : (locale === "en" ? "Show password" : locale === "es" ? "Mostrar contraseña" : "Mostrar senha");
 
+
+  const authCopy = AUTH_COPY[locale === "en" ? "en" : locale === "es" ? "es" : "pt"];
+
   return (
-    <main className="auth-shell" style={{ minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(180deg,#F5F3FB 0%,#EEEAF8 100%)",fontFamily:"sans-serif",padding:24 }}>
-      <section className="auth-card" aria-labelledby="login-title" style={{ background:"#FAF8FD",borderRadius:16,padding:"clamp(24px, 7vw, 40px)",width:"100%",maxWidth:400,border:"1px solid #D7D0E7",boxSizing:"border-box" }}>
-        <div aria-hidden="true" style={{ fontSize:28,fontWeight:700,letterSpacing:4,color:"#21253A",textAlign:"center",marginBottom:8 }}>FOTURA</div>
-        <h1 id="login-title" style={{ fontSize:14,fontWeight:400,color:"#73758D",textAlign:"center",margin:"0 0 32px" }}>{modo === "login" ? t("Entre na sua conta") : t("Crie sua conta")}</h1>
+    <main className="ft-auth-page">
+      <style>{AUTH_STYLES}</style>
+      <section className="ft-auth-panel" aria-labelledby="login-title">
+        <Link href={withLocalePath("/", locale)} className="ft-auth-brand" aria-label="Fotura — início">
+          <span className="ft-auth-brand-symbol" aria-hidden="true" />
+          <span className="ft-auth-brand-name">FOTURA</span>
+        </Link>
 
-        <form onSubmit={(event) => { event.preventDefault(); void handleSubmit(); }} noValidate>
-          <label htmlFor="login-email" style={{ fontSize:13,color:"#5F657D",display:"block",marginBottom:6 }}>{t("E-mail")}</label>
-          <input id="login-email" name="email" type="email" autoComplete="email" inputMode="email" value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="seu@email.com" aria-invalid={mensagemErro && !email.trim() ? true : undefined} style={{ width:"100%",padding:"12px 14px",fontSize:14,border:"1.5px solid #D7D0E7",borderRadius:10,background:"#F3EFF9",color:"#21253A",outline:"none",marginBottom:20,boxSizing:"border-box" }} />
+        <div className="ft-auth-main">
+          <span className="ft-auth-eyebrow">{modo === "login" ? authCopy.loginKicker : authCopy.signupKicker}</span>
+          <h1 id="login-title" className="ft-auth-title">
+            {modo === "login" ? authCopy.loginTitle : authCopy.signupTitle}
+          </h1>
+          <p className="ft-auth-intro">{modo === "login" ? authCopy.loginIntro : authCopy.signupIntro}</p>
 
-          <label htmlFor="login-senha" style={{ fontSize:13,color:"#5F657D",display:"block",marginBottom:6 }}>{t("Senha")}</label>
-          <div style={{ position:"relative",marginBottom:12 }}>
-            <input id="login-senha" name="senha" type={senhaVisivel ? "text" : "password"} autoComplete={modo === "login" ? "current-password" : "new-password"} value={senha} onChange={(e)=>setSenha(e.target.value)} placeholder="••••••••" maxLength={128} aria-describedby={modo === "cadastro" ? "senha-ajuda" : undefined} aria-invalid={mensagemErro && !senha ? true : undefined} style={{ width:"100%",padding:"12px 48px 12px 14px",fontSize:14,border:"1.5px solid #D7D0E7",borderRadius:10,background:"#F3EFF9",color:"#21253A",outline:"none",boxSizing:"border-box" }} />
-            <button type="button" onClick={()=>setSenhaVisivel((atual)=>!atual)} aria-label={textoVisibilidade} title={textoVisibilidade} aria-pressed={senhaVisivel} style={{ position:"absolute",right:2,top:0,width:44,height:"100%",display:"flex",alignItems:"center",justifyContent:"center",background:"transparent",border:"none",borderRadius:8,color:"#5F657D",cursor:"pointer" }}>
-              {senhaVisivel ? (
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c5 0 8.5 4.1 10 7a13.9 13.9 0 0 1-4 4.8"/><path d="M6.4 6.4A14.5 14.5 0 0 0 2 12c1.5 2.9 5 7 10 7a10.8 10.8 0 0 0 4.1-.8"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M3 3l18 18"/>
-                </svg>
-              ) : (
-                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>
-                </svg>
-              )}
+          <form className="ft-auth-form" onSubmit={(event) => { event.preventDefault(); void handleSubmit(); }} noValidate>
+            <label htmlFor="login-email" className="ft-auth-label">{t("E-mail")}</label>
+            <input
+              id="login-email" name="email" className="ft-auth-input ft-auth-email"
+              type="email" autoComplete="email" inputMode="email" value={email}
+              onChange={(event) => setEmail(event.target.value)} placeholder="seu@email.com"
+              aria-invalid={mensagemErro && !email.trim() ? true : undefined}
+              required
+            />
+
+            <label htmlFor="login-senha" className="ft-auth-label">{t("Senha")}</label>
+            <div className="ft-auth-password-wrap">
+              <input
+                id="login-senha" name="senha" className="ft-auth-input ft-auth-password-input"
+                type={senhaVisivel ? "text" : "password"}
+                autoComplete={modo === "login" ? "current-password" : "new-password"}
+                value={senha} onChange={(event) => setSenha(event.target.value)}
+                placeholder="••••••••" maxLength={128}
+                aria-describedby={modo === "cadastro" ? "senha-ajuda" : undefined}
+                aria-invalid={mensagemErro && !senha ? true : undefined}
+                required
+              />
+              <button
+                className="ft-auth-reveal" type="button"
+                onClick={() => setSenhaVisivel((atual) => !atual)}
+                aria-label={textoVisibilidade} title={textoVisibilidade} aria-pressed={senhaVisivel}
+              >
+                {senhaVisivel ? (
+                  <svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c5 0 8.5 4.1 10 7a13.9 13.9 0 0 1-4 4.8"/><path d="M6.4 6.4A14.5 14.5 0 0 0 2 12c1.5 2.9 5 7 10 7a10.8 10.8 0 0 0 4.1-.8"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M3 3l18 18"/>
+                  </svg>
+                ) : (
+                  <svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                )}
+              </button>
+            </div>
+            {modo === "cadastro" && <p id="senha-ajuda" className="ft-auth-hint">{t("Mínimo de 8 caracteres.")}</p>}
+
+            {modo === "login" && (
+              <div className="ft-auth-forgot">
+                <Link href={withLocalePath("/esqueci-senha", locale)} className="ft-auth-link">{t("Esqueci minha senha")}</Link>
+              </div>
+            )}
+
+            {modo === "cadastro" && (
+              <label className="ft-auth-terms">
+                <input
+                  className="ft-auth-checkbox" type="checkbox"
+                  checked={aceitouTermos} onChange={(event) => setAceitouTermos(event.target.checked)}
+                />
+                <span className="ft-auth-terms-copy">
+                  {t("Li e aceito os")}{" "}
+                  <Link href={withLocalePath("/termos", locale)} target="_blank" rel="noopener noreferrer">{t("Termos de Uso")}</Link>
+                  {" "}{locale === "en" ? "and the" : locale === "es" ? "y la" : "e a"}{" "}
+                  <Link href={withLocalePath("/privacidade", locale)} target="_blank" rel="noopener noreferrer">{t("Política de Privacidade")}</Link>.
+                </span>
+              </label>
+            )}
+
+            <button className="ft-auth-submit" type="submit" disabled={carregando} aria-busy={carregando}>
+              {carregando ? t("Aguarde...") : modo === "login" ? t("Entrar") : t("Criar conta")}
             </button>
-          </div>
-          {modo === "cadastro" && <p id="senha-ajuda" style={{fontSize:11,color:"#8A8CA1",margin:"0 0 18px"}}>{t("Mínimo de 8 caracteres.")}</p>}
+          </form>
 
-          {modo === "login" && <div style={{textAlign:"right",marginBottom:24}}><Link href={withLocalePath("/esqueci-senha", locale)} style={{fontSize:12,color:"#4a6cf7",textDecoration:"none"}}>{t("Esqueci minha senha")}</Link></div>}
-
-          {modo === "cadastro" && (
-            <label style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:24,cursor:"pointer"}}>
-              <input type="checkbox" checked={aceitouTermos} onChange={(e)=>setAceitouTermos(e.target.checked)} style={{marginTop:2,accentColor:"#4a6cf7",minWidth:18,minHeight:18}} />
-              <span style={{fontSize:12,color:"#5F657D",lineHeight:1.6}}>{t("Li e aceito os")} <Link href={withLocalePath("/termos", locale)} target="_blank" rel="noopener noreferrer" style={{color:"#4a6cf7",textDecoration:"underline"}}>{t("Termos de Uso")}</Link> {locale === "en" ? "and the" : locale === "es" ? "y la" : "e a"} <Link href={withLocalePath("/privacidade", locale)} target="_blank" rel="noopener noreferrer" style={{color:"#4a6cf7",textDecoration:"underline"}}>{t("Política de Privacidade")}</Link>.</span>
-            </label>
+          {mensagem && (
+            <p role={mensagemErro ? "alert" : "status"} aria-live={mensagemErro ? "assertive" : "polite"} className={mensagemErro ? "ft-auth-message error" : "ft-auth-message"}>
+              {t(mensagem)}
+            </p>
           )}
 
-          <button type="submit" disabled={carregando} aria-busy={carregando} style={{width:"100%",minHeight:44,padding:"13px",fontSize:14,fontWeight:600,color:"#fff",background:carregando?"#7D83C8":"linear-gradient(90deg,#1196fc,#5d0dfa)",border:"none",borderRadius:10,cursor:carregando?"default":"pointer"}}>{carregando ? t("Aguarde...") : modo === "login" ? t("Entrar") : t("Criar conta")}</button>
-        </form>
+          <p className="ft-auth-switch">
+            <span>{modo === "login" ? t("Não tem conta?") : t("Já tem conta?")}</span>
+            <button
+              type="button"
+              onClick={() => { setModo(modo === "login" ? "cadastro" : "login"); setMensagem(""); setSenha(""); setSenhaVisivel(false); }}
+            >
+              {modo === "login" ? t("Cadastre-se") : t("Fazer login")}
+            </button>
+          </p>
+        </div>
 
-        {mensagem && <p role={mensagemErro ? "alert" : "status"} aria-live={mensagemErro ? "assertive" : "polite"} style={{fontSize:13,textAlign:"center",marginTop:16,color:mensagemErro?"#ef4444":"#22c55e"}}>{t(mensagem)}</p>}
-
-        <p style={{fontSize:13,color:"#73758D",textAlign:"center",marginTop:24}}>{modo === "login" ? t("Não tem conta?") : t("Já tem conta?")} <button type="button" onClick={()=>{setModo(modo === "login" ? "cadastro" : "login");setMensagem("");setSenha("");setSenhaVisivel(false);}} style={{background:"none",border:"none",cursor:"pointer",color:"#4a6cf7",fontSize:"inherit",fontFamily:"inherit",padding:4,textDecoration:"underline"}}>{modo === "login" ? t("Cadastre-se") : t("Fazer login")}</button></p>
+        <p className="ft-auth-footer">{authCopy.footer}</p>
       </section>
+
+      <aside className="ft-auth-story">
+        <div className="ft-auth-story-content">
+          <span className="ft-auth-story-rule" aria-hidden="true" />
+          <span className="ft-auth-story-kicker">{authCopy.storyKicker}</span>
+          <h2 className="ft-auth-story-title">{authCopy.storyTitle}</h2>
+          <p className="ft-auth-story-description">{authCopy.storyDescription}</p>
+          <span className="ft-auth-story-signature">{authCopy.storySignature}</span>
+        </div>
+      </aside>
     </main>
   );
 }
