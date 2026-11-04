@@ -9,7 +9,7 @@ import { normalizeLocale, withLocalePath } from "../../lib/i18n";
 
 const ORIGEM_PRODUCAO = "https://foturax.com.br";
 
-const AUTH_STYLES = \`
+const AUTH_STYLES = `
   .ft-auth-page{display:grid;grid-template-columns:minmax(0,43%) minmax(0,57%);min-height:100vh;min-height:100svh;width:100%;background:#F9F7F3;color:#222338}
   .ft-auth-panel{display:flex;flex-direction:column;min-width:0;min-height:100svh;padding:clamp(28px,4.2vw,66px) clamp(26px,5vw,88px) 30px;box-sizing:border-box}
   .ft-auth-brand{display:inline-flex;align-items:center;gap:13px;align-self:flex-start;color:#26273B;text-decoration:none}
@@ -78,7 +78,7 @@ const AUTH_STYLES = \`
     .ft-auth-input{height:54px}
     .ft-auth-footer{text-align:center}
   }
-\`;
+`;
 
 const AUTH_COPY = {
   pt: {
