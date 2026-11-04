@@ -47,19 +47,21 @@ const AUTH_STYLES = `
   .ft-auth-switch button{color:#34316F;text-decoration:underline;text-underline-offset:3px;border:0;background:none;padding:4px;cursor:pointer;font:inherit;font-weight:700}
   .ft-auth-footer{margin-top:18px;color:#A19AAB;font-size:11px;line-height:1.5}
   .ft-auth-story{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;min-width:0;min-height:100vh;min-height:100svh;padding:72px clamp(36px,6.6vw,112px);box-sizing:border-box;overflow:hidden;text-align:center;color:#FAF8FF;background:radial-gradient(ellipse at 72% 42%,rgba(123,109,183,.25),transparent 54%),linear-gradient(145deg,#17192F 0%,#252440 55%,#20283F 100%)}
-  .ft-auth-story::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.025),transparent 35%),radial-gradient(ellipse at 80% 95%,rgba(95,133,196,.15),transparent 45%);z-index:-1}
-  .ft-auth-story::after{content:"F";position:absolute;right:-3%;bottom:-20%;font-family:Georgia,"Times New Roman",serif!important;font-size:clamp(360px,43vw,780px);line-height:1;color:rgba(250,248,255,.028);z-index:-1;pointer-events:none}
-  .ft-auth-story-content{width:100%;max-width:820px;position:relative}
-  .ft-auth-story-rule{display:block;width:80px;height:3px;margin:0 0 clamp(52px,9vh,92px);border-radius:99px;background:linear-gradient(90deg,#B5A7F6,#8EBBF5)}
-  .ft-auth-story-kicker{color:#C0B6EE;text-transform:uppercase;letter-spacing:.22em;font-size:11px;font-weight:700;line-height:1.6}
-  .ft-auth-story-title{font-family:Georgia,"Times New Roman",serif!important;font-size:clamp(57px,5.9vw,102px);font-weight:400;letter-spacing:-.055em;line-height:1.035;margin:26px auto 22px;max-width:820px;text-wrap:balance}
-  .ft-auth-story-description{color:#CDC8DE;font-size:14px;line-height:1.8;max-width:430px;margin:0 auto}
-  .ft-auth-story-signature{display:block;color:#AAA4CA;font-size:10px;letter-spacing:.17em;font-weight:700;margin-top:clamp(40px,8vh,86px)}
+  .ft-auth-story::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.025),transparent 35%),radial-gradient(ellipse at 80% 95%,rgba(95,133,196,.15),transparent 45%);z-index:0;pointer-events:none}
+  .ft-auth-story-emblem{position:absolute;right:-13%;bottom:-28%;width:min(60vw,820px);height:min(60vw,820px);z-index:0;pointer-events:none;background:linear-gradient(135deg,#C7BFFF,#B6D1FF);-webkit-mask:url("/favicon.svg") center/contain no-repeat;mask:url("/favicon.svg") center/contain no-repeat;opacity:.115;transform:rotate(-10deg)}
+  .ft-auth-story-content{width:100%;max-width:690px;position:relative;z-index:1;text-align:left}
+  .ft-auth-story-kicker{display:flex;align-items:center;gap:12px;color:#CFCAE5;text-transform:uppercase;letter-spacing:.16em;font-size:11px;font-weight:800;line-height:1.6}
+  .ft-auth-story-kicker::before{content:"";display:block;width:24px;height:1px;flex:none;background:#A8A3C6}
+  .ft-auth-story-title{font-family:inherit!important;font-size:clamp(48px,5.15vw,86px);font-weight:750;letter-spacing:-.064em;line-height:.97;margin:25px 0 25px;max-width:690px;text-wrap:balance}
+  .ft-auth-story-highlight{display:inline-block;font-family:Georgia,"Times New Roman",serif;font-style:italic;font-weight:500;letter-spacing:-.055em;padding:0 .08em .12em 0;margin:0 -.08em -.12em 0;background:linear-gradient(95deg,#1998FF 0%,#4771FF 44%,#7941FF 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+  .ft-auth-story-description{color:#D0CCDF;font-size:14px;line-height:1.8;max-width:500px;margin:0}
+  .ft-auth-story-signature{display:block;color:#AAA4CA;font-size:10px;letter-spacing:.17em;font-weight:700;margin-top:clamp(36px,8vh,80px)}
   @media(max-width:1100px){
     .ft-auth-page{grid-template-columns:minmax(0,46%) minmax(0,54%)}
     .ft-auth-panel{padding-inline:clamp(26px,4.1vw,52px)}
     .ft-auth-story{padding-inline:38px}
-    .ft-auth-story-title{font-size:clamp(52px,5.8vw,82px)}
+    .ft-auth-story-title{font-size:clamp(43px,5.1vw,70px)}
+    .ft-auth-story-emblem{right:-20%;bottom:-18%;width:min(64vw,700px);height:min(64vw,700px)}
   }
   @media(max-width:880px){
     .ft-auth-page{display:block}
@@ -88,8 +90,6 @@ const AUTH_COPY = {
     signupTitle:"Seu espaço começa aqui.",
     loginIntro:"Entre para organizar suas galerias e continuar suas entregas com tranquilidade.",
     signupIntro:"Crie sua conta e apresente seu trabalho com o cuidado que cada fotografia merece.",
-    storyKicker:"GALERIAS · SELEÇÃO · ENTREGA",
-    storyTitle:"O seu olhar merece uma entrega inesquecível.",
     storyDescription:"Galerias elegantes para transformar fotos em experiências que seus clientes vão guardar.",
     storySignature:"FOTURA — CADA HISTÓRIA MERECE SER BEM ENTREGUE.",
     footer:"Feito para valorizar o trabalho de quem fotografa.",
@@ -101,8 +101,6 @@ const AUTH_COPY = {
     signupTitle:"Your space starts here.",
     loginIntro:"Sign in to organize your galleries and keep delivering with confidence.",
     signupIntro:"Create an account and present your work with the care every photograph deserves.",
-    storyKicker:"GALLERIES · PROOFING · DELIVERY",
-    storyTitle:"Your vision deserves an unforgettable delivery.",
     storyDescription:"Beautiful galleries that turn photographs into experiences your clients will treasure.",
     storySignature:"FOTURA — EVERY STORY DESERVES A BEAUTIFUL DELIVERY.",
     footer:"Made to celebrate the work of photographers.",
@@ -114,8 +112,6 @@ const AUTH_COPY = {
     signupTitle:"Tu espacio empieza aquí.",
     loginIntro:"Accede para organizar tus galerías y continuar tus entregas con tranquilidad.",
     signupIntro:"Crea tu cuenta y presenta tu trabajo con el cuidado que cada fotografía merece.",
-    storyKicker:"GALERÍAS · SELECCIÓN · ENTREGA",
-    storyTitle:"Tu mirada merece una entrega inolvidable.",
     storyDescription:"Galerías elegantes que convierten fotografías en experiencias para recordar.",
     storySignature:"FOTURA — CADA HISTORIA MERECE UNA ENTREGA ESPECIAL.",
     footer:"Creado para valorar el trabajo de quienes fotografían.",
@@ -352,10 +348,14 @@ export default function LoginPage() {
       </section>
 
       <aside className="ft-auth-story">
+        <span className="ft-auth-story-emblem" aria-hidden="true" />
         <div className="ft-auth-story-content">
-          <span className="ft-auth-story-rule" aria-hidden="true" />
-          <span className="ft-auth-story-kicker">{authCopy.storyKicker}</span>
-          <h2 className="ft-auth-story-title">{authCopy.storyTitle}</h2>
+          <span className="ft-auth-story-kicker">{t("Galerias de entrega e prova online")}</span>
+          <h2 className="ft-auth-story-title">
+            {t("Sua fotografia merece uma")}{" "}
+            <span className="ft-auth-story-highlight">{t("entrega")}</span>{" "}
+            {t("à altura.")}
+          </h2>
           <p className="ft-auth-story-description">{authCopy.storyDescription}</p>
           <span className="ft-auth-story-signature">{authCopy.storySignature}</span>
         </div>
