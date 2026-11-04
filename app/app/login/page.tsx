@@ -141,6 +141,7 @@ export default function LoginPage() {
     <AuthFrame
       eyebrow={modo === "login" ? authCopy.loginKicker : authCopy.signupKicker}
       title={modo === "login" ? authCopy.loginTitle : authCopy.signupTitle}
+      singleLineTitle={modo === "cadastro"}
       intro={modo === "login" ? authCopy.loginIntro : authCopy.signupIntro}
     >
           <form className="ft-auth-form" onSubmit={(event) => { event.preventDefault(); void handleSubmit(); }} noValidate>
