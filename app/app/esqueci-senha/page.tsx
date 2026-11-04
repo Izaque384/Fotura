@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase-client";
 import { useI18n } from "../components/I18nProvider";
+import AuthFrame from "../components/AuthFrame";
 import { withLocalePath } from "../../lib/i18n";
 
 const ORIGEM_PRODUCAO = "https://foturax.com.br";
@@ -15,12 +16,37 @@ function origemRecuperacao() {
   return ORIGEM_PRODUCAO;
 }
 
+const RECOVERY_COPY = {
+  pt: {
+    eyebrow: "SEGURANÇA DA CONTA",
+    title: "Recupere seu acesso.",
+    intro: "Informe o e-mail da sua conta para receber um link e definir uma nova senha.",
+    sentTitle: "Verifique seu e-mail.",
+    sentIntro: "Se o endereço informado estiver cadastrado, você receberá as instruções de recuperação.",
+  },
+  en: {
+    eyebrow: "ACCOUNT SECURITY",
+    title: "Recover your access.",
+    intro: "Enter your account email to receive a link to set a new password.",
+    sentTitle: "Check your email.",
+    sentIntro: "If the address is registered, you will receive password recovery instructions.",
+  },
+  es: {
+    eyebrow: "SEGURIDAD DE LA CUENTA",
+    title: "Recupera tu acceso.",
+    intro: "Introduce el correo de tu cuenta para recibir un enlace y crear una nueva contraseña.",
+    sentTitle: "Revisa tu correo.",
+    sentIntro: "Si el correo está registrado, recibirás instrucciones para recuperar tu contraseña.",
+  },
+} as const;
+
 export default function EsqueciSenhaPage() {
   const { locale, t } = useI18n();
   const [email, setEmail] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const supabase = createClient();
+  const copy = RECOVERY_COPY[locale === "en" ? "en" : locale === "es" ? "es" : "pt"];
 
   async function handleSubmit() {
     const emailNormalizado = email.trim().toLowerCase();
@@ -37,29 +63,33 @@ export default function EsqueciSenhaPage() {
   }
 
   return (
-    <div className="auth-shell" style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(180deg,#F5F3FB 0%,#EEEAF8 100%)",fontFamily:"sans-serif",padding:24}}>
-      <div className="auth-card" style={{background:"#FAF8FD",borderRadius:16,padding:40,width:"100%",maxWidth:400,border:"1px solid #D7D0E7"}}>
-        <div style={{fontSize:28,fontWeight:700,letterSpacing:4,color:"#21253A",textAlign:"center",marginBottom:8}}>FOTURA</div>
-        <p style={{fontSize:14,color:"#73758D",textAlign:"center",marginBottom:32}}>{t("Recuperação de senha")}</p>
+    <AuthFrame
+      eyebrow={copy.eyebrow}
+      title={enviado ? copy.sentTitle : copy.title}
+      intro={enviado ? copy.sentIntro : copy.intro}
+    >
+      {enviado ? (
+        <p className="ft-auth-message" role="status" aria-live="polite">
+          {t("Se existir uma conta com esse e-mail, enviaremos um link de recuperação. Verifique também a caixa de spam.")}
+        </p>
+      ) : (
+        <form className="ft-auth-form" onSubmit={(event) => { event.preventDefault(); void handleSubmit(); }}>
+          <label className="ft-auth-label" htmlFor="recovery-email">{t("E-mail da sua conta")}</label>
+          <input
+            id="recovery-email" className="ft-auth-input ft-auth-email"
+            type="email" name="email" autoComplete="email" inputMode="email"
+            value={email} onChange={(event) => setEmail(event.target.value)}
+            placeholder="seu@email.com" required
+          />
+          <button className="ft-auth-submit" type="submit" disabled={carregando} aria-busy={carregando}>
+            {carregando ? t("Enviando...") : t("Enviar link de recuperação")}
+          </button>
+        </form>
+      )}
 
-        {enviado ? (
-          <>
-            <div style={{background:"#EAF5EF",border:"1px solid #22c55e44",borderRadius:10,padding:"16px 18px",marginBottom:24}}>
-              <p style={{fontSize:14,color:"#47735B",margin:0,lineHeight:1.6}}>
-                {t("Se existir uma conta com esse e-mail, enviaremos um link de recuperação. Verifique também a caixa de spam.")}
-              </p>
-            </div>
-            <Link href={withLocalePath("/login", locale)} style={{display:"block",textAlign:"center",fontSize:13,color:"#4a6cf7",textDecoration:"underline"}}>{t("Voltar ao login")}</Link>
-          </>
-        ) : (
-          <>
-            <label style={{fontSize:13,color:"#5F657D",display:"block",marginBottom:6}}>{t("E-mail da sua conta")}</label>
-            <input type="email" autoComplete="email" value={email} onChange={(e)=>setEmail(e.target.value)} onKeyDown={(e)=>e.key === "Enter" && handleSubmit()} placeholder="seu@email.com" style={{width:"100%",padding:"12px 14px",fontSize:14,border:"1.5px solid #D7D0E7",borderRadius:10,background:"#F3EFF9",color:"#21253A",outline:"none",marginBottom:24,boxSizing:"border-box"}} />
-            <button onClick={handleSubmit} disabled={carregando} style={{width:"100%",padding:"13px",fontSize:14,fontWeight:600,color:"#fff",background:carregando?"#7D83C8":"linear-gradient(90deg,#1196fc,#5d0dfa)",border:"none",borderRadius:10,cursor:carregando?"default":"pointer"}}>{carregando?t("Enviando..."):t("Enviar link de recuperação")}</button>
-            <p style={{fontSize:13,color:"#73758D",textAlign:"center",marginTop:24}}><Link href={withLocalePath("/login", locale)} style={{color:"#4a6cf7",textDecoration:"underline"}}>{t("Voltar ao login")}</Link></p>
-          </>
-        )}
-      </div>
-    </div>
+      <p className="ft-auth-switch">
+        <Link href={withLocalePath("/login", locale)} className="ft-auth-link">{t("Voltar ao login")}</Link>
+      </p>
+    </AuthFrame>
   );
 }
