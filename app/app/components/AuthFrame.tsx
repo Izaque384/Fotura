@@ -11,9 +11,10 @@ const AUTH_STYLES = `
   .ft-auth-brand{display:inline-flex;align-items:center;gap:13px;align-self:flex-start;color:#26273B;text-decoration:none}
   .ft-auth-brand-symbol{display:block;width:45px;height:45px;flex:none;background:url("/favicon.svg") center/contain no-repeat}
   .ft-auth-brand-name{font-size:24px;font-weight:700;letter-spacing:0.12em}
-  .ft-auth-main{width:100%;max-width:490px;margin:auto;display:flex;flex-direction:column;justify-content:center;padding:42px 0 28px}
+  .ft-auth-main{width:100%;max-width:490px;margin:auto;display:flex;flex-direction:column;justify-content:center;padding:42px 0 28px;container-type:inline-size}
   .ft-auth-eyebrow{color:#585587;font-size:11px;font-weight:700;letter-spacing:0.21em;text-transform:uppercase}
   .ft-auth-title{font-family:Georgia,"Times New Roman",serif!important;font-size:clamp(43px,4.05vw,68px);font-weight:400;letter-spacing:-0.058em;line-height:1.02;margin:16px 0 16px;color:#242336}
+  .ft-auth-title.ft-auth-title--singleline{font-size:clamp(22px,8.8cqw,44px);white-space:nowrap}
   .ft-auth-intro{color:#787485;font-size:14px;line-height:1.85;max-width:410px;margin:0 0 30px}
   .ft-auth-form{width:100%}
   .ft-auth-label{display:block;color:#3A3B4D;font-size:12px;font-weight:700;margin:0 0 9px}
@@ -118,10 +119,11 @@ type AuthFrameProps = {
   eyebrow: string;
   title: string;
   intro?: string;
+  singleLineTitle?: boolean;
   children: ReactNode;
 };
 
-export default function AuthFrame({ eyebrow, title, intro, children }: AuthFrameProps) {
+export default function AuthFrame({ eyebrow, title, intro, singleLineTitle = false, children }: AuthFrameProps) {
   const { locale, t } = useI18n();
   const authCopy = AUTH_COPY[locale === "en" ? "en" : locale === "es" ? "es" : "pt"];
 
@@ -136,7 +138,7 @@ export default function AuthFrame({ eyebrow, title, intro, children }: AuthFrame
 
         <div className="ft-auth-main">
           <span className="ft-auth-eyebrow">{eyebrow}</span>
-          <h1 id="login-title" className="ft-auth-title">{title}</h1>
+          <h1 id="login-title" className={singleLineTitle ? "ft-auth-title ft-auth-title--singleline" : "ft-auth-title"}>{title}</h1>
           {intro && <p className="ft-auth-intro">{intro}</p>}
           {children}
         </div>
