@@ -48,7 +48,7 @@ const AUTH_STYLES = `
   .ft-auth-footer{margin-top:18px;color:#A19AAB;font-size:11px;line-height:1.5}
   .ft-auth-story{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;min-width:0;min-height:100vh;min-height:100svh;padding:72px clamp(36px,6.6vw,112px);box-sizing:border-box;overflow:hidden;text-align:center;color:#FAF8FF;background:radial-gradient(ellipse at 72% 42%,rgba(123,109,183,.25),transparent 54%),linear-gradient(145deg,#17192F 0%,#252440 55%,#20283F 100%)}
   .ft-auth-story::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.025),transparent 35%),radial-gradient(ellipse at 80% 95%,rgba(95,133,196,.15),transparent 45%);z-index:0;pointer-events:none}
-  .ft-auth-story-emblem{position:absolute;left:50%;top:50%;width:min(54vw,760px);aspect-ratio:1;transform:translate(-50%,-50%);z-index:0;pointer-events:none;background:linear-gradient(135deg,#C7BFFF,#B6D1FF);-webkit-mask:url("/favicon.svg") center/contain no-repeat;mask:url("/favicon.svg") center/contain no-repeat;opacity:.115}
+  .ft-auth-story-emblem{position:absolute;right:-13%;bottom:-28%;width:min(60vw,820px);height:min(60vw,820px);z-index:0;pointer-events:none;background:linear-gradient(135deg,#C7BFFF,#B6D1FF);-webkit-mask:url("/favicon.svg") center/contain no-repeat;mask:url("/favicon.svg") center/contain no-repeat;opacity:.115}
   .ft-auth-story-content{width:100%;max-width:690px;position:relative;z-index:1;text-align:left}
   .ft-auth-story-kicker{display:flex;align-items:center;gap:12px;color:#CFCAE5;text-transform:uppercase;letter-spacing:.16em;font-size:11px;font-weight:800;line-height:1.6}
   .ft-auth-story-kicker::before{content:"";display:block;width:24px;height:1px;flex:none;background:#A8A3C6}
@@ -61,7 +61,7 @@ const AUTH_STYLES = `
     .ft-auth-panel{padding-inline:clamp(26px,4.1vw,52px)}
     .ft-auth-story{padding-inline:38px}
     .ft-auth-story-title{font-size:clamp(43px,5.1vw,70px)}
-    .ft-auth-story-emblem{width:min(60vw,650px)}
+    .ft-auth-story-emblem{right:-20%;bottom:-18%;width:min(64vw,700px);height:min(64vw,700px)}
   }
   @media(max-width:880px){
     .ft-auth-page{display:block}
