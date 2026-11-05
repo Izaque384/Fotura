@@ -3046,3 +3046,62 @@ html body .mf-shift :is(
     padding-top:max(76px,calc(env(safe-area-inset-top) + 68px)) !important;
   }
 }
+
+/* Sidebar do painel: mesma cor sólida do rodapé da landing page (#151518). */
+html body .mf-side,
+html body:has(.dash.mf-shift) .mf-side{
+  background:#151518 !important;
+  background-image:none !important;
+  border-right:1px solid rgba(255,255,255,.10) !important;
+  box-shadow:8px 0 28px rgba(0,0,0,.19) !important;
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
+}
+html body .mf-side .mf-brand-tx,
+html body:has(.dash.mf-shift) .mf-side .mf-brand-tx{
+  color:#F8F7F5 !important;
+}
+html body .mf-side :is(.mf-item,.mf-sair,.mf-admin),
+html body:has(.dash.mf-shift) .mf-side :is(.mf-item,.mf-sair,.mf-admin){
+  color:rgba(248,247,250,.76) !important;
+}
+html body .mf-side .mf-nav-secondary{
+  border-top-color:rgba(255,255,255,.14) !important;
+}
+html body .mf-side .mf-item:hover,
+html body:has(.dash.mf-shift) .mf-side .mf-item:hover{
+  background:rgba(255,255,255,.085) !important;
+  color:#FFFFFF !important;
+  border-color:rgba(255,255,255,.10) !important;
+}
+html body .mf-side .mf-item.ativo,
+html body:has(.dash.mf-shift) .mf-side .mf-item.ativo{
+  background:rgba(255,255,255,.12) !important;
+  color:#FFFFFF !important;
+  border-color:rgba(255,255,255,.14) !important;
+  box-shadow:inset 3px 0 0 #A89BFF !important;
+}
+html body .mf-side .mf-admin,
+html body:has(.dash.mf-shift) .mf-side .mf-admin{
+  border-color:rgba(255,255,255,.13) !important;
+  background:rgba(255,255,255,.055) !important;
+}
+html body .mf-side .mf-admin:hover,
+html body:has(.dash.mf-shift) .mf-side .mf-admin:hover{
+  background:rgba(255,255,255,.11) !important;
+  color:#FFFFFF !important;
+}
+html body .mf-side .mf-sair,
+html body:has(.dash.mf-shift) .mf-side .mf-sair{
+  color:#E6ADB6 !important;
+}
+html body .mf-side .mf-sair:hover,
+html body:has(.dash.mf-shift) .mf-side .mf-sair:hover{
+  background:rgba(230,173,182,.11) !important;
+  color:#FFD6DF !important;
+}
+html body .mf-side .mf-drawer-close{
+  background:#29292D !important;
+  color:#F8F7F5 !important;
+  border-color:rgba(255,255,255,.16) !important;
+}
