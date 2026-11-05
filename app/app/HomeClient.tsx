@@ -102,6 +102,39 @@ const passos = [
   },
 ];
 
+const footerCopy = {
+  pt: {
+    tagline: "Cada fotografia merece uma entrega à altura.",
+    product: "Produto",
+    resources: "Recursos",
+    account: "Conta",
+    create: "Criar conta",
+    help: "Central de ajuda",
+    label: "FEITO PARA FOTÓGRAFOS",
+    statement: "Seu trabalho merece ser apresentado com a mesma dedicação com que foi criado.",
+  },
+  en: {
+    tagline: "Every photograph deserves a delivery that lives up to it.",
+    product: "Product",
+    resources: "Features",
+    account: "Account",
+    create: "Create account",
+    help: "Help center",
+    label: "MADE FOR PHOTOGRAPHERS",
+    statement: "Your work deserves to be presented with the same care that went into creating it.",
+  },
+  es: {
+    tagline: "Cada fotografía merece una entrega a su altura.",
+    product: "Producto",
+    resources: "Funciones",
+    account: "Cuenta",
+    create: "Crear cuenta",
+    help: "Centro de ayuda",
+    label: "HECHO PARA FOTÓGRAFOS",
+    statement: "Tu trabajo merece presentarse con el mismo cuidado con el que fue creado.",
+  },
+} as const;
+
 function Logo() {
   return (
     <svg viewBox="0 0 115 101" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -325,6 +358,7 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
     });
   }
 
+  const footerText = footerCopy[locale];
   const destinoPrincipal = withLocalePath(logado ? "/dashboard" : "/login?modo=cadastro", locale);
   const destinoLogin = withLocalePath(logado ? "/dashboard" : "/login", locale);
   const heroAtual = [
@@ -539,14 +573,44 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
         </section>
       </main>
 
-      <footer className="lp2-shell lp2-footer">
-        <a className="lp2-brand" href={withLocalePath("/", locale)}><Logo /><strong>FOTURA</strong></a>
-        <div className="lp2-footer-links">
-          <a href={withLocalePath("/termos", locale)}>{t("Termos")}</a>
-          <a href={withLocalePath("/privacidade", locale)}>{t("Privacidade")}</a>
-          <a href={withLocalePath("/login", locale)}>{t("Entrar")}</a>
+      <footer className="lp2-footer">
+        <div className="lp2-shell lp2-footer-inner">
+          <div className="lp2-footer-grid">
+            <div className="lp2-footer-brand">
+              <a className="lp2-brand" href={withLocalePath("/", locale)} aria-label="Fotura — página inicial">
+                <Logo /><strong>FOTURA</strong>
+              </a>
+              <p>{footerText.tagline}</p>
+            </div>
+
+            <nav className="lp2-footer-column lp2-footer-product" aria-label={footerText.product}>
+              <h3>{footerText.product}</h3>
+              <a href="#experiencia">{footerText.resources}</a>
+              <a href="#planos">{t("Planos")}</a>
+              <a href="#fluxo">{t("Como funciona")}</a>
+            </nav>
+
+            <nav className="lp2-footer-column lp2-footer-account" aria-label={footerText.account}>
+              <h3>{footerText.account}</h3>
+              <a href={destinoLogin}>{logado ? t("Painel") : t("Entrar")}</a>
+              <a href={destinoPrincipal} onClick={() => rastrearCriacao("footer")}>{logado ? t("Abrir meu painel") : footerText.create}</a>
+              <a href={withLocalePath("/ajuda", locale)}>{footerText.help}</a>
+            </nav>
+
+            <div className="lp2-footer-statement">
+              <span>{footerText.label}</span>
+              <p>{footerText.statement}</p>
+            </div>
+          </div>
+
+          <div className="lp2-footer-bottom">
+            <small>© {new Date().getFullYear()} Fotura. {t("Todos os direitos reservados.")} <span>· {t("Fotos demonstrativas via Unsplash")}</span></small>
+            <div className="lp2-footer-legal">
+              <a href={withLocalePath("/termos", locale)}>{t("Termos")}</a>
+              <a href={withLocalePath("/privacidade", locale)}>{t("Privacidade")}</a>
+            </div>
+          </div>
         </div>
-        <div className="lp2-credit">© {new Date().getFullYear()} Fotura · {t("Fotos demonstrativas via Unsplash")}</div>
       </footer>
     </div>
   );
