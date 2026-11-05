@@ -105,6 +105,7 @@ const passos = [
 const footerCopy = {
   pt: {
     tagline: "Cada fotografia merece uma entrega à altura.",
+    rights: "Todos os direitos reservados.",
     product: "Produto",
     resources: "Recursos",
     account: "Conta",
@@ -115,6 +116,7 @@ const footerCopy = {
   },
   en: {
     tagline: "Every photograph deserves a delivery that lives up to it.",
+    rights: "All rights reserved.",
     product: "Product",
     resources: "Features",
     account: "Account",
@@ -125,6 +127,7 @@ const footerCopy = {
   },
   es: {
     tagline: "Cada fotografía merece una entrega a su altura.",
+    rights: "Todos los derechos reservados.",
     product: "Producto",
     resources: "Funciones",
     account: "Cuenta",
@@ -577,7 +580,7 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
         <div className="lp2-shell lp2-footer-inner">
           <div className="lp2-footer-grid">
             <div className="lp2-footer-brand">
-              <a className="lp2-brand" href={withLocalePath("/", locale)} aria-label="Fotura — página inicial">
+              <a className="lp2-brand" href={withLocalePath("/", locale)} aria-label="Fotura">
                 <Logo /><strong>FOTURA</strong>
               </a>
               <p>{footerText.tagline}</p>
@@ -604,7 +607,7 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
           </div>
 
           <div className="lp2-footer-bottom">
-            <small>© {new Date().getFullYear()} Fotura. {t("Todos os direitos reservados.")} <span>· {t("Fotos demonstrativas via Unsplash")}</span></small>
+            <small>© {new Date().getFullYear()} Fotura. {footerText.rights} <span>· {t("Fotos demonstrativas via Unsplash")}</span></small>
             <div className="lp2-footer-legal">
               <a href={withLocalePath("/termos", locale)}>{t("Termos")}</a>
               <a href={withLocalePath("/privacidade", locale)}>{t("Privacidade")}</a>
