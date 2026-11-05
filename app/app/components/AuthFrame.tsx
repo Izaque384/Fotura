@@ -7,17 +7,17 @@ import { withLocalePath } from "../../lib/i18n";
 
 const AUTH_STYLES = `
   .ft-auth-page{display:grid;grid-template-columns:minmax(0,43%) minmax(0,57%);width:100%;height:100vh;height:100dvh;min-height:0;overflow:hidden;background:#F9F7F3;color:#222338}
-  .ft-auth-panel{display:grid;grid-template-rows:auto minmax(0,1fr);justify-items:center;align-items:center;min-width:0;min-height:0;height:100%;padding:clamp(18px,3.5vh,38px) clamp(20px,4vw,70px);box-sizing:border-box;overflow:hidden}
-  .ft-auth-brand{display:inline-flex;align-items:center;gap:12px;align-self:start;justify-self:center;color:#26273B;text-decoration:none;white-space:nowrap}
+  .ft-auth-panel{display:grid;grid-template-rows:auto minmax(0,1fr);justify-items:start;align-items:center;min-width:0;min-height:0;height:100%;padding:clamp(18px,3.5vh,38px) clamp(20px,4vw,70px);box-sizing:border-box;overflow:hidden}
+  .ft-auth-brand{display:inline-flex;align-items:center;gap:12px;align-self:start;justify-self:start;color:#26273B;text-decoration:none;white-space:nowrap}
   .ft-auth-brand-symbol{display:block;width:45px;height:45px;flex:none;background:url("/favicon.svg") center/contain no-repeat}
   .ft-auth-brand-name{font-size:24px;font-weight:700;letter-spacing:0.12em}
-  .ft-auth-main{width:100%;max-width:490px;min-width:0;min-height:0;margin:0 auto;display:flex;flex-direction:column;align-items:stretch;justify-content:center;align-self:center;justify-self:center;padding:0;text-align:center;container-type:inline-size}
-  .ft-auth-eyebrow{color:#585587;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;text-align:center}
-  .ft-auth-title{font-family:Georgia,"Times New Roman",serif!important;font-size:clamp(34px,3.65vw,54px);font-weight:400;letter-spacing:-0.055em;line-height:1.08;margin:12px 0 12px;color:#242336;text-align:center;text-wrap:balance;overflow-wrap:normal}
+  .ft-auth-main{width:100%;max-width:490px;min-width:0;min-height:0;margin:0 auto;display:flex;flex-direction:column;align-items:stretch;justify-content:center;align-self:center;justify-self:center;padding:0;text-align:left;container-type:inline-size}
+  .ft-auth-eyebrow{color:#585587;font-size:11px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;text-align:left}
+  .ft-auth-title{font-family:Georgia,"Times New Roman",serif!important;font-size:clamp(34px,3.65vw,54px);font-weight:400;letter-spacing:-0.055em;line-height:1.08;margin:12px 0 12px;color:#242336;text-align:left;text-wrap:balance;overflow-wrap:normal}
   .ft-auth-title.ft-auth-title--singleline{font-size:clamp(18px,7.3cqw,37px)!important;white-space:nowrap!important;letter-spacing:-.055em;line-height:1.14}
-  .ft-auth-intro{color:#787485;font-size:13px;line-height:1.55;max-width:420px;margin:0 auto 20px;text-align:center;text-wrap:pretty}
+  .ft-auth-intro{color:#787485;font-size:13px;line-height:1.55;max-width:420px;margin:0 0 20px;text-align:left;text-wrap:pretty}
   .ft-auth-form{width:100%}
-  .ft-auth-label{display:block;color:#3A3B4D;font-size:12px;font-weight:700;margin:0 0 7px;text-align:center}
+  .ft-auth-label{display:block;color:#3A3B4D;font-size:12px;font-weight:700;margin:0 0 7px;text-align:left}
   .ft-auth-input{display:block;width:100%;height:49px;padding:0 16px;box-sizing:border-box;border:1px solid #DDD7E3;border-radius:12px;background:#FFFEFC;color:#25263E;font-size:14px;outline:0;transition:border-color .18s,box-shadow .18s}
   .ft-auth-input::placeholder{color:#9B97A4}
   .ft-auth-input:focus{border-color:#7564CD;box-shadow:0 0 0 3px rgba(101,84,193,.12)}
@@ -27,20 +27,20 @@ const AUTH_STYLES = `
   .ft-auth-password-input{padding-right:58px}
   .ft-auth-reveal{position:absolute;right:5px;top:5px;display:flex;align-items:center;justify-content:center;width:46px;height:46px;cursor:pointer;border:0;border-radius:9px;background:transparent;color:#66637B;transition:background .18s}
   .ft-auth-reveal:hover{background:#EEEAF5;color:#3F3984}
-  .ft-auth-hint{color:#777487;font-size:11px;margin:7px 0 13px;text-align:center;line-height:1.4}
+  .ft-auth-hint{color:#777487;font-size:11px;margin:7px 0 13px;text-align:left;line-height:1.4}
   .ft-auth-reset-password-wrap{margin-bottom:16px}
   .ft-auth-reset-hint{margin-top:-6px;margin-bottom:17px}
-  .ft-auth-forgot{display:flex;justify-content:center;margin:12px 0 17px}
+  .ft-auth-forgot{display:flex;justify-content:flex-end;margin:12px 0 17px}
   .ft-auth-link{color:#4D4A98;font-size:12px;font-weight:650;text-decoration:none}
   .ft-auth-link:hover{text-decoration:underline}
-  .ft-auth-terms{display:flex;align-items:flex-start;justify-content:center;gap:10px;margin:14px auto 16px;cursor:pointer;max-width:430px}
+  .ft-auth-terms{display:flex;align-items:flex-start;justify-content:flex-start;gap:10px;margin:14px 0 16px;cursor:pointer;max-width:430px}
   .ft-auth-checkbox{width:18px;height:18px;min-width:18px;margin-top:3px;accent-color:#5652A7}
-  .ft-auth-terms-copy{font-size:12px;line-height:1.55;color:#6A687C;text-align:center;text-wrap:pretty}
+  .ft-auth-terms-copy{font-size:12px;line-height:1.55;color:#6A687C;text-align:left;text-wrap:pretty}
   .ft-auth-terms-copy a{color:#4D4A98;text-decoration:underline;text-underline-offset:2px}
   .ft-auth-submit{width:100%;min-height:49px;padding:11px 24px;border:0;border-radius:12px;background:#292743;color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:background .18s,transform .18s;box-shadow:0 10px 22px rgba(31,27,72,.12)}
   .ft-auth-submit:hover:not(:disabled){background:#453A83;transform:translateY(-1px)}
   .ft-auth-submit:disabled{opacity:.58;cursor:wait}
-  .ft-auth-message{font-size:12px;line-height:1.45;margin:10px 0 0;padding:10px 12px;border-radius:10px;background:#EDF6EF;color:#2F694B;text-align:center;text-wrap:pretty}
+  .ft-auth-message{font-size:12px;line-height:1.45;margin:10px 0 0;padding:10px 12px;border-radius:10px;background:#EDF6EF;color:#2F694B;text-align:left;text-wrap:pretty}
   .ft-auth-message.error{background:#FFF0EF;color:#A23F48}
   .ft-auth-switch{display:flex;justify-content:center;align-items:baseline;gap:5px;flex-wrap:wrap;margin:17px 0 0;color:#777487;font-size:12px;text-align:center}
   .ft-auth-switch button{color:#34316F;text-decoration:underline;text-underline-offset:3px;border:0;background:none;padding:4px;cursor:pointer;font:inherit;font-weight:700}
@@ -89,7 +89,7 @@ const AUTH_STYLES = `
     .ft-auth-label{margin-bottom:5px;font-size:11px}
     .ft-auth-forgot{margin:9px 0 12px}
     .ft-auth-hint{margin:5px 0 9px}
-    .ft-auth-terms{margin:9px auto 11px}
+    .ft-auth-terms{margin:9px 0 11px}
     .ft-auth-terms-copy{font-size:11px;line-height:1.4}
     .ft-auth-submit{min-height:43px;padding:9px 16px}
     .ft-auth-switch{margin-top:12px}
@@ -107,7 +107,7 @@ const AUTH_STYLES = `
     .ft-auth-input{height:39px}
     .ft-auth-email{margin-bottom:9px}
     .ft-auth-label{margin-bottom:3px}
-    .ft-auth-terms{margin:7px auto}
+    .ft-auth-terms{margin:7px 0}
     .ft-auth-submit{min-height:39px;padding:7px 14px}
     .ft-auth-switch{margin-top:7px}
     .ft-auth-forgot{margin:6px 0 8px}
