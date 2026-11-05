@@ -730,9 +730,7 @@
   margin:0;
   overflow:hidden;
   color:#f6f4ff;
-  background:
-    radial-gradient(ellipse at 90% 20%,rgba(99,88,172,.16),transparent 35%),
-    linear-gradient(180deg,#1c2036 0%,#171c31 100%);
+  background:#151518;
 }
 .lp2-footer::before{
   content:"";
