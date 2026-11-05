@@ -102,13 +102,16 @@ export default function RedefinirSenhaPage() {
   const copy = RESET_COPY[locale === "en" ? "en" : locale === "es" ? "es" : "pt"];
 
   useEffect(() => {
-    let fluxoRecuperacao = new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery";
+    let fluxoRecuperacao = new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery"
+      || new URLSearchParams(window.location.search).get("recovery") === "1";
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && fluxoRecuperacao)) {
         fluxoRecuperacao = true;
-        setSessaoOk(true);
-        setVerificando(false);
+        if (session) {
+          setSessaoOk(true);
+          setVerificando(false);
+        }
       }
     });
 
