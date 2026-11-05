@@ -62,7 +62,7 @@ function ResetPasswordInput({
     : (locale === "en" ? "Show password" : locale === "es" ? "Mostrar contraseña" : "Mostrar senha");
 
   return (
-    <div className="ft-auth-password-wrap" style={{ marginBottom: 18 }}>
+    <div className="ft-auth-password-wrap ft-auth-reset-password-wrap">
       <input
         className="ft-auth-input ft-auth-password-input"
         id={id} type={visible ? "text" : "password"}
@@ -184,7 +184,7 @@ export default function RedefinirSenhaPage() {
         <form className="ft-auth-form" onSubmit={(event) => { event.preventDefault(); void handleRedefinir(); }} noValidate>
           <label className="ft-auth-label" htmlFor="reset-password">{t("Nova senha")}</label>
           <ResetPasswordInput id="reset-password" value={novaSenha} onChange={setNovaSenha} locale={locale} />
-          <p className="ft-auth-hint" style={{ marginTop: -7, marginBottom: 20 }}>{t("Mínimo de 8 caracteres.")}</p>
+          <p className="ft-auth-hint ft-auth-reset-hint">{t("Mínimo de 8 caracteres.")}</p>
 
           <label className="ft-auth-label" htmlFor="reset-confirm">{t("Confirmar nova senha")}</label>
           <ResetPasswordInput id="reset-confirm" value={confirmar} onChange={setConfirmar} locale={locale} />
