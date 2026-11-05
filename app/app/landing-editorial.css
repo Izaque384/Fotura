@@ -738,6 +738,7 @@
 .lp2-footer-grid{
   display:grid;
   grid-template-columns:minmax(0,1.42fr) minmax(0,.68fr) minmax(0,.68fr) minmax(0,1.35fr);
+  grid-template-areas:"brand product account statement";
   gap:clamp(26px,3.4vw,58px);
   align-items:start;
 }
