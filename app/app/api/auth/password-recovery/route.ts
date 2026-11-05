@@ -111,14 +111,28 @@ export async function POST(req: NextRequest) {
     const redirectTo = origin + "/" + locale + "/redefinir-senha?recovery=1";
 
     // Gera um link de uso único sem acionar o SMTP limitado do Supabase.
-    const { data, error } = await supabase.auth.admin.generateLink({
+    // Para contas ainda não confirmadas, o link de acesso por e-mail
+    // confirma a posse da caixa postal antes de permitir escolher a senha.
+    const recovery = await supabase.auth.admin.generateLink({
       type: "recovery",
       email,
       options: { redirectTo },
     });
+    let linkData = recovery.data;
+    let linkError = recovery.error;
 
-    if (error || !data?.properties?.action_link) {
-      if (error && (error.status || 0) >= 500) {
+    if ((linkData?.user && !linkData.user.email_confirmed_at) || linkError?.code === "email_not_confirmed") {
+      const verification = await supabase.auth.admin.generateLink({
+        type: "magiclink",
+        email,
+        options: { redirectTo },
+      });
+      linkData = verification.data;
+      linkError = verification.error;
+    }
+
+    if (linkError || !linkData?.properties?.action_link) {
+      if (linkError && (linkError.status || 0) >= 500) {
         registrarErro("auth.recovery.generate", req, new Error("Serviço de geração de link indisponível"));
         return respostaIndisponivel();
       }
@@ -126,7 +140,7 @@ export async function POST(req: NextRequest) {
       return respostaAceita();
     }
 
-    const actionLink = data.properties.action_link;
+    const actionLink = linkData.properties.action_link;
     // Apenas links de verificação gerados pelo projeto Supabase são enviados.
     const expectedOrigin = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin;
     const actionUrl = new URL(actionLink);
