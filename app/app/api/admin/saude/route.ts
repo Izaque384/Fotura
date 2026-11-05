@@ -95,15 +95,33 @@ export async function GET(req: NextRequest) {
         detalhe: "RESEND_API_KEY ausente; compartilhamento por e-mail fica indisponível.",
       });
     } else {
-      const resend = await verificarHttp("https://api.resend.com/domains", {
-        headers: { Authorization: `Bearer ${resendKey}` },
-      });
-      checks.push({
-        id: "resend",
-        nome: "Resend",
-        status: resend.ok ? "ok" : "error",
-        detalhe: resend.ok ? `Credenciais e conectividade validadas · ${resend.ms} ms.` : `Falha ao consultar a Resend (HTTP ${resend.status || "rede"}).`,
-      });
+      const inicioResend = Date.now();
+      let status: Check["status"] = "error";
+      let detalhe = "Não foi possível verificar o serviço de e-mails.";
+      try {
+        const resposta = await fetch("https://api.resend.com/domains", {
+          headers: { Authorization: `Bearer ${resendKey}` },
+          cache: "no-store",
+          signal: AbortSignal.timeout(4500),
+        });
+        if (resposta.ok) {
+          status = "ok";
+          detalhe = `API Resend disponível · ${Date.now() - inicioResend} ms. A entrega ainda depende de um envio real.`;
+        } else if (resposta.status === 401) {
+          const body = await resposta.json().catch(() => null) as { name?: string } | null;
+          if (body?.name === "restricted_api_key") {
+            status = "warn";
+            detalhe = "Chave Resend restrita a envios (permissão esperada); a consulta administrativa não pode validar a entrega. Verifique os eventos de envio no Resend.";
+          } else {
+            detalhe = "Autenticação Resend recusada (HTTP 401).";
+          }
+        } else {
+          detalhe = `Falha ao consultar a Resend (HTTP ${resposta.status}).`;
+        }
+      } catch {
+        detalhe = "Falha de conexão com a API Resend.";
+      }
+      checks.push({ id: "resend", nome: "Resend", status, detalhe });
     }
 
     const { data: recoverySnapshot, error: recoveryError } = await supabase.rpc("operational_recovery_snapshot_backend");

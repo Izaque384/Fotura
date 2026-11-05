@@ -2,19 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { createClient } from "../../lib/supabase-client";
 import { useI18n } from "../components/I18nProvider";
 import AuthFrame from "../components/AuthFrame";
 import { withLocalePath } from "../../lib/i18n";
-
-const ORIGEM_PRODUCAO = "https://foturax.com.br";
-
-function origemRecuperacao() {
-  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    return window.location.origin;
-  }
-  return ORIGEM_PRODUCAO;
-}
 
 const RECOVERY_COPY = {
   pt: {
@@ -45,7 +35,7 @@ export default function EsqueciSenhaPage() {
   const [email, setEmail] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [carregando, setCarregando] = useState(false);
-  const supabase = createClient();
+  const [erroEnvio, setErroEnvio] = useState("");
   const copy = RECOVERY_COPY[locale === "en" ? "en" : locale === "es" ? "es" : "pt"];
 
   async function handleSubmit() {
@@ -53,13 +43,27 @@ export default function EsqueciSenhaPage() {
     if (!emailNormalizado || carregando) return;
     setCarregando(true);
 
-    await supabase.auth.resetPasswordForEmail(emailNormalizado, {
-      redirectTo: `${origemRecuperacao()}${withLocalePath("/redefinir-senha", locale)}`,
-    });
-
-    // Resposta deliberadamente genérica para não revelar se o e-mail possui conta.
-    setEnviado(true);
-    setCarregando(false);
+    setErroEnvio("");
+    try {
+      const response = await fetch("/api/auth/password-recovery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailNormalizado, locale }),
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        setErroEnvio(response.status === 429
+          ? (locale === "en" ? "Too many requests. Try again later." : locale === "es" ? "Demasiadas solicitudes. Inténtalo más tarde." : "Muitas solicitações. Aguarde antes de tentar novamente.")
+          : (locale === "en" ? "We could not process your request now. Please try again later." : locale === "es" ? "No pudimos procesar tu solicitud. Inténtalo de nuevo más tarde." : "Não foi possível processar a solicitação agora. Tente novamente mais tarde."));
+      } else {
+        // Mensagem neutra: não revela se existe uma conta.
+        setEnviado(true);
+      }
+    } catch {
+      setErroEnvio(locale === "en" ? "Connection failed. Check your internet and try again." : locale === "es" ? "Falló la conexión. Comprueba tu internet y vuelve a intentarlo." : "Falha de conexão. Verifique sua internet e tente novamente.");
+    } finally {
+      setCarregando(false);
+    }
   }
 
   return (
@@ -81,6 +85,7 @@ export default function EsqueciSenhaPage() {
             value={email} onChange={(event) => setEmail(event.target.value)}
             placeholder="seu@email.com" required
           />
+          {erroEnvio && <p role="alert" className="ft-auth-message error" style={{ marginBottom: 18 }}>{erroEnvio}</p>}
           <button className="ft-auth-submit" type="submit" disabled={carregando} aria-busy={carregando}>
             {carregando ? t("Enviando...") : t("Enviar link de recuperação")}
           </button>
