@@ -5,13 +5,11 @@ import { usePathname } from "next/navigation";
 
 const pages = [
   { href: "/admin", label: "Visão geral" },
-  { href: "/admin#contas", label: "Contas" },
+  { href: "/admin/avisos", label: "Avisos" },
   { href: "/admin/uso", label: "Armazenamento" },
   { href: "/admin/analytics", label: "Produto" },
   { href: "/admin/saude", label: "Saúde" },
-  { href: "/admin/lancamento", label: "Lançamento" },
   { href: "/admin/feedback", label: "Feedback" },
-  { href: "/admin/auditoria", label: "Auditoria" },
 ];
 
 export default function AdminNavigation() {
@@ -25,10 +23,8 @@ export default function AdminNavigation() {
         </div>
         <nav className="admin-console-nav" aria-label="Navegação administrativa">
           {pages.map(({ href, label }) => {
-            const route = href.split("#")[0];
             const active = href === "/admin" ? pathname === "/admin" :
-              href.includes("#") ? pathname.startsWith("/admin/contas") :
-              pathname === route || pathname.startsWith(route + "/");
+              pathname === href || pathname.startsWith(href + "/");
             return <Link key={href} href={href} className={"admin-console-nav-link" + (active ? " active" : "")} aria-current={active ? "page" : undefined}>{label}</Link>;
           })}
         </nav>
