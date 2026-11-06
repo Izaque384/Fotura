@@ -91,3 +91,26 @@ button.ft-drawer-item:hover{border-color:#bdb3e2;background:#faf8ff}
   .ft-drawer-panel{animation:ft-drawer-in .20s ease-out both}
   @keyframes ft-drawer-in{from{transform:translateX(14px);opacity:.95}to{transform:translateX(0);opacity:1}}
 }
+
+/* Título da pasta abre o painel; mantém aparência de texto da listagem. */
+html body .pw-page.mf-shift .pw-folder-open{
+  box-sizing:border-box!important;
+  display:inline!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:none!important;
+  box-shadow:none!important;
+  color:inherit!important;
+  font-family:inherit!important;
+  font-size:inherit!important;
+  font-weight:800!important;
+  text-align:left!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere;
+  cursor:pointer;
+}
+html body .pw-page.mf-shift .pw-folder-open:hover{color:#6552b1!important;text-decoration:underline;text-underline-offset:3px}
+html body .pw-page.mf-shift .pw-folder-open:focus-visible{outline:2px solid #8976d9;outline-offset:3px}
