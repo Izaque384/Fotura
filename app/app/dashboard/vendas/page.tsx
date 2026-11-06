@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import MenuFotografo from "../../MenuFotografo";
+import FoturaDrawer from "../../components/FoturaDrawer";
 import { createClient } from "../../../lib/supabase-client";
 import { registrarEventoProduto } from "../../../lib/product-analytics";
 import { CheckIcon, ChevronDownIcon } from "../../components/FoturaIcons";
@@ -54,6 +55,7 @@ export default function VendasPage(){
   useEffect(()=>{const fora=(e:PointerEvent)=>{const alvo=e.target;if(!(alvo instanceof Element)||!alvo.closest(".filter-wrap"))setFiltroAberto(false)};const tecla=(e:KeyboardEvent)=>{if(e.key==="Escape")setFiltroAberto(false)};document.addEventListener("pointerdown",fora);window.addEventListener("keydown",tecla);return()=>{document.removeEventListener("pointerdown",fora);window.removeEventListener("keydown",tecla)}},[]);
   const [busca,setBusca]=useState("");
   const [infoAberta,setInfoAberta]=useState(false);
+  const [vendaDetalhes,setVendaDetalhes]=useState<string|null>(null);
 
   useEffect(()=>{
     const inicial=new URLSearchParams(window.location.search).get("filtro");
@@ -91,6 +93,7 @@ export default function VendasPage(){
     if(ativo)setCarregando(false);
   })();return()=>{ativo=false}},[router,supabase]);
 
+  const vendaSelecionada=vendas.find(v=>v.id===vendaDetalhes)||null;
   const pagas=vendas.filter(v=>v.status==="pago");
   const receita=pagas.reduce((s,v)=>s+v.valor_total_centavos,0);
   const fotos=pagas.reduce((s,v)=>s+v.qtd_extras,0);
@@ -138,11 +141,45 @@ export default function VendasPage(){
           <div><span className={"sales-pill "+v.status}>{statusLabel(v.status)}</span></div>
           <div className="sales-small">{dataCurta(v.pago_em||v.criado_em)}</div>
           <div className="sales-actions">
+            <button className="sales-action" type="button" onClick={()=>setVendaDetalhes(v.id)}>Detalhes</button>
             <button className={"sales-action"+(v.status==="pago"?" primary":"")} onClick={()=>router.push(`/dashboard/selecoes?galeria=${v.galeria}`)}>Ver seleção</button>
             <button className="sales-action" onClick={()=>window.open(`/g/${v.galeria}`,"_blank","noopener,noreferrer")}>Galeria</button>
           </div>
         </article>)}
       </section>
     </div>
+    {vendaSelecionada&&
+      <FoturaDrawer title="Detalhes da venda" description="Informações da transação e fotos selecionadas" onClose={()=>setVendaDetalhes(null)}
+        footer={<>
+          <button className="ft-drawer-button" type="button" onClick={()=>{setVendaDetalhes(null);router.push("/dashboard/selecoes?galeria="+encodeURIComponent(vendaSelecionada.galeria))}}>Ver seleção</button>
+          <button className="ft-drawer-button primary" type="button" onClick={()=>window.open("/g/"+encodeURIComponent(vendaSelecionada.galeria),"_blank","noopener,noreferrer")}>Abrir galeria <span aria-hidden="true">→</span></button>
+        </>}>
+        <h3 className="ft-drawer-name">{titulos[vendaSelecionada.galeria]||"Galeria"}</h3>
+        <div className="ft-drawer-badges">
+          <span className={"ft-drawer-badge"+(vendaSelecionada.status==="pago"?" ok":"")}>{statusLabel(vendaSelecionada.status)}</span>
+          <span className="ft-drawer-badge">{vendaSelecionada.qtd_extras} {vendaSelecionada.qtd_extras===1?"foto extra":"fotos extras"}</span>
+        </div>
+        <p className="ft-drawer-description">{descricaoStatus(vendaSelecionada)}</p>
+        <section className="ft-drawer-section">
+          <h3>Pagamento</h3>
+          <div className="ft-drawer-field"><strong>Valor bruto</strong>{dinheiro(vendaSelecionada.valor_total_centavos)}</div>
+          <div className="ft-drawer-field"><strong>Preço por foto extra</strong>{dinheiro(vendaSelecionada.valor_unitario_centavos)}</div>
+          <div className="ft-drawer-field"><strong>Método de pagamento</strong>{vendaSelecionada.metodo_pagamento||"Não informado"}</div>
+          <div className="ft-drawer-field"><strong>Solicitado em</strong>{dataCurta(vendaSelecionada.criado_em)}</div>
+          {!!vendaSelecionada.pago_em&&<div className="ft-drawer-field"><strong>Pagamento confirmado em</strong>{dataCurta(vendaSelecionada.pago_em)}</div>}
+          <p className="ft-drawer-note">Os valores exibidos são brutos. Taxas, repasses e comprovantes são administrados pela Stripe.</p>
+        </section>
+        <section className="ft-drawer-section">
+          <h3>Fotos da seleção ({vendaSelecionada.fotos?.length??0})</h3>
+          {vendaSelecionada.fotos?.length?
+            <div className="ft-drawer-list">
+              {vendaSelecionada.fotos.slice(0,50).map((foto,index)=><div className="ft-drawer-item" key={index}>
+                <div><strong>{foto}</strong><small>Arquivo selecionado</small></div>
+              </div>)}
+              {vendaSelecionada.fotos.length>50&&<p className="ft-drawer-note">Exibindo 50 arquivos. Abra a seleção para consultar a lista completa.</p>}
+            </div>:
+            <p className="ft-drawer-note">Nenhum nome de arquivo registrado nesta venda.</p>}
+        </section>
+      </FoturaDrawer>}
   </main>
 }
