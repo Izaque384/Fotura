@@ -120,6 +120,7 @@ export async function POST(req: NextRequest) {
     });
     let linkData = recovery.data;
     let linkError = recovery.error;
+    let verifyType: "recovery" | "magiclink" = "recovery";
 
     if ((linkData?.user && !linkData.user.email_confirmed_at) || linkError?.code === "email_not_confirmed") {
       const verification = await supabase.auth.admin.generateLink({
@@ -129,6 +130,7 @@ export async function POST(req: NextRequest) {
       });
       linkData = verification.data;
       linkError = verification.error;
+      verifyType = "magiclink";
     }
 
     if (linkError || !linkData?.properties?.action_link) {
@@ -141,16 +143,29 @@ export async function POST(req: NextRequest) {
     }
 
     const actionLink = linkData.properties.action_link;
-    // Apenas links de verificação gerados pelo projeto Supabase são enviados.
+    // Confirme que o token foi criado pelo projeto Auth do Fotura.
+    // Não coloque o action_link do Supabase no e-mail: verificadores automáticos
+    // podem abrir um GET em /auth/v1/verify e consumir o token antes do usuário.
     const expectedOrigin = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin;
     const actionUrl = new URL(actionLink);
     if (actionUrl.origin !== expectedOrigin || !actionUrl.pathname.endsWith("/auth/v1/verify")) {
       registrarErro("auth.recovery.link_validation", req, new Error("Link de recuperação fora da origem esperada"));
       return respostaIndisponivel();
     }
+    const tokenHash = linkData.properties.hashed_token || actionUrl.searchParams.get("token");
+    if (!tokenHash || !/^[A-Za-z0-9_-]{20,200}$/.test(tokenHash)) {
+      registrarErro("auth.recovery.token_format", req, new Error("Token de verificação ausente ou inválido"));
+      return respostaIndisponivel();
+    }
+
+    // A URL do Fotura não verifica nada por GET. O token fica no fragmento
+    // (não é enviado ao servidor no carregamento) e só é consumido após
+    // o usuário acionar o botão "Continuar" na página de redefinição.
+    const confirmationLink = origin + "/" + locale +
+      "/redefinir-senha#token_hash=" + encodeURIComponent(tokenHash) + "&type=" + verifyType;
 
     const copy = messages[locale];
-    const safeLink = escapeHtml(actionLink);
+    const safeLink = escapeHtml(confirmationLink);
     const html = '<!doctype html><html lang="' + locale + '"><body style="margin:0;padding:32px 16px;background:#f7f4ee;font-family:Arial,sans-serif;color:#25243b">' +
       '<div style="max-width:510px;margin:0 auto;padding:36px 30px;background:#fff;border:1px solid #e3dff0;border-radius:16px">' +
       '<div style="font-size:18px;font-weight:bold;letter-spacing:.15em;color:#292743">FOTURA</div>' +
@@ -159,6 +174,10 @@ export async function POST(req: NextRequest) {
       '<a href="' + safeLink + '" style="display:inline-block;padding:15px 22px;margin:20px 0;background:#292743;border-radius:9px;text-decoration:none;color:#fff;font-weight:bold">' +
       escapeHtml(copy.button) + '</a>' +
       '<p style="font-size:12px;line-height:1.6;color:#737086">' + escapeHtml(copy.ignore) + '</p>' +
+      '<p style="font-size:12px;line-height:1.6;color:#737086">' +
+      escapeHtml(locale === "en" ? "Use the most recent email if you requested more than one link." :
+        locale === "es" ? "Si solicitaste varios enlaces, utiliza el correo más reciente." :
+        "Se você solicitou mais de um link, utilize o e-mail mais recente.") + '</p>' +
       '<p style="font-size:11px;line-height:1.6;color:#737086;overflow-wrap:anywhere">' + escapeHtml(copy.fallback) +
       ' <a href="' + safeLink + '" style="color:#5049a4">' + safeLink + '</a></p>' +
       '</div></body></html>';
@@ -175,7 +194,7 @@ export async function POST(req: NextRequest) {
         to: [email],
         subject: copy.subject,
         html,
-        text: copy.description + "\n\n" + copy.button + ":\n" + actionLink + "\n\n" + copy.ignore,
+        text: copy.description + "\n\n" + copy.button + ":\n" + confirmationLink + "\n\n" + copy.ignore,
       }),
       cache: "no-store",
       signal: AbortSignal.timeout(12000),
