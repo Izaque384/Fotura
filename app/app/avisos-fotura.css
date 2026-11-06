@@ -1,32 +1,72 @@
-/* Avisos globais — exibidos somente no painel interno de fotógrafos. */
-.fotura-aviso-toast{
-  position:fixed;right:25px;bottom:25px;z-index:110;
-  width:min(385px,calc(100vw - 32px));max-height:calc(100dvh - 45px);overflow:auto;
-  border:1px solid #dcd6ec;border-left:4px solid #8771df;border-radius:18px;
-  background:#fbfaff;color:#252840;padding:19px 20px 18px;
-  box-shadow:0 18px 65px rgba(22,19,47,.23);
+/* Anúncio de entrada do Fotura: exibido uma única vez por conta e aviso. */
+.fotura-anuncio-overlay{
+  position:fixed;inset:0;z-index:300;
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;box-sizing:border-box;overflow-y:auto;
+  background:rgba(15,15,25,.66);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+.fotura-anuncio-dialog{
+  display:flex;flex-direction:column;
+  width:min(560px,100%);max-height:calc(100dvh - 48px);min-height:0;
+  border:1px solid #e4e0ee;border-radius:25px;overflow:hidden;
+  background:#fbfaff;color:#21263b;
+  box-shadow:0 30px 95px rgba(7,5,22,.32);
   font-family:var(--font-sora),Sora,system-ui,sans-serif;
 }
-.fotura-aviso-toast.tipo-atencao{border-left-color:#e6aa5e}
-.fotura-aviso-toast.tipo-novidade{border-left-color:#3d9ae7}
-.fotura-aviso-toast-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.fotura-aviso-toast-head strong{color:#6758ae;text-transform:uppercase;font-size:10px;letter-spacing:.11em}
-.fotura-aviso-toast-head button{width:29px;height:29px;display:grid;place-items:center;border:1px solid #e1dcec;background:#fff;color:#65637c;border-radius:9px;font-size:22px;cursor:pointer}
-.fotura-aviso-toast h3{margin:10px 0 7px;color:#24273d;font-size:16px;line-height:1.4;font-weight:800;overflow-wrap:anywhere}
-.fotura-aviso-toast p{margin:0;color:#686d83;font-size:12px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
-.fotura-aviso-toast-actions{margin-top:17px;display:flex;align-items:center;gap:9px}
-.fotura-aviso-open,.fotura-aviso-later{height:38px;border-radius:10px;font-family:inherit;font-size:11px;font-weight:750;padding:0 13px;cursor:pointer}
-.fotura-aviso-open{background:linear-gradient(100deg,#258fff,#6233fa);color:#fff;border:0}
-.fotura-aviso-later{background:#f7f5fc;border:1px solid #ded8ed;color:#655e81}
-.fotura-aviso-summary{margin-bottom:17px;border:1px solid #ded8ed;border-radius:12px;background:#f4f1fa;color:#666084;padding:12px 14px;font-size:11px;font-weight:750}
-.fotura-aviso-card{margin:0 0 14px;padding:19px;border:1px solid #dedce9;border-left:3px solid #9383dc;border-radius:15px;background:#fff;color:#2e3046}
-.fotura-aviso-card.tipo-novidade{border-left-color:#409ad8}
-.fotura-aviso-card.tipo-atencao{border-left-color:#e0a453}
-.fotura-aviso-card.lido{opacity:.84}
-.fotura-aviso-card-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.fotura-aviso-tipo{font-size:9px;letter-spacing:.09em;text-transform:uppercase;font-weight:800;color:#68619e}
-.fotura-aviso-date{font-size:10px;color:#898ba0}
-.fotura-aviso-card h3{font-size:16px;color:#252740;margin:12px 0 9px;line-height:1.45}
-.fotura-aviso-card p{white-space:pre-wrap;overflow-wrap:anywhere;color:#646a82;font-size:12px;line-height:1.75;margin:0 0 16px}
-.fotura-aviso-read{color:#458b71;font-size:11px;font-weight:700}
-@media(max-width:640px){.fotura-aviso-toast{right:16px;bottom:max(16px,env(safe-area-inset-bottom));padding:16px}}
+.fotura-anuncio-top{
+  flex:none;display:flex;align-items:center;justify-content:space-between;
+  gap:15px;padding:23px 28px 19px;border-bottom:1px solid #e9e5f0;
+}
+.fotura-anuncio-brand{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:#22253a;font-size:12px;font-weight:900;letter-spacing:.16em}
+.fotura-anuncio-brand span{color:#8076b3;font-size:10px;font-weight:750;letter-spacing:.045em}
+.fotura-anuncio-dialog.tipo-atencao .fotura-anuncio-brand span{color:#a56b2b}
+.fotura-anuncio-dialog.tipo-novidade .fotura-anuncio-brand span{color:#2b82be}
+.fotura-anuncio-close{
+  display:grid;place-items:center;flex:none;width:35px;height:35px;
+  border:1px solid #e3dfea;border-radius:11px;background:#fff;color:#64647d;
+  font-family:inherit;font-size:23px;font-weight:400;cursor:pointer;
+}
+.fotura-anuncio-close:hover{background:#f0ecfa;color:#463b90}
+.fotura-anuncio-content{overflow-y:auto;overscroll-behavior:contain;padding:32px 34px 35px}
+.fotura-anuncio-date{color:#7d81a0;font-size:11px;font-weight:650}
+.fotura-anuncio-content h2{
+  margin:13px 0 15px;color:#202339;
+  font-size:clamp(23px,4vw,30px);line-height:1.24;
+  letter-spacing:-.04em;font-weight:850;overflow-wrap:anywhere;
+}
+.fotura-anuncio-content p{
+  color:#5e647b;font-size:13px;line-height:1.85;
+  margin:0;white-space:pre-wrap;overflow-wrap:anywhere;
+}
+.fotura-anuncio-bottom{
+  flex:none;display:flex;align-items:center;justify-content:space-between;
+  gap:15px;flex-wrap:wrap;padding:19px 28px;
+  border-top:1px solid #e9e5f0;background:#f8f6fc;
+}
+.fotura-anuncio-bottom span{color:#89899e;font-size:10px}
+.fotura-anuncio-action{
+  min-height:44px;min-width:114px;padding:0 20px;
+  background:linear-gradient(100deg,#258fff,#6233fa);
+  color:#fff;border:0;border-radius:12px;cursor:pointer;
+  font-family:inherit;font-size:12px;font-weight:800;
+  box-shadow:0 8px 19px rgba(90,70,191,.15);
+}
+.fotura-anuncio-action:hover{filter:brightness(.96)}
+.fotura-anuncio-dialog button:focus-visible{outline:3px solid #aa95f2;outline-offset:3px}
+@media(max-width:640px){
+  .fotura-anuncio-overlay{padding:12px;align-items:center}
+  .fotura-anuncio-dialog{max-height:calc(100dvh - 24px);border-radius:19px}
+  .fotura-anuncio-top{padding:18px 20px 15px}
+  .fotura-anuncio-content{padding:25px 21px 28px}
+  .fotura-anuncio-bottom{padding:15px 20px}
+  .fotura-anuncio-bottom span{display:none}
+  .fotura-anuncio-action{width:100%}
+}
+@media(prefers-reduced-motion:no-preference){
+  .fotura-anuncio-dialog{animation:fotura-anuncio-enter .2s ease-out both}
+  @keyframes fotura-anuncio-enter{
+    from{transform:translateY(12px);opacity:.94}
+    to{transform:translateY(0);opacity:1}
+  }
+}

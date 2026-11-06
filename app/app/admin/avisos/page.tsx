@@ -103,7 +103,7 @@ export default function AdminAvisosPage() {
             <h1>Avisos para usuários</h1>
             <p className="admin-overview-description">
               Prepare comunicados e publique para todos os fotógrafos que utilizam o Fotura.
-              Os avisos são exibidos dentro do painel, sem envio de e-mail.
+              Ao entrar no Fotura, o fotógrafo vê um anúncio que pode fechar a qualquer momento. Ele aparece apenas uma vez por conta, sem envio de e-mail.
             </p>
           </div>
           <span className="admin-heading-badge">Publicação exclusiva do responsável</span>
@@ -160,7 +160,7 @@ export default function AdminAvisosPage() {
               <strong>{form.titulo.trim() || "Título do seu aviso"}</strong>
               <p>{form.mensagem.trim() || "A mensagem aparecerá neste espaço quando você começar a escrever."}</p>
             </div>
-            <p className="admin-avisos-tip">Usuários podem marcar comunicados como lidos. Uma edição publicada gera uma nova versão, que volta a aparecer como não lida.</p>
+            <p className="admin-avisos-tip">O aviso aparece automaticamente quando o fotógrafo entra no Fotura. Cada comunicado é mostrado uma única vez por conta; editar o mesmo comunicado não faz ele reaparecer.</p>
           </section>
         </div>
 
