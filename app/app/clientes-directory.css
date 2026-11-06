@@ -129,3 +129,13 @@
  .ftc-tabbar button{font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){.ftc-card{transition:none}}
+
+.ftc-gallery-picker{background:#f3f0fb;border:1px solid #dcd5ec;border-radius:13px;padding:14px;margin:-6px 0 18px}
+.ftc-gallery-picker p{font-size:11px;color:#6d6a86;line-height:1.55;margin:0 0 11px}
+.ftc-gallery-picker select{width:100%;min-height:40px;border-radius:9px;border:1px solid #d4cce8;background:#fff;color:#484561;font-size:12px;padding:0 12px;margin-bottom:12px}
+.ftc-gallery-thumbs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;max-height:290px;overflow-y:auto}
+.ftc-gallery-thumbs button{position:relative;border:2px solid transparent;border-radius:9px;aspect-ratio:1/1;cursor:pointer;padding:0;overflow:hidden;background:#e6e2ef}
+.ftc-gallery-thumbs button:hover,.ftc-gallery-thumbs button:focus-visible{border-color:#7460d0;outline:none}
+.ftc-gallery-thumbs img{width:100%;height:100%;display:block;object-fit:cover}
+.ftc-gallery-thumbs button:disabled{opacity:.55;cursor:wait}
+@media(max-width:640px){.ftc-gallery-thumbs{grid-template-columns:repeat(4,minmax(0,1fr))}}
