@@ -435,3 +435,36 @@ html body .adm .table th{background:#f1eef9!important}
   html body .delivery-page.mf-shift .delivery-card,
   html body .adm .card{border-radius:18px!important}
 }
+
+/* Controles compactos: rótulo e ícone sempre na mesma linha.
+   Corrige "Filtrar por" (Projetos/Vendas) e "+ Nova pasta"
+   (cabeçalho e seção de pastas do projeto). */
+html body .projects-page.mf-shift .filter-trigger,
+html body .sales-page.mf-shift .filter-trigger,
+html body .pw-page.mf-shift .pw-head-actions > button,
+html body .pw-page.mf-shift .pw-folder-summary > button,
+html body .pw-page.mf-shift .pw-head-buttons > button{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  gap:7px!important;
+  white-space:nowrap!important;
+  width:max-content;
+  min-width:max-content;
+  flex-shrink:0;
+}
+html body .projects-page.mf-shift .filter-trigger > span,
+html body .sales-page.mf-shift .filter-trigger > span,
+html body .pw-page.mf-shift .pw-head-actions > button > svg,
+html body .pw-page.mf-shift .pw-folder-summary > button > svg{
+  display:inline-flex;
+  align-items:center;
+  flex:0 0 auto;
+}
+html body .pw-page.mf-shift .pw-head-actions,
+html body .pw-page.mf-shift .pw-folder-summary,
+html body .pw-page.mf-shift .pw-head-buttons{
+  flex-wrap:wrap;
+}
