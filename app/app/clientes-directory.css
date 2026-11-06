@@ -12,7 +12,7 @@
 .ftc-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
 .ftc-search{position:relative;flex:1;min-width:180px;max-width:520px}
 .ftc-search svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:#828ba3;pointer-events:none}
-.ftc-search input{height:46px;width:100%;padding:0 16px 0 44px;border:1px solid #d9dce6;border-radius:13px;background:rgba(255,255,255,.68);font:500 13px inherit;color:#23283e;outline:none}
+.ftc-search input{height:46px;width:100%;padding:0 16px 0 44px;border:1px solid #d9dce6;border-radius:13px;background:rgba(255,255,255,.68);font-family:inherit;font-size:13px;font-weight:500;color:#23283e;outline:none}
 .ftc-search input:focus,.ftc-field :is(input,textarea):focus,.ftc-select:focus{border-color:#9e8adf;box-shadow:0 0 0 3px rgba(116,92,192,.10)}
 .ftc-select{height:46px;max-width:200px;padding:0 36px 0 14px;border:1px solid #ded9ee;border-radius:13px;background:rgba(255,255,255,.64);color:#5e5a80;font-size:12px;font-weight:750;cursor:pointer}
 .ftc-primary{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;border:0;border-radius:12px;background:linear-gradient(100deg,#258fff,#6233fa);color:#fff;font-size:12px;font-weight:800;padding:0 20px;cursor:pointer;box-shadow:0 10px 24px rgba(57,55,190,.13);white-space:nowrap}
@@ -78,7 +78,7 @@
 .ftc-dialog-body{padding:22px 28px 26px}
 .ftc-field{display:block;margin-bottom:16px}
 .ftc-field span{display:block;font-size:11px;font-weight:800;color:#61677d;margin:0 0 7px}
-.ftc-field :is(input,textarea){width:100%;font:500 13px inherit;color:#22263d;box-sizing:border-box;border:1px solid #dcdae7;background:#fff;border-radius:11px;outline:0;padding:11px 13px}
+.ftc-field :is(input,textarea){width:100%;font-family:inherit;font-size:13px;font-weight:500;color:#22263d;box-sizing:border-box;border:1px solid #dcdae7;background:#fff;border-radius:11px;outline:0;padding:11px 13px}
 .ftc-field input{height:44px}
 .ftc-field textarea{min-height:90px;resize:vertical;line-height:1.5}
 .ftc-form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}

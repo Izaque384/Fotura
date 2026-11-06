@@ -466,6 +466,7 @@ export default function ClientesPage() {
               </div>
               <div className="ftc-detail-actions">
                 <button type="button" className="ftc-primary" onClick={() => abrirEditor(clienteSelecionado)}>Editar cliente</button>
+                <button type="button" className="ftc-secondary" onClick={() => { setSelecionado(null); router.push("/dashboard/projetos?novo=1&cliente=" + encodeURIComponent(clienteSelecionado.id)); }}>+ Criar projeto</button>
                 <button type="button" className="ftc-secondary ftc-danger" onClick={() => setConfirmarExclusao(true)}>Excluir</button>
               </div>
               {confirmarExclusao && <div className="ftc-delete-confirm">

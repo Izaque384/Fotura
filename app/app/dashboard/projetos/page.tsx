@@ -46,7 +46,7 @@ export default function ProjetosPage(){
   const mapa=new Map<string,string>();
   for(let i=0;i<thumbs.length;i+=200){const{data:signed}=await supabase.storage.from("fotos").createSignedUrls(thumbs.slice(i,i+200),3600);for(const x of signed??[])if(x.path&&x.signedUrl)mapa.set(x.path as string,x.signedUrl as string)}
   setProjetos(lista.map(x=>({...x,capaUrl:x.capa_galeria_id&&x.capa_arquivo?mapa.get(`${auth.user!.id}/${x.capa_galeria_id}/thumbs/${x.capa_arquivo}`):undefined})));
-  setPastas((g.data??[]) as Pasta[]);setClientes((c.data??[]) as Cliente[]);setCarregando(false);
+  setPastas((g.data??[]) as Pasta[]);const listaClientes=(c.data??[]) as Cliente[];setClientes(listaClientes);const query=new URLSearchParams(window.location.search);const preselected=query.get("cliente");if(query.get("novo")==="1"&&preselected&&listaClientes.some(x=>x.id===preselected))setClienteId(preselected);setCarregando(false);
  }
  useEffect(()=>{void carregar()},[]);
 
