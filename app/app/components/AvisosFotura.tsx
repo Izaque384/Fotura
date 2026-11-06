@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { createClient } from "../../../lib/supabase-client";
+import { createClient } from "../../lib/supabase-client";
 import FoturaDrawer from "./FoturaDrawer";
 
 type Aviso = {
