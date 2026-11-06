@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase-client";
@@ -19,6 +19,10 @@ const RESET_COPY = {
     intro: "Escolha uma nova senha para proteger sua conta e continuar suas entregas.",
     checkingTitle: "Verificando seu link.",
     checkingIntro: "Estamos confirmando o acesso para redefinir sua senha.",
+    confirmTitle: "Confirme seu acesso.",
+    confirmIntro: "Seu link está pronto. Clique em continuar para validar o acesso e criar uma nova senha.",
+    confirmButton: "Continuar para redefinir",
+    confirmingButton: "Validando acesso...",
     invalidTitle: "Este link expirou.",
     invalidIntro: "O link de recuperação é inválido, expirou ou já foi utilizado. Você pode solicitar outro.",
     successTitle: "Senha atualizada.",
@@ -30,6 +34,10 @@ const RESET_COPY = {
     intro: "Choose a new password to secure your account and continue delivering.",
     checkingTitle: "Verifying your link.",
     checkingIntro: "We are confirming your password reset access.",
+    confirmTitle: "Confirm your access.",
+    confirmIntro: "Your link is ready. Select continue to validate your access and set a new password.",
+    confirmButton: "Continue to reset password",
+    confirmingButton: "Validating access...",
     invalidTitle: "This link has expired.",
     invalidIntro: "The recovery link is invalid, expired, or has already been used. You can request another one.",
     successTitle: "Password updated.",
@@ -41,6 +49,10 @@ const RESET_COPY = {
     intro: "Elige una nueva contraseña para proteger tu cuenta y continuar tus entregas.",
     checkingTitle: "Verificando tu enlace.",
     checkingIntro: "Estamos confirmando tu acceso para restablecer la contraseña.",
+    confirmTitle: "Confirma tu acceso.",
+    confirmIntro: "Tu enlace está listo. Selecciona continuar para validar el acceso y crear una nueva contraseña.",
+    confirmButton: "Continuar para restablecer",
+    confirmingButton: "Validando acceso...",
     invalidTitle: "Este enlace ha caducado.",
     invalidIntro: "El enlace es inválido, ha caducado o ya se ha utilizado. Puedes solicitar otro.",
     successTitle: "Contraseña actualizada.",
@@ -91,7 +103,7 @@ function ResetPasswordInput({
 export default function RedefinirSenhaPage() {
   const { locale, t } = useI18n();
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmar, setConfirmar] = useState("");
   const [mensagem, setMensagem] = useState("");
@@ -99,34 +111,85 @@ export default function RedefinirSenhaPage() {
   const [carregando, setCarregando] = useState(false);
   const [sessaoOk, setSessaoOk] = useState(false);
   const [verificando, setVerificando] = useState(true);
+  const [tokenHash, setTokenHash] = useState("");
+  const [tokenType, setTokenType] = useState<"recovery" | "magiclink">("recovery");
+  const [validando, setValidando] = useState(false);
   const copy = RESET_COPY[locale === "en" ? "en" : locale === "es" ? "es" : "pt"];
 
   useEffect(() => {
-    let fluxoRecuperacao = new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery"
-      || new URLSearchParams(window.location.search).get("recovery") === "1";
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const query = new URLSearchParams(window.location.search);
+    const token = hash.get("token_hash");
+    const type = hash.get("type");
 
+    // O link enviado pelo Fotura não é consumido ao abrir esta página.
+    // A confirmação real exige um clique explícito no botão abaixo.
+    if (token && (type === "recovery" || type === "magiclink")) {
+      setTokenHash(token);
+      setTokenType(type);
+      setVerificando(false);
+      return;
+    }
+
+    // Compatibilidade com links antigos, em que o Supabase redirecionava
+    // diretamente para o aplicativo após validar a URL de uso único.
+    if (hash.has("error_code") || query.has("error_code") || query.has("error")) {
+      setVerificando(false);
+      return;
+    }
+    const legado = type === "recovery" || query.get("recovery") === "1";
+    if (!legado) {
+      setVerificando(false);
+      return;
+    }
+
+    let ativo = true;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && fluxoRecuperacao)) {
-        fluxoRecuperacao = true;
-        if (session) {
-          setSessaoOk(true);
-          setVerificando(false);
-        }
+      if (ativo && session && (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN")) {
+        setSessaoOk(true);
+        setVerificando(false);
       }
     });
-
     const timer = setTimeout(async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (fluxoRecuperacao && session) setSessaoOk(true);
+      if (!ativo) return;
+      if (session) setSessaoOk(true);
       setVerificando(false);
-    }, 1500);
-
+    }, 1800);
     return () => {
+      ativo = false;
       subscription.unsubscribe();
       clearTimeout(timer);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [supabase]);
+
+  async function validarLink() {
+    if (!tokenHash || validando) return;
+    setErro("");
+    setValidando(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: tokenType,
+      });
+      if (error || !data.session) {
+        setSessaoOk(false);
+        setErro("Link inválido ou expirado.");
+      } else {
+        setSessaoOk(true);
+      }
+    } catch {
+      setSessaoOk(false);
+      setErro("Não foi possível validar o link. Solicite outro e tente novamente.");
+    } finally {
+      // A credencial é descartada da barra de endereço após a tentativa;
+      // evita reutilização acidental e exposição em histórico de navegação.
+      window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+      setTokenHash("");
+      setValidando(false);
+      setVerificando(false);
+    }
+  }
 
   async function handleRedefinir() {
     if (carregando || !sessaoOk) return;
@@ -158,10 +221,10 @@ export default function RedefinirSenhaPage() {
 
   const title = verificando
     ? copy.checkingTitle
-    : !sessaoOk ? copy.invalidTitle : mensagem ? copy.successTitle : copy.title;
+    : !sessaoOk ? (tokenHash ? copy.confirmTitle : copy.invalidTitle) : mensagem ? copy.successTitle : copy.title;
   const intro = verificando
     ? copy.checkingIntro
-    : !sessaoOk ? copy.invalidIntro : mensagem ? copy.successIntro : copy.intro;
+    : !sessaoOk ? (tokenHash ? copy.confirmIntro : copy.invalidIntro) : mensagem ? copy.successIntro : copy.intro;
 
   return (
     <AuthFrame eyebrow={copy.eyebrow} title={title} intro={intro}>
@@ -169,9 +232,18 @@ export default function RedefinirSenhaPage() {
         <p className="ft-auth-message" role="status" aria-live="polite">
           {t("Verificando link de recuperação…")}
         </p>
+      ) : !sessaoOk && tokenHash ? (
+        <div className="ft-auth-form">
+          <button type="button" className="ft-auth-submit" onClick={() => void validarLink()} disabled={validando} aria-busy={validando}>
+            {validando ? copy.confirmingButton : copy.confirmButton}
+          </button>
+          <p className="ft-auth-switch">
+            <Link href={withLocalePath("/esqueci-senha", locale)} className="ft-auth-link">{t("Solicitar novo link")}</Link>
+          </p>
+        </div>
       ) : !sessaoOk ? (
         <>
-          <p className="ft-auth-message error" role="alert">{t("Link inválido ou expirado.")}</p>
+          <p className="ft-auth-message error" role="alert">{t(erro || "Link inválido ou expirado.")}</p>
           <p className="ft-auth-switch">
             <Link href={withLocalePath("/esqueci-senha", locale)} className="ft-auth-link">{t("Solicitar novo link")}</Link>
           </p>
