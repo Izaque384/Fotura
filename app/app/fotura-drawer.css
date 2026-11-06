@@ -114,3 +114,14 @@ html body .pw-page.mf-shift .pw-folder-open{
 }
 html body .pw-page.mf-shift .pw-folder-open:hover{color:#6552b1!important;text-decoration:underline;text-underline-offset:3px}
 html body .pw-page.mf-shift .pw-folder-open:focus-visible{outline:2px solid #8976d9;outline-offset:3px}
+
+/* Foto privada do cliente na ficha rápida do projeto. */
+.ft-drawer-client{display:flex;align-items:center;gap:12px;min-height:44px;min-width:0}
+.ft-drawer-client>span:last-child{min-width:0;overflow-wrap:anywhere;font-weight:650}
+.ft-drawer-avatar{
+  width:44px;height:44px;min-width:44px;display:grid;place-items:center;
+  overflow:hidden;border-radius:50%;border:1px solid #dcd7ed;
+  background:linear-gradient(135deg,#e5e6f7,#e9dffd);color:#615e99;
+  font-size:12px;font-weight:800;letter-spacing:.03em;
+}
+.ft-drawer-avatar img{display:block;width:100%;height:100%;object-fit:cover}
