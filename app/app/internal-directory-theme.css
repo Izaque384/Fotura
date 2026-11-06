@@ -1,0 +1,341 @@
+/*
+ * Fotura interno — linguagem visual derivada da página Clientes.
+ *
+ * Escopo exclusivo para as páginas autenticadas. Não altera a landing page,
+ * as galerias públicas, a navegação lateral nem os formulários de autenticação.
+ * Mantém grades, formulários, estados e interações originais de cada tela.
+ */
+html body :is(.dash,.sales-page,.bill-page,.cfg,.profile,.help,.onb,.pw-page).mf-shift:not(.ftc-page){
+  --ft-directory-surface:rgba(255,255,255,.64);
+  --ft-directory-border:rgba(76,85,116,.16);
+  --ft-directory-shadow:0 16px 38px rgba(31,41,55,.055);
+  --ft-directory-title:#1e2235;
+  --ft-directory-muted:#737b93;
+  --ft-directory-accent:#7565b4;
+  --ft-directory-focus:#9e8adf;
+}
+
+/* Cabeçalhos uniformes: mesma hierarquia tipográfica de Clientes. */
+html body .dash.mf-shift:not(.ftc-page) .dash-eyebrow,
+html body .projects-page.mf-shift .ey,
+html body .sales-page.mf-shift .sales-ey,
+html body .bill-page.mf-shift .bill-ey,
+html body .cfg.mf-shift .cfg-head .ey,
+html body .profile.mf-shift .profile-head .ey,
+html body .help.mf-shift .help-head .ey,
+html body .dash.mf-shift > .body .ey,
+html body .onb.mf-shift > .onb-wrap .ey{
+  color:var(--ft-directory-accent)!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  letter-spacing:.17em!important;
+  line-height:1.4!important;
+  text-transform:uppercase!important;
+}
+html body .dash.mf-shift:not(.ftc-page) .dash-h1,
+html body .projects-page.mf-shift .dash-body > .top .h1,
+html body .sales-page.mf-shift .sales-h1,
+html body .bill-page.mf-shift .bill-h1,
+html body .cfg.mf-shift .cfg-head .h1,
+html body .profile.mf-shift .profile-head .h1,
+html body .help.mf-shift .help-head .h1,
+html body .dash.mf-shift > .body > .top .h1,
+html body .onb.mf-shift > .onb-wrap > h1{
+  color:var(--ft-directory-title)!important;
+  font-size:clamp(27px,2.6vw,34px)!important;
+  font-weight:800!important;
+  line-height:1.2!important;
+  letter-spacing:-.045em!important;
+  text-wrap:balance;
+}
+html body .dash.mf-shift:not(.ftc-page) .dash-sub,
+html body .projects-page.mf-shift .dash-body > .top .sub,
+html body .sales-page.mf-shift .sales-sub,
+html body .bill-page.mf-shift .bill-sub,
+html body .cfg.mf-shift .cfg-head .sub,
+html body .profile.mf-shift .profile-head .sub,
+html body .help.mf-shift .help-head .sub,
+html body .dash.mf-shift > .body > .top .sub,
+html body .onb.mf-shift > .onb-wrap > .sub{
+  color:var(--ft-directory-muted)!important;
+  font-size:13px!important;
+  line-height:1.6!important;
+  font-weight:550!important;
+  text-wrap:pretty;
+}
+html body .dash.mf-shift:not(.ftc-page) .dash-top,
+html body .projects-page.mf-shift .dash-body > .top,
+html body .sales-page.mf-shift .sales-header,
+html body .bill-page.mf-shift .bill-top,
+html body .cfg.mf-shift .cfg-head,
+html body .profile.mf-shift .profile-head,
+html body .help.mf-shift .help-head,
+html body .dash.mf-shift > .body > .top{
+  margin-bottom:24px!important;
+}
+
+/* Superfícies claras, contornos suaves e raio de curvatura da seção Clientes. */
+html body .dash.mf-shift:not(.ftc-page) .card,
+html body .projects-page.mf-shift .panel,
+html body .projects-page.mf-shift .project-card,
+html body .sales-page.mf-shift .sales-card,
+html body .sales-page.mf-shift .sales-stat,
+html body .bill-page.mf-shift .bill-card,
+html body .bill-page.mf-shift .plan,
+html body .cfg.mf-shift .account-card,
+html body .cfg.mf-shift .setting-card,
+html body .profile.mf-shift .panel,
+html body .help.mf-shift .card,
+html body .onb.mf-shift .progress,
+html body .onb.mf-shift .step,
+html body .pw-page.mf-shift .pw-section,
+html body .pw-page.mf-shift .pw-state-card{
+  background:var(--ft-directory-surface)!important;
+  background-image:none!important;
+  border:1px solid var(--ft-directory-border)!important;
+  border-radius:24px!important;
+  box-shadow:var(--ft-directory-shadow)!important;
+  min-width:0;
+}
+
+/* Projetos: os registros passam a formar uma lista limpa, como Clientes.
+   O cartão externo perde a moldura, mas os cartões clicáveis são mantidos. */
+html body .projects-page.mf-shift .panel.list-panel{
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  padding:0!important;
+}
+html body .projects-page.mf-shift .project-list{gap:12px!important}
+html body .projects-page.mf-shift .project-card{
+  padding:18px 20px!important;
+  border-radius:22px!important;
+  transition:border-color .18s,box-shadow .18s,transform .18s;
+}
+html body .projects-page.mf-shift .project-card:hover,
+html body .projects-page.mf-shift .project-card:focus-within{
+  border-color:#bcb2e4!important;
+  box-shadow:0 19px 40px rgba(55,46,110,.08)!important;
+}
+html body .projects-page.mf-shift .project-grid .project-card{padding:15px!important}
+
+/* Indicadores: mesma proporção, leitura e respiro dos números de Clientes. */
+html body .projects-page.mf-shift .stats,
+html body .sales-page.mf-shift .sales-stats{
+  gap:13px!important;
+  margin-bottom:20px!important;
+}
+html body .projects-page.mf-shift .stat,
+html body .sales-page.mf-shift .sales-stat{
+  padding:20px 22px!important;
+  border-radius:25px!important;
+}
+html body .projects-page.mf-shift .stat strong,
+html body .sales-page.mf-shift .sales-stat strong{
+  display:block;
+  color:#252941!important;
+  font-size:30px!important;
+  letter-spacing:-.04em;
+  line-height:1.1;
+}
+html body .projects-page.mf-shift .stat span,
+html body .sales-page.mf-shift .sales-stat span{
+  color:#778098!important;
+  font-size:12px!important;
+  font-weight:650!important;
+  line-height:1.4;
+  margin-top:8px!important;
+}
+
+/* Barras de pesquisa e filtros com dimensões e foco compartilhados. */
+html body .projects-page.mf-shift .toolbar,
+html body .sales-page.mf-shift .sales-toolbar{
+  gap:12px!important;
+  margin-bottom:20px!important;
+}
+html body .projects-page.mf-shift .search-box,
+html body .sales-page.mf-shift .sales-search-box{
+  max-width:520px;
+}
+html body .projects-page.mf-shift .search,
+html body .sales-page.mf-shift .sales-search,
+html body .help.mf-shift .faq-toolbar .search,
+html body .dash.mf-shift > .body .search{
+  height:46px!important;
+  min-height:46px;
+  border:1px solid #d9dce6!important;
+  border-radius:13px!important;
+  background:rgba(255,255,255,.68)!important;
+  color:#23283e!important;
+  font-family:inherit;
+  font-size:13px!important;
+}
+html body .projects-page.mf-shift .search,
+html body .sales-page.mf-shift .sales-search{
+  padding-left:36px!important;
+}
+html body .projects-page.mf-shift .filter-trigger,
+html body .sales-page.mf-shift .filter-trigger,
+html body .projects-page.mf-shift .view-toggle{
+  height:46px!important;
+  min-height:46px!important;
+  border:1px solid #ded9ee!important;
+  border-radius:13px!important;
+  background:rgba(255,255,255,.64)!important;
+  color:#5e5a80!important;
+  font-weight:750!important;
+}
+html body .projects-page.mf-shift .view-toggle{
+  padding:4px!important;
+}
+html body .dash.mf-shift > .body .tab{
+  min-height:40px!important;
+  background:rgba(255,255,255,.65)!important;
+  color:#656584!important;
+  border:1px solid #ded9ee!important;
+  border-radius:11px!important;
+}
+html body .dash.mf-shift > .body .tab.on{
+  background:#ede9fa!important;
+  border-color:#b9abe5!important;
+  color:#51429c!important;
+}
+html body :is(.projects-page,.sales-page,.help,.dash).mf-shift :is(.search,.sales-search):focus-visible,
+html body .profile.mf-shift .input:focus-visible,
+html body .help.mf-shift :is(.input,.select,.textarea):focus-visible{
+  border-color:var(--ft-directory-focus)!important;
+  outline:0!important;
+  box-shadow:0 0 0 3px rgba(116,92,192,.10)!important;
+}
+
+/* Botões principais seguem a mesma assinatura visual de "Novo cliente". */
+html body .dash.mf-shift:not(.ftc-page) .dash-btn,
+html body .projects-page.mf-shift .dash-body > .top .btn,
+html body .cfg.mf-shift .btn.primary,
+html body .profile.mf-shift .btn.primary,
+html body .help.mf-shift .submit,
+html body .onb.mf-shift .btn.primary{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px!important;
+  border:0!important;
+  border-radius:12px!important;
+  padding:0 20px!important;
+  background:linear-gradient(100deg,#258fff,#6233fa)!important;
+  color:white!important;
+  font-family:inherit!important;
+  font-size:12px!important;
+  font-weight:800!important;
+  box-shadow:0 10px 24px rgba(57,55,190,.13)!important;
+  cursor:pointer;
+}
+html body .dash.mf-shift:not(.ftc-page) .dash-btn:disabled,
+html body .projects-page.mf-shift .btn:disabled,
+html body .cfg.mf-shift .btn:disabled,
+html body .profile.mf-shift .btn:disabled,
+html body .help.mf-shift .submit:disabled,
+html body .onb.mf-shift .btn:disabled{
+  opacity:.58;
+  cursor:not-allowed;
+}
+html body .bill-page.mf-shift .manage-btn,
+html body .cfg.mf-shift .btn:not(.primary),
+html body .projects-page.mf-shift .mini,
+html body .profile.mf-shift .btn:not(.primary){
+  border-radius:12px!important;
+}
+
+/* Vendas: preserve a tabela e seus dados, refinando apenas sua moldura. */
+html body .sales-page.mf-shift .sales-card{overflow:hidden}
+html body .sales-page.mf-shift .sales-head{
+  background:#f1eef9!important;
+  border-bottom:1px solid #ded9ec!important;
+}
+html body .sales-page.mf-shift .sales-row:not(.sales-head){
+  border-bottom-color:#e6e3ec!important;
+}
+html body .sales-page.mf-shift .sales-row:last-child{border-bottom:0!important}
+
+/* Detalhes de projeto e cartões de informações utilizam o mesmo contorno. */
+html body .pw-page.mf-shift .pw-section{border-radius:22px!important}
+html body .pw-page.mf-shift .pw-head h1{
+  font-size:clamp(26px,2.5vw,33px)!important;
+  font-weight:800!important;
+  letter-spacing:-.04em!important;
+  line-height:1.2!important;
+  text-wrap:balance;
+}
+html body .pw-page.mf-shift .pw-tabs button.on{
+  color:#6354b6!important;
+}
+html body .pw-page.mf-shift .pw-overview-grid{gap:14px!important}
+
+/* Ajustes de ritmo: sem transformar formulários extensos em modais
+   ou esconder controles específicos de cada funcionalidade. */
+html body .profile.mf-shift .editor,
+html body .cfg.mf-shift .setting-card,
+html body .help.mf-shift .form-body{padding:20px!important}
+html body .profile.mf-shift .layout,
+html body .help.mf-shift .layout,
+html body .cfg.mf-shift .grid,
+html body .bill-page.mf-shift .overview,
+html body .bill-page.mf-shift .plans,
+html body .onb.mf-shift .steps{gap:14px!important}
+html body .help.mf-shift .faq-item,
+html body .profile.mf-shift .brand-block,
+html body .profile.mf-shift .color-block{
+  background:rgba(255,255,255,.78)!important;
+  border:1px solid #e5e2ed!important;
+  border-radius:13px!important;
+}
+html body .dash.mf-shift > .body .row{gap:14px}
+html body .onb.mf-shift .step{padding:22px!important}
+
+@media(max-width:900px){
+  html body .projects-page.mf-shift .stat,
+  html body .sales-page.mf-shift .sales-stat{padding:16px!important;border-radius:19px!important}
+  html body .projects-page.mf-shift .stat strong,
+  html body .sales-page.mf-shift .sales-stat strong{font-size:25px!important}
+}
+@media(max-width:640px){
+  html body .dash.mf-shift:not(.ftc-page) .dash-h1,
+  html body .projects-page.mf-shift .dash-body > .top .h1,
+  html body .sales-page.mf-shift .sales-h1,
+  html body .bill-page.mf-shift .bill-h1,
+  html body .cfg.mf-shift .cfg-head .h1,
+  html body .profile.mf-shift .profile-head .h1,
+  html body .help.mf-shift .help-head .h1,
+  html body .dash.mf-shift > .body > .top .h1,
+  html body .onb.mf-shift > .onb-wrap > h1{font-size:clamp(25px,6vw,30px)!important}
+  html body .projects-page.mf-shift .project-card{padding:14px!important;border-radius:18px!important}
+  html body .projects-page.mf-shift .project-grid .project-card{padding:12px!important}
+  html body .projects-page.mf-shift .stats,
+  html body .sales-page.mf-shift .sales-stats{gap:8px!important}
+  html body .projects-page.mf-shift .stat,
+  html body .sales-page.mf-shift .sales-stat{padding:13px!important;border-radius:16px!important}
+  html body .projects-page.mf-shift .stat strong,
+  html body .sales-page.mf-shift .sales-stat strong{font-size:22px!important}
+  html body .projects-page.mf-shift .stat span,
+  html body .sales-page.mf-shift .sales-stat span{font-size:10px!important}
+  html body .projects-page.mf-shift .toolbar,
+  html body .sales-page.mf-shift .sales-toolbar{gap:8px!important}
+  html body .projects-page.mf-shift .search-box,
+  html body .sales-page.mf-shift .sales-search-box{max-width:100%}
+  html body .dash.mf-shift:not(.ftc-page) .card,
+  html body .projects-page.mf-shift .project-card,
+  html body .sales-page.mf-shift .sales-card,
+  html body .bill-page.mf-shift .bill-card,
+  html body .bill-page.mf-shift .plan,
+  html body .cfg.mf-shift .account-card,
+  html body .cfg.mf-shift .setting-card,
+  html body .profile.mf-shift .panel,
+  html body .help.mf-shift .card,
+  html body .onb.mf-shift .step,
+  html body .onb.mf-shift .progress,
+  html body .pw-page.mf-shift .pw-section{border-radius:18px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  html body .projects-page.mf-shift .project-card{transition:none}
+}
