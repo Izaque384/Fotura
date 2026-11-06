@@ -142,7 +142,7 @@
 }
 .mf-shift :where(.dash-btn,.btn.primary,.btn.save,.up-enviar,.up-concluir,.delivery-btn.blue){
   background:var(--ft-brand) !important;
-  border-color:transparent !important;
+  border:0 !important;
   box-shadow:0 8px 22px rgba(93,13,250,.13) !important;
 }
 

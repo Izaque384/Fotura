@@ -54,7 +54,7 @@
 }
 .lp2-btn:hover{transform:translateY(-1px);background:#fff}
 .lp2-btn-primary{
-  border-color:transparent;
+  border:0;
   background:linear-gradient(95deg,var(--blue),var(--violet));
   color:#fff!important;
   box-shadow:0 12px 30px rgba(73,57,201,.2);
@@ -696,7 +696,7 @@
 .lp2-plan.hot li{color:#c8c8ce}
 .lp2-plan li:before{content:"✓";margin-right:7px;color:#43865c;font-weight:900}
 .lp2-plan .lp2-btn{width:100%;background:#fff}
-.lp2-plan.hot .lp2-btn{border-color:transparent;background:linear-gradient(95deg,var(--blue),var(--violet));color:#fff}
+.lp2-plan.hot .lp2-btn{border:0;background:linear-gradient(95deg,var(--blue),var(--violet));color:#fff}
 
 .lp2-faq{padding:80px 0}
 .lp2-faq-grid{display:grid;grid-template-columns:.72fr 1.28fr;gap:55px}
