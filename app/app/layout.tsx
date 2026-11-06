@@ -9,6 +9,7 @@ import "./mobile-density.css";
 import "./lavanda-moderna.css";
 import "./clientes-directory.css";
 import "./internal-directory-theme.css";
+import "./fotura-drawer.css";
 import ClientShortcuts from "./components/ClientShortcuts";
 import BellOutsideDismiss from "./components/BellOutsideDismiss";
 import I18nProvider from "./components/I18nProvider";

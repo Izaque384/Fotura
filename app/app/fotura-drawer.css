@@ -1,0 +1,93 @@
+/* Fotura — painel contextual reutilizável, no estilo de Clientes. */
+.ft-drawer-overlay{
+  position:fixed;inset:0;z-index:220;
+  display:flex;justify-content:flex-end;
+  background:rgba(18,19,34,.57);
+  -webkit-backdrop-filter:blur(5px);
+  backdrop-filter:blur(5px);
+}
+.ft-drawer-panel{
+  box-sizing:border-box;width:min(590px,100%);height:100%;height:100dvh;
+  display:flex;flex-direction:column;min-width:0;overflow:hidden;
+  background:#faf9fd;color:#22263e;box-shadow:-24px 0 65px rgba(12,12,29,.22);
+}
+.ft-drawer-header{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  padding:24px 28px 19px;border-bottom:1px solid #e5e3ed;flex:none;
+}
+.ft-drawer-header h2{margin:0;color:#22263c;font-size:19px;line-height:1.35;font-weight:800;letter-spacing:-.025em}
+.ft-drawer-header p{margin:5px 0 0;color:#7e8296;font-size:12px;line-height:1.5}
+.ft-drawer-close{
+  flex:none;display:grid;place-items:center;width:36px;height:36px;cursor:pointer;
+  border:1px solid #dedbe8;border-radius:11px;background:#fff;color:#555674;
+  font:500 25px/1 inherit;
+}
+.ft-drawer-close:hover{background:#f1edfa;color:#453a82}
+.ft-drawer-close:focus-visible,.ft-drawer-button:focus-visible{
+  outline:3px solid #b5a3f2;outline-offset:2px;
+}
+.ft-drawer-content{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:24px 28px 35px}
+.ft-drawer-footer{
+  flex:none;display:flex;justify-content:flex-end;flex-wrap:wrap;gap:9px;
+  padding:15px 28px 19px;border-top:1px solid #e5e3ed;background:#faf9fd;
+}
+.ft-drawer-cover{width:100%;height:190px;object-fit:cover;display:block;background:#e8e5f0;border-radius:16px;margin:0 0 21px}
+.ft-drawer-cover-placeholder{
+  height:150px;display:grid;place-items:center;border-radius:16px;margin:0 0 21px;
+  background:linear-gradient(135deg,#edf1fc,#e9e2f8);color:#6861a3;font-size:13px;font-weight:750;
+}
+.ft-drawer-name{font-size:21px;font-weight:800;color:#25283d;letter-spacing:-.03em;margin:0 0 8px;overflow-wrap:anywhere}
+.ft-drawer-description{color:#6b7087;font-size:12px;line-height:1.65;margin:0 0 20px;overflow-wrap:anywhere}
+.ft-drawer-badges{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px}
+.ft-drawer-badge{border-radius:100px;border:1px solid #dcd5ef;padding:6px 10px;font-size:10px;font-weight:750;background:#f1edfa;color:#655a9c}
+.ft-drawer-badge.ok{background:#e9f5ef;color:#277854;border-color:#cde5d9}
+.ft-drawer-section{margin-bottom:23px}
+.ft-drawer-section h3{
+  font-size:11px;letter-spacing:.115em;text-transform:uppercase;
+  font-weight:800;margin:0 0 11px;color:#30354d;
+}
+.ft-drawer-field{
+  border:1px solid #e4e1ed;border-radius:12px;padding:13px 15px;
+  background:#fff;margin:0 0 9px;line-height:1.6;font-size:12px;color:#51566f;overflow-wrap:anywhere;
+}
+.ft-drawer-field strong{display:block;font-size:11px;margin-bottom:4px;color:#2d3150;font-weight:800}
+.ft-drawer-field a{color:#574ab0;text-decoration:underline;text-underline-offset:3px}
+.ft-drawer-list{display:grid;gap:8px}
+.ft-drawer-item{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  border:1px solid #e7e4ee;border-radius:13px;background:#fff;padding:13px 15px;
+  color:#26283d;text-align:left;width:100%;box-sizing:border-box;
+}
+button.ft-drawer-item{cursor:pointer}
+button.ft-drawer-item:hover{border-color:#bdb3e2;background:#faf8ff}
+.ft-drawer-item strong{display:block;font-size:12px;font-weight:800;overflow-wrap:anywhere}
+.ft-drawer-item small{display:block;margin-top:5px;font-size:10px;color:#85899b;overflow-wrap:anywhere}
+.ft-drawer-button{
+  min-height:42px;padding:0 15px;display:inline-flex;align-items:center;justify-content:center;
+  gap:8px;white-space:nowrap;border:1px solid #d9d9e9;border-radius:12px;
+  color:#464868;background:#fbfaff;font-family:inherit;font-size:12px;font-weight:750;cursor:pointer;
+}
+.ft-drawer-button.primary{border:0;color:#fff;background:linear-gradient(100deg,#258fff,#6233fa)}
+.ft-drawer-button:hover:not(:disabled){filter:brightness(.975)}
+.ft-drawer-button:disabled{opacity:.55;cursor:not-allowed}
+.ft-drawer-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
+.ft-drawer-form label{display:block;color:#596078;font-size:11px;font-weight:800;margin:0 0 7px}
+.ft-drawer-form input[type="text"]{
+  width:100%;height:44px;box-sizing:border-box;padding:0 13px;margin-bottom:12px;
+  border:1px solid #dcd9e9;border-radius:11px;background:#fff;color:#22263d;
+  font:500 13px/1.4 inherit;
+}
+.ft-drawer-form input:focus-visible{outline:3px solid #d6cef5;border-color:#9784d5}
+.ft-drawer-note{color:#7b7e94;font-size:11px;line-height:1.6;margin:10px 0}
+.ft-drawer-error{background:#fff1f3;color:#9c4051;border:1px solid #ecced6;border-radius:11px;padding:12px;font-size:12px}
+@media(max-width:640px){
+  .ft-drawer-header{padding:19px 18px 15px}
+  .ft-drawer-content{padding:20px 18px 28px}
+  .ft-drawer-footer{padding:13px 18px;justify-content:stretch}
+  .ft-drawer-footer .ft-drawer-button{flex:1}
+  .ft-drawer-cover{height:160px}
+}
+@media(prefers-reduced-motion:no-preference){
+  .ft-drawer-panel{animation:ft-drawer-in .20s ease-out both}
+  @keyframes ft-drawer-in{from{transform:translateX(14px);opacity:.95}to{transform:translateX(0);opacity:1}}
+}
