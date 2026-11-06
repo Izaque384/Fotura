@@ -394,3 +394,73 @@ html body .admin-console .au .meter-top{color:#dddbe7!important}
 @media(prefers-reduced-motion:reduce){
  html body .admin-console *,html body .admin-console *::before,html body .admin-console *::after{scroll-behavior:auto!important;transition:none!important}
 }
+
+/* Administração: central de avisos. Compartilha o tema grafite #151518. */
+html body .admin-console .admin-avisos{min-height:calc(100vh - 80px);background:#151518;padding:46px clamp(18px,4vw,68px) 100px;color:#f3f3f7}
+html body .admin-console .admin-avisos-inner{max-width:1450px;margin:0 auto;min-width:0}
+html body .admin-console .admin-avisos h1{font-size:clamp(28px,3vw,40px);line-height:1.16;letter-spacing:-.045em;margin:10px 0;color:#f8f7fb}
+html body .admin-console .admin-avisos h2{font-size:17px;letter-spacing:-.025em;color:#f3f2fa;margin:0 0 7px}
+html body .admin-console .admin-avisos-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:25px}
+html body .admin-console .admin-avisos-metrics .admin-mini-stat{background:#202024;padding:20px;border-radius:18px}
+html body .admin-console .admin-avisos-columns{display:grid;grid-template-columns:1fr minmax(285px,.7fr);gap:14px;margin-bottom:32px;align-items:start}
+html body .admin-console .admin-avisos-editor>p,
+html body .admin-console .admin-avisos-preview>p{font-size:11px;line-height:1.7;color:#a5a4b6;margin:5px 0 18px}
+html body .admin-console .admin-avisos-editor label{display:block;color:#cfcedb;font-size:11px;font-weight:750;margin:16px 0 8px}
+html body .admin-console .admin-avisos-editor :is(input,select,textarea){
+ display:block;width:100%;box-sizing:border-box;background:#292930;
+ border:1px solid #494852;border-radius:11px;color:#f1f0f8;
+ font-family:inherit;font-size:12px;padding:11px 14px;outline:none;
+}
+html body .admin-console .admin-avisos-editor :is(input,select){min-height:44px}
+html body .admin-console .admin-avisos-editor textarea{resize:vertical;min-height:145px;line-height:1.65}
+html body .admin-console .admin-avisos-editor :is(input,textarea)::placeholder{color:#858597}
+html body .admin-console .admin-avisos-editor :is(input,select,textarea):focus-visible{outline:2px solid #8876d6;outline-offset:2px}
+html body .admin-console .admin-avisos-counter{font-size:10px;color:#9795a6;text-align:right;margin-top:7px}
+html body .admin-console .admin-avisos-actions,
+html body .admin-console .admin-avisos-row-buttons{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+html body .admin-console .admin-avisos-actions{margin-top:19px}
+html body .admin-console :is(.admin-avisos-primary,.admin-avisos-secondary,.admin-avisos-delete){
+ display:inline-flex;align-items:center;justify-content:center;min-height:40px;
+ font-family:inherit;font-size:11px;font-weight:750;white-space:nowrap;
+ padding:0 15px;border-radius:11px;cursor:pointer;
+}
+html body .admin-console .admin-avisos-primary{color:#fff;border:0;background:linear-gradient(100deg,#258fff,#6233fa)}
+html body .admin-console .admin-avisos-secondary{color:#d4d0e6;background:#2b2a35;border:1px solid #50505f}
+html body .admin-console .admin-avisos-delete{background:#412b32;color:#f6b7c5;border:1px solid #6d414b}
+html body .admin-console :is(.admin-avisos-primary,.admin-avisos-secondary,.admin-avisos-delete):disabled{opacity:.5;cursor:not-allowed}
+html body .admin-console .admin-avisos-preview-card{
+ background:#29282f;border:1px solid #474354;border-left:3px solid #9b8ce8;
+ border-radius:16px;padding:22px 21px;min-height:180px;
+}
+html body .admin-console .admin-avisos-preview-card.tipo-novidade{border-left-color:#52a9eb}
+html body .admin-console .admin-avisos-preview-card.tipo-atencao{border-left-color:#ebba76}
+html body .admin-console .admin-avisos-tag{color:#c6b9ff;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+html body .admin-console .admin-avisos-preview-card strong{display:block;color:#fff;font-size:17px;line-height:1.5;margin:13px 0;overflow-wrap:anywhere}
+html body .admin-console .admin-avisos-preview-card p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.7;color:#cccbd9;margin:0}
+html body .admin-console .admin-avisos-tip{margin-top:16px!important}
+html body .admin-console .admin-avisos-success{margin-bottom:18px;border:1px solid #3b6b58;border-radius:12px;background:#223a30;color:#b2edce;font-size:12px;padding:12px 14px}
+html body .admin-console .admin-avisos-items{display:grid;gap:11px}
+html body .admin-console .admin-avisos-row{
+ display:flex;align-items:flex-start;justify-content:space-between;gap:23px;
+ background:#202024;border:1px solid #38383f;border-radius:17px;padding:21px 23px;
+}
+html body .admin-console .admin-avisos-row-body{min-width:0;flex:1}
+html body .admin-console .admin-avisos-row-badges{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+html body .admin-console .admin-avisos-row h3{font-size:14px;color:#f4f4f9;margin:12px 0 7px;overflow-wrap:anywhere}
+html body .admin-console .admin-avisos-row p{font-size:11px;color:#b3b2c0;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 12px}
+html body .admin-console .admin-avisos-row small{font-size:10px;color:#88889c}
+html body .admin-console .admin-avisos-row-buttons{flex:none;justify-content:flex-end}
+@media(max-width:1080px){
+ html body .admin-console .admin-avisos-columns{grid-template-columns:1fr}
+ html body .admin-console .admin-avisos-preview-card{min-height:0}
+ html body .admin-console .admin-avisos-row{flex-direction:column;gap:16px}
+}
+@media(max-width:600px){
+ html body .admin-console .admin-avisos{padding:30px 16px 70px}
+ html body .admin-console .admin-avisos-metrics{gap:8px}
+ html body .admin-console .admin-avisos-metrics .admin-mini-stat{padding:13px}
+ html body .admin-console .admin-avisos-metrics .admin-mini-stat strong{font-size:19px}
+ html body .admin-console .admin-avisos-metrics .admin-mini-stat span{font-size:9px}
+ html body .admin-console .admin-avisos-row{padding:17px}
+ html body .admin-console .admin-avisos-row-buttons{justify-content:flex-start}
+}
