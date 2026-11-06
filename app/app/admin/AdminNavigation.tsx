@@ -15,7 +15,7 @@ const pages = [
 ];
 
 export default function AdminNavigation() {
-  const pathname = usePathname();
+  const pathname = usePathname().replace(/^\/(?:pt|en|es)(?=\/admin(?:\/|$))/, "");
   return (
     <header className="admin-console-header">
       <div className="admin-console-header-inner">
