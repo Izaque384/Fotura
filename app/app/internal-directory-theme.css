@@ -468,3 +468,21 @@ html body .pw-page.mf-shift .pw-folder-summary,
 html body .pw-page.mf-shift .pw-head-buttons{
   flex-wrap:wrap;
 }
+
+/* Projetos: abrir é a ação principal, detalhes permanece secundário. */
+html body .projects-page.mf-shift .project-actions .mini.primary-mini{
+  background:#e8e4ff!important;
+  color:#4d3bac!important;
+  border:1px solid #bcb1ed!important;
+  box-shadow:0 3px 11px rgba(96,75,184,.12)!important;
+  font-weight:800!important;
+}
+html body .projects-page.mf-shift .project-actions .mini.primary-mini:hover{
+  background:#ddd6ff!important;
+  border-color:#9e8ae7!important;
+  box-shadow:0 4px 14px rgba(96,75,184,.17)!important;
+}
+html body .projects-page.mf-shift .project-actions .mini.primary-mini:focus-visible{
+  outline:2px solid #8b72de!important;
+  outline-offset:2px;
+}
