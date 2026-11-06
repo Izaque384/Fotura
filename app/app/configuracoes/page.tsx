@@ -70,6 +70,7 @@ export default function ConfiguracoesPage() {
           supabase.from("perfis").select("logo_url").eq("id",data.user.id).maybeSingle(),
           fetch("/api/account/closure",{headers,cache:"no-store"}),
         ]);
+        // A foto exibida nas configurações vem do perfil Fotura.
         if(perfilRes.status==="fulfilled"&&perfilRes.value.data?.logo_url&&ativo) {
           setAvatarConta(perfilRes.value.data.logo_url as string);
         }
