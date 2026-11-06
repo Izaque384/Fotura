@@ -33,7 +33,6 @@ export async function GET(req: NextRequest) {
       vendasRes,
       atividadeRes,
       eventosRes,
-      googleRes,
     ] = await Promise.all([
       supabase.from("perfis")
         .select("id,nome_estudio,logo_url,cor_hero,hero_galeria_ativo,hero_galeria_estilo,hero_foto_capa_ativo,atualizado_em")
@@ -59,14 +58,11 @@ export async function GET(req: NextRequest) {
       supabase.from("produto_eventos")
         .select("evento,rota,entidade,entidade_id,detalhes,criado_em")
         .eq("user_id", user.id).order("criado_em", { ascending: true }),
-      supabase.from("google_integracoes")
-        .select("google_email,scope,criado_em,atualizado_em")
-        .eq("user_id", user.id).maybeSingle(),
     ]);
 
     const erros = [
       perfilRes.error, assinaturaRes.error, clientesRes.error, projetosRes.error, galeriasRes.error,
-      vendasRes.error, atividadeRes.error, eventosRes.error, googleRes.error,
+      vendasRes.error, atividadeRes.error, eventosRes.error,
     ].filter(Boolean);
     if (erros.length) throw erros[0];
 
@@ -94,9 +90,7 @@ export async function GET(req: NextRequest) {
       },
       perfil: perfilRes.data ?? null,
       assinatura: assinaturaRes.data ?? null,
-      integracoes: {
-        google: googleRes.data ?? null,
-      },
+      integracoes: {},
       clientes: clientesRes.data ?? [],
       projetos: projetosRes.data ?? [],
       galerias: galeriasRes.data ?? [],

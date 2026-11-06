@@ -27,8 +27,6 @@ type EncerramentoEstado = {
 };
 type EncerramentoModo = "solicitar" | "confirmar" | null;
 
-function GoogleLogo(){return <svg className="google-logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.39-.18-2.04H12v3.86h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.9-1.75 2.98-4.33 2.98-7.35Z"/><path fill="#34A853" d="M12 22c2.7 0 4.97-.9 6.62-2.42l-3.24-2.51c-.9.6-2.05.96-3.38.96-2.61 0-4.82-1.76-5.61-4.13H3.04v2.59A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.39 13.9A6 6 0 0 1 6.08 12c0-.66.11-1.3.31-1.9V7.51H3.04A10 10 0 0 0 2 12c0 1.61.38 3.14 1.04 4.49l3.35-2.59Z"/><path fill="#EA4335" d="M12 5.97c1.47 0 2.79.5 3.83 1.5l2.87-2.88A9.63 9.63 0 0 0 12 2a10 10 0 0 0-8.96 5.51l3.35 2.59C7.18 7.73 9.39 5.97 12 5.97Z"/></svg>}
-
 export default function ConfiguracoesPage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -39,9 +37,6 @@ export default function ConfiguracoesPage() {
   const [permissao, setPermissao] = useState<Permissao>("default");
   const [pushAtivo,setPushAtivo]=useState(false);
   const [alterandoPush, setAlterandoPush] = useState(false);
-  const [googleConectado,setGoogleConectado]=useState(false);
-  const [googleEmail,setGoogleEmail]=useState<string|null>(null);
-  const [alterandoGoogle,setAlterandoGoogle]=useState(false);
   const [encerrando, setEncerrando] = useState(false);
   const [exportandoDados,setExportandoDados]=useState(false);
   const [encerramentoEstado,setEncerramentoEstado]=useState<EncerramentoEstado|null>(null);
@@ -71,23 +66,18 @@ export default function ConfiguracoesPage() {
       const {data:{session}}=await supabase.auth.getSession();
       if(session?.access_token){
         const headers={Authorization:`Bearer ${session.access_token}`};
-        const [googleRes,encerramentoRes]=await Promise.allSettled([
-          fetch("/api/google/integration",{headers,cache:"no-store"}),
+        const [perfilRes,encerramentoRes]=await Promise.allSettled([
+          supabase.from("perfis").select("logo_url").eq("id",data.user.id).maybeSingle(),
           fetch("/api/account/closure",{headers,cache:"no-store"}),
         ]);
-        if(googleRes.status==="fulfilled"&&googleRes.value.ok){
-          const g=await googleRes.value.json() as {conectado?:boolean;email?:string|null;avatar?:string|null};
-          if(ativo){setGoogleConectado(Boolean(g.conectado));setGoogleEmail(g.email??null);if(g.avatar)setAvatarConta(g.avatar)}
+        if(perfilRes.status==="fulfilled"&&perfilRes.value.data?.logo_url&&ativo) {
+          setAvatarConta(perfilRes.value.data.logo_url as string);
         }
         if(encerramentoRes.status==="fulfilled"&&encerramentoRes.value.ok){
           const encerramento=await encerramentoRes.value.json() as EncerramentoEstado;
           if(ativo)setEncerramentoEstado(encerramento);
         }
       }
-      const param=new URLSearchParams(window.location.search).get("google");
-      if(param==="conectado"){setErro(false);setMensagem("Google Contacts conectado. As fotos disponíveis nos seus contatos poderão aparecer nos cards de clientes.");}
-      else if(param==="erro"){setErro(true);setMensagem("Não foi possível concluir a conexão com o Google.");}
-      else if(param==="config"){setErro(true);setMensagem("A integração Google ainda precisa das credenciais OAuth do projeto.");}
       setCarregando(false);
     })();
     return () => { ativo = false; };
@@ -103,26 +93,6 @@ export default function ConfiguracoesPage() {
     setPermissao(atual);setAlterandoPush(false);
     if(ok){setPushAtivo(true);setMensagem("Notificações ativadas neste navegador.");}
     else{definirPreferenciaPush(false);setPushAtivo(false);setErro(true);setMensagem(atual === "denied" ? "As notificações estão bloqueadas nas permissões do navegador." : "Não foi possível ativar as notificações neste navegador.");}
-  }
-
-  async function conectarGoogle(){
-    if(alterandoGoogle)return;setAlterandoGoogle(true);setMensagem("");setErro(false);
-    const {data:{session}}=await supabase.auth.getSession();
-    if(!session?.access_token){setAlterandoGoogle(false);setErro(true);setMensagem("Sua sessão expirou. Entre novamente para conectar o Google.");return}
-    const r=await fetch("/api/google/connect",{method:"POST",headers:{Authorization:`Bearer ${session.access_token}`}});
-    const d=await r.json().catch(()=>({error:"Não foi possível iniciar a conexão."}));
-    if(!r.ok||!d.url){setAlterandoGoogle(false);setErro(true);setMensagem(d.error||"Não foi possível iniciar a conexão com o Google.");return}
-    window.location.href=d.url as string;
-  }
-
-  async function desconectarGoogle(){
-    if(alterandoGoogle)return;setAlterandoGoogle(true);setMensagem("");setErro(false);
-    const {data:{session}}=await supabase.auth.getSession();
-    if(!session?.access_token){setAlterandoGoogle(false);setErro(true);setMensagem("Sua sessão expirou.");return}
-    const r=await fetch("/api/google/integration",{method:"DELETE",headers:{Authorization:`Bearer ${session.access_token}`}});
-    setAlterandoGoogle(false);
-    if(!r.ok){setErro(true);setMensagem("Não foi possível desconectar o Google.");return}
-    setGoogleConectado(false);setGoogleEmail(null);setMensagem("Google Contacts desconectado.");
   }
 
   async function tokenAtual(){
@@ -204,7 +174,7 @@ export default function ConfiguracoesPage() {
       .account-copy{min-width:0}.account-title{font-size:13.5px;font-weight:800;color:#292E45}.account-email{font-size:var(--ft-font-sm);color:var(--ft-text-muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.account-note{font-size:var(--ft-font-xs);color:#8A8FA3;margin-top:5px}
       .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:20px}
       .setting-card{border-radius:var(--ft-radius-panel);padding:16px;display:flex;flex-direction:column;min-height:178px}
-      .setting-top{display:flex;align-items:flex-start;gap:11px}.icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#EEE8FA;border:1px solid #DAD2E9;color:#655C90;flex:none}.icon svg{width:17px;height:17px}.icon .google-logo{width:19px;height:19px}
+      .setting-top{display:flex;align-items:flex-start;gap:11px}.icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#EEE8FA;border:1px solid #DAD2E9;color:#655C90;flex:none}.icon svg{width:17px;height:17px}
       .setting-copy{min-width:0}.title{font-size:13px;font-weight:800;margin:1px 0 0;color:#2A2F46}.desc{font-size:var(--ft-font-sm);color:var(--ft-text-muted);line-height:1.5;margin:4px 0 0}
       .setting-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:14px;border-top:1px solid #E7E2EE}.setting-info{min-width:0}.label{font-size:10px;font-weight:700;color:#555D75}.value{font-size:var(--ft-font-xs);color:var(--ft-text-muted);margin-top:3px;line-height:1.45}
       .status-pill{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:4px 7px;border-radius:999px;background:#F2EEF7;border:1px solid #E0DAEB;color:#6A7085;font-size:var(--ft-font-xs);font-weight:700}.status-dot{width:6px;height:6px;border-radius:50%;background:#8D93A6}.status-pill.on{background:#E9F5EF;border-color:#CBE4D6;color:var(--ft-success)}.status-pill.on .status-dot{background:#4F9A71}.status-pill.warn{background:#FAF2E5;border-color:#E8D7B8;color:#94703C}.status-pill.warn .status-dot{background:#C89245}
@@ -267,19 +237,7 @@ export default function ConfiguracoesPage() {
           </div>
         </section>
 
-        <section className="setting-card">
-          <div className="setting-top">
-            <div className="icon" aria-hidden="true"><GoogleLogo/></div>
-            <div className="setting-copy"><h2 className="title">Google Contacts</h2><p className="desc">Use fotos dos seus contatos Google nos cards de clientes quando o e-mail corresponder.</p></div>
-          </div>
-          <div className="setting-bottom">
-            <div className="setting-info">
-              <div className="label">Conta Google</div>
-              <div className={"status-pill"+(googleConectado?" on":"")}><span className="status-dot"/>{googleConectado?(googleEmail?googleEmail:"Conectada"):"Não conectada"}</div>
-            </div>
-            <button className={"btn"+(!googleConectado?" primary":"")} disabled={alterandoGoogle} onClick={()=>void (googleConectado?desconectarGoogle():conectarGoogle())}>{alterandoGoogle?"Processando…":googleConectado?"Desconectar":"Conectar Google"}</button>
-          </div>
-        </section>
+
       </div>
 
       <div className="section-label">Segurança e conta</div>
