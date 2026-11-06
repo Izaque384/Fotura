@@ -134,6 +134,11 @@ export default function ClientesPage() {
   const [zoom, setZoom] = useState(1);
   const [posX, setPosX] = useState(50);
   const [posY, setPosY] = useState(50);
+  const [galeriaPicker, setGaleriaPicker] = useState(false);
+  const [galeriaId, setGaleriaId] = useState("");
+  const [imagensGaleria, setImagensGaleria] = useState<{ path: string; url: string }[]>([]);
+  const [carregandoGaleria, setCarregandoGaleria] = useState(false);
+  const [erroGaleria, setErroGaleria] = useState("");
   const [confirmarExclusao, setConfirmarExclusao] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
 
@@ -258,6 +263,7 @@ export default function ClientesPage() {
     setRemoverFoto(false);
     setPermitirDuplicado(false);
     setZoom(1); setPosX(50); setPosY(50);
+    setGaleriaPicker(false); setGaleriaId(""); setImagensGaleria([]); setErroGaleria("");
   }
   function abrirEditor(cliente: Cliente) {
     setForm({ nome: cliente.nome, email: cliente.email || "", telefone: cliente.telefone || "", observacoes: cliente.observacoes || "", etiquetas: (cliente.etiquetas || []).join(", ") });
@@ -268,6 +274,7 @@ export default function ClientesPage() {
     setRemoverFoto(false);
     setPermitirDuplicado(false);
     setZoom(1); setPosX(50); setPosY(50);
+    setGaleriaPicker(false); setGaleriaId(""); setImagensGaleria([]); setErroGaleria("");
   }
   function escolherFoto(file: File | undefined) {
     if (!file) return;
@@ -279,6 +286,45 @@ export default function ClientesPage() {
     setImagem(file);
     setRemoverFoto(false);
     setZoom(1); setPosX(50); setPosY(50);
+  }
+  async function carregarFotosDaGaleria(id: string) {
+    if (!uid || !id) { setImagensGaleria([]); return; }
+    // Só permite navegar nas pastas que estão vinculadas ao cliente editado.
+    if (!clienteEditando || !galeriasDe(clienteEditando.id).some((g) => g.id === id)) return;
+    setCarregandoGaleria(true); setErroGaleria(""); setImagensGaleria([]);
+    const prefixo = uid + "/" + id + "/thumbs";
+    try {
+      const { data: arquivos, error } = await supabase.storage.from("fotos").list(prefixo, {
+        limit: 36,
+        sortBy: { column: "created_at", order: "desc" }
+      });
+      if (error) throw error;
+      const caminhos = (arquivos || []).filter((a) => a.name && /\.(?:webp|jpg|jpeg|png)$/i.test(a.name))
+        .map((a) => prefixo + "/" + a.name);
+      if (!caminhos.length) { setErroGaleria("Nenhuma miniatura disponível nesta pasta."); return; }
+      const { data: urls, error: signedError } = await supabase.storage.from("fotos").createSignedUrls(caminhos, 900);
+      if (signedError) throw signedError;
+      const imagens = (urls || []).flatMap((item, index) => item.signedUrl ? [{ path: caminhos[index], url: item.signedUrl }] : []);
+      setImagensGaleria(imagens);
+      if (!imagens.length) setErroGaleria("Não foi possível abrir as fotos desta pasta.");
+    } catch {
+      setErroGaleria("Não foi possível carregar as fotos. Tente outra pasta.");
+    } finally { setCarregandoGaleria(false); }
+  }
+  async function selecionarFotoDaGaleria(path: string) {
+    if (!clienteEditando || !galeriasDe(clienteEditando.id).some((g) => path.startsWith(uid + "/" + g.id + "/thumbs/"))) return;
+    setCarregandoGaleria(true); setErroGaleria("");
+    try {
+      const { data, error } = await supabase.storage.from("fotos").download(path);
+      if (error || !data) throw new Error("Download indisponível");
+      const mime = /\.webp$/i.test(path) ? "image/webp" : /\.png$/i.test(path) ? "image/png" : "image/jpeg";
+      const file = new File([data], "fotura-galeria." + mime.split("/")[1], { type: mime });
+      if (file.size > 8 * 1024 * 1024) throw new Error("Arquivo acima do limite");
+      escolherFoto(file);
+      setGaleriaPicker(false);
+    } catch {
+      setErroGaleria("Não foi possível escolher esta foto. Tente outra imagem.");
+    } finally { setCarregandoGaleria(false); }
   }
   async function assinarAvatar(path: string) {
     const { data } = await supabase.storage.from(BUCKET).createSignedUrl(path, 3600);
@@ -559,10 +605,29 @@ export default function ClientesPage() {
                   <p>Foto do cliente (opcional). Só você pode visualizar a imagem no Fotura.</p>
                   <div className="ftc-photo-actions">
                     <label className="ftc-file-label">Escolher foto <input type="file" accept="image/jpeg,image/png,image/webp" disabled={salvando} onChange={(e) => escolherFoto(e.target.files?.[0])} /></label>
+                    {!!clienteEditando && galeriasDe(clienteEditando.id).length > 0 && <button type="button" className="ftc-secondary" disabled={salvando} onClick={() => setGaleriaPicker((open) => !open)}>Escolher da galeria</button>}
                     {(imagem || (clienteEditando?.avatar_path && !removerFoto)) && <button type="button" className="ftc-secondary ftc-danger" disabled={salvando} onClick={() => { setImagem(null); setRemoverFoto(true); }}>Remover foto</button>}
                   </div>
                 </div>
               </div>
+              {galeriaPicker && !!clienteEditando && (
+                <div className="ftc-gallery-picker">
+                  <p>Escolha uma pasta vinculada a este cliente e depois uma fotografia. A imagem será copiada para o cadastro privado.</p>
+                  <select aria-label="Escolher pasta do cliente" value={galeriaId} onChange={(e) => { setGaleriaId(e.target.value); void carregarFotosDaGaleria(e.target.value); }}>
+                    <option value="">Selecione uma pasta</option>
+                    {galeriasDe(clienteEditando.id).map((g) => <option key={g.id} value={g.id}>{g.titulo}</option>)}
+                  </select>
+                  {carregandoGaleria && <p>Carregando fotografias…</p>}
+                  {erroGaleria && <p role="alert">{erroGaleria}</p>}
+                  {!!imagensGaleria.length && <div className="ftc-gallery-thumbs">
+                    {imagensGaleria.map((item) => (
+                      <button type="button" key={item.path} disabled={carregandoGaleria || salvando} title="Usar esta fotografia" aria-label="Usar foto da galeria como avatar" onClick={() => void selecionarFotoDaGaleria(item.path)}>
+                        <img alt="" src={item.url} loading="lazy" />
+                      </button>
+                    ))}
+                  </div>}
+                </div>
+              )}
               {!!imagem && (
                 <div className="ftc-crop">
                   <div className="ftc-muted">Ajuste o enquadramento. O recorte será salvo em formato quadrado.</div>
