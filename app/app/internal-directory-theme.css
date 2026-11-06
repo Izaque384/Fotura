@@ -339,3 +339,99 @@ html body .onb.mf-shift .step{padding:22px!important}
 @media(prefers-reduced-motion:reduce){
   html body .projects-page.mf-shift .project-card{transition:none}
 }
+
+/* Fluxo interno de entrega: mesmas superfícies, sem alterar os passos. */
+html body .delivery-page.mf-shift{
+  --ft-directory-surface:rgba(255,255,255,.64);
+  --ft-directory-border:rgba(76,85,116,.16);
+  --ft-directory-shadow:0 16px 38px rgba(31,41,55,.055);
+}
+html body .delivery-page.mf-shift .delivery-ey{
+  color:#7565b4!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  letter-spacing:.17em!important;
+  text-transform:uppercase!important;
+}
+html body .delivery-page.mf-shift .delivery-title{
+  color:#1e2235!important;
+  font-size:clamp(27px,2.6vw,34px)!important;
+  font-weight:800!important;
+  letter-spacing:-.045em!important;
+  line-height:1.2!important;
+  text-wrap:balance;
+}
+html body .delivery-page.mf-shift .delivery-sub{
+  color:#737b93!important;
+  font-size:13px!important;
+  line-height:1.6!important;
+}
+html body .delivery-page.mf-shift .delivery-head{
+  margin-bottom:24px!important;
+}
+html body .delivery-page.mf-shift .delivery-card{
+  background:var(--ft-directory-surface)!important;
+  background-image:none!important;
+  border:1px solid var(--ft-directory-border)!important;
+  border-radius:24px!important;
+  box-shadow:var(--ft-directory-shadow)!important;
+}
+html body .delivery-page.mf-shift .delivery-card.active{
+  border-color:#b6a8e8!important;
+  box-shadow:0 16px 40px rgba(94,79,158,.10)!important;
+}
+html body .delivery-page.mf-shift .delivery-btn:not(.secondary){
+  min-height:44px;
+  border-radius:12px!important;
+}
+html body .delivery-page.mf-shift .delivery-grid{gap:14px!important}
+
+/* Administração é um ambiente especial: só recebe a hierarquia e cartões.
+   Tabelas, indicadores, permissões e ações administrativas ficam intocados. */
+html body .adm{
+  --ft-directory-surface:rgba(255,255,255,.64);
+  --ft-directory-border:rgba(76,85,116,.16);
+  --ft-directory-shadow:0 16px 38px rgba(31,41,55,.055);
+}
+html body .adm .wrap{max-width:1440px!important}
+html body .adm .heading{margin-bottom:24px!important}
+html body .adm .ey{
+  color:#7565b4!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  letter-spacing:.17em!important;
+  text-transform:uppercase!important;
+}
+html body .adm h1{
+  color:#1e2235!important;
+  font-size:clamp(27px,2.6vw,34px)!important;
+  font-weight:800!important;
+  letter-spacing:-.045em!important;
+}
+html body .adm .sub{color:#737b93!important;font-size:13px!important;line-height:1.6!important}
+html body .adm .card{
+  background:var(--ft-directory-surface)!important;
+  background-image:none!important;
+  border:1px solid var(--ft-directory-border)!important;
+  border-radius:24px!important;
+  box-shadow:var(--ft-directory-shadow)!important;
+}
+html body .adm .search{
+  min-height:46px!important;
+  background:rgba(255,255,255,.68)!important;
+  border:1px solid #d9dce6!important;
+  border-radius:13px!important;
+  font-family:inherit!important;
+  font-size:13px!important;
+}
+html body .adm .search:focus-visible{
+  border-color:#9e8adf!important;
+  outline:0!important;
+  box-shadow:0 0 0 3px rgba(116,92,192,.10)!important;
+}
+html body .adm .table-wrap{border-radius:18px!important;border-color:#ded9e9!important}
+html body .adm .table th{background:#f1eef9!important}
+@media(max-width:640px){
+  html body .delivery-page.mf-shift .delivery-card,
+  html body .adm .card{border-radius:18px!important}
+}
