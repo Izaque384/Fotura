@@ -3,7 +3,7 @@ import {useEffect} from "react";
 
 type Pasta={id:string;titulo:string;visivel:boolean;etapa:string;qtd:number};
 type Props={
- aberto:boolean;fechar:()=>void;nome:string;url:string;cliente:string|null;
+ aberto:boolean;fechar:()=>void;nome:string;url:string;cliente:string|null;galeriaUnica?:boolean;
  protegido:boolean;linkAte:string|null;prova:boolean;downloadAtivo:boolean;
  downloadIndividual:boolean;downloadCompleto:boolean;downloadTamanho:"web"|"original";
  downloadPin:boolean;pastas:Pasta[];copiar:()=>void;configurar:()=>void;
@@ -20,18 +20,18 @@ export default function ProjectShareCenter(p:Props){
  return <div className="ft-share-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)p.fechar()}} role="presentation">
    <section className="ft-share-card" role="dialog" aria-modal="true" aria-label="Revisar e compartilhar projeto">
     <header><div><small>REVISÃO DE ENTREGA</small><h2>Compartilhar projeto</h2><p>Confira como o cliente acessará <strong>{p.nome}</strong>.</p></div><button onClick={p.fechar} type="button" aria-label="Fechar">✕</button></header>
-    <div className="ft-share-ready"><strong>{pronto?"Tudo pronto para compartilhar":"Revise antes de compartilhar"}</strong><span>{pronto?"O link reúne as pastas publicadas e os controles de acesso.":"Publique ao menos uma pasta com fotos e confirme a validade do link."}</span></div>
+    <div className="ft-share-ready"><strong>{pronto?"Tudo pronto para compartilhar":"Revise antes de compartilhar"}</strong><span>{pronto?"O link reúne as fotos e os controles de acesso.":"Adicione fotos e confirme a validade do link."}</span></div>
     <div className="ft-share-details">
       <div><span>CLIENTE</span><b>{p.cliente||"Sem cliente vinculado"}</b></div>
       <div><span>ACESSO</span><b>{p.protegido?"Com senha":"Pelo link"}</b></div>
       <div><span>VALIDADE</span><b>{p.linkAte?new Date(p.linkAte+"T12:00:00").toLocaleDateString("pt-BR"):"Sem prazo"}</b></div>
-      <div><span>DOWNLOADS</span><b>{p.downloadAtivo?`${p.downloadTamanho==="original"?"Originais":"Web"} · ${p.downloadCompleto?"pasta completa":p.downloadIndividual?"individuais":"desativados"}`:"Desativados"}</b></div>
+      <div><span>DOWNLOADS</span><b>{p.downloadAtivo?`${p.downloadTamanho==="original"?"Originais":"Web"} · ${p.downloadCompleto?(p.galeriaUnica?"galeria completa":"galeria completa"):p.downloadIndividual?"individuais":"desativados"}`:"Desativados"}</b></div>
       <div><span>SELEÇÃO</span><b>{p.prova?"Ativada":"Entrega direta"}</b></div>
       <div><span>PIN DE DOWNLOAD</span><b>{p.downloadPin?"Configurado":"Não configurado"}</b></div>
     </div>
-    <div className="ft-share-folders"><strong>Pastas visíveis para o cliente ({publicadas.length})</strong><div>{p.pastas.map(x=><span key={x.id} className={!x.visivel?"muted":""}>{x.visivel?"✓":"—"} {x.titulo} · {x.qtd} foto{x.qtd===1?"":"s"}{!x.visivel?" · oculta":""}</span>)}</div></div>
+    <div className="ft-share-folders"><strong>{p.galeriaUnica?"Galeria que o cliente receberá":`Galerias visíveis para o cliente (${publicadas.length})`}</strong><div>{p.pastas.map(x=><span key={x.id} className={!x.visivel?"muted":""}>{x.visivel?"✓":"—"} {x.titulo} · {x.qtd} foto{x.qtd===1?"":"s"}{!x.visivel?" · oculta":""}</span>)}</div></div>
     {expirado&&<p className="ft-share-warning">O link expirou. Atualize a validade nas configurações.</p>}
-    {vazias.length>0&&<p className="ft-share-warning">{vazias.length} pasta(s) pública(s) ainda não têm fotos.</p>}
+    {vazias.length>0&&<p className="ft-share-warning">{p.galeriaUnica?"A galeria ainda não tem fotos.":`${vazias.length} galeria(s) pública(s) ainda não têm fotos.`}</p>}
     {!p.downloadAtivo&&<p className="ft-share-note">Os downloads estão desativados. Você pode habilitá-los nas configurações.</p>}
     <label className="ft-share-link">LINK DO PROJETO<input value={p.url} readOnly onFocus={e=>e.currentTarget.select()}/></label>
     <div className="ft-share-actions"><button className="secondary" onClick={p.configurar}>Configurações</button><button className="secondary" disabled={!p.url} onClick={()=>window.open(p.url,"_blank","noopener,noreferrer")}>Ver como cliente</button><button className="primary" onClick={p.copiar} disabled={!pronto}>Copiar link</button></div>
