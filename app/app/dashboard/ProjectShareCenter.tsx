@@ -25,7 +25,7 @@ export default function ProjectShareCenter(p:Props){
       <div><span>CLIENTE</span><b>{p.cliente||"Sem cliente vinculado"}</b></div>
       <div><span>ACESSO</span><b>{p.protegido?"Com senha":"Pelo link"}</b></div>
       <div><span>VALIDADE</span><b>{p.linkAte?new Date(p.linkAte+"T12:00:00").toLocaleDateString("pt-BR"):"Sem prazo"}</b></div>
-      <div><span>DOWNLOADS</span><b>{p.downloadAtivo?`${p.downloadTamanho==="original"?"Originais":"Web"} · ${p.downloadCompleto?(p.galeriaUnica?"galeria completa":"galeria completa"):p.downloadIndividual?"individuais":"desativados"}`:"Desativados"}</b></div>
+      <div><span>DOWNLOADS</span><b>{p.downloadAtivo?`${p.downloadTamanho==="original"?"Originais":"Web"} · ${p.downloadCompleto?"galeria completa":p.downloadIndividual?"individuais":"desativados"}`:"Desativados"}</b></div>
       <div><span>SELEÇÃO</span><b>{p.prova?"Ativada":"Entrega direta"}</b></div>
       <div><span>PIN DE DOWNLOAD</span><b>{p.downloadPin?"Configurado":"Não configurado"}</b></div>
     </div>
@@ -33,7 +33,7 @@ export default function ProjectShareCenter(p:Props){
     {expirado&&<p className="ft-share-warning">O link expirou. Atualize a validade nas configurações.</p>}
     {vazias.length>0&&<p className="ft-share-warning">{p.galeriaUnica?"A galeria ainda não tem fotos.":`${vazias.length} galeria(s) pública(s) ainda não têm fotos.`}</p>}
     {!p.downloadAtivo&&<p className="ft-share-note">Os downloads estão desativados. Você pode habilitá-los nas configurações.</p>}
-    <label className="ft-share-link">LINK DO PROJETO<input value={p.url} readOnly onFocus={e=>e.currentTarget.select()}/></label>
+    <label className="ft-share-link">{p.galeriaUnica?"LINK DA GALERIA":"LINK DO PROJETO"}<input value={p.url} readOnly onFocus={e=>e.currentTarget.select()}/></label>
     <div className="ft-share-actions"><button className="secondary" onClick={p.configurar}>Configurações</button><button className="secondary" disabled={!p.url} onClick={()=>window.open(p.url,"_blank","noopener,noreferrer")}>Ver como cliente</button><button className="primary" onClick={p.copiar} disabled={!pronto}>Copiar link</button></div>
     <div className="ft-share-channels"><a href={whatsapp} target="_blank" rel="noreferrer" aria-disabled={!pronto} onClick={e=>{if(!pronto)e.preventDefault()}}>WhatsApp ↗</a><a href={email} aria-disabled={!pronto} onClick={e=>{if(!pronto)e.preventDefault()}}>E-mail ↗</a></div>
    </section>

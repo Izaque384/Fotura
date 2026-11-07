@@ -4,7 +4,7 @@ import {createClient} from "../../lib/supabase-client";
 
 type Pasta={id:string;titulo:string;etapa:string;qtd:number};
 type Foto={nome:string;thumb:string|null};
-export default function ProjectPhotoManager({projetoId,pastas,pastaInicial,fechar,atualizar}:{projetoId:string;pastas:Pasta[];pastaInicial:string;fechar:()=>void;atualizar:()=>void}){
+export default function ProjectPhotoManager({projetoId,pastas,pastaInicial,fechar,atualizar,galeriaUnica=false}:{projetoId:string;pastas:Pasta[];pastaInicial:string;fechar:()=>void;atualizar:()=>void;galeriaUnica?:boolean}){
  const supabase=useMemo(()=>createClient(),[]);
  const [pasta,setPasta]=useState(pastaInicial),[destino,setDestino]=useState(""),[fotos,setFotos]=useState<Foto[]>([]),[selecionadas,setSelecionadas]=useState<string[]>([]);
  const [alterou,setAlterou]=useState(false),[carregando,setCarregando]=useState(false),[busy,setBusy]=useState(false),[aviso,setAviso]=useState(""),[erro,setErro]=useState(false),[proximo,setProximo]=useState<number|null>(null),[capa,setCapa]=useState<string|null>(null);
@@ -25,7 +25,7 @@ export default function ProjectPhotoManager({projetoId,pastas,pastaInicial,fecha
  async function acao(operacao:"capa"|"mover"){
   setErro(false);setAviso("");setBusy(true);
   try{
-   if(operacao==="mover"&&(!destino||selecionadas.length>25))throw Error("Escolha a pasta de destino e até 25 fotos por operação.");
+   if(operacao==="mover"&&(galeriaUnica||!destino||selecionadas.length>25))throw Error("Escolha a pasta de destino e até 25 fotos por operação.");
    const access=await token();
    const r=await fetch("/api/projeto/fotos",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${access}`},body:JSON.stringify(operacao==="capa"?{acao:"capa",projeto:projetoId,pasta,foto:selecionadas[0]}:{acao:"mover",projeto:projetoId,pasta,destino,fotos:selecionadas})});
    const data=await r.json();if(!r.ok){if((data.movidas??[]).length){setAviso(`${data.movidas.length} fotos foram movidas, mas houve uma falha. Atualize o painel.`);await listar(pasta);setAlterou(true)}throw Error(data.error||"Não foi possível concluir.")}
@@ -34,8 +34,8 @@ export default function ProjectPhotoManager({projetoId,pastas,pastaInicial,fecha
  }
  return <div className="ft-photo-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)encerrar()}}>
   <section className="ft-photo-manager" role="dialog" aria-modal="true" aria-label="Gerenciar fotos do projeto">
-   <header><div><small>ORGANIZAÇÃO DE FOTOS</small><h2>Gerenciar fotos</h2><p>Selecione fotos para definir a capa ou movê-las entre pastas antes da seleção do cliente.</p></div><button type="button" onClick={encerrar} disabled={busy} aria-label="Fechar">✕</button></header>
-   <div className="ft-photo-controls"><label>Pasta de origem<select value={pasta} disabled={busy} onChange={e=>{setPasta(e.target.value);setDestino("");setAviso("");setErro(false)}}>{pastas.map(x=><option key={x.id} value={x.id}>{x.titulo} · {x.qtd} fotos</option>)}</select></label><label>Destino (para mover)<select value={destino} disabled={busy||origem?.etapa!=="prova"} onChange={e=>setDestino(e.target.value)}><option value="">Escolher outra pasta</option>{destinos.map(x=><option key={x.id} value={x.id}>{x.titulo}</option>)}</select></label></div>
+   <header><div><small>ORGANIZAÇÃO DE FOTOS</small><h2>Gerenciar fotos</h2><p>{galeriaUnica?"Selecione uma fotografia para definir a capa da sua galeria.":"Selecione fotos para definir a capa ou movê-las entre galerias antes da seleção do cliente."}</p></div><button type="button" onClick={encerrar} disabled={busy} aria-label="Fechar">✕</button></header>
+   {!galeriaUnica&&<div className="ft-photo-controls"><label>Galeria de origem<select value={pasta} disabled={busy} onChange={e=>{setPasta(e.target.value);setDestino("");setAviso("");setErro(false)}}>{pastas.map(x=><option key={x.id} value={x.id}>{x.titulo} · {x.qtd} fotos</option>)}</select></label><label>Destino (para mover)<select value={destino} disabled={busy||origem?.etapa!=="prova"} onChange={e=>setDestino(e.target.value)}><option value="">Escolher outra galeria</option>{destinos.map(x=><option key={x.id} value={x.id}>{x.titulo}</option>)}</select></label></div>}
    <div className="ft-photo-toolbar"><span>{selecionadas.length} selecionada(s) · {fotos.length} carregada(s)</span><button type="button" onClick={()=>setSelecionadas(fotos.slice(0,25).map(f=>f.nome))} disabled={busy||!fotos.length}>Selecionar até 25</button><button type="button" onClick={()=>setSelecionadas([])} disabled={busy||!selecionadas.length}>Limpar seleção</button></div>
    {origem?.etapa!=="prova"&&<p className="ft-photo-warning">Esta pasta já está em preparação ou entrega. A movimentação está bloqueada para preservar os arquivos do cliente.</p>}
    {aviso&&<p className={"ft-photo-message"+(erro?" err":"")} role="status">{aviso}</p>}
@@ -44,7 +44,7 @@ export default function ProjectPhotoManager({projetoId,pastas,pastaInicial,fecha
     {!carregando&&!fotos.length&&<p>Nenhuma foto nesta pasta.</p>}
    </div>
    {proximo!==null&&<button className="ft-photo-more" type="button" disabled={carregando||busy} onClick={()=>void listar(pasta,proximo)}>{carregando?"Carregando…":"Carregar mais fotos"}</button>}
-   <footer><small>Movimentações: até 25 fotos por vez, apenas antes de seleções, vendas e entregas.</small><div><button type="button" onClick={()=>void acao("capa")} disabled={busy||selecionadas.length!==1}>Definir como capa</button><button type="button" className="primary" onClick={()=>void acao("mover")} disabled={busy||!destino||!selecionadas.length||selecionadas.length>25||origem?.etapa!=="prova"}>{busy?"Processando…":"Mover fotos"}</button></div></footer>
+   <footer><small>{galeriaUnica?"A imagem selecionada pode ser usada como capa da galeria.":"Movimentações: até 25 fotos por vez, apenas antes de seleções, vendas e entregas."}</small><div><button type="button" onClick={()=>void acao("capa")} disabled={busy||selecionadas.length!==1}>Definir como capa</button>{!galeriaUnica&&<button type="button" className="primary" onClick={()=>void acao("mover")} disabled={busy||!destino||!selecionadas.length||selecionadas.length>25||origem?.etapa!=="prova"}>{busy?"Processando…":"Mover fotos"}</button>}</div></footer>
   </section><style>{`
 .ft-photo-overlay{position:fixed;inset:0;z-index:145;padding:20px;display:grid;place-items:center;background:#151321aa;backdrop-filter:blur(5px)}
 .ft-photo-manager{width:min(860px,100%);max-height:93vh;overflow:auto;padding:20px;border-radius:18px;border:1px solid #dcd4eb;background:#fff;color:#282c42;box-shadow:0 30px 90px #17112866}
