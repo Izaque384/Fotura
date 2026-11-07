@@ -14,10 +14,10 @@ import { PLANOS_FOTURA, type PlanoCodigo } from "../lib/billing-plans";
 
 const codigosPlanos=["gratis","essencial","profissional","studio"] as const satisfies readonly PlanoCodigo[];
 const extrasPlano:Record<(typeof codigosPlanos)[number],string[]>={
-  gratis:["Projetos, pastas, clientes e fotos sem limite por quantidade","Seleção, comentários, senha e entrega","Logo, cor e Open Graph com a marca do fotógrafo"],
-  essencial:["Projetos, pastas, clientes e fotos sem limite por quantidade","Hero Minimal com logo, nome e cor","Seleção, comentários, senha e entrega"],
-  profissional:["Tudo do Essencial","Heroes Minimal, Premium e Tech","Foto do projeto no fundo do hero"],
-  studio:["Tudo do Profissional","Mesmos recursos visuais do Profissional","Para operações com alto volume"],
+  gratis:["Crie projetos, pastas e cadastre clientes sem limite de quantidade","Seleção de fotos, comentários e proteção por senha","Seu logo e suas cores na galeria e na prévia do link no WhatsApp"],
+  essencial:["Tudo o que está no plano Grátis","Capa de abertura com nome, logo e cores do estúdio","Uma apresentação mais personalizada para seus clientes"],
+  profissional:["Tudo do Essencial","Escolha entre três estilos de capa de abertura","Use uma foto do projeto como fundo da capa"],
+  studio:["Tudo do Profissional","Mais espaço para guardar e entregar fotografias","Ideal para quem gerencia muitos trabalhos"],
 };
 const planos=codigosPlanos.map(codigo=>{
   const plano=PLANOS_FOTURA[codigo];
@@ -27,7 +27,7 @@ const planos=codigosPlanos.map(codigo=>{
     destaque:codigo==="profissional",
     uploadMensalGb:plano.limites.uploadMensalGb,
     envioEmail:plano.recursos.envioEmail,
-    itens:[`${plano.limites.armazenamentoGb} GB de armazenamento`,...extrasPlano[codigo]],
+    itens:[`${plano.limites.armazenamentoGb} GB para guardar suas fotos`,...extrasPlano[codigo]],
   };
 });
 
@@ -338,10 +338,10 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
         <section className="lp2-hero lp2-hero-cinematic" id="experiencia">
           <LandingHeroVideo />
           <div className="lp2-hero-copy">
-            <div className="lp2-kicker">{t("Galerias de entrega e prova online")}</div>
+            <div className="lp2-kicker">{t("Galerias para selecionar e entregar fotografias")}</div>
             <h1>{t("Sua fotografia merece uma")} <span className="lp2-serif lp2-gradient-word">{t("entrega")}</span> {t("à altura.")}</h1>
             <p>
-              {t("Um único link para apresentar o ensaio, receber favoritas e comentários e concluir a seleção — com a sua identidade no centro da experiência.")}
+              {t("Compartilhe suas fotos com um único link. Seu cliente escolhe as favoritas, deixa comentários e recebe a entrega em uma galeria com a identidade do seu estúdio.")}
             </p>
             <div className="lp2-hero-actions">
               <a className="lp2-btn lp2-btn-primary" href={destinoPrincipal} onClick={() => rastrearCriacao("hero")}>
@@ -361,8 +361,8 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
           <div className="lp2-shell">
             <div className="lp2-section-head">
               <div>
-                <div className="lp2-kicker">{t("Do clique à entrega")}</div>
-                <h2>{t("Do upload à escolha final.")}<br />{t("No mesmo fluxo.")}</h2>
+                <div className="lp2-kicker">{t("Da organização à entrega")}</div>
+                <h2>{t("Do envio à escolha final.")}<br />{t("Tudo em um só lugar.")}</h2>
               </div>
               <p>
                 {t("Crie o projeto, organize as pastas e receba as escolhas do cliente por um único link, sem mensagens soltas ou listas de arquivos.")}
@@ -424,10 +424,10 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
             <div className="lp2-pricing-head">
               <div>
                 <div className="lp2-kicker">{t("Planos")}</div>
-                <h2>{t("Comece leve.")}<br />{t("Escale quando precisar.")}</h2>
+                <h2>{t("Comece grátis.")}<br />{t("Cresça no seu ritmo.")}</h2>
               </div>
               <p>
-                {t("Projetos, pastas, clientes e fotos não têm limite por quantidade. Você escolhe o plano pelo armazenamento e pelo nível de apresentação.")}
+                {t("Organize quantos projetos, pastas e clientes precisar. Escolha seu plano pelo espaço para guardar fotos e pelas opções de personalização.")}
               </p>
             </div>
 
@@ -447,7 +447,7 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
                   </div>
                   <div className="lp2-per">{t("por mês")}</div>
                   <ul>{plano.itens.map((item) => <li key={item}>{t(item)}</li>)}
-                      <li>{locale === "en" ? `Monthly upload allowance (fair use): ${plano.uploadMensalGb} GB` : locale === "es" ? `Franquicia mensual de subidas (uso razonable): ${plano.uploadMensalGb} GB` : `Franquia mensal de envios (uso justo): ${plano.uploadMensalGb?.toLocaleString("pt-BR")} GB`}</li>
+                      <li>{locale === "en" ? `Upload up to ${plano.uploadMensalGb?.toLocaleString("en-US")} GB of photos each month` : locale === "es" ? `Envía hasta ${plano.uploadMensalGb?.toLocaleString("es-ES")} GB de fotos al mes` : `Envie até ${plano.uploadMensalGb?.toLocaleString("pt-BR")} GB de fotos por mês`}</li>
                       <li>{plano.envioEmail ? (locale === "en" ? "Gallery invitations and delivery notices by email" : locale === "es" ? "Invitaciones y avisos de entrega por correo" : "Convites e avisos de entrega por e-mail") : (locale === "en" ? "Share by link; emails require a paid plan" : locale === "es" ? "Compartir por enlace; correos requieren un plan de pago" : "Compartilhe por link; e-mails exigem plano pago")}</li></ul>
                   <a
                     className="lp2-btn"
@@ -467,13 +467,14 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
             <div className="lp2-faq-intro">
               <div className="lp2-kicker">{t("Dúvidas")}</div>
               <h2>{t("O essencial, antes de começar.")}</h2>
-              <p>{t("Sem letras miúdas no fluxo principal.")}</p>
+              <p>{t("Respostas claras antes de escolher.")}</p>
             </div>
             <div className="lp2-faq-list">
               <details><summary>{t("Meu cliente precisa criar uma conta?")}</summary><p>{t("Não. Ele acessa a galeria pelo link enviado por você e, quando necessário, informa apenas a senha da galeria.")}</p></details>
-              <details><summary>{t("Posso usar o Fotura para prova de fotos?")}</summary><p>{t("Sim. Você pode habilitar seleção, definir limite de favoritas e receber comentários por foto.")}</p></details>
-              <details><summary>{t("Minha marca aparece na experiência?")}</summary><p>{t("Sim. O Fotura permite personalizar a apresentação do estúdio e manter sua identidade no centro da entrega.")}</p></details>
-              <details><summary>{t("Posso cancelar quando quiser?")}</summary><p>{t("Sim. A assinatura é gerenciada pelo portal de cobrança e pode ser cancelada para o fim do período vigente.")}</p></details>
+              <details><summary>{t("Qual é a diferença entre espaço para fotos e envio mensal?")}</summary><p>{t("O espaço para fotos é o total que você pode manter guardado no Fotura. O envio mensal é o volume de novas fotos que pode adicionar a cada mês. Os limites e as regras de uso variam conforme o plano.")}</p></details>
+              <details><summary>{t("Meu cliente pode escolher as fotos favoritas?")}</summary><p>{t("Sim. Seu cliente pode selecionar as favoritas e comentar em cada foto. Você também pode definir um limite de escolhas.")}</p></details>
+              <details><summary>{t("Posso colocar minha marca nas galerias?")}</summary><p>{t("Sim. Você pode personalizar a galeria com a identidade do seu estúdio. As opções de capa variam conforme o plano escolhido.")}</p></details>
+              <details><summary>{t("Posso cancelar quando quiser?")}</summary><p>{t("Sim. Você pode cancelar a assinatura quando quiser. O plano continua ativo até o fim do período já contratado.")}</p></details>
             </div>
           </div>
         </section>
