@@ -12,12 +12,13 @@ type Aviso = {
   versao: number;
   publicado_em: string;
 };
-type Leitura = { aviso_id: string };
+type Preferencia = { aviso_id: string; ocultar_permanentemente: boolean };
 type Props = { uid: string };
 
 const nomesTipos = { informacao: "Comunicado", novidade: "Novidade", atencao: "Aviso importante" } as const;
-// Evita disparar outro anúncio em cada troca de página durante uma visita.
-const vistosNestaVisita = new Set<string>();
+// Cada login/visita pode mostrar um anúncio. Navegação interna não repete o modal.
+// Um novo login (last_sign_in_at) ou uma nova visita com recarga permite outra exibição.
+const exibidosNestaEntrada = new Set<string>();
 
 function dataCurta(value: string) {
   const date = new Date(value);
@@ -30,48 +31,80 @@ export default function AvisosFotura({ uid }: Props) {
   const tituloId = useId();
   const descricaoId = useId();
   const botaoFechar = useRef<HTMLButtonElement>(null);
+  const fecharAtual = useRef<() => void>(() => {});
   const [aviso, setAviso] = useState<Aviso | null>(null);
+  const [naoMostrar, setNaoMostrar] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const [erroPreferencia, setErroPreferencia] = useState("");
   const [montado, setMontado] = useState(false);
 
   useEffect(() => { setMontado(true); }, []);
 
   useEffect(() => {
-    if (!uid || vistosNestaVisita.has(uid)) return;
+    if (!uid) return;
     let cancelado = false;
 
     void (async () => {
-      const [avisosRes, leiturasRes] = await Promise.all([
+      const { data: { session } } = await supabase.auth.getSession();
+      if (cancelado || !session || session.user.id !== uid) return;
+      const chaveEntrada = uid + ":" + (session.user.last_sign_in_at || "sessao");
+      if (exibidosNestaEntrada.has(chaveEntrada)) return;
+
+      const [avisosRes, preferenciasRes] = await Promise.all([
         supabase.from("avisos_globais")
           .select("id,titulo,mensagem,tipo,versao,publicado_em")
           .order("publicado_em", { ascending: false }).limit(100),
         supabase.from("avisos_leituras")
-          .select("aviso_id").eq("user_id", uid),
+          .select("aviso_id,ocultar_permanentemente").eq("user_id", uid)
+          .eq("ocultar_permanentemente", true),
       ]);
-      if (cancelado || avisosRes.error || leiturasRes.error) return;
+      if (cancelado || avisosRes.error || preferenciasRes.error) return;
 
-      const vistos = new Set(((leiturasRes.data || []) as Leitura[]).map(l => l.aviso_id));
-      const pendente = ((avisosRes.data || []) as Aviso[]).find(item => !vistos.has(item.id));
-      if (!pendente || vistosNestaVisita.has(uid) || cancelado) return;
+      // Visualizações de versões anteriores não representam opt-out explícito.
+      const ocultos = new Set(((preferenciasRes.data || []) as Preferencia[])
+        .filter(item => item.ocultar_permanentemente).map(item => item.aviso_id));
+      const escolhido = ((avisosRes.data || []) as Aviso[]).find(item => !ocultos.has(item.id));
+      if (!escolhido || cancelado || exibidosNestaEntrada.has(chaveEntrada)) return;
 
-      // Reserva esta exibição no banco antes de abrir o modal.
-      // A chave composta (aviso_id, user_id) impede reapresentação em outros dispositivos,
-      // mesmo que dois aparelhos tentem abrir o aviso ao mesmo tempo.
-      const { error } = await supabase.from("avisos_leituras").insert({
-        aviso_id: pendente.id,
-        user_id: uid,
-        versao_lida: pendente.versao,
-        lido_em: new Date().toISOString(),
-      });
-      if (error || cancelado) return;
-      vistosNestaVisita.add(uid);
-      setAviso(pendente);
+      exibidosNestaEntrada.add(chaveEntrada);
+      setNaoMostrar(false);
+      setErroPreferencia("");
+      setAviso(escolhido);
     })().catch(() => {
-      // Falhas de rede não devem bloquear a navegação do fotógrafo.
-      // O aviso poderá ser tentado novamente em um próximo acesso.
+      // Um erro de rede nunca deve bloquear o acesso ao painel.
     });
 
     return () => { cancelado = true; };
   }, [supabase, uid]);
+
+  // Fechar normalmente não grava nenhuma leitura permanente. A opção é
+  // registrada no Supabase apenas após escolha explícita do fotógrafo.
+  async function fecharAviso() {
+    if (!aviso || salvando) return;
+    if (!naoMostrar) {
+      setAviso(null);
+      return;
+    }
+    setSalvando(true);
+    setErroPreferencia("");
+    try {
+      const { error } = await supabase.from("avisos_leituras").upsert({
+        aviso_id: aviso.id,
+        user_id: uid,
+        versao_lida: aviso.versao,
+        lido_em: new Date().toISOString(),
+        ocultar_permanentemente: true,
+      }, { onConflict: "aviso_id,user_id" });
+
+      if (error) throw error;
+      setAviso(null);
+    } catch {
+      setErroPreferencia("Não foi possível salvar a preferência. Tente novamente ou feche sem salvar.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+  fecharAtual.current = () => { void fecharAviso(); };
 
   useEffect(() => {
     if (!aviso) return;
@@ -83,7 +116,7 @@ export default function AvisosFotura({ uid }: Props) {
     const aoTeclar = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        setAviso(null);
+        fecharAtual.current();
       }
       if (event.key === "Tab") {
         const acoes = document.querySelectorAll<HTMLButtonElement>(".fotura-anuncio-dialog button:not([disabled])");
@@ -108,7 +141,7 @@ export default function AvisosFotura({ uid }: Props) {
   if (!montado || !uid || !aviso) return null;
   return createPortal(
     <div className="fotura-anuncio-overlay" onMouseDown={event => {
-      if (event.currentTarget === event.target) setAviso(null);
+      if (event.currentTarget === event.target) fecharAtual.current();
     }}>
       <section
         role="dialog"
@@ -124,7 +157,7 @@ export default function AvisosFotura({ uid }: Props) {
             <span className="fotura-anuncio-type">{nomesTipos[aviso.tipo]}</span>
           </div>
           <button ref={botaoFechar} type="button" className="fotura-anuncio-close"
-            onClick={() => setAviso(null)} aria-label="Fechar anúncio">
+            onClick={() => fecharAtual.current()} aria-label="Fechar anúncio" disabled={salvando}>
             <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
@@ -142,7 +175,26 @@ export default function AvisosFotura({ uid }: Props) {
           <p id={descricaoId}>{aviso.mensagem}</p>
         </div>
         <div className="fotura-anuncio-bottom">
-          <button type="button" className="fotura-anuncio-action" onClick={() => setAviso(null)}>Entendi</button>
+          <label className="fotura-anuncio-choice">
+            <input
+              type="checkbox"
+              checked={naoMostrar}
+              onChange={event => {
+                setNaoMostrar(event.target.checked);
+                setErroPreferencia("");
+              }}
+              disabled={salvando}
+            />
+            <span>Não mostrar este aviso novamente</span>
+          </label>
+          <button type="button" className="fotura-anuncio-action"
+            onClick={() => fecharAtual.current()} disabled={salvando}>
+            {salvando ? "Salvando…" : "Entendi"}
+          </button>
+          {erroPreferencia && <div className="fotura-anuncio-preference-error" role="alert">
+            <span>{erroPreferencia}</span>
+            <button type="button" onClick={() => setAviso(null)}>Fechar sem salvar</button>
+          </div>}
         </div>
       </section>
     </div>,
