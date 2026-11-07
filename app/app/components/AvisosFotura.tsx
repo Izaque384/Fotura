@@ -118,17 +118,30 @@ export default function AvisosFotura({ uid }: Props) {
         className={"fotura-anuncio-dialog tipo-" + aviso.tipo}
       >
         <div className="fotura-anuncio-top">
-          <span className="fotura-anuncio-brand">FOTURA <span>· {nomesTipos[aviso.tipo]}</span></span>
+          <div className="fotura-anuncio-brand">
+            <strong>FOTURA</strong>
+            <span className="fotura-anuncio-brand-separator" aria-hidden="true">·</span>
+            <span className="fotura-anuncio-type">{nomesTipos[aviso.tipo]}</span>
+          </div>
           <button ref={botaoFechar} type="button" className="fotura-anuncio-close"
-            onClick={() => setAviso(null)} aria-label="Fechar anúncio">×</button>
+            onClick={() => setAviso(null)} aria-label="Fechar anúncio">
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
         </div>
         <div className="fotura-anuncio-content">
-          <span className="fotura-anuncio-date">{dataCurta(aviso.publicado_em)}</span>
+          <time className="fotura-anuncio-date" dateTime={aviso.publicado_em}>
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="5" width="18" height="16" rx="2" />
+              <path d="M16 3v4M8 3v4M3 10h18" />
+            </svg>
+            {dataCurta(aviso.publicado_em)}
+          </time>
           <h2 id={tituloId}>{aviso.titulo}</h2>
           <p id={descricaoId}>{aviso.mensagem}</p>
         </div>
         <div className="fotura-anuncio-bottom">
-          <span>Um comunicado da equipe Fotura</span>
           <button type="button" className="fotura-anuncio-action" onClick={() => setAviso(null)}>Entendi</button>
         </div>
       </section>
