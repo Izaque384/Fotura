@@ -4,7 +4,7 @@ import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import MenuFotografo from "../../MenuFotografo";
 import FoturaDrawer from "../../components/FoturaDrawer";
-import { ArrowRightIcon, CheckIcon, ChevronDownIcon, CloseIcon, FolderIcon, ImageIcon } from "../../components/FoturaIcons";
+import { ArrowRightIcon, CheckIcon, ChevronDownIcon, CloseIcon, FolderIcon as FolderModelIcon, ImageIcon } from "../../components/FoturaIcons";
 import { createClient } from "../../../lib/supabase-client";
 import { MODELOS_PROJETO,type ModeloProjeto } from "../../../lib/project-templates";
 
@@ -163,7 +163,7 @@ export default function ProjetosPage(){
              <label className={"project-model-choice"+(modelo===key?" selected":"")} key={key}>
                <input type="radio" name="modelo" value={key} checked={modelo===key} onChange={()=>setModelo(key)} disabled={criando}/>
                <span className="project-model-top">
-                 <span className="project-model-symbol" aria-hidden="true">{key==="ensaio"?<CheckIcon size={19}/>:key==="entrega"?<ImageIcon size={19}/>:<FolderIcon size={19}/>}</span>
+                 <span className="project-model-symbol" aria-hidden="true">{key==="ensaio"?<CheckIcon size={19}/>:key==="entrega"?<ImageIcon size={19}/>:<FolderModelIcon size={19}/>}</span>
                  <span className="project-model-check" aria-hidden="true">{modelo===key&&<CheckIcon size={13}/>}</span>
                </span>
                <span className="project-model-copy"><strong>{MODELOS_PROJETO[key].nome}</strong><small>{RESUMOS_MODELO_PROJETO[key]}</small></span>
