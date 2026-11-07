@@ -6,6 +6,7 @@ import { registrarEventoProduto, utmAtual } from "../lib/product-analytics";
 import "./landing-editorial.css";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import LandingCinematicShowcase from "./components/LandingCinematicShowcase";
+import LandingHeroVideo from "./components/LandingHeroVideo";
 import { useI18n } from "./components/I18nProvider";
 import { withLocalePath } from "../lib/i18n";
 import { approvedMonthlyPrice, formatPricingAmount, type PricingCurrency } from "../lib/pricing-markets";
@@ -29,45 +30,6 @@ const planos=codigosPlanos.map(codigo=>{
     itens:[`${plano.limites.armazenamentoGb} GB de armazenamento`,...extrasPlano[codigo]],
   };
 });
-
-const fotosHero = [
-  {
-    url: "https://images.unsplash.com/photo-1759308730169-9156cb9fe8fe?auto=format&fit=crop&w=1600&q=88",
-    label: "Casamentos",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1741940365437-e55b919a89d3?auto=format&fit=crop&w=1400&q=88",
-    label: "Famílias",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1774708053382-f1d453ea5dc9?auto=format&fit=crop&w=1400&q=88",
-    label: "Retratos",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1790926075510-72557dfa0b0f?auto=format&fit=crop&w=1600&q=88",
-    label: "Eventos",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1777728091201-cce6045e078f?auto=format&fit=crop&w=1400&q=88",
-    label: "Histórias",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1694030505309-5fcfc3d58653?auto=format&fit=crop&w=1600&q=88",
-    label: "Autorais",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1773188536669-17275a1c200c?auto=format&fit=crop&w=1400&q=88",
-    label: "Retratos",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1769412954921-1474a34e8049?auto=format&fit=crop&w=1400&q=88",
-    label: "Famílias",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1763631045896-04d2e60048ae?auto=format&fit=crop&w=1600&q=88",
-    label: "Famílias",
-  },
-];
 
 const fotosGaleria = [
   { url: "https://images.unsplash.com/photo-1780291116326-36096428e499?auto=format&fit=crop&w=1400&q=88" },
@@ -313,7 +275,6 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
   const supabase = useMemo(() => createClient(), []);
   const [logado, setLogado] = useState(false);
   const [etapaAtiva, setEtapaAtiva] = useState(0);
-  const [heroCarousel, setHeroCarousel] = useState({ atual: 0, anterior: 0 });
 
   useEffect(() => {
     let ativo = true;
@@ -338,17 +299,6 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
     return () => window.clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const timer = window.setInterval(() => {
-      setHeroCarousel(({ atual }) => ({
-        anterior: atual,
-        atual: (atual + 1) % fotosHero.length,
-      }));
-    }, 2600);
-    return () => window.clearInterval(timer);
-  }, []);
-
   function rastrearCriacao(origem: string, plano?: string) {
     if (logado) return;
     registrarEventoProduto("landing_signup_clicked", {
@@ -364,16 +314,6 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
   const footerText = footerCopy[locale];
   const destinoPrincipal = withLocalePath(logado ? "/dashboard" : "/login?modo=cadastro", locale);
   const destinoLogin = withLocalePath(logado ? "/dashboard" : "/login", locale);
-  const heroAtual = [
-    heroCarousel.atual,
-    (heroCarousel.atual + 2) % fotosHero.length,
-    (heroCarousel.atual + 4) % fotosHero.length,
-  ];
-  const heroAnterior = [
-    heroCarousel.anterior,
-    (heroCarousel.anterior + 2) % fotosHero.length,
-    (heroCarousel.anterior + 4) % fotosHero.length,
-  ];
 
   return (
     <div className="lp2">
@@ -395,7 +335,8 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
       </header>
 
       <main>
-        <section className="lp2-hero" id="experiencia">
+        <section className="lp2-hero lp2-hero-cinematic" id="experiencia">
+          <LandingHeroVideo />
           <div className="lp2-hero-copy">
             <div className="lp2-kicker">{t("Galerias de entrega e prova online")}</div>
             <h1>{t("Sua fotografia merece uma")} <span className="lp2-serif lp2-gradient-word">{t("entrega")}</span> {t("à altura.")}</h1>
@@ -411,32 +352,7 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
             <div className="lp2-micro"><b>●</b> {t("Plano grátis disponível · seu cliente não precisa criar conta")}</div>
           </div>
 
-          <div
-            className="lp2-hero-art"
-            aria-label={`${t("Seleção editorial de fotografias")}: ${heroAtual.map((index) => t(fotosHero[index].label)).join(", ")}`}
-          >
-            <div className="lp2-photo lp2-hero-main" style={{ backgroundImage: 'url("' + fotosHero[heroAnterior[0]].url + '")' }}>
-              <div
-                key={`hero-main-${heroCarousel.atual}`}
-                className="lp2-hero-photo-layer"
-                style={{ backgroundImage: 'url("' + fotosHero[heroAtual[0]].url + '")' }}
-              />
-            </div>
-            <div className="lp2-photo lp2-hero-tall" style={{ backgroundImage: 'url("' + fotosHero[heroAnterior[1]].url + '")' }}>
-              <div
-                key={`hero-tall-${heroCarousel.atual}`}
-                className="lp2-hero-photo-layer"
-                style={{ backgroundImage: 'url("' + fotosHero[heroAtual[1]].url + '")' }}
-              />
-            </div>
-            <div className="lp2-photo lp2-hero-small" style={{ backgroundImage: 'url("' + fotosHero[heroAnterior[2]].url + '")' }}>
-              <div
-                key={`hero-small-${heroCarousel.atual}`}
-                className="lp2-hero-photo-layer"
-                style={{ backgroundImage: 'url("' + fotosHero[heroAtual[2]].url + '")' }}
-              />
-            </div>
-          </div>
+
         </section>
 
         <section className="lp2-demo" id="fluxo">
