@@ -200,7 +200,7 @@ const css=`
 .create-panel .create-fields-row{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);align-items:end;gap:14px}
 .create-panel .field{display:block;margin-top:14px;color:#656b82;font-size:11px;font-weight:750;line-height:1.35}
 .create-panel .field small{display:inline;margin-left:3px;color:#a3a1ae;font-size:10px;font-weight:500}
-.create-panel .field input,.create-panel .field select,.create-panel .field textarea{display:block;width:100%;box-sizing:border-box;margin-top:7px;border:1px solid #e4e2e9;border-radius:11px;background:#fdfcff;color:#30354b;font:500 13px inherit;outline:none;transition:border-color .2s,box-shadow .2s}
+.create-panel .field input,.create-panel .field select,.create-panel .field textarea{display:block;width:100%;box-sizing:border-box;margin-top:7px;border:1px solid #e4e2e9;border-radius:11px;background:#fdfcff;color:#30354b;font-family:inherit;font-size:13px;font-weight:500;outline:none;transition:border-color .2s,box-shadow .2s}
 .create-panel .field input,.create-panel .field select{height:44px;padding:0 13px}
 .create-panel .field textarea{min-height:68px;max-height:180px;padding:12px 13px;resize:vertical;line-height:1.45}
 .create-panel .field input:focus,.create-panel .field select:focus,.create-panel .field textarea:focus{border-color:#a99ad0;box-shadow:0 0 0 3px rgba(156,138,201,.12)}
