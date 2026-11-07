@@ -139,3 +139,53 @@
 .ftc-gallery-thumbs img{width:100%;height:100%;display:block;object-fit:cover}
 .ftc-gallery-thumbs button:disabled{opacity:.55;cursor:wait}
 @media(max-width:640px){.ftc-gallery-thumbs{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* Cadastro e edição de clientes seguem o mesmo drawer usado em Projetos.
+   Cabeçalho e ações ficam fixos; formulário e fotos rolam internamente. */
+.ftc-client-editor-surface .ft-drawer-overlay{
+  background:rgba(18,19,34,.57);
+  -webkit-backdrop-filter:blur(6px);
+  backdrop-filter:blur(6px);
+}
+.ftc-client-editor-surface .ft-drawer-panel{
+  width:min(610px,100%);
+  background:#faf9fd;
+}
+.ftc-client-editor-surface .ft-drawer-content{
+  padding:24px 28px 32px;
+  overflow-x:hidden;
+}
+.ftc-client-editor-surface .ftc-dialog-body{
+  padding:0;
+  margin:0;
+  min-width:0;
+}
+.ftc-client-editor-surface .ft-drawer-footer{
+  background:#faf9fd;
+  padding:15px 28px 19px;
+}
+.ftc-client-editor-surface .ftc-form-foot{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:9px;
+  flex-wrap:wrap;
+  padding:0;
+  margin:0;
+  width:100%;
+}
+.ftc-client-editor-surface .ftc-form-foot :is(.ftc-primary,.ftc-secondary){
+  min-height:44px;
+  white-space:nowrap;
+}
+.ftc-client-editor-surface .ftc-form-photo{
+  min-width:0;
+}
+@media(max-width:640px){
+  .ftc-client-editor-surface .ft-drawer-panel{width:100%}
+  .ftc-client-editor-surface .ft-drawer-content{padding:20px 18px 28px}
+  .ftc-client-editor-surface .ft-drawer-footer{padding:13px 18px 16px}
+  .ftc-client-editor-surface .ftc-form-foot{flex-wrap:nowrap}
+  .ftc-client-editor-surface .ftc-form-foot .ftc-secondary{flex:1;min-width:0}
+  .ftc-client-editor-surface .ftc-form-foot .ftc-primary{flex:1.4;min-width:0}
+}
