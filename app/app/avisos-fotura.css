@@ -1,5 +1,5 @@
-/* Anúncio de entrada do Fotura — acabamento editorial e exibição única por conta/aviso.
-   Apenas apresentação; o controle de leitura continua no componente e no banco. */
+/* Anúncio de entrada do Fotura — modal editorial.
+   Reaparece a cada entrada até o fotógrafo optar por não ver novamente. */
 .fotura-anuncio-overlay{
   position:fixed;inset:0;z-index:300;
   display:flex;align-items:center;justify-content:center;
@@ -127,4 +127,47 @@
 }
 @media(prefers-reduced-motion:reduce){
   .fotura-anuncio-close,.fotura-anuncio-action{transition:none}
+}
+
+/* Preferência explícita de não exibir novamente, sem perder a leveza visual. */
+.fotura-anuncio-bottom{
+  justify-content:space-between;
+  flex-wrap:wrap;
+  column-gap:22px;
+  row-gap:13px;
+}
+.fotura-anuncio-choice{
+  display:inline-flex;align-items:center;gap:11px;
+  min-height:44px;max-width:100%;
+  cursor:pointer;color:#555c78;font-size:12px;font-weight:650;line-height:1.5;
+  user-select:none;
+}
+.fotura-anuncio-choice input[type="checkbox"]{
+  flex:none;width:18px;height:18px;margin:0;
+  accent-color:#5945e5;cursor:pointer;
+}
+.fotura-anuncio-choice input[type="checkbox"]:focus-visible{
+  outline:3px solid #9f8af5;outline-offset:3px;
+}
+.fotura-anuncio-choice input:disabled{cursor:wait}
+.fotura-anuncio-action:disabled{
+  opacity:.67;cursor:wait;transform:none;
+}
+.fotura-anuncio-preference-error{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:10px;
+  padding:10px 12px;border-radius:11px;
+  border:1px solid #e9c0c7;background:#fff0f2;color:#923d4b;
+  font-size:11px;line-height:1.5;
+}
+.fotura-anuncio-preference-error button{
+  border:0;background:transparent;color:#7832a1;
+  text-decoration:underline;text-underline-offset:3px;
+  font:700 11px/1.4 inherit;cursor:pointer;
+}
+@media(max-width:640px){
+  .fotura-anuncio-bottom{flex-direction:column;align-items:stretch;gap:10px}
+  .fotura-anuncio-choice{width:100%;min-height:37px}
+  .fotura-anuncio-action{width:100%}
+  .fotura-anuncio-preference-error{box-sizing:border-box}
 }
