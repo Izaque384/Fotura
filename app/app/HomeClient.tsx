@@ -355,6 +355,8 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
 
         </section>
 
+        <LandingCinematicShowcase locale={locale} />
+
         <section className="lp2-demo" id="fluxo">
           <div className="lp2-shell">
             <div className="lp2-section-head">
@@ -416,8 +418,6 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
             </div>
           </div>
         </section>
-
-        <LandingCinematicShowcase locale={locale} />
 
         <section className="lp2-pricing" id="planos">
           <div className="lp2-shell">
