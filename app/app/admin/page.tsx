@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
+import AdminAccountsPanel from "./AdminAccountsPanel";
 
 type Resumo = {
   papel: string; contas: number; assinantes: number; mrrCentavos: number;
@@ -56,8 +57,8 @@ export default function AdminPage() {
             <div className="admin-overview-eyebrow">CENTRAL DE CONTROLE</div>
             <h1>Administração</h1>
             <p className="admin-overview-description">
-              Acompanhe os indicadores da plataforma, a operação e seus comunicados
-              sem precisar navegar por telas de gerenciamento de contas.
+              Acompanhe os indicadores da plataforma, os comunicados e as contas cadastradas
+              em uma única visão administrativa.
             </p>
           </div>
           <div className="admin-heading-badge">Acesso restrito · Fotura interno</div>
@@ -70,7 +71,7 @@ export default function AdminPage() {
               <div>
                 <div className="admin-section-kicker">PLATAFORMA</div>
                 <h2>Visão geral</h2>
-                <p>Números consolidados. A área de gerenciamento individual de contas foi removida.</p>
+                <p>Indicadores consolidados de usuários, assinaturas e atividade.</p>
               </div>
             </div>
             <div className="admin-metrics">
@@ -113,6 +114,7 @@ export default function AdminPage() {
               </div>
             </div>
           </section>
+          <AdminAccountsPanel />
         </>}
       </div>
     </main>
