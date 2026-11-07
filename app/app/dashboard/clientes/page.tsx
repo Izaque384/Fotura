@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../lib/supabase-client";
 import MenuFotografo from "../../MenuFotografo";
+import FoturaDrawer from "../../components/FoturaDrawer";
 
 const BUCKET = "client-avatars";
 type Cliente = {
@@ -589,13 +590,19 @@ export default function ClientesPage() {
       )}
 
       {editor && (
-        <div className="ftc-backdrop ftc-editor-backdrop" onClick={() => !salvando && setEditor(null)}>
-          <div className="ftc-dialog" role="dialog" aria-modal="true" aria-label={editor === "novo" ? "Cadastrar cliente" : "Editar cliente"} onClick={(e) => e.stopPropagation()}>
-            <div className="ftc-panel-top">
-              <div><strong>{editor === "novo" ? "Novo cliente" : "Editar cliente"}</strong><p>Dados essenciais e apresentação do contato</p></div>
-              <button type="button" className="ftc-close" aria-label="Fechar cadastro" disabled={salvando} onClick={() => setEditor(null)}>×</button>
-            </div>
-            <form onSubmit={(e) => void salvar(e)} className="ftc-dialog-body">
+        <div className="ftc-client-editor-surface">
+          <FoturaDrawer
+            title={editor === "novo" ? "Novo cliente" : "Editar cliente"}
+            description="Dados essenciais e apresentação do contato"
+            onClose={() => { if (!salvando) setEditor(null); }}
+            footer={
+              <div className="ftc-form-foot">
+                <button type="button" className="ftc-secondary" disabled={salvando} onClick={() => setEditor(null)}>Cancelar</button>
+                <button type="submit" form="ftc-client-editor-form" className="ftc-primary" disabled={salvando || !form.nome.trim() || !!(duplicado && !permitirDuplicado)}>{salvando ? "Salvando..." : editor === "novo" ? "Cadastrar cliente" : "Salvar alterações"}</button>
+              </div>
+            }
+          >
+            <form id="ftc-client-editor-form" onSubmit={(e) => void salvar(e)} className="ftc-dialog-body">
               <div className="ftc-form-photo">
                 <div className="ftc-photo-preview" aria-hidden="true">
                   {preview ? <img src={preview} alt="" style={{ objectPosition: String(posX) + "% " + String(posY) + "%", transform: "scale(" + zoom + ")" }} /> :
@@ -650,12 +657,8 @@ export default function ClientesPage() {
               <p className="ftc-tags-small">Separe por vírgulas, até 8 etiquetas.</p>
               <label className="ftc-field"><span>Observações privadas</span><textarea maxLength={2000} value={form.observacoes} disabled={salvando} onChange={(e) => setForm((current) => ({ ...current, observacoes: e.target.value }))} placeholder="Preferências, observações de atendimento, detalhes úteis..." /></label>
               {erroForm && <div className="ftc-alert" role="alert">{erroForm}</div>}
-              <div className="ftc-form-foot">
-                <button type="button" className="ftc-secondary" disabled={salvando} onClick={() => setEditor(null)}>Cancelar</button>
-                <button type="submit" className="ftc-primary" disabled={salvando || !form.nome.trim() || !!(duplicado && !permitirDuplicado)}>{salvando ? "Salvando..." : editor === "novo" ? "Cadastrar cliente" : "Salvar alterações"}</button>
-              </div>
             </form>
-          </div>
+          </FoturaDrawer>
         </div>
       )}
     </main>
