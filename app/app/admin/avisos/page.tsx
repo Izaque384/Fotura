@@ -103,7 +103,7 @@ export default function AdminAvisosPage() {
             <h1>Avisos para usuários</h1>
             <p className="admin-overview-description">
               Prepare comunicados e publique para todos os fotógrafos que utilizam o Fotura.
-              Ao entrar no Fotura, o fotógrafo vê um anúncio que pode fechar a qualquer momento. Ele aparece apenas uma vez por conta, sem envio de e-mail.
+              Ao entrar no Fotura, o fotógrafo vê o anúncio novamente, até optar por não mostrá-lo mais. O aviso não é enviado por e-mail.
             </p>
           </div>
           <span className="admin-heading-badge">Publicação exclusiva do responsável</span>
@@ -160,7 +160,7 @@ export default function AdminAvisosPage() {
               <strong>{form.titulo.trim() || "Título do seu aviso"}</strong>
               <p>{form.mensagem.trim() || "A mensagem aparecerá neste espaço quando você começar a escrever."}</p>
             </div>
-            <p className="admin-avisos-tip">O aviso aparece automaticamente quando o fotógrafo entra no Fotura. Cada comunicado é mostrado uma única vez por conta; editar o mesmo comunicado não faz ele reaparecer.</p>
+            <p className="admin-avisos-tip">O anúncio aparece na entrada do Fotura e pode ser fechado a qualquer momento. O fotógrafo pode marcar “Não mostrar este aviso novamente”; a escolha vale para sua conta, mesmo após edições no comunicado.</p>
           </section>
         </div>
 
@@ -202,7 +202,7 @@ export default function AdminAvisosPage() {
                       {aviso.ativo ? "Retirar do ar" : "Publicar para todos"}
                     </button>
                     <button className="admin-avisos-delete" type="button" disabled={salvando} onClick={() => {
-                      if (window.confirm("Excluir este aviso permanentemente? Os registros de leitura também serão excluídos.")) {
+                      if (window.confirm("Excluir este aviso permanentemente? As preferências de não exibição associadas também serão excluídas.")) {
                         void executar("DELETE", { id: aviso.id }, "Comunicado excluído.");
                       }
                     }}>Excluir</button>
