@@ -11,7 +11,7 @@ import { MODELOS_PROJETO,type ModeloProjeto } from "../../../lib/project-templat
 type Projeto={id:string;modelo:ModeloProjeto|null;prova:boolean;nome:string;descricao:string|null;cliente_id:string|null;slug:string|null;capa_galeria_id:string|null;capa_arquivo:string|null;criado_em:string;atualizado_em:string;capaUrl?:string};
 type Pasta={id:string;titulo:string;projeto_id:string|null;cliente_id:string|null;etapa:string;criado_em:string};
 type Cliente={id:string;nome:string;avatar_path:string|null};
-type Filtro="todos"|"modelo_selecao"|"modelo_entrega"|"modelo_pastas"|"aguardando"|"selecao"|"preparando"|"entregue";
+type Filtro="todos"|"sem_pastas"|"modelo_selecao"|"modelo_entrega"|"modelo_pastas"|"aguardando"|"selecao"|"preparando"|"entregue";
 type ModoProjetos="lista"|"grade";
 function statusProjeto(ps:Pasta[],prova:boolean,modelo?:ModeloProjeto|null):{filtro:Filtro;rotulo:string;proxima:string}{
  if(!ps.length)return{filtro:"sem_pastas",rotulo:modelo==="casamento"?"Sem galerias":"Sem pastas",proxima:modelo==="casamento"?"Criar galeria":"Criar primeira pasta"};
