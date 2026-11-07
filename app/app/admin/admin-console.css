@@ -464,3 +464,134 @@ html body .admin-console .admin-avisos-row-buttons{flex:none;justify-content:fle
  html body .admin-console .admin-avisos-row{padding:17px}
  html body .admin-console .admin-avisos-row-buttons{justify-content:flex-start}
 }
+
+/* Contas na Visão geral: detalhes em drawer grafite, sem rota administrativa extra. */
+html body .admin-console .admin-account-more{
+  display:flex;justify-content:center;margin-top:17px;
+}
+html body .admin-console .ft-drawer-overlay{
+  background:rgba(8,8,13,.66);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
+}
+html body .admin-console .ft-drawer-panel{
+  width:min(660px,100%);
+  background:#1e1e23;color:#f3f2f8;
+  border-left:1px solid #41414c;box-shadow:-25px 0 70px rgba(0,0,0,.35);
+}
+html body .admin-console .ft-drawer-header{
+  background:#222228;border-bottom:1px solid #3c3b46;
+}
+html body .admin-console .ft-drawer-header h2{color:#f7f6fc}
+html body .admin-console .ft-drawer-header p{color:#a6a3b9}
+html body .admin-console .ft-drawer-close{
+  color:#e4e0f4;background:#303039;border:1px solid #4c495c;
+}
+html body .admin-console .ft-drawer-close:hover{background:#3c354c;color:#fff}
+html body .admin-console .ft-drawer-content{
+  background:#1e1e23;color:#eeedf6;
+}
+html body .admin-console .admin-account-detail-name{
+  font-size:23px;font-weight:800;line-height:1.3;letter-spacing:-.035em;
+  color:#f8f7fc;overflow-wrap:anywhere;margin:0 0 5px;
+}
+html body .admin-console .admin-account-detail-muted{
+  font-size:11px;line-height:1.65;color:#aaa8b9;overflow-wrap:anywhere;margin:0 0 17px;
+}
+html body .admin-console .admin-account-detail-badges{
+  display:flex;flex-wrap:wrap;gap:7px;margin:0 0 19px;
+}
+html body .admin-console .admin-account-detail-stats{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:0 0 23px;
+}
+html body .admin-console .admin-account-detail-stats>div{
+  padding:17px 12px;background:#292831;border:1px solid #40404c;border-radius:13px;
+  min-width:0;
+}
+html body .admin-console .admin-account-detail-stats strong{
+  display:block;color:#f6f5fb;font-size:18px;font-weight:800;letter-spacing:-.03em;overflow-wrap:anywhere;
+}
+html body .admin-console .admin-account-detail-stats span{
+  display:block;margin-top:6px;color:#9997ad;font-size:10px;line-height:1.4;
+}
+html body .admin-console .admin-account-detail-section{
+  border:1px solid #383842;background:#24242a;border-radius:16px;
+  padding:20px;margin:0 0 13px;
+}
+html body .admin-console .admin-account-detail-section h3{
+  color:#efedf7;font-size:12px;font-weight:800;
+  letter-spacing:.01em;margin:0 0 14px;
+}
+html body .admin-console .admin-account-detail-section dl{margin:0}
+html body .admin-console .admin-account-detail-section dl>div{
+  display:flex;justify-content:space-between;gap:16px;
+  border-bottom:1px solid #383841;padding:10px 0;
+}
+html body .admin-console .admin-account-detail-section dl>div:first-child{padding-top:0}
+html body .admin-console .admin-account-detail-section dl>div:last-child{border:0;padding-bottom:0}
+html body .admin-console .admin-account-detail-section dt{
+  color:#9b9aac;font-size:11px;flex:0 0 40%;
+}
+html body .admin-console .admin-account-detail-section dd{
+  color:#e8e7f2;font-size:11px;font-weight:700;text-align:right;
+  margin:0;min-width:0;overflow-wrap:anywhere;
+}
+html body .admin-console .admin-account-detail-id{font-family:monospace;font-size:10px!important}
+html body .admin-console .admin-account-detail-rows{display:grid;gap:8px}
+html body .admin-console .admin-account-detail-rows>div{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+  border-radius:10px;border:1px solid #3c3c47;background:#2b2b33;padding:12px 13px;
+}
+html body .admin-console .admin-account-detail-rows strong{
+  font-size:11px;color:#f0edf6;overflow-wrap:anywhere;min-width:0;
+}
+html body .admin-console .admin-account-detail-rows span{
+  flex:none;font-size:10px;color:#9d9bae;overflow-wrap:anywhere;text-align:right;
+}
+html body .admin-console .admin-account-advanced{
+  border:1px solid #53475f;background:#2a2530;border-radius:16px;padding:18px 20px;
+}
+html body .admin-console .admin-account-advanced summary{
+  font-size:12px;font-weight:800;color:#e8ddfa;cursor:pointer;
+}
+html body .admin-console .admin-account-advanced p{
+  margin:12px 0;color:#b3aebc;font-size:11px;line-height:1.65;
+}
+html body .admin-console .admin-account-advanced label{
+  display:block;font-size:11px;color:#cbc4da;font-weight:700;margin:14px 0 7px;
+}
+html body .admin-console .admin-account-advanced :is(textarea,select){
+  width:100%;box-sizing:border-box;border:1px solid #595366;border-radius:11px;
+  color:#f4f2f8;background:#332e3a;font:12px inherit;padding:11px;
+}
+html body .admin-console .admin-account-advanced textarea{resize:vertical;min-height:72px}
+html body .admin-console .admin-account-advanced-buttons{
+  display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;
+}
+html body .admin-console .admin-account-advanced-buttons button{
+  border:1px solid #59536c;border-radius:10px;background:#373045;color:#e4dbf9;
+  padding:10px 12px;cursor:pointer;font-size:11px;font-weight:750;
+}
+html body .admin-console .admin-account-advanced-buttons button:hover:not(:disabled){
+  background:#484057;border-color:#8b7abe;
+}
+html body .admin-console .admin-account-advanced-buttons button.warn{
+  border-color:#82633e;background:#493625;color:#ffdcaa;
+}
+html body .admin-console .admin-account-advanced-buttons button.danger{
+  border-color:#855160;background:#4a3038;color:#ffbacc;
+}
+html body .admin-console .admin-account-advanced-buttons button:disabled{opacity:.48;cursor:not-allowed}
+html body .admin-console .admin-account-advanced .admin-account-action-success{
+  color:#9ce5bd;background:#203b31;border:1px solid #3f7158;border-radius:9px;padding:10px;
+}
+html body .admin-console .admin-account-advanced .admin-account-action-error{
+  color:#ffbdc7;background:#472e34;border:1px solid #87515d;border-radius:9px;padding:10px;
+}
+@media(max-width:640px){
+  html body .admin-console .admin-account-detail-stats{gap:6px}
+  html body .admin-console .admin-account-detail-stats>div{padding:13px 9px}
+  html body .admin-console .admin-account-detail-stats strong{font-size:15px}
+  html body .admin-console .admin-account-detail-stats span{font-size:9px}
+  html body .admin-console .admin-account-detail-section{padding:16px}
+  html body .admin-console .admin-account-detail-rows>div{flex-direction:column;gap:4px}
+  html body .admin-console .admin-account-detail-rows span{text-align:left}
+}
