@@ -23,7 +23,7 @@ export type Meta={
 export type ProjectClientContext={
   id:string;nome:string;descricao:string|null;capaUrl:string|null;studioName:string|null;
   heroColor:string;publicUrl:string;pastas:Array<{id:string;titulo:string}>;
-  pastaAtivaId:string;onFolderChange:(id:string)=>void;
+  pastaAtivaId:string;singleGallery?:boolean;onFolderChange:(id:string)=>void;
 };
 
 export type GallerySignedPayload={

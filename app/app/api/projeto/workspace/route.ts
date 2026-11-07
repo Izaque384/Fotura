@@ -34,7 +34,7 @@ function slugify(valor: string) {
 async function projetoDoUsuario(projeto: string, userId: string) {
   const supabase = createServiceClient();
   const { data } = await supabase.from("galeria_projetos")
-    .select("id,user_id,cliente_id,nome,descricao,slug,capa_galeria_id,capa_arquivo,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade,assistente_ativo,abertura_config,og_capa_autorizada,config_revisada_em,criado_em,atualizado_em")
+    .select("id,user_id,cliente_id,nome,descricao,slug,capa_galeria_id,capa_arquivo,modelo,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade,assistente_ativo,abertura_config,og_capa_autorizada,config_revisada_em,criado_em,atualizado_em")
     .eq("id", projeto).eq("user_id", userId).maybeSingle();
   return data ?? null;
 }
@@ -402,7 +402,8 @@ export async function POST(req: NextRequest) {
       const { data: cliente } = await supabase.from("clientes").select("id").eq("id", clienteId).eq("user_id", user.id).maybeSingle();
       if (!cliente) return json({ error: "Cliente não encontrado." }, 404);
     }
-    let configuracao = modeloValido(body.modelo) ? MODELOS_PROJETO[body.modelo].config : MODELOS_PROJETO.ensaio.config;
+    const modeloProjeto = modeloValido(body.modelo) ? body.modelo : "ensaio";
+    let configuracao = MODELOS_PROJETO[modeloProjeto].config;
     if(body.presetId){
       if(!uuidValido(body.presetId))return json({error:"Modelo inválido."},400);
       const {data:preset}=await supabase.from("galeria_presets").select("config").eq("id",body.presetId).eq("user_id",user.id).maybeSingle();
@@ -410,8 +411,11 @@ export async function POST(req: NextRequest) {
       const validado=configProjeto(preset.config);if(!validado)return json({error:"Modelo incompatível."},400);
       configuracao=validado;
     }
+    // O modelo define a seleção inicial mesmo quando um preset opcional é utilizado.
+    configuracao = { ...configuracao, prova: modeloProjeto === "ensaio" };
     const { data, error } = await supabase.from("galeria_projetos").insert({
       ...configuracao,
+      modelo: modeloProjeto,
       user_id: user.id,
       cliente_id: clienteId,
       nome,
@@ -419,7 +423,28 @@ export async function POST(req: NextRequest) {
       slug: slugify(nome),
     }).select("id,nome,slug").single();
     if (error || !data) return json({ error: "Não foi possível criar o projeto." }, 500);
-    return json({ projeto: { ...data, publicRef: publicProjectRef(String(data.slug), String(data.id)) } }, 201);
+    // Seleção e entrega direta começam com uma única galeria real, sem exigir
+    // que o fotógrafo crie uma pasta artificial antes de enviar as fotografias.
+    if (modeloProjeto !== "casamento") {
+      const { error: galeriaError } = await supabase.from("galerias").insert({
+        ...configuracao,
+        user_id: user.id,
+        projeto_id: data.id,
+        cliente_id: clienteId,
+        slug: slugify(nome),
+        titulo: nome,
+        ordem: 0,
+        visivel: true,
+        etapa: "prova",
+      });
+      if (galeriaError) {
+        registrarErro("project.create.initial_gallery", req, galeriaError, { modelo: modeloProjeto });
+        // Não deixar um projeto de galeria única criado pela metade.
+        await supabase.from("galeria_projetos").delete().eq("id", data.id).eq("user_id", user.id);
+        return json({ error: "Não foi possível preparar a galeria do projeto. Tente novamente." }, 500);
+      }
+    }
+    return json({ projeto: { ...data, modelo: modeloProjeto, publicRef: publicProjectRef(String(data.slug), String(data.id)) } }, 201);
   }
 
   if (body.acao === "criar_pasta") {
@@ -428,6 +453,11 @@ export async function POST(req: NextRequest) {
     if (!nome) return json({ error: "Informe o nome da pasta." }, 400);
     const p = await projetoDoUsuario(body.projetoId!, user.id);
     if (!p) return json({ error: "Projeto não encontrado." }, 404);
+    if (p.modelo === "ensaio" || p.modelo === "entrega") {
+      const { count, error: countError } = await supabase.from("galerias").select("id", { count: "exact", head: true }).eq("projeto_id", body.projetoId).eq("user_id", user.id);
+      if (countError) return json({ error: "Não foi possível verificar a galeria do projeto." }, 500);
+      if ((count ?? 0) > 0) return json({ error: "Este modelo utiliza uma galeria única. Para várias galerias, escolha Projeto com pastas ao criar um novo projeto." }, 409);
+    }
     const { data: ordemData } = await supabase.from("galerias").select("ordem").eq("projeto_id", body.projetoId).eq("user_id", user.id).order("ordem", { ascending: false }).limit(1);
     const ordem = Number(ordemData?.[0]?.ordem ?? -1) + 1;
     const { data, error } = await supabase.from("galerias").insert({

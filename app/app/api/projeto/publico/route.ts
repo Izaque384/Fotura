@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 
   const supabase = createServiceClient();
   const { data: p, error } = await supabase.from("galeria_projetos")
-    .select("id,user_id,nome,descricao,slug,capa_galeria_id,capa_arquivo,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade,assistente_ativo,abertura_config")
+    .select("id,user_id,nome,descricao,slug,capa_galeria_id,capa_arquivo,modelo,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade,assistente_ativo,abertura_config")
     .eq("id", resolvido.id).maybeSingle();
   if (error || !p) return baseJson({ error: "Projeto não encontrado." }, 404);
 
@@ -133,6 +133,7 @@ export async function GET(req: NextRequest) {
       nome: String(p.nome || "Projeto"),
       descricao: (p.descricao as string | null) ?? null,
       publicRef: resolvido.publicRef,
+      modelo: p.modelo ?? null,
       capaUrl,
       prova: Boolean(p.prova),
       limite: Number(p.limite ?? 0),

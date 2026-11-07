@@ -5,9 +5,9 @@ export type ConfigProjeto = {
  watermark_texto:string|null;watermark_opacidade:number;assistente_ativo:boolean;
 };
 export const MODELOS_PROJETO:Record<ModeloProjeto,{nome:string;descricao:string;config:ConfigProjeto}>={
- ensaio:{nome:"Ensaio com seleção",descricao:"Cliente escolhe e comenta as fotos antes da entrega.",config:{prova:true,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"web",watermark_ativo:true,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
- casamento:{nome:"Casamento com pastas",descricao:"Organize etapas do evento e entregue pelo mesmo link.",config:{prova:false,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"web",watermark_ativo:false,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
- entrega:{nome:"Entrega direta",descricao:"Fotos prontas, sem etapa de seleção.",config:{prova:false,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"web",watermark_ativo:false,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
+ ensaio:{nome:"Seleção de fotos",descricao:"Uma galeria única para o cliente escolher as favoritas e comentar antes da entrega.",config:{prova:true,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"web",watermark_ativo:true,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
+ casamento:{nome:"Projeto com pastas",descricao:"Crie várias galerias em um projeto, organizadas e compartilhadas pelo mesmo link.",config:{prova:false,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"web",watermark_ativo:false,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
+ entrega:{nome:"Entrega direta",descricao:"Uma galeria única para compartilhar fotos prontas, sem pastas ou seleção.",config:{prova:false,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"original",watermark_ativo:false,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
 };
 export function modeloValido(x:unknown):x is ModeloProjeto{return x==="ensaio"||x==="casamento"||x==="entrega"}
 /** Validação explícita: nenhum modelo pode alterar IDs, cobrança, senha ou propriedade do projeto. */

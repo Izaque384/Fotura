@@ -16,6 +16,7 @@ type ProjetoPublico = {
   nome:string;
   descricao:string|null;
   publicRef:string;
+  modelo:"ensaio"|"casamento"|"entrega"|null;
   capaUrl:string|null;
   temSenha:boolean;
   desbloqueado:boolean;
@@ -48,15 +49,18 @@ export default function ProjetoClientePage(){
       setDados(payload);
       const query=new URLSearchParams(window.location.search);
       const solicitada=query.get("pasta");
-      const ativa=payload.pastas.some(p=>p.id===solicitada)?solicitada!:"";
-      setPastaAtiva(ativa);
-      // Abertura em toda nova visita ao link principal, sem lembrar se o cliente
-      // já assistiu. Links diretos de pastas continuam levando ao destino solicitado.
-      setIntroAberta(Boolean(
+      const galeriaUnica = (payload.projeto.modelo === "ensaio" || payload.projeto.modelo === "entrega") && payload.pastas.length === 1;
+      const solicitadaValida = payload.pastas.some(p=>p.id===solicitada);
+      const abreIntroducao = Boolean(
         payload.projeto.abertura?.ativo && payload.projeto.abertura.fotos.length > 0 &&
-        !ativa && !solicitada && payload.projeto.desbloqueado && !payload.projeto.linkExpirado &&
+        !solicitadaValida && !solicitada && payload.projeto.desbloqueado && !payload.projeto.linkExpirado &&
         payload.pastas.length > 0
-      ));
+      );
+      const ativa = solicitadaValida ? solicitada! : galeriaUnica && !abreIntroducao ? payload.pastas[0].id : "";
+      setPastaAtiva(ativa);
+      // Projetos de galeria única abrem as fotos diretamente; a introdução
+      // cinematográfica, quando ativa, continua aparecendo primeiro.
+      setIntroAberta(abreIntroducao);
       if(payload.projeto.publicRef&&window.location.pathname!==`/p/${payload.projeto.publicRef}`){
         if(ativa)query.set("pasta",ativa);else query.delete("pasta");
         window.history.replaceState(window.history.state,"",`/p/${payload.projeto.publicRef}${query.toString()?`?${query.toString()}`:""}`);
@@ -102,7 +106,8 @@ export default function ProjetoClientePage(){
     if(id)void loadGalleryGrid(id);
     setPastaAtiva(id);
     const q=new URLSearchParams();
-    if(id)q.set("pasta",id);
+    const galeriaUnica=(dados.projeto.modelo==="ensaio"||dados.projeto.modelo==="entrega")&&dados.pastas.length===1;
+    if(id&&!galeriaUnica)q.set("pasta",id);
     window.history.replaceState(window.history.state,"",`/p/${dados.projeto.publicRef}${q.toString()?`?${q.toString()}`:""}`);
   }
 
@@ -117,6 +122,7 @@ export default function ProjetoClientePage(){
       heroColor:dados.perfil.cor||"#F0EDF7",
       publicUrl:typeof window==="undefined"?"":`${window.location.origin}/p/${dados.projeto.publicRef}`,
       pastas:dados.pastas.map(p=>({id:p.id,titulo:p.titulo})),
+      singleGallery:(dados.projeto.modelo==="ensaio"||dados.projeto.modelo==="entrega")&&dados.pastas.length===1,
       pastaAtivaId:pastaAtiva,
       onFolderChange:trocarPasta,
     };
@@ -129,7 +135,7 @@ export default function ProjetoClientePage(){
   if(!dados.pastas.length)return <Estado titulo={dados.projeto.nome} texto="Este projeto ainda não possui galerias de fotos publicadas."/>;
   if(!pastaAtiva && introAberta && dados.projeto.abertura?.ativo)return <ProjectCinematicIntro
     projetoNome={dados.projeto.nome} projetoDescricao={dados.projeto.descricao} studioNome={dados.perfil.nome} config={dados.projeto.abertura}
-    onFinish={()=>setIntroAberta(false)} />;
+    onFinish={()=>{setIntroAberta(false);if((dados.projeto.modelo==="ensaio"||dados.projeto.modelo==="entrega")&&dados.pastas.length===1)trocarPasta(dados.pastas[0].id)}} />;
   if(!pastaAtiva)return <ProjetoHome dados={dados} onOpen={trocarPasta} onPrefetch={id=>void loadGalleryGrid(id)}/>;
   if(!context)return <Estado texto="Preparando projeto…"/>;
 

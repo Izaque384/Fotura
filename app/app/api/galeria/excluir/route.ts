@@ -47,10 +47,13 @@ export async function DELETE(req: NextRequest) {
   let eraCapaProjeto = false;
   if (g.projeto_id) {
     const { data: projeto } = await supabase.from("galeria_projetos")
-      .select("capa_galeria_id")
+      .select("capa_galeria_id,modelo")
       .eq("id", g.projeto_id)
       .eq("user_id", auth.user.id)
       .maybeSingle();
+    if (projeto?.modelo === "ensaio" || projeto?.modelo === "entrega") {
+      return NextResponse.json({ error: "Esta é a galeria principal do projeto. Para remover todas as fotos, exclua o projeto inteiro." }, { status: 409 });
+    }
     eraCapaProjeto = projeto?.capa_galeria_id === galeria;
   }
 
