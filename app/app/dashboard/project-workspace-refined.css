@@ -153,3 +153,12 @@
  .pw-page .pw-project-summary{grid-template-columns:1fr}
  .pw-page .pw-summary-cover{height:145px}
 }
+
+
+/* Menus das galerias: grupos legíveis e abertura para cima nas últimas linhas. */
+.pw-page .pw-overflow-menu.folder{min-width:222px;padding:7px;border:1px solid #e0d9e9;border-radius:12px;background:#fff;box-shadow:0 15px 36px rgba(43,35,72,.15)}
+.pw-page .pw-overflow-menu.folder.opens-up{top:auto;bottom:calc(100% + 7px)}
+.pw-page .pw-overflow-menu.folder .pw-menu-label{padding:9px 10px 5px;font-size:9px;letter-spacing:1.2px;color:#a397b8}
+.pw-page .pw-overflow-menu.folder button{display:flex;align-items:center;gap:10px;padding:9px 10px!important;font-size:11px!important}
+.pw-page .pw-overflow-menu.folder button svg{flex:none;color:#998ab5}
+.pw-page .pw-overflow-menu.folder button.danger svg{color:#b15d6c}
