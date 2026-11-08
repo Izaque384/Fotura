@@ -39,3 +39,8 @@ export function ShieldIcon(props:IconProps){return <IconBase {...props}><path d=
 export function ListIcon(props:IconProps){return <IconBase {...props}><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r=".7"/><circle cx="4.5" cy="12" r=".7"/><circle cx="4.5" cy="18" r=".7"/></IconBase>}
 export function SlidersIcon(props:IconProps){return <IconBase {...props}><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2.5" fill="var(--ft-surface,#fff)"/><circle cx="15" cy="17" r="2.5" fill="var(--ft-surface,#fff)"/></IconBase>}
 export function SparklesIcon(props:IconProps){return <IconBase {...props}><path d="m12 2 1.7 5.3L19 9l-5.3 1.7L12 16l-1.7-5.3L5 9l5.3-1.7L12 2ZM19 16l.9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9L19 16Z"/></IconBase>}
+
+
+export function PencilIcon(props:IconProps){return <IconBase {...props}><path d="m15.5 5.5 3 3M5 19l3.8-.8L19 8a2.12 2.12 0 0 0-3-3L5.8 15.2 5 19Z"/><path d="M5 21h14"/></IconBase>}
+export function TrashIcon(props:IconProps){return <IconBase {...props}><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></IconBase>}
+export function ArrowUpIcon(props:IconProps){return <IconBase {...props}><path d="M12 20V4"/><path d="m7 9 5-5 5 5"/></IconBase>}
