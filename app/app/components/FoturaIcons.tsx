@@ -26,3 +26,16 @@ export function PlusIcon(props:IconProps){return <IconBase {...props}><path d="M
 export function ArrowDownIcon(props:IconProps){return <IconBase {...props}><path d="M12 4v14"/><path d="m7 13 5 5 5-5"/></IconBase>}
 export function ChevronLeftIcon(props:IconProps){return <IconBase {...props}><path d="m15 18-6-6 6-6"/></IconBase>}
 export function ChevronRightIcon(props:IconProps){return <IconBase {...props}><path d="m9 6 6 6-6 6"/></IconBase>}
+
+
+export function SettingsIcon(props:IconProps){return <IconBase {...props}><path d="M10 3.7h4l.6 2.2 1.8.8 2-1.1 2.8 2.8-1.1 2 .8 1.8 2.1.6v4l-2.1.6-.8 1.8 1.1 2-2.8 2.8-2-1.1-1.8.8-.6 2.1h-4l-.6-2.1-1.8-.8-2 1.1-2.8-2.8 1.1-2-.8-1.8-2.1-.6v-4l2.1-.6.8-1.8-1.1-2 2.8-2.8 2 1.1 1.8-.8Z" transform="translate(0,-1) scale(1,.97)"/><circle cx="12" cy="12" r="3.3"/></IconBase>}
+export function ActivityIcon(props:IconProps){return <IconBase {...props}><path d="M3 12h4l3-7 4 14 3-7h4"/></IconBase>}
+export function EyeIcon(props:IconProps){return <IconBase {...props}><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.5"/></IconBase>}
+export function LinkIcon(props:IconProps){return <IconBase {...props}><path d="M9 15l6-6"/><path d="M8.5 9.5 10 8a4 4 0 0 1 5.7 5.7l-1 1M15.5 14.5 14 16a4 4 0 0 1-5.7-5.7l1-1"/></IconBase>}
+export function CopyIcon(props:IconProps){return <IconBase {...props}><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></IconBase>}
+export function ShareIcon(props:IconProps){return <IconBase {...props}><path d="M12 16V4m-4 4 4-4 4 4"/><path d="M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></IconBase>}
+export function ShoppingBagIcon(props:IconProps){return <IconBase {...props}><path d="M4 8h16l-1 12H5L4 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></IconBase>}
+export function ShieldIcon(props:IconProps){return <IconBase {...props}><path d="M12 3l8 4v5c0 5-3 8-8 9-5-1-8-4-8-9V7l8-4Z"/><path d="m9 12 2 2 4-4"/></IconBase>}
+export function ListIcon(props:IconProps){return <IconBase {...props}><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4.5" cy="6" r=".7"/><circle cx="4.5" cy="12" r=".7"/><circle cx="4.5" cy="18" r=".7"/></IconBase>}
+export function SlidersIcon(props:IconProps){return <IconBase {...props}><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2.5" fill="var(--ft-surface,#fff)"/><circle cx="15" cy="17" r="2.5" fill="var(--ft-surface,#fff)"/></IconBase>}
+export function SparklesIcon(props:IconProps){return <IconBase {...props}><path d="m12 2 1.7 5.3L19 9l-5.3 1.7L12 16l-1.7-5.3L5 9l5.3-1.7L12 2ZM19 16l.9 2.1L22 19l-2.1.9L19 22l-.9-2.1L16 19l2.1-.9L19 16Z"/></IconBase>}
