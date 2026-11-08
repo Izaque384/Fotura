@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase-client";
 import MenuFotografo from "../MenuFotografo";
 import { heroPresetDataUrl } from "../../lib/gallery-hero";
+import "./studio-profile.css";
 
 const TIPOS_LOGO = new Set(["image/png", "image/jpeg", "image/webp"]);
 const MAX_LOGO = 5 * 1024 * 1024;
@@ -20,7 +21,7 @@ export default function PerfilPage() {
   const [salvando, setSalvando] = useState(false);
   const [enviandoLogo, setEnviandoLogo] = useState(false);
   const [nomeEstudio, setNomeEstudio] = useState("");
-  const [corHero, setCorHero] = useState("var(--ft-bg-start)");
+  const [corHero, setCorHero] = useState("#0b0b1a");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [heroAtivo, setHeroAtivo] = useState(false);
   const [heroEstilo, setHeroEstilo] = useState<HeroEstilo>("minimal");
@@ -65,7 +66,7 @@ export default function PerfilPage() {
       const estiloEfetivo = !recursos.heroPremiumTech && (estiloSalvo === "premium" || estiloSalvo === "tech") ? "minimal" : estiloSalvo;
       setNomeEstudio((data?.nome_estudio as string | null) ?? "");
       setLogoUrl((data?.logo_url as string | null) ?? null);
-      setCorHero((data?.cor_hero as string | null) ?? "var(--ft-bg-start)");
+      setCorHero(/^#[0-9a-fA-F]{6}$/.test(String(data?.cor_hero??""))?String(data?.cor_hero):"#0b0b1a");
       setHeroAtivo(Boolean(data?.hero_galeria_ativo) && recursos.heroEstudio);
       setHeroEstilo(estiloEfetivo);
       setHeroEstiloSalvo(estiloSalvo);
@@ -87,7 +88,7 @@ export default function PerfilPage() {
     const observer = new ResizeObserver(atualizar);
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [carregando]);
 
   async function enviarLogo(arquivo: File) {
     setErro(false); setMensagem("");
@@ -104,7 +105,7 @@ export default function PerfilPage() {
     const url = urlData.publicUrl;
     const { error: erroPerfil } = await supabase.from("perfis").upsert({ id: userData.user.id, logo_url: url, atualizado_em: new Date().toISOString() });
     if (erroPerfil) { setErro(true); setMensagem("A imagem foi enviada, mas não foi possível atualizar o perfil."); }
-    else { setLogoUrl(url); setMensagem("Logo atualizada. O Hero do estúdio também usa essa imagem."); }
+    else { setLogoUrl(url); setMensagem("Logotipo atualizado. A nova imagem já aparece na prévia."); }
     setEnviandoLogo(false);
   }
 
@@ -113,7 +114,7 @@ export default function PerfilPage() {
     setErro(false);
     setHeroEstilo(estilo);
     if ((estilo === "premium" || estilo === "tech") && !podePremiumTech) {
-      setMensagem(`Prévia do Hero ${estilo === "premium" ? "Premium" : "Tech"}. Para aplicar este estilo, use o plano Profissional ou Studio.`);
+      setMensagem(`Você está visualizando o estilo ${estilo === "premium" ? "Editorial" : "Moderno"}. Para utilizá-lo, escolha o plano Profissional ou Studio.`);
       return;
     }
     setMensagem("");
@@ -144,9 +145,9 @@ export default function PerfilPage() {
     if (!previewEstiloBloqueado) setHeroEstilo(estiloEfetivo);
     setMensagem(
       previewEstiloBloqueado
-        ? "Perfil salvo. O estilo em prévia não foi aplicado; Premium e Tech ficam disponíveis no Profissional e Studio."
+        ? "Perfil salvo. O estilo da prévia exige o plano Profissional ou Studio e não foi aplicado."
         : ativoEfetivo
-          ? "Perfil salvo. O Hero do estúdio está ativo nos projetos."
+          ? "Perfil salvo. Sua apresentação personalizada está ativa nos projetos."
           : "Perfil do estúdio salvo com sucesso."
     );
   }
@@ -178,16 +179,17 @@ export default function PerfilPage() {
 
     <div className="profile-body">
       <header className="profile-head">
-        <div className="ey">PERFIL DO ESTÚDIO</div>
-        <h1 className="h1">Sua marca no Fotura</h1>
-        <p className="sub">Defina como seu estúdio aparece nos projetos entregues aos clientes.</p>
+        <div className="ey">PERSONALIZAÇÃO</div>
+        <h1 className="h1">Sua identidade, em cada entrega.</h1>
+        <p className="sub">Personalize como sua marca aparece nas galerias que seus clientes recebem.</p>
       </header>
 
       <div className="layout">
-        <section className="panel editor">
+        <div className="profile-editor-stack">
+        <section className="panel editor brand-editor">
           <div className="panel-head">
-            <div><h2 className="panel-title">Identidade do estúdio</h2><p className="panel-desc">Nome, logo e aparência usados na experiência do cliente.</p></div>
-            <span className="panel-badge">Marca</span>
+            <div><h2 className="panel-title">Identidade do estúdio</h2><p className="panel-desc">Seu nome, logotipo e cor nas galerias.</p></div>
+            <span className="panel-badge">01 · Marca</span>
           </div>
 
           <label className="field">
@@ -195,60 +197,65 @@ export default function PerfilPage() {
             <input className="input" value={nomeEstudio} onChange={e=>setNomeEstudio(e.target.value)} maxLength={80} placeholder="Ex: Alvor Fotografia"/>
           </label>
 
+          <div className="brand-grid">
           <div className="field">
-            <span className="field-label">Logo do estúdio</span>
+            <span className="field-label">Logotipo</span>
             <div className="brand-block">
               <div className="preview">{logoUrl?<img src={logoUrl} alt="Logo atual do estúdio"/>:<span>SEM LOGO</span>}</div>
               <div className="file-wrap">
-                <input className="file" type="file" accept="image/png,image/jpeg,image/webp" disabled={enviandoLogo} onChange={e=>{const f=e.target.files?.[0];if(f)void enviarLogo(f)}}/>
-                <p className="hint">{enviandoLogo?"Enviando logo…":"PNG, JPG ou WEBP · máximo 5 MB. Fundo transparente funciona melhor."}</p>
+                <input id="profile-logo-upload" className="file profile-file-input" type="file" accept="image/png,image/jpeg,image/webp" disabled={enviandoLogo} onChange={e=>{const f=e.target.files?.[0];if(f)void enviarLogo(f);e.currentTarget.value="";}}/><label className={"profile-file-trigger"+(enviandoLogo?" busy":"")} htmlFor="profile-logo-upload">{enviandoLogo?"Enviando…":logoUrl?"Trocar logotipo":"Escolher imagem"}</label>
+                <p className="hint">{enviandoLogo?"Atualizando sua marca…":"PNG, JPG ou WEBP · até 5 MB. Atualizado ao escolher."}</p>
               </div>
             </div>
           </div>
 
           <label className="field">
-            <span className="field-label">Cor preferencial do hero</span>
+            <span className="field-label">Cor da marca</span>
             <div className="color-block">
               <input className="color" type="color" value={corHero} onChange={e=>setCorHero(e.target.value)}/>
-              <div><div className="hex">{corHero}</div><div className="hint">Usada como base quando o hero não utiliza a capa do projeto.</div></div>
+              <div><div className="hex">{corHero.toUpperCase()}</div><div className="hint">Fundo da galeria quando não há foto de capa.</div></div>
             </div>
           </label>
 
-          <div className="section-divider"/>
-
+          </div>
+        </section>
+        <section className="panel editor presentation-editor">
+          <div className="panel-head"><div><h2 className="panel-title">Apresentação das galerias</h2><p className="panel-desc">Defina a aparência que seu cliente verá ao abrir um projeto.</p></div><span className="panel-badge">02 · Galerias</span></div>
           <div className="hero-section">
             <div className="hero-header">
-              <div><div className="hero-title">Hero do estúdio</div><div className="hero-copy">Controle a composição da logo e dos textos nos projetos.</div></div>
-              <label className="switch">
+              <div><div className="hero-title">Personalizar a abertura</div><div className="hero-copy">Ative para destacar seu logotipo e o nome do projeto.</div></div>
+              <label className="switch" aria-label="Ativar apresentação personalizada">
                 <input type="checkbox" checked={heroAtivo} disabled={!podeHeroEstudio} onChange={e=>setHeroAtivo(e.target.checked)}/>
                 <span className="switch-track"/>
               </label>
             </div>
 
-            <div className="styles" aria-label="Estilo do Hero do estúdio">
-              <button type="button" className={"style-btn"+(heroEstilo==="minimal"?" on":"")} disabled={!podeHeroEstudio} onClick={()=>escolherEstilo("minimal")}>Minimal</button>
-              <button type="button" className={"style-btn"+(heroEstilo==="premium"?" on":"")+(!podePremiumTech?" locked":"")} disabled={!podeHeroEstudio} onClick={()=>escolherEstilo("premium")}>Premium{!podePremiumTech&&<span className="pro-tag">PRÉVIA</span>}</button>
-              <button type="button" className={"style-btn"+(heroEstilo==="tech"?" on":"")+(!podePremiumTech?" locked":"")} disabled={!podeHeroEstudio} onClick={()=>escolherEstilo("tech")}>Tech{!podePremiumTech&&<span className="pro-tag">PRÉVIA</span>}</button>
+            <div className="profile-style-heading"><strong>Estilo da abertura</strong><span>Escolha para visualizar</span></div>
+            <div className="styles" role="group" aria-label="Estilo da apresentação das galerias">
+              <button type="button" aria-pressed={heroEstilo==="minimal"} className={"style-btn"+(heroEstilo==="minimal"?" on":"")} disabled={!podeHeroEstudio} onClick={()=>escolherEstilo("minimal")}><span className="style-visual visual-classic" aria-hidden="true"><i/><b/><em/></span><span className="style-copy"><strong>Clássico</strong><small>Simples e discreto</small></span><span className="style-indicator" aria-hidden="true">{heroEstilo==="minimal"?"✓":""}</span></button>
+              <button type="button" aria-pressed={heroEstilo==="premium"} className={"style-btn"+(heroEstilo==="premium"?" on":"")+(!podePremiumTech?" locked":"")} disabled={!podeHeroEstudio} onClick={()=>escolherEstilo("premium")}><span className="style-visual visual-editorial" aria-hidden="true"><i/><b/><em/></span><span className="style-copy"><strong>Editorial</strong><small>Elegante e expressivo</small></span><span className="style-indicator" aria-hidden="true">{heroEstilo==="premium"?"✓":""}</span>{!podePremiumTech&&<span className="pro-tag">Só prévia</span>}</button>
+              <button type="button" aria-pressed={heroEstilo==="tech"} className={"style-btn"+(heroEstilo==="tech"?" on":"")+(!podePremiumTech?" locked":"")} disabled={!podeHeroEstudio} onClick={()=>escolherEstilo("tech")}><span className="style-visual visual-modern" aria-hidden="true"><i/><b/><em/></span><span className="style-copy"><strong>Moderno</strong><small>Marcante e atual</small></span><span className="style-indicator" aria-hidden="true">{heroEstilo==="tech"?"✓":""}</span>{!podePremiumTech&&<span className="pro-tag">Só prévia</span>}</button>
             </div>
 
-            <div className="plan-note">Plano atual: {planoNome}. {podePremiumTech?"Premium e Tech estão liberados no seu plano.":podeHeroEstudio?"Premium e Tech podem ser pré-visualizados; para aplicar, use Profissional ou Studio.":"O Hero personalizado começa no Essencial."}</div>
+            <div className="plan-note">Plano {planoNome}. {podePremiumTech?"Os três estilos estão disponíveis.":podeHeroEstudio?"Editorial e Moderno podem ser vistos na prévia, mas exigem Profissional ou Studio para aplicar.":"A apresentação personalizada começa no plano Essencial."}</div>
 
             <div className="photo-feature">
-              <div><strong>Usar a capa do projeto como fundo do hero</strong><p>{podeFotoHero?"Quando ativado, cada projeto usa sua capa compartilhada como fundo do hero em todas as pastas.":"Disponível nos planos Profissional e Studio. A capa é escolhida dentro do Workspace do Projeto."}</p></div>
-              <label className="switch" aria-label="Usar a capa do projeto como fundo do hero">
+              <div><strong>Usar a foto de capa do projeto como fundo</strong><p>{podeFotoHero?"Cada projeto pode exibir sua foto atrás do nome e do logotipo do estúdio.":"Disponível nos planos Profissional e Studio. A foto é escolhida nas configurações do projeto."}</p></div>
+              <label className="switch" aria-label="Usar a foto de capa do projeto como fundo">
                 <input type="checkbox" checked={podeFotoHero&&heroFotoCapaAtivo} disabled={!podeFotoHero||!podeHeroEstudio} onChange={e=>setHeroFotoCapaAtivo(e.target.checked)}/>
                 <span className="switch-track"/>
               </label>
             </div>
           </div>
 
-          <div className="editor-actions"><button className="btn primary save" type="button" disabled={salvando} onClick={()=>void salvar()}>{salvando?"Salvando…":"Salvar alterações"}</button></div>
-          {mensagem&&<div role={erro?"alert":"status"} className={"notice"+(erro?" err":"")}>{mensagem}</div>}
         </section>
+        {mensagem&&<div role={erro?"alert":"status"} className={"notice"+(erro?" err":"")}>{mensagem}</div>}
+        <div className="profile-save-dock"><div><strong>Sua identidade, em cada entrega.</strong><span>Nome, cor e apresentação são salvos juntos.</span></div><button className="btn primary save" type="button" disabled={salvando} onClick={()=>void salvar()}>{salvando?"Salvando…":"Salvar alterações"} <span aria-hidden="true">✓</span></button></div>
+        </div>
 
         <aside className="panel preview-panel">
           <div className="panel-head">
-            <div><h2 className="panel-title">Prévia do hero</h2><p className="panel-desc">A mesma composição usada na abertura dos projetos.</p></div>
+            <div><span className="preview-eyebrow">VISUALIZAÇÃO EM TEMPO REAL</span><h2 className="panel-title">Veja como ficará</h2><p className="panel-desc">Uma amostra da abertura que o cliente verá.</p></div>
           </div>
 
           <div className="sample">
@@ -268,7 +275,8 @@ export default function PerfilPage() {
             </div>
           </div>
 
-          <div className="preview-note">{podeFotoHero&&heroFotoCapaAtivo?"Nos projetos, a mesma composição será aplicada sobre a capa compartilhada definida no Workspace.":"A prévia usa o mesmo fundo, posicionamento, tipografia e composição do estilo selecionado no projeto público."}</div>
+          <div className="preview-metadata"><div><span>Estilo</span><strong>{heroEstilo==="minimal"?"Clássico":heroEstilo==="premium"?"Editorial":"Moderno"}</strong></div><div><span>Apresentação</span><strong>{heroAtivo?"Ativada":"Desativada"}</strong></div></div>
+          <div className="preview-note">{podeFotoHero&&heroFotoCapaAtivo?"Quando houver foto de capa no projeto, ela será usada como fundo. Aqui você visualiza o estilo com sua cor.":"A prévia acompanha suas escolhas. Clique em Salvar alterações para aplicá-las aos projetos."}</div>
         </aside>
       </div>
     </div>
