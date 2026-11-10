@@ -154,20 +154,39 @@ export default function ProjetosPage(){
          <label className="field">Cliente <small>opcional</small><select value={clienteId} onChange={e=>setClienteId(e.target.value)}><option value="">Sem cliente vinculado</option>{clientes.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}</select></label>
        </div>
        <fieldset className="project-model-field">
-         <legend>Como as fotos serão entregues?</legend>
-         <div className="project-model-list">
-           {(["ensaio","entrega","casamento"] as ModeloProjeto[]).map(key=>
-             <label className={"project-model-choice"+(modelo===key?" selected":"")} key={key}>
-               <input type="radio" name="modelo" value={key} checked={modelo===key} onChange={()=>setModelo(key)} disabled={criando}/>
-               <span className="project-model-top">
-                 <span className="project-model-symbol" aria-hidden="true">{key==="ensaio"?<CheckIcon size={19}/>:key==="entrega"?<ImageIcon size={19}/>:<FolderModelIcon size={19}/>}</span>
-                 <span className="project-model-check" aria-hidden="true">{modelo===key&&<CheckIcon size={13}/>}</span>
-               </span>
-               <span className="project-model-copy"><strong>{MODELOS_PROJETO[key].nome}</strong><small>{RESUMOS_MODELO_PROJETO[key]}</small></span>
-             </label>)}
-         </div>
-         <p className="project-model-hint"><CheckIcon size={13}/>{modelo==="casamento"?"Você poderá criar quantas galerias precisar.":"A galeria será criada automaticamente, pronta para receber fotos."}</p>
-       </fieldset>
+          <legend aria-live="polite">{etapaCriacao==="fluxo"?"Como será a experiência do cliente?":"Como deseja organizar as fotografias?"}</legend>
+          <div className="project-model-progress" aria-label={etapaCriacao==="fluxo"?"Etapa 1 de 2":"Etapa 2 de 2"}>
+            <span className={etapaCriacao==="fluxo"?"current":"done"}/><span className={etapaCriacao==="estrutura"?"current":""}/>
+            <small>{etapaCriacao==="fluxo"?"1 de 2 · Tipo de entrega":"2 de 2 · Organização do projeto"}</small>
+          </div>
+          <div className="project-model-slot">
+            {etapaCriacao==="fluxo"?<div className="project-model-step" key="fluxo">
+              <div className="project-model-list">
+                {(["selecao","direta"] as FluxoProjeto[]).map(valor=>
+                  <label key={valor} className={"project-model-choice"+(fluxoProjeto===valor?" selected":"")}>
+                    <input type="radio" name="fluxo-projeto" value={valor} checked={fluxoProjeto===valor}
+                      onChange={()=>{setFluxoProjeto(valor);setEstruturaProjeto(null);setEtapaCriacao("estrutura")}} disabled={criando}/>
+                    <span className="project-model-top"><span className="project-model-symbol" aria-hidden="true">{valor==="selecao"?<CheckIcon size={19}/>:<ImageIcon size={19}/>}</span><span className="project-model-check" aria-hidden="true">{fluxoProjeto===valor&&<CheckIcon size={13}/>}</span></span>
+                    <span className="project-model-copy"><strong>{valor==="selecao"?"Seleção pelo cliente":"Entrega direta"}</strong><small>{valor==="selecao"?"O cliente escolhe as favoritas antes de você entregar as fotos finais.":"Compartilhe as fotografias prontas, sem solicitar uma seleção."}</small></span>
+                  </label>)}
+              </div>
+              <p className="project-model-hint">Primeiro, escolha se o cliente vai selecionar fotos ou recebê-las prontas.</p>
+            </div>:<div className="project-model-step" key="estrutura">
+              <div className="project-model-list">
+                {(["unico","galerias"] as EstruturaProjeto[]).map(valor=>
+                  <label key={valor} className={"project-model-choice"+(estruturaProjeto===valor?" selected":"")}>
+                    <input type="radio" name="estrutura-projeto" value={valor} checked={estruturaProjeto===valor} onChange={()=>setEstruturaProjeto(valor)} disabled={criando}/>
+                    <span className="project-model-top"><span className="project-model-symbol" aria-hidden="true">{valor==="unico"?<ImageIcon size={19}/>:<FolderModelIcon size={19}/>}</span><span className="project-model-check" aria-hidden="true">{estruturaProjeto===valor&&<CheckIcon size={13}/>}</span></span>
+                    <span className="project-model-copy"><strong>{valor==="unico"?"Galeria única":"Projeto com galerias"}</strong><small>{valor==="unico"?"Todas as fotos em uma galeria, com acesso direto ao cliente.":"Separe por momentos ou temas e compartilhe tudo em um único link."}</small></span>
+                  </label>)}
+              </div>
+              <div className="project-model-step-footer">
+                <button className="project-model-back" type="button" disabled={criando} onClick={()=>{setEtapaCriacao("fluxo");setEstruturaProjeto(null)}}>← Alterar tipo de entrega</button>
+                <p className="project-model-hint">{estruturaProjeto==="galerias"?"Você poderá criar quantas galerias precisar.":estruturaProjeto==="unico"?"A galeria será preparada automaticamente.":"Escolha a organização para concluir o projeto."}</p>
+              </div>
+            </div>}
+          </div>
+        </fieldset>
        <label className="field create-description">Descrição <small>opcional</small><textarea rows={2} value={descricao} onChange={e=>setDescricao(e.target.value)} placeholder="Detalhes do trabalho (opcional)"/></label>
      </div>
      <div className="modal-actions">
