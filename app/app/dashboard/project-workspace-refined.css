@@ -162,3 +162,6 @@
 .pw-page .pw-overflow-menu.folder button{display:flex;align-items:center;gap:10px;padding:9px 10px!important;font-size:11px!important}
 .pw-page .pw-overflow-menu.folder button svg{flex:none;color:#998ab5}
 .pw-page .pw-overflow-menu.folder button.danger svg{color:#b15d6c}
+
+/* A navegação principal reúne agora visão geral e gerenciamento de galerias. */
+.pw-page #pw-gallery-section{margin-top:18px;scroll-margin-top:20px}

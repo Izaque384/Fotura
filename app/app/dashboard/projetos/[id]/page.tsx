@@ -13,7 +13,7 @@ import ConfirmDialog from "../../../components/ConfirmDialog";
 import { ArrowLeftIcon, ArrowRightIcon, CloseIcon, DragHandleIcon, ImageIcon, MoreIcon, PlusIcon, GridIcon, FolderIcon, CheckIcon, DownloadIcon, SettingsIcon, ActivityIcon, EyeIcon, LinkIcon, CopyIcon, ShareIcon, ShoppingBagIcon, SparklesIcon, PencilIcon, TrashIcon, ArrowUpIcon, ArrowDownIcon } from "../../../components/FoturaIcons";
 import "../../project-workspace-refined.css";
 import { createClient } from "../../../../lib/supabase-client";
-import { MODELOS_PROJETO, type ModeloProjeto } from "../../../../lib/project-templates";
+import { type ModeloProjeto } from "../../../../lib/project-templates";
 import { registrarEventoProduto } from "../../../../lib/product-analytics";
 
 type Cliente={id:string;nome:string;email:string|null;telefone:string|null};
@@ -30,7 +30,7 @@ type Projeto={
 };
 type Comercial={planoCodigo:string;assinaturaAtiva:boolean;stripeRecebimentosAtivo:boolean;vendaFotosDisponivel:boolean};
 type Dados={projeto:Projeto;cliente:Cliente|null;clientes:Cliente[];pastas:Pasta[];vendas:Venda[];eventos:Evento[];presets:Preset[];comercial:Comercial};
-type Aba="resumo"|"pastas"|"selecao"|"entrega"|"atividade"|"configuracoes"|"vendas";
+type Aba="resumo"|"selecao"|"entrega"|"atividade"|"configuracoes"|"vendas";
 type ConfigSecao="projeto"|"abertura"|"selecao"|"entrega"|"vendas"|"avancado";
 type CapaFoto={nome:string;url:string};
 
@@ -87,7 +87,8 @@ export default function ProjetoWorkspacePage(){
   const recebido=d as Dados;const w={...recebido,comercial:recebido.comercial??{planoCodigo:"sem_plano",assinaturaAtiva:false,stripeRecebimentosAtivo:false,vendaFotosDisponivel:false}};setDados(w);aplicarForm(w.projeto);setOrigem(window.location.origin);setCarregando(false);
  }
  useEffect(()=>{void carregar()},[id]);
- useEffect(()=>{const valor=new URLSearchParams(window.location.search).get("aba");if(valor&&["resumo","pastas","selecao","entrega","atividade","configuracoes","vendas"].includes(valor))setAba(valor as Aba)},[id]);
+ useEffect(()=>{const valor=new URLSearchParams(window.location.search).get("aba");if(valor==="pastas")setAba("resumo");else if(valor&&["resumo","selecao","entrega","atividade","configuracoes","vendas"].includes(valor))setAba(valor as Aba)},[id]);
+ useEffect(()=>{if(dados&&!dados.projeto.prova&&(aba==="selecao"||aba==="entrega"))setAba("resumo")},[dados,aba]);
  useEffect(()=>{
   function fecharMenus(event:PointerEvent){
    const alvo=event.target;
@@ -271,7 +272,7 @@ export default function ProjetoWorkspacePage(){
  const galeriaPrincipal=galeriaUnica?dados.pastas[0]??null:null;
  const totalFotos=dados.pastas.reduce((s,x)=>s+x.qtd,0),totalSelecionadas=dados.pastas.reduce((s,x)=>s+(x.selecao?.fotos.length??0),0),totalComentarios=dados.pastas.reduce((s,x)=>s+Object.values(x.selecao?.comentarios??{}).filter(v=>v?.trim()).length,0);
  const finalizadas=dados.pastas.filter(x=>x.selecao?.finalizada).length,entregues=dados.pastas.filter(x=>x.etapa==="entrega").length;
- const status=dados.pastas.length&&entregues===dados.pastas.length?"Entregue":dados.pastas.some(x=>x.etapa==="preparando_entrega")?"Preparando entrega":finalizadas?"Seleção em andamento":galeriaUnica&&totalFotos===0?"Aguardando fotos":dados.pastas.length?"Ativo":"Sem galerias";
+ const status=dados.pastas.length&&entregues===dados.pastas.length?"Entregue":dados.pastas.some(x=>x.etapa==="preparando_entrega")?"Preparando entrega":p.prova&&finalizadas?"Seleção em andamento":galeriaUnica&&totalFotos===0?"Aguardando fotos":dados.pastas.length?"Ativo":"Sem galerias";
  const vendasPagas=dados.vendas.filter(v=>v.status==="pago"),receita=vendasPagas.reduce((s,v)=>s+v.valor_total_centavos,0),extras=vendasPagas.reduce((s,v)=>s+v.qtd_extras,0);
  const proximoPasso = !dados.pastas.length
    ? {titulo:"Crie sua primeira galeria",descricao:"Comece organizando as fotografias deste projeto.",botao:"Criar galeria",destino:"criar"}
@@ -280,14 +281,16 @@ export default function ProjetoWorkspacePage(){
      : p.prova&&finalizadas>0&&entregues<dados.pastas.length
        ? {titulo:"Prepare as fotos escolhidas",descricao:"A seleção foi finalizada. Organize os arquivos para a entrega.",botao:"Ver entregas",destino:"entrega"}
        : !p.prova&&entregues<dados.pastas.length
-         ? {titulo:"Prepare a entrega",descricao:"As fotos já foram adicionadas e podem ser preparadas para o cliente.",botao:"Ver entregas",destino:"entrega"}
+         ? {titulo:"Prepare a entrega",descricao:"As fotos já foram adicionadas. Acesse a galeria para preparar a entrega.",botao:"Ver galerias",destino:"pastas"}
          : entregues===dados.pastas.length
            ? {titulo:"Seu projeto está entregue",descricao:"Confira a experiência e compartilhe o link com o cliente.",botao:"Compartilhar",destino:"compartilhar"}
-           : {titulo:"Envie o link para o cliente",descricao:"As fotografias estão disponíveis. Compartilhe o projeto para receber as escolhas.",botao:"Compartilhar",destino:"compartilhar"};
+           : {titulo:"Envie o link para o cliente",descricao:"As fotografias estão disponíveis. Confira e compartilhe o projeto com o cliente.",botao:"Compartilhar",destino:"compartilhar"};
+ function irParaGalerias(){document.getElementById("pw-gallery-section")?.scrollIntoView({behavior:"smooth",block:"start"})}
  function abrirProximoPasso(){
-   if(proximoPasso.destino==="criar")galeriaUnica?setAba("pastas"):setModalPasta(true);
+   if(proximoPasso.destino==="criar")galeriaUnica?irParaGalerias():setModalPasta(true);
    else if(proximoPasso.destino==="upload"&&galeriaPrincipal)router.push("/upload?galeria="+galeriaPrincipal.id+"&projeto="+id);
    else if(proximoPasso.destino==="compartilhar")setCompartilharAberto(true);
+   else if(proximoPasso.destino==="pastas")irParaGalerias();
    else setAba(proximoPasso.destino as Aba);
  }
 
@@ -297,7 +300,7 @@ export default function ProjetoWorkspacePage(){
       <button className="pw-back" onClick={()=>router.push("/dashboard/projetos")}><ArrowLeftIcon size={15}/> Voltar aos projetos</button>
       <p>ESPAÇO DE TRABALHO</p>
       <h1 title={p.nome}>{p.nome}</h1>
-      <div className="pw-status"><span className="pw-status-primary">{status}</span>{dados.cliente&&<span><span aria-hidden="true">· </span>{dados.cliente.nome}</span>}<span>{galeriaUnica?MODELOS_PROJETO[p.modelo as ModeloProjeto].nome:"Projeto com galerias"}</span></div>
+      <div className="pw-status"><span className="pw-status-primary">{status}</span>{dados.cliente&&<span><span aria-hidden="true">· </span>{dados.cliente.nome}</span>}<span>{galeriaUnica?"Galeria única":"Projeto com galerias"} · {p.prova?"Seleção pelo cliente":"Entrega direta"}</span></div>
     </div>
     <div className="pw-head-actions">
       {galeriaUnica
@@ -309,7 +312,7 @@ export default function ProjetoWorkspacePage(){
         {menuProjetoAberto&&<div className="pw-overflow-menu project" role="menu">
           <div className="pw-menu-label">APRESENTAÇÃO</div>
           <button role="menuitem" onClick={()=>{setMenuProjetoAberto(false);if(publicUrl)window.open(publicUrl,"_blank","noopener,noreferrer")}} disabled={!dados.pastas.length}><EyeIcon size={16}/> Ver como cliente</button>
-          <button role="menuitem" onClick={()=>{setMenuProjetoAberto(false);void abrirCapa()}} disabled={!dados.pastas.length}><ImageIcon size={16}/> Escolher capa</button>
+          <button role="menuitem" className={aba==="configuracoes"?"active":""} onClick={()=>{setConfigSecao("projeto");setAba("configuracoes");setMenuProjetoAberto(false)}}><SettingsIcon size={16}/> Configurações do projeto</button>
           <div className="pw-menu-sep"/>
           <div className="pw-menu-label">ACOMPANHAMENTO</div>
           <button role="menuitem" className={aba==="atividade"?"active":""} onClick={()=>{setAba("atividade");setMenuProjetoAberto(false)}}><ActivityIcon size={16}/> Atividade do cliente</button>
@@ -320,13 +323,16 @@ export default function ProjetoWorkspacePage(){
   </header>
   {aviso&&<div className="pw-notice">{aviso}</div>}
   <nav className="pw-tabs" aria-label="Navegação do projeto">
-    {((p.modelo==="entrega"&&!p.prova?["resumo","pastas","entrega","configuracoes"]:["resumo","pastas","selecao","entrega","configuracoes"]) as Aba[]).map(a=>
-      <button key={a} className={aba===a?"on":""} aria-current={aba===a?"page":undefined} onClick={()=>{setAba(a);setMenuProjetoAberto(false)}}>
-        {a==="resumo"?<GridIcon size={17}/>:a==="pastas"?<FolderIcon size={17}/>:a==="selecao"?<CheckIcon size={17}/>:a==="entrega"?<DownloadIcon size={17}/>:<SettingsIcon size={17}/>}
-        <span>{a==="resumo"?"Visão geral":a==="pastas"?(galeriaUnica?"Minha galeria":"Galerias e fotos"):a==="selecao"?"Seleção":a==="entrega"?"Entrega":"Configurações"}</span>
-      </button>)}
-    {(["atividade","vendas"] as Aba[]).includes(aba)&&<span className="pw-secondary-current" aria-current="page">{aba==="atividade"?<ActivityIcon size={17}/>:<ShoppingBagIcon size={17}/>}<span>{aba==="atividade"?"Atividade":"Vendas"}</span></span>}
-  </nav>
+     {(["resumo",...(p.prova?["selecao","entrega"]:[])] as Aba[]).map(a=>
+       <button key={a} className={aba===a?"on":""} aria-current={aba===a?"page":undefined} onClick={()=>{setAba(a);setMenuProjetoAberto(false)}}>
+         {a==="resumo"?<FolderIcon size={17}/>:a==="selecao"?<CheckIcon size={17}/>:<DownloadIcon size={17}/>}
+         <span>{a==="resumo"?(galeriaUnica?"Minha galeria":"Galerias e fotos"):a==="selecao"?"Seleção":"Entrega"}</span>
+       </button>)}
+     {(["atividade","vendas","configuracoes"] as Aba[]).includes(aba)&&<span className="pw-secondary-current" aria-current="page">
+       {aba==="atividade"?<ActivityIcon size={17}/>:aba==="vendas"?<ShoppingBagIcon size={17}/>:<SettingsIcon size={17}/>}
+       <span>{aba==="atividade"?"Atividade":aba==="vendas"?"Vendas":"Configurações"}</span>
+     </span>}
+   </nav>
 
   {aba==="resumo"&&<>
     <section className="pw-overview-grid" aria-label="Resumo do projeto">
@@ -350,15 +356,15 @@ export default function ProjetoWorkspacePage(){
       </article>
     </section>
     <section className="pw-metrics" aria-label="Resumo em números">
-      <button onClick={()=>setAba("pastas")}><FolderIcon size={18}/><strong>{galeriaUnica?1:dados.pastas.length}</strong><span>{galeriaUnica?"Galeria principal":"Galerias"}</span></button>
-      <button onClick={()=>setAba("pastas")}><ImageIcon size={18}/><strong>{totalFotos}</strong><span>Fotos no projeto</span></button>
+      <button onClick={irParaGalerias}><FolderIcon size={18}/><strong>{galeriaUnica?1:dados.pastas.length}</strong><span>{galeriaUnica?"Galeria principal":"Galerias"}</span></button>
+      <button onClick={irParaGalerias}><ImageIcon size={18}/><strong>{totalFotos}</strong><span>Fotos no projeto</span></button>
       <button onClick={()=>setAba(p.prova?"selecao":"entrega")}>{p.prova?<CheckIcon size={18}/>:<DownloadIcon size={18}/>}<strong>{p.prova?totalSelecionadas:entregues}</strong><span>{p.prova?"Fotos selecionadas":"Galerias entregues"}</span></button>
     </section>
   </>}
 
-  {aba==="pastas"&&galeriaUnica&&<section className="pw-section pw-single-section"><div className="pw-section-head"><div><span>{p.modelo==="ensaio"?"SELEÇÃO DE FOTOS":"ENTREGA DIRETA"}</span><h2>Sua galeria, pronta para receber fotos</h2><p>{p.modelo==="ensaio"?"Adicione as fotos para seu cliente escolher as favoritas e deixar comentários.":"Adicione as fotos prontas. Seu cliente abrirá esta galeria diretamente, sem passar por pastas."}</p></div></div>{galeriaPrincipal?<div className="pw-single-gallery"><div className="pw-single-cover">{galeriaPrincipal.capaUrl?<img src={galeriaPrincipal.capaUrl} alt="Capa da galeria"/>:<ImageIcon size={34}/>}</div><div className="pw-single-copy"><span>GALERIA ÚNICA</span><h3>{p.nome}</h3><p>{galeriaPrincipal.qtd} foto{galeriaPrincipal.qtd===1?"":"s"} {p.prova?"· Seleção disponível":"· Entrega sem seleção"}</p><div className="pw-single-actions"><button type="button" className="primary" onClick={()=>router.push(`/upload?galeria=${galeriaPrincipal.id}&projeto=${id}`)}><PlusIcon size={15}/> Enviar fotos</button><button type="button" onClick={()=>setGerenciadorPasta(galeriaPrincipal.id)} disabled={!galeriaPrincipal.qtd}><ImageIcon size={15}/> Organizar fotos</button></div></div></div>:<div className="pw-empty">Não foi possível localizar a galeria principal. Atualize a página ou entre em contato com o suporte.</div>}</section>}
+  {aba==="resumo"&&galeriaUnica&&<section id="pw-gallery-section" className="pw-section pw-single-section"><div className="pw-section-head"><div><span>{p.prova?"SELEÇÃO DE FOTOS":"ENTREGA DIRETA"}</span><h2>Sua galeria, pronta para receber fotos</h2><p>{p.prova?"Adicione as fotos para seu cliente escolher as favoritas e deixar comentários.":"Adicione as fotos prontas. Seu cliente abrirá esta galeria diretamente, sem passar por pastas."}</p></div></div>{galeriaPrincipal?<div className="pw-single-gallery"><div className="pw-single-cover">{galeriaPrincipal.capaUrl?<img src={galeriaPrincipal.capaUrl} alt="Capa da galeria"/>:<ImageIcon size={34}/>}</div><div className="pw-single-copy"><span>GALERIA ÚNICA</span><h3>{p.nome}</h3><p>{galeriaPrincipal.qtd} foto{galeriaPrincipal.qtd===1?"":"s"} {p.prova?"· Seleção disponível":"· Entrega sem seleção"}</p><div className="pw-single-actions"><button type="button" className="primary" onClick={()=>router.push(`/upload?galeria=${galeriaPrincipal.id}&projeto=${id}`)}><PlusIcon size={15}/> Enviar fotos</button><button type="button" onClick={()=>setGerenciadorPasta(galeriaPrincipal.id)} disabled={!galeriaPrincipal.qtd}><ImageIcon size={15}/> Organizar fotos</button>{!p.prova&&galeriaPrincipal.qtd>0&&<button type="button" onClick={()=>router.push(`/dashboard/entrega/${galeriaPrincipal.id}`)}><DownloadIcon size={15}/> {rotuloAcaoPasta(galeriaPrincipal)}</button>}</div></div></div>:<div className="pw-empty">Não foi possível localizar a galeria principal. Atualize a página ou entre em contato com o suporte.</div>}</section>}
 
-  {aba==="pastas"&&!galeriaUnica&&<section className="pw-section"><div className="pw-section-head"><div><span>GALERIAS DO PROJETO</span><h2>Organize suas galerias</h2><p>Gerencie fotos, visibilidade e ordem de exibição para o cliente.</p></div><div className="pw-folder-summary"><small><EyeIcon size={14}/>{dados.pastas.filter(x=>x.visivel).length} publicada{dados.pastas.filter(x=>x.visivel).length===1?"":"s"}</small><small className="pw-sort-tip"><DragHandleIcon size={14}/> Arraste para ordenar</small></div></div>{dados.pastas.length?<div className="pw-folder-list">{dados.pastas.map((x,i)=><article className={"pw-folder"+(!x.visivel?" hidden":"")+(arrastandoPasta===x.id?" dragging":"")} key={x.id} draggable={!reordenandoPastas&&editandoPasta!==x.id} onDragStart={e=>{setArrastandoPasta(x.id);e.dataTransfer.effectAllowed="move"}} onDragOver={e=>{if(arrastandoPasta&&arrastandoPasta!==x.id)e.preventDefault()}} onDrop={e=>{e.preventDefault();soltarPasta(x.id)}} onDragEnd={()=>setArrastandoPasta(null)}><div className="pw-folder-cover" title="Arraste para reordenar">{x.capaUrl?<img src={x.capaUrl} alt="" loading="lazy" draggable={false}/>:<span className="pw-folder-cover-empty" aria-hidden="true"><ImageIcon size={18}/></span>}<span className="pw-folder-cover-shade"/><span className="pw-drag" aria-hidden="true"><DragHandleIcon size={16}/></span><b>{String(i+1).padStart(2,"0")}</b></div><div className="pw-folder-copy">{editandoPasta===x.id?<div className="pw-folder-edit"><input autoFocus value={nomePastaEdicao} onChange={e=>setNomePastaEdicao(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();void salvarNomePasta(x)}if(e.key==="Escape"){setEditandoPasta(null);setNomePastaEdicao("")}}} maxLength={120}/><button className="save" onClick={()=>void salvarNomePasta(x)} disabled={!nomePastaEdicao.trim()||salvandoPasta===x.id}>{salvandoPasta===x.id?"Salvando…":"Salvar"}</button><button onClick={()=>{setEditandoPasta(null);setNomePastaEdicao("")}} disabled={salvandoPasta===x.id}>Cancelar</button></div>:<div className="pw-folder-title"><button type="button" className="pw-folder-open" onClick={()=>abrirDetalhesPasta(x)} aria-label={"Detalhes e configurações de "+x.titulo}>{x.titulo}</button><span className={"pw-visibility "+(x.visivel?"published":"hidden")}>{x.visivel?"Publicada":"Oculta"}</span></div>}<p>{x.qtd} foto{x.qtd===1?"":"s"}{p.prova&&<> · {x.selecao?.fotos.length??0} escolhida{(x.selecao?.fotos.length??0)===1?"":"s"}</>}</p></div><span className={"pw-pill "+(x.etapa==="entrega"?"done":x.etapa==="preparando_entrega"?"prep":"active")}>{x.etapa==="entrega"?"Entregue":x.etapa==="preparando_entrega"?"Preparando":x.selecao?.finalizada?"Seleção finalizada":p.prova?"Seleção aberta":"Entrega direta"}</span><div className="pw-folder-actions"><button className="pw-folder-primary" onClick={()=>abrirAcaoPasta(x)}>{x.etapa==="entrega"?<EyeIcon size={15}/>:x.etapa==="preparando_entrega"||x.selecao?.finalizada?<DownloadIcon size={15}/>:<PlusIcon size={15}/>} {rotuloAcaoPasta(x)}</button><div className="pw-overflow-wrap"><button className={"pw-more folder"+(menuPastaAberta===x.id?" open":"")} aria-label={`Mais ações de ${x.titulo}`} aria-haspopup="menu" aria-expanded={menuPastaAberta===x.id} onClick={()=>{setMenuPastaAberta(v=>v===x.id?null:x.id);setMenuProjetoAberto(false)}}><MoreIcon size={18}/></button>{menuPastaAberta===x.id&&<div className={"pw-overflow-menu folder"+(i>=2&&i>=dados.pastas.length-2?" opens-up":"")} role="menu">
+  {aba==="resumo"&&!galeriaUnica&&<section id="pw-gallery-section" className="pw-section"><div className="pw-section-head"><div><span>GALERIAS DO PROJETO</span><h2>Organize suas galerias</h2><p>Gerencie fotos, visibilidade e ordem de exibição para o cliente.</p></div><div className="pw-folder-summary"><small><EyeIcon size={14}/>{dados.pastas.filter(x=>x.visivel).length} publicada{dados.pastas.filter(x=>x.visivel).length===1?"":"s"}</small><small className="pw-sort-tip"><DragHandleIcon size={14}/> Arraste para ordenar</small></div></div>{dados.pastas.length?<div className="pw-folder-list">{dados.pastas.map((x,i)=><article className={"pw-folder"+(!x.visivel?" hidden":"")+(arrastandoPasta===x.id?" dragging":"")} key={x.id} draggable={!reordenandoPastas&&editandoPasta!==x.id} onDragStart={e=>{setArrastandoPasta(x.id);e.dataTransfer.effectAllowed="move"}} onDragOver={e=>{if(arrastandoPasta&&arrastandoPasta!==x.id)e.preventDefault()}} onDrop={e=>{e.preventDefault();soltarPasta(x.id)}} onDragEnd={()=>setArrastandoPasta(null)}><div className="pw-folder-cover" title="Arraste para reordenar">{x.capaUrl?<img src={x.capaUrl} alt="" loading="lazy" draggable={false}/>:<span className="pw-folder-cover-empty" aria-hidden="true"><ImageIcon size={18}/></span>}<span className="pw-folder-cover-shade"/><span className="pw-drag" aria-hidden="true"><DragHandleIcon size={16}/></span><b>{String(i+1).padStart(2,"0")}</b></div><div className="pw-folder-copy">{editandoPasta===x.id?<div className="pw-folder-edit"><input autoFocus value={nomePastaEdicao} onChange={e=>setNomePastaEdicao(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();void salvarNomePasta(x)}if(e.key==="Escape"){setEditandoPasta(null);setNomePastaEdicao("")}}} maxLength={120}/><button className="save" onClick={()=>void salvarNomePasta(x)} disabled={!nomePastaEdicao.trim()||salvandoPasta===x.id}>{salvandoPasta===x.id?"Salvando…":"Salvar"}</button><button onClick={()=>{setEditandoPasta(null);setNomePastaEdicao("")}} disabled={salvandoPasta===x.id}>Cancelar</button></div>:<div className="pw-folder-title"><button type="button" className="pw-folder-open" onClick={()=>abrirDetalhesPasta(x)} aria-label={"Detalhes e configurações de "+x.titulo}>{x.titulo}</button><span className={"pw-visibility "+(x.visivel?"published":"hidden")}>{x.visivel?"Publicada":"Oculta"}</span></div>}<p>{x.qtd} foto{x.qtd===1?"":"s"}{p.prova&&<> · {x.selecao?.fotos.length??0} escolhida{(x.selecao?.fotos.length??0)===1?"":"s"}</>}</p></div><span className={"pw-pill "+(x.etapa==="entrega"?"done":x.etapa==="preparando_entrega"?"prep":"active")}>{x.etapa==="entrega"?"Entregue":x.etapa==="preparando_entrega"?"Preparando":x.selecao?.finalizada?"Seleção finalizada":p.prova?"Seleção aberta":"Entrega direta"}</span><div className="pw-folder-actions"><button className="pw-folder-primary" onClick={()=>abrirAcaoPasta(x)}>{x.etapa==="entrega"?<EyeIcon size={15}/>:x.etapa==="preparando_entrega"||x.selecao?.finalizada?<DownloadIcon size={15}/>:<PlusIcon size={15}/>} {rotuloAcaoPasta(x)}</button><div className="pw-overflow-wrap"><button className={"pw-more folder"+(menuPastaAberta===x.id?" open":"")} aria-label={`Mais ações de ${x.titulo}`} aria-haspopup="menu" aria-expanded={menuPastaAberta===x.id} onClick={()=>{setMenuPastaAberta(v=>v===x.id?null:x.id);setMenuProjetoAberto(false)}}><MoreIcon size={18}/></button>{menuPastaAberta===x.id&&<div className={"pw-overflow-menu folder"+(i>=2&&i>=dados.pastas.length-2?" opens-up":"")} role="menu">
   <div className="pw-menu-label">VISUALIZAR E EDITAR</div>
   <button role="menuitem" onClick={()=>{setMenuPastaAberta(null);window.open(publicUrl+"?pasta="+x.id,"_blank","noopener,noreferrer")}} disabled={!x.visivel}><EyeIcon size={15}/> Ver como cliente</button>
   <button role="menuitem" onClick={()=>{setMenuPastaAberta(null);setGerenciadorPasta(x.id)}} disabled={!x.qtd}><ImageIcon size={15}/> Organizar fotos</button>

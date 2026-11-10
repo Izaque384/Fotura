@@ -374,7 +374,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 type PostBody =
-  | { acao: "criar_projeto"; nome?: string; descricao?: string | null; clienteId?: string | null; modelo?: string; presetId?: string | null }
+  | { acao: "criar_projeto"; nome?: string; descricao?: string | null; clienteId?: string | null; modelo?: string; prova?: boolean; presetId?: string | null }
   | { acao: "criar_pasta"; projetoId?: string; nome?: string }
   | { acao: "reordenar_pastas"; projetoId?: string; pastas?: string[] }
   | { acao: "atualizar_pasta"; projetoId?: string; pastaId?: string; nome?: string; visivel?: boolean; capaArquivo?: string | null; ordemFotos?: OrdemFotos }
@@ -403,7 +403,15 @@ export async function POST(req: NextRequest) {
       if (!cliente) return json({ error: "Cliente não encontrado." }, 404);
     }
     const modeloProjeto = modeloValido(body.modelo) ? body.modelo : "ensaio";
-    let configuracao = MODELOS_PROJETO[modeloProjeto].config;
+    if (body.prova !== undefined && typeof body.prova !== "boolean") {
+      return json({ error: "O tipo de entrega informado é inválido." }, 400);
+    }
+    // O formato (uma ou várias galerias) e o fluxo (seleção ou entrega)
+    // são independentes. Projetos antigos sem prova continuam compatíveis.
+    const usaSelecao = modeloProjeto === "casamento" ? body.prova === true : modeloProjeto === "ensaio";
+    let configuracao = modeloProjeto === "casamento" && usaSelecao
+      ? MODELOS_PROJETO.ensaio.config
+      : MODELOS_PROJETO[modeloProjeto].config;
     if(body.presetId){
       if(!uuidValido(body.presetId))return json({error:"Modelo inválido."},400);
       const {data:preset}=await supabase.from("galeria_presets").select("config").eq("id",body.presetId).eq("user_id",user.id).maybeSingle();
@@ -411,8 +419,8 @@ export async function POST(req: NextRequest) {
       const validado=configProjeto(preset.config);if(!validado)return json({error:"Modelo incompatível."},400);
       configuracao=validado;
     }
-    // O modelo define a seleção inicial mesmo quando um preset opcional é utilizado.
-    configuracao = { ...configuracao, prova: modeloProjeto === "ensaio" };
+    // A finalidade escolhida prevalece sobre presets, sem alterar os demais ajustes.
+    configuracao = { ...configuracao, prova: usaSelecao };
     const { data, error } = await supabase.from("galeria_projetos").insert({
       ...configuracao,
       modelo: modeloProjeto,
