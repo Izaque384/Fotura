@@ -13,7 +13,7 @@ import ConfirmDialog from "../../../components/ConfirmDialog";
 import { ArrowLeftIcon, ArrowRightIcon, CloseIcon, DragHandleIcon, ImageIcon, MoreIcon, PlusIcon, GridIcon, FolderIcon, CheckIcon, DownloadIcon, SettingsIcon, ActivityIcon, EyeIcon, LinkIcon, CopyIcon, ShareIcon, ShoppingBagIcon, SparklesIcon, PencilIcon, TrashIcon, ArrowUpIcon, ArrowDownIcon } from "../../../components/FoturaIcons";
 import "../../project-workspace-refined.css";
 import { createClient } from "../../../../lib/supabase-client";
-import { MODELOS_PROJETO, type ModeloProjeto } from "../../../../lib/project-templates";
+import { type ModeloProjeto } from "../../../../lib/project-templates";
 import { registrarEventoProduto } from "../../../../lib/product-analytics";
 
 type Cliente={id:string;nome:string;email:string|null;telefone:string|null};
@@ -30,7 +30,7 @@ type Projeto={
 };
 type Comercial={planoCodigo:string;assinaturaAtiva:boolean;stripeRecebimentosAtivo:boolean;vendaFotosDisponivel:boolean};
 type Dados={projeto:Projeto;cliente:Cliente|null;clientes:Cliente[];pastas:Pasta[];vendas:Venda[];eventos:Evento[];presets:Preset[];comercial:Comercial};
-type Aba="resumo"|"pastas"|"selecao"|"entrega"|"atividade"|"configuracoes"|"vendas";
+type Aba="resumo"|"selecao"|"entrega"|"atividade"|"configuracoes"|"vendas";
 type ConfigSecao="projeto"|"abertura"|"selecao"|"entrega"|"vendas"|"avancado";
 type CapaFoto={nome:string;url:string};
 
@@ -87,7 +87,7 @@ export default function ProjetoWorkspacePage(){
   const recebido=d as Dados;const w={...recebido,comercial:recebido.comercial??{planoCodigo:"sem_plano",assinaturaAtiva:false,stripeRecebimentosAtivo:false,vendaFotosDisponivel:false}};setDados(w);aplicarForm(w.projeto);setOrigem(window.location.origin);setCarregando(false);
  }
  useEffect(()=>{void carregar()},[id]);
- useEffect(()=>{const valor=new URLSearchParams(window.location.search).get("aba");if(valor&&["resumo","pastas","selecao","entrega","atividade","configuracoes","vendas"].includes(valor))setAba(valor as Aba)},[id]);
+ useEffect(()=>{const valor=new URLSearchParams(window.location.search).get("aba");if(valor==="pastas")setAba("resumo");else if(valor&&["resumo","selecao","entrega","atividade","configuracoes","vendas"].includes(valor))setAba(valor as Aba)},[id]);
  useEffect(()=>{
   function fecharMenus(event:PointerEvent){
    const alvo=event.target;
@@ -271,7 +271,7 @@ export default function ProjetoWorkspacePage(){
  const galeriaPrincipal=galeriaUnica?dados.pastas[0]??null:null;
  const totalFotos=dados.pastas.reduce((s,x)=>s+x.qtd,0),totalSelecionadas=dados.pastas.reduce((s,x)=>s+(x.selecao?.fotos.length??0),0),totalComentarios=dados.pastas.reduce((s,x)=>s+Object.values(x.selecao?.comentarios??{}).filter(v=>v?.trim()).length,0);
  const finalizadas=dados.pastas.filter(x=>x.selecao?.finalizada).length,entregues=dados.pastas.filter(x=>x.etapa==="entrega").length;
- const status=dados.pastas.length&&entregues===dados.pastas.length?"Entregue":dados.pastas.some(x=>x.etapa==="preparando_entrega")?"Preparando entrega":finalizadas?"Seleção em andamento":galeriaUnica&&totalFotos===0?"Aguardando fotos":dados.pastas.length?"Ativo":"Sem galerias";
+ const status=dados.pastas.length&&entregues===dados.pastas.length?"Entregue":dados.pastas.some(x=>x.etapa==="preparando_entrega")?"Preparando entrega":p.prova&&finalizadas?"Seleção em andamento":galeriaUnica&&totalFotos===0?"Aguardando fotos":dados.pastas.length?"Ativo":"Sem galerias";
  const vendasPagas=dados.vendas.filter(v=>v.status==="pago"),receita=vendasPagas.reduce((s,v)=>s+v.valor_total_centavos,0),extras=vendasPagas.reduce((s,v)=>s+v.qtd_extras,0);
  const proximoPasso = !dados.pastas.length
    ? {titulo:"Crie sua primeira galeria",descricao:"Comece organizando as fotografias deste projeto.",botao:"Criar galeria",destino:"criar"}
@@ -280,14 +280,16 @@ export default function ProjetoWorkspacePage(){
      : p.prova&&finalizadas>0&&entregues<dados.pastas.length
        ? {titulo:"Prepare as fotos escolhidas",descricao:"A seleção foi finalizada. Organize os arquivos para a entrega.",botao:"Ver entregas",destino:"entrega"}
        : !p.prova&&entregues<dados.pastas.length
-         ? {titulo:"Prepare a entrega",descricao:"As fotos já foram adicionadas e podem ser preparadas para o cliente.",botao:"Ver entregas",destino:"entrega"}
+         ? {titulo:"Prepare a entrega",descricao:"As fotos já foram adicionadas. Acesse a galeria para preparar a entrega.",botao:"Ver galerias",destino:"pastas"}
          : entregues===dados.pastas.length
            ? {titulo:"Seu projeto está entregue",descricao:"Confira a experiência e compartilhe o link com o cliente.",botao:"Compartilhar",destino:"compartilhar"}
            : {titulo:"Envie o link para o cliente",descricao:"As fotografias estão disponíveis. Compartilhe o projeto para receber as escolhas.",botao:"Compartilhar",destino:"compartilhar"};
+ function irParaGalerias(){document.getElementById("pw-gallery-section")?.scrollIntoView({behavior:"smooth",block:"start"})}
  function abrirProximoPasso(){
-   if(proximoPasso.destino==="criar")galeriaUnica?setAba("pastas"):setModalPasta(true);
+   if(proximoPasso.destino==="criar")galeriaUnica?irParaGalerias():setModalPasta(true);
    else if(proximoPasso.destino==="upload"&&galeriaPrincipal)router.push("/upload?galeria="+galeriaPrincipal.id+"&projeto="+id);
    else if(proximoPasso.destino==="compartilhar")setCompartilharAberto(true);
+   else if(proximoPasso.destino==="pastas")irParaGalerias();
    else setAba(proximoPasso.destino as Aba);
  }
 
@@ -297,7 +299,7 @@ export default function ProjetoWorkspacePage(){
       <button className="pw-back" onClick={()=>router.push("/dashboard/projetos")}><ArrowLeftIcon size={15}/> Voltar aos projetos</button>
       <p>ESPAÇO DE TRABALHO</p>
       <h1 title={p.nome}>{p.nome}</h1>
-      <div className="pw-status"><span className="pw-status-primary">{status}</span>{dados.cliente&&<span><span aria-hidden="true">· </span>{dados.cliente.nome}</span>}<span>{galeriaUnica?MODELOS_PROJETO[p.modelo as ModeloProjeto].nome:"Projeto com galerias"}</span></div>
+      <div className="pw-status"><span className="pw-status-primary">{status}</span>{dados.cliente&&<span><span aria-hidden="true">· </span>{dados.cliente.nome}</span>}<span>{galeriaUnica?"Galeria única":"Projeto com galerias"} · {p.prova?"Seleção pelo cliente":"Entrega direta"}</span></div>
     </div>
     <div className="pw-head-actions">
       {galeriaUnica
@@ -309,7 +311,7 @@ export default function ProjetoWorkspacePage(){
         {menuProjetoAberto&&<div className="pw-overflow-menu project" role="menu">
           <div className="pw-menu-label">APRESENTAÇÃO</div>
           <button role="menuitem" onClick={()=>{setMenuProjetoAberto(false);if(publicUrl)window.open(publicUrl,"_blank","noopener,noreferrer")}} disabled={!dados.pastas.length}><EyeIcon size={16}/> Ver como cliente</button>
-          <button role="menuitem" onClick={()=>{setMenuProjetoAberto(false);void abrirCapa()}} disabled={!dados.pastas.length}><ImageIcon size={16}/> Escolher capa</button>
+          <button role="menuitem" className={aba==="configuracoes"?"active":""} onClick={()=>{setConfigSecao("projeto");setAba("configuracoes");setMenuProjetoAberto(false)}}><SettingsIcon size={16}/> Configurações do projeto</button>
           <div className="pw-menu-sep"/>
           <div className="pw-menu-label">ACOMPANHAMENTO</div>
           <button role="menuitem" className={aba==="atividade"?"active":""} onClick={()=>{setAba("atividade");setMenuProjetoAberto(false)}}><ActivityIcon size={16}/> Atividade do cliente</button>
