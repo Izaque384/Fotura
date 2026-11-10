@@ -6,27 +6,22 @@ import MenuFotografo from "../../MenuFotografo";
 import FoturaDrawer from "../../components/FoturaDrawer";
 import { ArrowRightIcon, CheckIcon, ChevronDownIcon, CloseIcon, FolderIcon as FolderModelIcon, ImageIcon } from "../../components/FoturaIcons";
 import { createClient } from "../../../lib/supabase-client";
-import { MODELOS_PROJETO,type ModeloProjeto } from "../../../lib/project-templates";
+import { type ModeloProjeto } from "../../../lib/project-templates";
 
 type Projeto={id:string;modelo:ModeloProjeto|null;prova:boolean;nome:string;descricao:string|null;cliente_id:string|null;slug:string|null;capa_galeria_id:string|null;capa_arquivo:string|null;criado_em:string;atualizado_em:string;capaUrl?:string};
 type Pasta={id:string;titulo:string;projeto_id:string|null;cliente_id:string|null;etapa:string;criado_em:string};
 type Cliente={id:string;nome:string;avatar_path:string|null};
 type Filtro="todos"|"sem_pastas"|"modelo_selecao"|"modelo_entrega"|"modelo_pastas"|"aguardando"|"selecao"|"preparando"|"entregue";
 type ModoProjetos="lista"|"grade";
-const RESUMOS_MODELO_PROJETO: Record<ModeloProjeto,string> = {
- ensaio: "O cliente escolhe as fotos favoritas em uma galeria.",
- entrega: "Envie as fotos prontas em uma única galeria.",
- casamento: "Organize várias galerias no mesmo projeto.",
-};
+type FluxoProjeto="selecao"|"direta";
+type EstruturaProjeto="unico"|"galerias";
 function statusProjeto(ps:Pasta[],prova:boolean,modelo?:ModeloProjeto|null):{filtro:Filtro;rotulo:string;proxima:string}{
  if(!ps.length)return{filtro:"sem_pastas",rotulo:modelo==="casamento"?"Sem galerias":"Sem pastas",proxima:modelo==="casamento"?"Criar galeria":"Criar primeira pasta"};
  if(ps.every(p=>p.etapa==="entrega"))return{filtro:"entregue",rotulo:"Entregue",proxima:"Abrir projeto"};
  if(ps.some(p=>p.etapa==="preparando_entrega"))return{filtro:"preparando",rotulo:"Preparando entrega",proxima:"Continuar entrega"};
  if(ps.some(p=>p.etapa==="selecao_finalizada"))return{filtro:"selecao",rotulo:"Seleção concluída",proxima:"Preparar entrega"};
- if(modelo==="ensaio")return{filtro:"aguardando",rotulo:"Seleção disponível",proxima:"Abrir projeto"};
- if(modelo==="casamento")return{filtro:"preparando",rotulo:"Galerias do projeto",proxima:"Abrir projeto"};
- if(!prova)return{filtro:"preparando",rotulo:"Entrega direta",proxima:"Abrir projeto"};
- return{filtro:"aguardando",rotulo:"Aguardando cliente",proxima:"Abrir projeto"};
+ if(prova)return{filtro:"aguardando",rotulo:"Seleção disponível",proxima:"Abrir projeto"};
+ return{filtro:"preparando",rotulo:"Entrega direta",proxima:"Abrir projeto"};
 }
 
 function SearchIcon(){return <svg className="search-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>}
@@ -38,7 +33,7 @@ export default function ProjetosPage(){
  const[uid,setUid]=useState(""),[projetos,setProjetos]=useState<Projeto[]>([]),[pastas,setPastas]=useState<Pasta[]>([]),[clientes,setClientes]=useState<Cliente[]>([]),[carregando,setCarregando]=useState(true);
  const[busca,setBusca]=useState(""),[modo,setModo]=useState<ModoProjetos>("lista"),[filtro,setFiltro]=useState<Filtro>("todos"),[filtroAberto,setFiltroAberto]=useState(false),[projetoDetalhes,setProjetoDetalhes]=useState<string|null>(null);
  const[fotoCliente,setFotoCliente]=useState<{path:string;url:string}|null>(null);
- const[modelo,setModelo]=useState<ModeloProjeto>("ensaio");
+ const[etapaCriacao,setEtapaCriacao]=useState<"fluxo"|"estrutura">("fluxo"),[fluxoProjeto,setFluxoProjeto]=useState<FluxoProjeto|null>(null),[estruturaProjeto,setEstruturaProjeto]=useState<EstruturaProjeto|null>(null);
  const[aviso,setAviso]=useState(""),[avisoErro,setAvisoErro]=useState(false),[modalAberto,setModalAberto]=useState(false),[nome,setNome]=useState(""),[descricao,setDescricao]=useState(""),[clienteId,setClienteId]=useState(""),[criando,setCriando]=useState(false);
 
  useEffect(()=>{const fora=(e:PointerEvent)=>{const a=e.target;if(!(a instanceof Element)||!a.closest(".filter-wrap"))setFiltroAberto(false)};const tecla=(e:KeyboardEvent)=>{if(e.key==="Escape")setFiltroAberto(false)};document.addEventListener("pointerdown",fora);window.addEventListener("keydown",tecla);return()=>{document.removeEventListener("pointerdown",fora);window.removeEventListener("keydown",tecla)}},[]);
@@ -66,11 +61,13 @@ export default function ProjetosPage(){
  }
  useEffect(()=>{void carregar()},[]);
 
- function abrirModal(){setModelo("ensaio");setNome("");setDescricao("");setClienteId("");setAviso("");setAvisoErro(false);setModalAberto(true)}
- function fecharModal(){if(criando)return;setModalAberto(false);setNome("");setDescricao("");setClienteId("");if(new URLSearchParams(window.location.search).get("novo")==="1")window.history.replaceState(window.history.state,"","/dashboard/projetos")}
+ function abrirModal(){setEtapaCriacao("fluxo");setFluxoProjeto(null);setEstruturaProjeto(null);setNome("");setDescricao("");setClienteId("");setAviso("");setAvisoErro(false);setModalAberto(true)}
+ function fecharModal(){if(criando)return;setModalAberto(false);setEtapaCriacao("fluxo");setFluxoProjeto(null);setEstruturaProjeto(null);setNome("");setDescricao("");setClienteId("");if(new URLSearchParams(window.location.search).get("novo")==="1")window.history.replaceState(window.history.state,"","/dashboard/projetos")}
  async function criar(e:FormEvent){
-  e.preventDefault();if(!nome.trim()||criando)return;setCriando(true);setAviso("");setAvisoErro(false);
-  try{const access=await token();if(!access)throw new Error("Sua sessão expirou.");const r=await fetch("/api/projeto/workspace",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${access}`},body:JSON.stringify({acao:"criar_projeto",nome:nome.trim(),descricao:descricao.trim()||null,clienteId:clienteId||null,modelo})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Não foi possível criar o projeto.");fecharModal();router.push(`/dashboard/projetos/${d.projeto.id}`)}catch(e){setAvisoErro(true);setAviso(e instanceof Error?e.message:"Não foi possível criar o projeto.")}finally{setCriando(false)}
+  e.preventDefault();if(!nome.trim()||criando||!fluxoProjeto||!estruturaProjeto||etapaCriacao!=="estrutura")return;
+  const modelo:ModeloProjeto=estruturaProjeto==="galerias"?"casamento":fluxoProjeto==="selecao"?"ensaio":"entrega";
+  setCriando(true);setAviso("");setAvisoErro(false);
+  try{const access=await token();if(!access)throw new Error("Sua sessão expirou.");const r=await fetch("/api/projeto/workspace",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${access}`},body:JSON.stringify({acao:"criar_projeto",nome:nome.trim(),descricao:descricao.trim()||null,clienteId:clienteId||null,modelo,prova:fluxoProjeto==="selecao"})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Não foi possível criar o projeto.");fecharModal();router.push(`/dashboard/projetos/${d.projeto.id}`)}catch(e){setAvisoErro(true);setAviso(e instanceof Error?e.message:"Não foi possível criar o projeto.")}finally{setCriando(false)}
  }
  function clienteNome(id:string|null){return clientes.find(c=>c.id===id)?.nome||"Sem cliente vinculado"}
  function status(etapa:string){return etapa==="entrega"?"Entregue":etapa==="preparando_entrega"?"Preparando entrega":etapa==="selecao_finalizada"?"Seleção finalizada":"Em andamento"}
@@ -90,14 +87,14 @@ export default function ProjetosPage(){
  const pastasDoProjeto=projetoSelecionado?pastas.filter(g=>g.projeto_id===projetoSelecionado.id):[];
  const estadoSelecionado=projetoSelecionado?statusProjeto(pastasDoProjeto,projetoSelecionado.prova,projetoSelecionado.modelo):null;
  const totalPastas=pastas.length,comPastas=projetos.filter(p=>pastas.some(g=>g.projeto_id===p.id)).length;
- const visiveis=useMemo(()=>{const termo=busca.trim().toLocaleLowerCase("pt-BR");return projetos.filter(p=>{const ps=pastas.filter(g=>g.projeto_id===p.id),okFiltro=filtro==="todos"||(filtro==="modelo_selecao"&&p.modelo==="ensaio")||(filtro==="modelo_entrega"&&p.modelo==="entrega")||(filtro==="modelo_pastas"&&p.modelo==="casamento")||filtro===statusProjeto(ps,p.prova,p.modelo).filtro,okBusca=!termo||p.nome.toLocaleLowerCase("pt-BR").includes(termo)||(p.descricao??"").toLocaleLowerCase("pt-BR").includes(termo)||clienteNome(p.cliente_id).toLocaleLowerCase("pt-BR").includes(termo)||ps.some(g=>g.titulo.toLocaleLowerCase("pt-BR").includes(termo));return okFiltro&&okBusca})},[busca,filtro,pastas,projetos,clientes]);
+ const visiveis=useMemo(()=>{const termo=busca.trim().toLocaleLowerCase("pt-BR");return projetos.filter(p=>{const ps=pastas.filter(g=>g.projeto_id===p.id),okFiltro=filtro==="todos"||(filtro==="modelo_selecao"&&p.prova)||(filtro==="modelo_entrega"&&!p.prova)||(filtro==="modelo_pastas"&&p.modelo==="casamento")||filtro===statusProjeto(ps,p.prova,p.modelo).filtro,okBusca=!termo||p.nome.toLocaleLowerCase("pt-BR").includes(termo)||(p.descricao??"").toLocaleLowerCase("pt-BR").includes(termo)||clienteNome(p.cliente_id).toLocaleLowerCase("pt-BR").includes(termo)||ps.some(g=>g.titulo.toLocaleLowerCase("pt-BR").includes(termo));return okFiltro&&okBusca})},[busca,filtro,pastas,projetos,clientes]);
 
  return <div className="dash mf-shift projects-page"><MenuFotografo/><style>{css}</style><main className="dash-body">
   <header className="top"><div><div className="ey">PROJETOS</div><h1 className="h1">Seus trabalhos em um só lugar</h1><p className="sub">Cada projeto reúne suas pastas, seleção, entrega e um único link para o cliente.</p></div><button className="btn" onClick={abrirModal}>+ Novo projeto</button></header>
   <section className="stats"><div className="stat"><strong>{projetos.length}</strong><span>Projetos</span></div><div className="stat"><strong>{comPastas}</strong><span>Projetos com galerias</span></div><div className="stat"><strong>{totalPastas}</strong><span>Galerias criadas</span></div></section>
-  <div className="toolbar"><label className="search-box"><SearchIcon/><input className="search" value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar projeto, cliente ou pasta" aria-label="Buscar projetos"/></label><div className="filter-wrap"><button type="button" className={"filter-trigger"+(filtroAberto?" open":"")} onClick={()=>setFiltroAberto(v=>!v)}>Filtrar por <span><ChevronDownIcon size={14}/></span></button>{filtroAberto&&<div className="filter-menu">{([["todos","Todos"],["aguardando","Aguardando cliente"],["selecao","Seleção concluída"],["preparando","Preparando entrega"],["entregue","Entregues"],["modelo_selecao","Seleção de fotos"],["modelo_entrega","Entrega direta"],["modelo_pastas","Projeto com pastas"]] as [Filtro,string][]).map(([v,l])=><button key={v} className={"filter-option"+(filtro===v?" on":"")} onClick={()=>{setFiltro(v);setFiltroAberto(false)}}><span>{l}</span>{filtro===v&&<b><CheckIcon size={14}/></b>}</button>)}</div>}</div><div className="view-toggle" role="group" aria-label="Visualização dos projetos"><button type="button" className={modo==="lista"?"selected":""} aria-pressed={modo==="lista"} onClick={()=>mudarModo("lista")}>☰ Lista</button><button type="button" className={modo==="grade"?"selected":""} aria-pressed={modo==="grade"} onClick={()=>mudarModo("grade")}>▦ Grade</button></div></div>
+  <div className="toolbar"><label className="search-box"><SearchIcon/><input className="search" value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar projeto, cliente ou pasta" aria-label="Buscar projetos"/></label><div className="filter-wrap"><button type="button" className={"filter-trigger"+(filtroAberto?" open":"")} onClick={()=>setFiltroAberto(v=>!v)}>Filtrar por <span><ChevronDownIcon size={14}/></span></button>{filtroAberto&&<div className="filter-menu">{([["todos","Todos"],["aguardando","Aguardando cliente"],["selecao","Seleção concluída"],["preparando","Preparando entrega"],["entregue","Entregues"],["modelo_selecao","Seleção de fotos"],["modelo_entrega","Entrega direta"],["modelo_pastas","Projeto com galerias"]] as [Filtro,string][]).map(([v,l])=><button key={v} className={"filter-option"+(filtro===v?" on":"")} onClick={()=>{setFiltro(v);setFiltroAberto(false)}}><span>{l}</span>{filtro===v&&<b><CheckIcon size={14}/></b>}</button>)}</div>}</div><div className="view-toggle" role="group" aria-label="Visualização dos projetos"><button type="button" className={modo==="lista"?"selected":""} aria-pressed={modo==="lista"} onClick={()=>mudarModo("lista")}>☰ Lista</button><button type="button" className={modo==="grade"?"selected":""} aria-pressed={modo==="grade"} onClick={()=>mudarModo("grade")}>▦ Grade</button></div></div>
   {aviso&&<div className={"notice"+(avisoErro?" err":"")}><span>{aviso}</span>{avisoErro&&<button type="button" onClick={()=>void carregar()} disabled={carregando}>{carregando?"Tentando…":"Tentar novamente"}</button>}</div>}
-  <section className="panel list-panel">{carregando?<div className="empty">Carregando projetos…</div>:!visiveis.length?<div className="empty-first"><strong>{projetos.length?"Nenhum projeto encontrado":"Crie seu primeiro projeto"}</strong><span>{projetos.length?"Ajuste a busca ou o filtro.":"Escolha um modelo de seleção, entrega direta ou organização em pastas."}</span>{!projetos.length&&<button className="btn" onClick={abrirModal}>Criar projeto</button>}</div>:<div className={"project-list "+(modo==="grade"?"project-grid":"")}>{visiveis.map(p=>{const ps=pastas.filter(g=>g.projeto_id===p.id),estado=statusProjeto(ps,p.prova,p.modelo);return <article className="project-card" key={p.id}>
+  <section className="panel list-panel">{carregando?<div className="empty">Carregando projetos…</div>:!visiveis.length?<div className="empty-first"><strong>{projetos.length?"Nenhum projeto encontrado":"Crie seu primeiro projeto"}</strong><span>{projetos.length?"Ajuste a busca ou o filtro.":"Escolha como o cliente recebe as fotos e, depois, como organizá-las."}</span>{!projetos.length&&<button className="btn" onClick={abrirModal}>Criar projeto</button>}</div>:<div className={"project-list "+(modo==="grade"?"project-grid":"")}>{visiveis.map(p=>{const ps=pastas.filter(g=>g.projeto_id===p.id),estado=statusProjeto(ps,p.prova,p.modelo);return <article className="project-card" key={p.id}>
    <div className="project-main"><div className="project-cover">{p.capaUrl?<img src={p.capaUrl} alt=""/>:<FolderIcon/>}</div><div className="project-copy"><div className="project-title-line"><h2>{p.nome}</h2><span className="count-badge">{p.modelo==="ensaio"||p.modelo==="entrega"?"Galeria única":`${ps.length} ${ps.length===1?"galeria":"galerias"}`}</span><span className={"project-stage "+estado.filtro}>{estado.rotulo}</span></div><div className="project-meta"><span>{clienteNome(p.cliente_id)}</span><span>Atualizado {dataCurta(p.atualizado_em)}</span></div></div><div className="project-actions"><button className="mini primary-mini" type="button" onClick={()=>router.push(`/dashboard/projetos/${p.id}`)}>{estado.proxima}</button><button className="mini" type="button" onClick={()=>setProjetoDetalhes(p.id)}>Detalhes</button></div></div>
   </article>})}</div>}</section>
  </main>
@@ -109,7 +106,7 @@ export default function ProjetosPage(){
     <div className="ft-drawer-badges">
       <span className="ft-drawer-badge">{estadoSelecionado.rotulo}</span>
       <span className="ft-drawer-badge">{projetoSelecionado.modelo==="ensaio"||projetoSelecionado.modelo==="entrega"?"Galeria única":`${pastasDoProjeto.length} ${pastasDoProjeto.length===1?"galeria":"galerias"}`}</span>
-      <span className="ft-drawer-badge">{projetoSelecionado.modelo?MODELOS_PROJETO[projetoSelecionado.modelo].nome:projetoSelecionado.prova?"Prova e seleção":"Entrega direta"}</span>
+      <span className="ft-drawer-badge">{projetoSelecionado.prova?"Seleção de fotos":"Entrega direta"}</span>
     </div>
     {!!projetoSelecionado.descricao&&<p className="ft-drawer-description">{projetoSelecionado.descricao}</p>}
     <section className="ft-drawer-section">
@@ -177,7 +174,7 @@ export default function ProjetosPage(){
        <span className="create-footer-note">Os detalhes podem ser ajustados depois.</span>
        <div className="create-footer-buttons">
          <button type="button" className="ghost" onClick={fecharModal} disabled={criando}>Cancelar</button>
-         <button className="btn" type="submit" disabled={!nome.trim()||criando}>{criando?"Criando…":"Criar projeto"}<ArrowRightIcon size={15}/></button>
+         <button className="btn" type="submit" disabled={!nome.trim()||criando||!fluxoProjeto||!estruturaProjeto||etapaCriacao!=="estrutura"}>{criando?"Criando…":"Criar projeto"}<ArrowRightIcon size={15}/></button>
        </div>
      </div>
    </form>
