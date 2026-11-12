@@ -1,0 +1,35 @@
+name: R2 migration SQL on isolated local Supabase
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/config.toml"
+      - ".github/workflows/r2-database-migrations.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-r2-migrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      # Pin the supported v2 channel: CLI v3 changed local/remote defaults.
+      - uses: supabase/setup-cli@v3
+        with:
+          version: v2.stable
+      - name: Start isolated local Supabase (never link production)
+        run: supabase start
+      - name: Rebuild local database from all versioned migrations
+        run: supabase db reset --local --no-seed
+      - name: Verify R2 registry and reservations exist
+        run: |
+          # This is intentionally local-only. It must not use project IDs,
+          # access tokens, --remote, --linked or hosted database URLs.
+          supabase migration list --local
+      - name: Stop ephemeral Supabase services
+        if: always()
+        run: supabase stop --no-backup || true
