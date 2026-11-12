@@ -5,6 +5,7 @@ import { temAcessoGaleria } from "../../../../lib/gallery-access";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { uuidValido } from "../../../../lib/validation";
 import { dataCalendarioExpirada } from "../../../../lib/date-only";
+import { signPrivateMediaUrl } from "../../../../lib/media-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -35,8 +36,13 @@ export async function GET(req: NextRequest) {
   const base = g.prova && etapa === "entrega" ? `${g.user_id}/${galeria}/entrega` : `${g.user_id}/${galeria}`;
   const tamanho = g.download_tamanho === "web" ? "web" : "original";
   const caminho = tamanho === "web" ? `${base}/thumbs/${arquivo}` : `${base}/${arquivo}`;
-  const { data, error } = await supabase.storage.from("fotos").createSignedUrl(caminho, 5 * 60, { download: arquivo });
-  if (error || !data?.signedUrl) return NextResponse.json({
+  let signedUrl: string | null;
+  try {
+    signedUrl = await signPrivateMediaUrl(supabase, "fotos", caminho, 5 * 60, arquivo);
+  } catch {
+    return NextResponse.json({ error: "Não foi possível preparar o download." }, { status: 503 });
+  }
+  if (!signedUrl) return NextResponse.json({
     error: tamanho === "web" ? "A versão web deste arquivo não está disponível." : "Arquivo não disponível."
   }, { status: 404 });
 
@@ -51,5 +57,5 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({ url: data.signedUrl, nome: arquivo, tamanho }, { headers: { "Cache-Control": "no-store, private" } });
+  return NextResponse.json({ url: signedUrl, nome: arquivo, tamanho }, { headers: { "Cache-Control": "no-store, private" } });
 }
