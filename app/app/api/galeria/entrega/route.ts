@@ -7,6 +7,7 @@ import { uuidValido } from "../../../../lib/validation";
 import { planoEfetivoAssinatura } from "../../../../lib/billing-plans";
 import { normalizeLocale, translate, withLocalePath } from "../../../../lib/i18n";
 import { publicProjectRef } from "../../../../lib/project-links";
+import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -25,11 +26,7 @@ async function listarFinais(
   userId: string,
   galeriaId: string
 ) {
-  const { data, error } = await supabase.rpc("listar_fotos_galeria_storage", {
-    p_galeria: galeriaId,
-    p_user: userId,
-    p_variante: "entrega",
-  });
+  const { data, error } = await listarCatalogoGaleriaHibrido(supabase, userId, galeriaId, "entrega");
   if (error) throw error;
   return (data ?? []).map((item: { nome?: unknown }) => String(item.nome || "")).filter(Boolean);
 }
