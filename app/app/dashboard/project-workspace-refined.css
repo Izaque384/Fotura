@@ -82,7 +82,8 @@
 .pw-page .pw-config-nav button.on svg{color:#795dbb}
 .pw-page .pw-config-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;max-width:840px}
 .pw-page .pw-config-grid>.pw-config-column{display:contents}
-.pw-page .pw-config-grid .pw-config-card,.pw-page .pw-config-grid .pw-config-intro{display:none}
+/* Ocultar apenas os cards de categoria: o card interno do editor de abertura deve continuar visível. */
+.pw-page .pw-config-grid .pw-config-column>.pw-config-card,.pw-page .pw-config-grid .pw-config-intro{display:none}
 .pw-page .pw-config-grid[data-active="projeto"] .pw-config-identity,
 .pw-page .pw-config-grid[data-active="projeto"] .pw-config-access,
 .pw-page .pw-config-grid[data-active="abertura"] .pw-config-intro,
