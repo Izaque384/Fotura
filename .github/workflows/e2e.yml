@@ -24,6 +24,9 @@ jobs:
     env:
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_test
+      # A dummy value avoids throwing during Supabase client construction in
+      # isolated UI tests. It is NEVER a credential for a real project.
+      SUPABASE_SERVICE_ROLE_KEY: sb_secret_ci_placeholder_not_real
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
