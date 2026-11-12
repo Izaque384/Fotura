@@ -8,6 +8,7 @@ import { contextoPlano, podeAdicionarFotos } from "../../../../lib/billing-usage
 import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
 import { signPrivateR2ObjectUrl, r2CredentialsPresent, isR2ReadEnabled } from "../../../../lib/r2-storage";
 import { validarArquivo } from "../../../../lib/upload-validation";
+import { R2_PART_BYTES, beginR2Multipart, signedR2PartUrl, listR2MultipartParts, finishR2Multipart, abortR2Multipart } from "../../../../lib/r2-multipart";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -15,6 +16,7 @@ export const runtime = "nodejs";
 const MAX_PILOT_ORIGINAL = 50 * 1024 * 1024;
 const MAX_THUMB = 4 * 1024 * 1024;
 const EXPIRES_SECONDS = 300;
+const TICKET_SECONDS = 24 * 60 * 60;
 const json = (data: unknown, status = 200) =>
   NextResponse.json(data, { status, headers: { "Cache-Control": "private, no-store" } });
 
@@ -32,13 +34,13 @@ function available() {
 type Variant = "principal" | "entrega";
 type Ticket = {
   u: string; g: string; v: Variant; n: string;
-  bytes: number; thumbBytes: number; mime: string; exp: number;
+  bytes: number; thumbBytes: number; mime: string; exp: number; uploadId?: string;
 };
 type Incoming = {
-  acao?: "preparar" | "confirmar" | "cancelar";
+  acao?: "preparar" | "confirmar" | "cancelar" | "multipart_iniciar" | "multipart_parte" | "multipart_listar" | "multipart_concluir" | "multipart_abortar";
   galeria?: string; variante?: Variant;
   nome?: string; bytes?: number; mimeType?: string;
-  thumbBytes?: number; ticket?: string;
+  thumbBytes?: number; ticket?: string; partNumber?: number;
   largura?: number | null; altura?: number | null;
 };
 
@@ -66,12 +68,15 @@ function validateTicket(input: unknown): Ticket | null {
   try {
     const parsed = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as Ticket;
     if (!uuidValido(parsed.u) || !uuidValido(parsed.g) || !Number.isSafeInteger(parsed.exp) ||
-        parsed.exp < Date.now() || parsed.exp > Date.now() + 6 * 60_000 ||
+        parsed.exp < Date.now() || parsed.exp > Date.now() + (TICKET_SECONDS + 60) * 1000 ||
         (parsed.v !== "principal" && parsed.v !== "entrega") ||
         !/^[0-9a-f-]{36}-[A-Za-z0-9._-]{1,190}$/.test(parsed.n) ||
         !Number.isSafeInteger(parsed.bytes) || parsed.bytes <= 0 || parsed.bytes > MAX_PILOT_ORIGINAL ||
         !Number.isSafeInteger(parsed.thumbBytes) || parsed.thumbBytes <= 0 || parsed.thumbBytes > MAX_THUMB ||
-        !["image/jpeg", "image/png", "image/webp"].includes(parsed.mime)) return null;
+        !["image/jpeg", "image/png", "image/webp"].includes(parsed.mime) ||
+        (parsed.uploadId !== undefined &&
+          (typeof parsed.uploadId !== "string" || parsed.uploadId.length === 0 ||
+           parsed.uploadId.length > 512 || /[\u0000-\u001f\u007f<>]/.test(parsed.uploadId)))) return null;
     return parsed;
   } catch { return null; }
 }
@@ -145,6 +150,7 @@ export async function POST(req: NextRequest) {
     const raw = await req.text();
     if (raw.length > 8192) return json({ error: "Requisição muito grande." }, 413);
     body = JSON.parse(raw) as Incoming;
+    if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Dados inválidos." }, 400);
   } catch { return json({ error: "Dados inválidos." }, 400); }
 
   if (body.acao === "preparar") {
@@ -186,7 +192,7 @@ export async function POST(req: NextRequest) {
       const ticket: Ticket = {
         u: auth.user.id, g: body.galeria, v: body.variante, n: name,
         bytes: body.bytes, thumbBytes: body.thumbBytes, mime: body.mimeType,
-        exp: Date.now() + EXPIRES_SECONDS * 1000,
+        exp: Date.now() + TICKET_SECONDS * 1000,
       };
       const key = paths(ticket);
       return json({
@@ -197,6 +203,68 @@ export async function POST(req: NextRequest) {
     } catch {
       return json({ error: "Falha ao preparar o envio." }, 503);
     }
+  }
+
+  if (body.acao?.startsWith("multipart_")) {
+    const ticket = validateTicket(body.ticket);
+    if (!ticket || ticket.u !== auth.user.id) return json({ error: "Autorização de upload inválida." }, 403);
+    if (!await galleryAllowed(auth.db, auth.user.id, ticket.g, ticket.v)) {
+      return json({ error: "Galeria indisponível." }, 403);
+    }
+    if (ticket.bytes <= R2_PART_BYTES) return json({ error: "Multipartes reservado a arquivos grandes." }, 400);
+    const key = paths(ticket).original;
+    try {
+      const { data: registered, error: dbError } = await auth.db.from("fotura_media_objects")
+        .select("bytes").eq("bucket", "fotos").eq("object_key", key).maybeSingle();
+      if (dbError) throw dbError;
+      if (registered) return json({ error: "O objeto já foi registrado." }, 409);
+
+      if (body.acao === "multipart_iniciar") {
+        if (ticket.uploadId) return json({ error: "Transferência já iniciada." }, 409);
+        const uploadId = await beginR2Multipart(key, ticket.mime);
+        return json({
+          ok: true, nome: ticket.n, ticket: createTicket({ ...ticket, uploadId }),
+          partBytes: R2_PART_BYTES, totalParts: Math.ceil(ticket.bytes / R2_PART_BYTES),
+        });
+      }
+      if (!ticket.uploadId) return json({ error: "Transferência não iniciada." }, 409);
+
+      if (body.acao === "multipart_parte") {
+        const number = body.partNumber;
+        const total = Math.ceil(ticket.bytes / R2_PART_BYTES);
+        if (!Number.isInteger(number) || !number || number < 1 || number > total) {
+          return json({ error: "Número de parte inválido." }, 400);
+        }
+        return json({
+          url: signedR2PartUrl(key, ticket.uploadId, number),
+          partNumber: number, bytes: Math.min(R2_PART_BYTES, ticket.bytes - (number - 1) * R2_PART_BYTES),
+        });
+      }
+      if (body.acao === "multipart_listar") {
+        const parts = await listR2MultipartParts(key, ticket.uploadId);
+        return json({ ok: true, parts: parts.map((item) => ({
+          number: item.partNumber, bytes: item.bytes,
+        })) });
+      }
+      if (body.acao === "multipart_concluir") {
+        const previous = await headObject(key);
+        if (!previous) {
+          await finishR2Multipart(key, ticket.uploadId, ticket.bytes);
+        }
+        const ready = await headObject(key);
+        if (!ready || ready.bytes !== ticket.bytes || ready.type !== ticket.mime) {
+          return json({ error: "O arquivo concluído não passou na conferência." }, 422);
+        }
+        return json({ ok: true, nome: ticket.n, bytes: ready.bytes });
+      }
+      if (body.acao === "multipart_abortar") {
+        await abortR2Multipart(key, ticket.uploadId);
+        return json({ ok: true });
+      }
+    } catch {
+      return json({ error: "Não foi possível operar a transferência multipartes." }, 503);
+    }
+    return json({ error: "Operação multipartes inválida." }, 400);
   }
 
   if (body.acao === "confirmar" || body.acao === "cancelar") {
