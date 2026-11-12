@@ -61,7 +61,8 @@ Objetivo confirmado: R2 como único storage de mídias após migração; Supabas
 - Mantém o upload Supabase legado **apenas enquanto o modo R2 estiver desativado**. A escolha do destino não recua silenciosamente do R2 para o Supabase.
 - **Ainda não aprovado para produção:** faltam teste autenticado em navegador com R2 ligado e validação de acessibilidade/preview compartilhado; a Vercel limitou deploys adicionais por dia.
 - Dependência residual: a folha `app/app/lavanda-moderna.css` contém uma imagem estática apontando para `storage/v1/object/public/marca/landing/fotura-wedding-sunset-generated.png`. Deve ser copiada/verificada e apontada para local definitivo antes da retirada total do Storage, observando o bloqueio de egress até 23/11.
-- Verificar também os uploads de avatares (8 MB) e anexos de feedback (5 MB) contra o limite de 4,5 MB do corpo das funções Vercel; os fluxos grandes deverão usar PUT direto ao R2 antes do cutover.
+- Avatares de clientes (até 8 MB) foram adaptados na branch para PUT direto e temporário ao R2, com autorização por cliente, reserva, HEAD de integridade e registro atômico. Antes do cutover, o envio legado continua sendo feito diretamente do navegador ao Supabase. **Falta validar o comportamento em navegador autenticado.**
+- **Ainda pendente:** anexos de feedback (até 5 MB) atravessam a função Vercel, que limita corpos a 4,5 MB. Migrar esse fluxo para PUT direto ao R2 antes de ativar o armazenamento definitivo.
 
 ## Condições obrigatórias para release
 1. Preparar ambiente isolado de teste com as migrações SQL, validar RLS/grants, reservas, jobs, contagem de quota e transações com dados sintéticos.
