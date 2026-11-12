@@ -61,13 +61,19 @@ test("avatar updates are owner-validated and use atomic R2 registration", () => 
   assert.match(api, /\.eq\("user_id", actor\.user\.id\)/);
   assert.match(api, /fotura_r2_upload_reservations/);
   assert.match(api, /registrar_avatar_r2_backend/);
-  assert.match(api, /putVerifiedAuxiliaryMedia/);
+  assert.match(api, /signPrivateR2ObjectUrl\("PUT"/);
+  assert.match(api, /signPrivateR2ObjectUrl\("HEAD"/);
+  assert.match(api, /acao === "preparar"/);
+  assert.match(api, /acao === "confirmar"/);
   assert.match(sql, /for update/);
   assert.match(sql, /insert into public\.fotura_media_objects/);
   assert.match(sql, /update public\.clientes set avatar_path=p_key/);
   assert.match(sql, /delete from public\.fotura_r2_upload_reservations/);
   assert.match(page, /\/api\/clientes\/avatar/);
-  assert.doesNotMatch(page, /storage\.from\("client-avatars"\)\.upload/);
+  assert.match(page, /provider.provider === "r2"/);
+  assert.match(page, /provider.provider === "supabase"/);
+  assert.match(page, /method: "PUT"/);
+  assert.match(page, /acao: "confirmar"/);
 });
 
 test("avatar deletion refuses a referenced image and verifies R2 absence", () => {
