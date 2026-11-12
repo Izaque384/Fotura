@@ -2,6 +2,15 @@
 
 Status: **etapa 1 (preparação somente; sem migração, sem cutover)**.
 
+## Verificações realizadas em 2026-11-12
+- Bucket Cloudflare **fotura-media** criado em Standard, sem domínio público; CORS de leitura restrito ao domínio do Fotura.
+- Conta Cloudflare conectada e token S3 **com acesso exclusivo ao bucket**. Variáveis armazenadas na Vercel apenas para a branch de preview, sem publicação em production.
+- Smoke Cloudflare REST: PUT, GET, conferência byte a byte e exclusão de um arquivo sintético de 23 bytes, aprovado.
+- Smoke real do Next.js na Vercel: URLs S3 SigV4 para PUT, GET, HEAD e DELETE, todas verificadas com sucesso. A rota pública temporária de teste foi **retirada** e a flag temporária desativada.
+- Listagem híbrida de fotos preparada nos endpoints de galeria pública, seleção de imagens e entrega final; a flag de leitura do R2 continua **false**.
+- Inventário Supabase: **1212 objetos em fotos (~1587,53 MB)** e **2 objetos em abertura-videos (~11,42 MB)**; não confundir tamanho de objetos atual com métricas de GB-hora do faturamento.
+- Zero fotografias de clientes transferidas ou excluídas. SQL do catálogo privado foi **apenas versionado**, não aplicado ao banco de produção.
+
 ## Objetivo
 Manter PostgreSQL/Auth do Supabase e passar arquivos dos buckets **fotos** e **abertura-videos** ao bucket privado Cloudflare R2 **fotura-media**, sem alterar nomes de arquivos, links de projetos ou qualidade dos originais.
 
