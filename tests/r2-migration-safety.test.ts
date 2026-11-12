@@ -10,6 +10,9 @@ test("R2 provider is exclusive for new uploads and is preview-gated", () => {
   const client = read("app/lib/r2-photo-upload-client.ts");
   assert.match(photo, /VERCEL_ENV === "preview"/);
   assert.match(photo, /FOTURA_R2_UPLOAD_ENABLED/);
+  assert.match(photo, /FOTURA_R2_FINAL_CUTOVER/);
+  assert.match(photo, /requested && !available\(\)/);
+  assert.match(video, /FOTURA_R2_FINAL_CUTOVER/);
   assert.match(video, /r2Requested\(\) && !r2Ready\(\)/);
   assert.match(video, /provider: "r2"/);
   assert.match(client, /never|Never/);
