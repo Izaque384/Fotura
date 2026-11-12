@@ -107,7 +107,7 @@ begin
   where q.bucket='fotos' and q.object_key=v_original and q.owner_id=p_user_id;
   return true;
 end;
-$;
+$$;
 
 revoke all on function public.registrar_foto_r2_upload_backend(
  uuid,uuid,text,text,bigint,bigint,text,text,text,integer,integer
