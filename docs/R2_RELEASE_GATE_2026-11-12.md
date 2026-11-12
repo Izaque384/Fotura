@@ -25,6 +25,13 @@ Objetivo confirmado: R2 como único storage de mídias após migração; Supabas
 
 ## Bloqueio de teste isolado (custo)
 - A ferramenta Supabase não permite criar uma branch de teste sem confirmação explícita de custo. Valor informado pela conta: **US$ 0,01344 por hora**. Não houve autorização dessa despesa, portanto a branch de teste não foi criada e as migrações não foram aplicadas ao banco de produção.
+## Atualização de validação — 12/11/2026
+- Os testes `storage-cleanup` permanecem verdes; o job de sintaxe das sete migrações SQL R2 via pglast 8.7 passou após corrigir o delimitador `$` da função de confirmação de fotos. **Parser SQL não é execução de migrações.**
+- Nova compilação de prévia com a trava de produção (`FOTURA_R2_FINAL_CUTOVER`) validada no processo de build. Ela continua desativada por padrão.
+- Um replay completo em Supabase local falhou **antes** das migrações R2: a primeira migração histórica do repositório depende do schema `private`, ausente no baseline versionado. Para uma validação de integração fiel precisamos recuperar o baseline ou criar uma branch Supabase a partir da produção.
+- A última execução E2E concluída após alterações nos seletores/testes registrou 152 aprovações e 18 falhas. Não há aprovação da suíte completa.
+- A branch de teste do Supabase requer aceitação explícita do custo de US$ 0,01344 por hora, conforme retornado pela ferramenta; nenhum custo extra de branch foi autorizado ou ativado.
+- O plano Supabase atual é Free. A plataforma inclui 5 GB de egress não cacheado por ciclo; a cópia integral (~1,69 GB de mídias) precisa respeitar a franquia restante e não deve ser disparada sem medição atual. Consulte a cota em Supabase antes de copiar.
 ## Condições obrigatórias para release
 1. Preparar ambiente isolado de teste com as migrações SQL, validar RLS/grants, reservas, jobs, contagem de quota e transações com dados sintéticos.
 2. Configurar segredos R2 também no ambiente correto da Edge Function de limpeza, testar tarefas expiradas de foto, thumb, vídeo e multipart e verificar HEAD 404 antes do ACK.
