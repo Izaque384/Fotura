@@ -37,7 +37,7 @@ type Ticket = {
   bytes: number; thumbBytes: number; mime: string; exp: number; uploadId?: string;
 };
 type Incoming = {
-  acao?: "preparar" | "confirmar" | "cancelar" | "multipart_iniciar" | "multipart_parte" | "multipart_listar" | "multipart_concluir" | "multipart_abortar";
+  acao?: "preparar" | "confirmar" | "cancelar" | "multipart_iniciar" | "multipart_parte" | "multipart_listar" | "multipart_resumir" | "multipart_concluir" | "multipart_abortar";
   galeria?: string; variante?: Variant;
   nome?: string; bytes?: number; mimeType?: string;
   thumbBytes?: number; ticket?: string; partNumber?: number;
@@ -217,7 +217,12 @@ export async function POST(req: NextRequest) {
       const { data: registered, error: dbError } = await auth.db.from("fotura_media_objects")
         .select("bytes").eq("bucket", "fotos").eq("object_key", key).maybeSingle();
       if (dbError) throw dbError;
-      if (registered) return json({ error: "O objeto já foi registrado." }, 409);
+      if (registered) {
+        if (body.acao === "multipart_resumir" && registered.bytes === ticket.bytes) {
+          return json({ ok: true, registered: true, nome: ticket.n });
+        }
+        return json({ error: "O objeto já foi registrado." }, 409);
+      }
 
       if (body.acao === "multipart_iniciar") {
         if (ticket.uploadId) return json({ error: "Transferência já iniciada." }, 409);
@@ -238,6 +243,22 @@ export async function POST(req: NextRequest) {
         return json({
           url: signedR2PartUrl(key, ticket.uploadId, number),
           partNumber: number, bytes: Math.min(R2_PART_BYTES, ticket.bytes - (number - 1) * R2_PART_BYTES),
+        });
+      }
+      if (body.acao === "multipart_resumir") {
+        const head = await headObject(key);
+        const completed = Boolean(head && head.bytes === ticket.bytes && head.type === ticket.mime);
+        const parts = completed ? [] : await listR2MultipartParts(key, ticket.uploadId);
+        return json({
+          ok: true, nome: ticket.n, completed,
+          parts: parts.map((item) => ({ number: item.partNumber, bytes: item.bytes })),
+          thumb: {
+            url: signPrivateR2ObjectUrl(
+              "PUT", paths(ticket).thumb, EXPIRES_SECONDS, "image/jpeg"
+            ),
+            contentType: "image/jpeg",
+          },
+          partBytes: R2_PART_BYTES,
         });
       }
       if (body.acao === "multipart_listar") {
