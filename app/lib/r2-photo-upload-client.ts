@@ -1,9 +1,11 @@
 /**
- * R2 pilot browser adapter. This does not replace Supabase TUS for large photos:
- * single-object PUTs can only retry the whole image, not resume a partial upload.
- * Both the original and its JPEG thumbnail are verified before registration.
+ * R2 pilot browser adapter. All Fotura images must use the same storage
+ * provider for a selected upload session: never route by file size.
+ * Single-object PUTs can retry the whole image but cannot resume partially.
+ * Multipart/resumability is required before the final R2 production cutover.
+ * Original and JPEG thumbnail are verified before registration.
  */
-export const R2_PILOT_MAX_BYTES = 6 * 1024 * 1024;
+export const R2_PILOT_MAX_BYTES = 50 * 1024 * 1024;
 
 type Variant = "principal" | "entrega";
 type Prepared = {
@@ -14,12 +16,16 @@ type Prepared = {
 };
 
 export async function r2PilotAvailable(): Promise<boolean> {
-  try {
-    const res = await fetch("/api/fotos/r2", { cache: "no-store" });
-    if (!res.ok) return false;
-    const data = (await res.json()) as { enabled?: boolean };
-    return data.enabled === true;
-  } catch { return false; }
+  // Deliberately fail closed when provider selection cannot be checked.
+  // Falling back to Supabase on a network error would split new uploads.
+  const res = await fetch("/api/fotos/r2", { cache: "no-store" });
+  if (!res.ok) throw new Error("Não foi possível verificar o armazenamento. Nenhuma foto foi enviada.");
+  const data = (await res.json()) as { enabled?: boolean; provider?: string };
+  if ((data.provider !== "r2" && data.provider !== "supabase") ||
+      data.enabled !== (data.provider === "r2")) {
+    throw new Error("Configuração de armazenamento inválida. Nenhuma foto foi enviada.");
+  }
+  return data.provider === "r2";
 }
 
 async function callR2Api(token: string, body: Record<string, unknown>) {
