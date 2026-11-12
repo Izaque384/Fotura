@@ -406,26 +406,71 @@ export default function ClientesPage() {
           if (!blob) throw new Error("Não foi possível preparar a imagem.");
           const { data: session } = await supabase.auth.getSession();
           if (!session.session?.access_token) throw new Error("Sessão expirada.");
-          const body = new FormData();
-          body.append("cliente", salvo.id);
-          body.append("arquivo", blob, "avatar.webp");
-          const response = await fetch("/api/clientes/avatar", {
-            method: "POST",
-            headers: { Authorization: "Bearer " + session.session.access_token },
-            body,
-          });
-          if (!response.ok) throw new Error("Falha ao enviar o avatar.");
-          const uploaded = await response.json() as { path?: string };
-          if (!uploaded.path) throw new Error("Arquivo não confirmado.");
+          const providerResponse = await fetch("/api/clientes/avatar", { cache: "no-store" });
+          if (!providerResponse.ok) throw new Error("Armazenamento indisponível.");
+          const provider = await providerResponse.json() as { provider?: string };
+          let uploadedPath: string;
+
+          if (provider.provider === "r2") {
+            const headers = {
+              Authorization: "Bearer " + session.session.access_token,
+              "Content-Type": "application/json",
+            };
+            const prepare = await fetch("/api/clientes/avatar", {
+              method: "POST", headers, cache: "no-store",
+              body: JSON.stringify({
+                acao: "preparar", cliente: salvo.id, bytes: blob.size, mime: "image/webp",
+              }),
+            });
+            const reserved = await prepare.json() as {
+              path?: string; url?: string; contentType?: string; error?: string
+            };
+            if (!prepare.ok || !reserved.url || !reserved.path ||
+                reserved.contentType !== "image/webp") {
+              throw new Error(reserved.error || "Não foi possível preparar o avatar.");
+            }
+            const sent = await fetch(reserved.url, {
+              method: "PUT", headers: { "Content-Type": "image/webp" }, body: blob,
+            });
+            if (!sent.ok) throw new Error("Falha no envio direto ao R2.");
+            const confirm = await fetch("/api/clientes/avatar", {
+              method: "POST", headers, cache: "no-store",
+              body: JSON.stringify({
+                acao: "confirmar", cliente: salvo.id, path: reserved.path, bytes: blob.size,
+              }),
+            });
+            const verified = await confirm.json() as { path?: string; error?: string };
+            if (!confirm.ok || verified.path !== reserved.path) {
+              throw new Error(verified.error || "Não foi possível confirmar o avatar R2.");
+            }
+            uploadedPath = reserved.path;
+          } else if (provider.provider === "supabase") {
+            // Legacy mode uses the original browser-to-Supabase upload, not a
+            // 4.5 MB-limited Vercel Function. Never run this branch in R2 mode.
+            if (!uid) throw new Error("Sessão expirada.");
+            uploadedPath = uid + "/" + salvo.id + "/" + crypto.randomUUID() + ".webp";
+            const { error: uploadError } = await supabase.storage.from("client-avatars")
+              .upload(uploadedPath, blob, { contentType: "image/webp", upsert: false });
+            if (uploadError) throw uploadError;
+            const { error: updateError } = await supabase.from("clientes")
+              .update({ avatar_path: uploadedPath })
+              .eq("id", salvo.id).eq("user_id", uid);
+            if (updateError) {
+              await supabase.storage.from("client-avatars").remove([uploadedPath]);
+              throw updateError;
+            }
+          } else {
+            throw new Error("Destino de armazenamento inválido.");
+          }
           const { data: alterado, error: updateError } = await supabase.from("clientes")
             .select("id,nome,email,telefone,criado_em,avatar_path,observacoes,etiquetas")
             .eq("id", salvo.id).eq("user_id", uid).single();
-          if (updateError || !alterado || alterado.avatar_path !== uploaded.path) {
+          if (updateError || !alterado || alterado.avatar_path !== uploadedPath) {
             throw new Error("Não foi possível atualizar a foto do cliente.");
           }
           salvo = alterado as Cliente;
-          await assinarAvatar(uploaded.path);
-          if (previous?.avatar_path && previous.avatar_path !== uploaded.path) {
+          await assinarAvatar(uploadedPath);
+          if (previous?.avatar_path && previous.avatar_path !== uploadedPath) {
             void excluirAvatarAntigo(previous.avatar_path, previous.id).catch(() => {});
           }
         } catch {
