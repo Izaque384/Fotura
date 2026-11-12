@@ -55,7 +55,19 @@ export default function ProjetosPage(){
   const capas=lista.filter(x=>x.capa_galeria_id&&x.capa_arquivo);
   const thumbs=capas.map(x=>`${auth.user!.id}/${x.capa_galeria_id}/thumbs/${x.capa_arquivo}`);
   const mapa=new Map<string,string>();
-  for(let i=0;i<thumbs.length;i+=200){const{data:signed}=await supabase.storage.from("fotos").createSignedUrls(thumbs.slice(i,i+200),3600);for(const x of signed??[])if(x.path&&x.signedUrl)mapa.set(x.path as string,x.signedUrl as string)}
+  const {data:session}=await supabase.auth.getSession();
+  const access=session.session?.access_token;
+  if(access){
+   for(let i=0;i<thumbs.length;i+=200){
+    const response=await fetch("/api/projetos/preview-urls",{
+     method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+access},
+     cache:"no-store",body:JSON.stringify({paths:thumbs.slice(i,i+200)}),
+    });
+    if(!response.ok){setAvisoErro(true);setAviso("Não foi possível carregar as capas dos projetos.");break}
+    const signed=await response.json() as {urls?:Record<string,string>};
+    for(const [path,url] of Object.entries(signed.urls??{}))mapa.set(path,url);
+   }
+  }
   setProjetos(lista.map(x=>({...x,capaUrl:x.capa_galeria_id&&x.capa_arquivo?mapa.get(`${auth.user!.id}/${x.capa_galeria_id}/thumbs/${x.capa_arquivo}`):undefined})));
   setPastas((g.data??[]) as Pasta[]);const listaClientes=(c.data??[]) as Cliente[];setClientes(listaClientes);const query=new URLSearchParams(window.location.search);const preselected=query.get("cliente");if(query.get("novo")==="1"&&preselected&&listaClientes.some(x=>x.id===preselected))setClienteId(preselected);setCarregando(false);
  }
@@ -79,9 +91,18 @@ export default function ProjetosPage(){
   let ativo=true;
   setFotoCliente(null);
   if(!avatarPath)return()=>{ativo=false};
-  void supabase.storage.from("client-avatars").createSignedUrl(avatarPath,900).then(({data,error})=>{
-   if(ativo&&!error&&data?.signedUrl)setFotoCliente({path:avatarPath,url:data.signedUrl});
-  }).catch(()=>{if(ativo)setFotoCliente(null)});
+  void (async()=>{
+   const {data:session}=await supabase.auth.getSession();
+   const access=session.session?.access_token;if(!access||!ativo)return;
+   const response=await fetch("/api/clientes/avatar-urls",{
+    method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+access},
+    cache:"no-store",body:JSON.stringify({paths:[avatarPath]}),
+   });
+   if(!response.ok||!ativo)return;
+   const signed=await response.json() as {urls?:Record<string,string>};
+   const url=signed.urls?.[avatarPath];
+   if(url&&ativo)setFotoCliente({path:avatarPath,url});
+  })().catch(()=>{if(ativo)setFotoCliente(null)});
   return()=>{ativo=false};
  },[supabase,avatarPath,projetoDetalhes]);
  const pastasDoProjeto=projetoSelecionado?pastas.filter(g=>g.projeto_id===projetoSelecionado.id):[];
