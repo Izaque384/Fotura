@@ -81,13 +81,13 @@ Deno.serve(async (req: Request) => {
     }
   }
   type PendingR2 = {
-    id: string; lease_token: string; bucket: "fotos" | "abertura-videos";
+    id: string; lease_token: string; bucket: "fotos" | "abertura-videos" | "marca" | "client-avatars" | "feedback-anexos";
     owner_id: string; object_key: string; thumbnail_key: string | null;
     upload_id: string | null;
   };
 
   function pendingPathIsSafe(job: PendingR2, path: string): boolean {
-    return (job.bucket === "fotos" || job.bucket === "abertura-videos") &&
+    return (["fotos","abertura-videos","marca","client-avatars","feedback-anexos"].includes(job.bucket)) &&
       path.startsWith(job.owner_id + "/") &&
       !path.includes("\\") &&
       path.split("/").every((segment) => Boolean(segment) && segment !== "." && segment !== "..");
