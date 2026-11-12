@@ -10,6 +10,9 @@ declare
   thumb_key text;
   video_key text;
   feedback_key text;
+  client_id uuid := '77777777-7777-4777-8777-777777777777';
+  avatar_key text;
+  stored_avatar text;
   feedback_record uuid;
   cleanup_ticket jsonb;
   v_count integer;
@@ -25,6 +28,10 @@ begin
     '55555555-5555-4555-8555-555555555555.mp4';
   feedback_key := uid::text || '/' ||
     '66666666-6666-4666-8666-666666666666-feedback.png';
+
+  avatar_key := uid::text || '/' || client_id::text || '/' ||
+    '88888888-8888-4888-8888-888888888888.webp';
+  insert into public.clientes(id,user_id,nome) values (client_id,uid,'Cliente sintético');
 
   -- No upload can be registered without an owner-bound reservation.
   if public.registrar_foto_r2_upload_backend(
@@ -52,6 +59,20 @@ begin
   if not public.registrar_video_r2_upload_backend(
     uid,project_id,video_key,2048
   ) then raise exception 'Reserved R2 video confirmation failed'; end if;
+
+  insert into public.fotura_r2_upload_reservations
+    (bucket,object_key,owner_id,expires_at)
+  values ('client-avatars',avatar_key,uid,now()+interval '24 hours');
+  perform public.registrar_avatar_r2_backend(uid,client_id,avatar_key,401,null);
+  select avatar_path into stored_avatar from public.clientes where id=client_id;
+  if stored_avatar is distinct from avatar_key then
+    raise exception 'R2 client avatar reference was not updated'; end if;
+  select count(*) into v_count from public.fotura_media_objects
+    where bucket='client-avatars' and object_key=avatar_key;
+  if v_count<>1 then raise exception 'R2 client avatar registry missing'; end if;
+  select count(*) into v_count from public.fotura_r2_upload_reservations
+    where bucket='client-avatars' and object_key=avatar_key;
+  if v_count<>0 then raise exception 'R2 client avatar pending record was not cleared'; end if;
 
   insert into public.fotura_r2_upload_reservations
     (bucket,object_key,owner_id,expires_at)
