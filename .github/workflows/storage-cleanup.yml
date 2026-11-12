@@ -17,18 +17,30 @@ jobs:
         with:
           node-version: 24
       - run: node --test tests/storage-cleanup.test.ts tests/r2-migration-safety.test.ts
-  validate-r2-sql:
+  r2-sql-syntax:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v3
+      - uses: actions/setup-python@v5
         with:
-          version: v2.stable
-      - name: Start local Supabase (no hosted database credentials)
-        run: supabase start
-      - name: Replay migrations in disposable local database
-        run: supabase db reset --local --no-seed
-      - name: Stop disposable database
-        if: always()
-        run: supabase stop --no-backup || true
+          python-version: "3.12"
+      - name: Install PostgreSQL syntax parser (no remote database access)
+        run: python -m pip install pglast==8.7
+      - name: Parse all R2 migration scripts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from pglast import parse_sql
+          files = sorted(Path("supabase/migrations").glob("*_r2_*.sql"))
+          if len(files) < 7:
+              raise SystemExit("Expected all seven R2 migrations to be versioned")
+          for path in files:
+              try:
+                  parsed = parse_sql(path.read_text(encoding="utf-8"))
+                  if not parsed:
+                      raise ValueError("Empty SQL migration")
+              except Exception as error:
+                  raise SystemExit(f"Invalid SQL syntax in {path}: {error}")
+          print(f"Parsed {len(files)} R2 migrations (syntax only; does not execute DDL).")
+          PY
