@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { signPrivateR2ObjectUrl } from "../../../../lib/r2-storage";
+import { signPrivateR2ObjectUrl } from "../../../lib/r2-storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
