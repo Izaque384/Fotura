@@ -12,6 +12,7 @@ import { lerAbertura, validarAbertura, caminhoVideoValido, VIDEO_ABERTURA_BUCKET
 import { MODELOS_PROJETO,modeloValido,configProjeto } from "../../../../lib/project-templates";
 import { signPrivateMediaUrl, signPrivateMediaUrls } from "../../../../lib/media-storage";
 import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
+import { isR2ReadEnabled } from "../../../../lib/r2-storage";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -588,6 +589,32 @@ export async function POST(req: NextRequest) {
     const confirmacao = body.confirmacao?.trim() ?? "";
     if (!confirmacao || confirmacao !== String(projeto.nome)) {
       return json({ error: "Digite o nome exato do projeto para confirmar a exclusão." }, 400);
+    }
+
+    // Prevent orphaned R2 media until cross-provider cleanup is transactional.
+    if (isR2ReadEnabled()) {
+      const { data: folders, error: foldersError } = await supabase.from("galerias")
+        .select("id").eq("projeto_id", body.projetoId).eq("user_id", user.id);
+      if (foldersError) return json({ error: "Não foi possível conferir os arquivos do projeto." }, 503);
+      const folderIds = (folders ?? []).map((folder) => String(folder.id));
+      for (let start = 0; start < folderIds.length; start += 20) {
+        const expressions = folderIds.slice(start, start + 20)
+          .map((id) => "object_key.like." + user.id + "/" + id + "/%");
+        const { data: photos, error: registryError } = await supabase.from("fotura_media_objects")
+          .select("object_key").eq("bucket", "fotos").eq("owner_id", user.id)
+          .or(expressions.join(",")).limit(1);
+        if (registryError) return json({ error: "Não foi possível conferir as mídias R2." }, 503);
+        if ((photos ?? []).length) return json({
+          error: "Este projeto tem fotografias no R2. A exclusão segura ainda está em preparação; nada foi removido.",
+        }, 409);
+      }
+      const { data: videos, error: videoError } = await supabase.from("fotura_media_objects")
+        .select("object_key").eq("bucket", VIDEO_ABERTURA_BUCKET).eq("owner_id", user.id)
+        .like("object_key", user.id + "/" + body.projetoId + "/%").limit(1);
+      if (videoError) return json({ error: "Não foi possível conferir os vídeos R2." }, 503);
+      if ((videos ?? []).length) return json({
+        error: "Este projeto tem vídeos no R2. A exclusão segura ainda está em preparação; nada foi removido.",
+      }, 409);
     }
 
     // Não excluir o registro sem primeiro remover os vídeos privados. A limpeza
