@@ -23,7 +23,7 @@ begin
     select object_key from public.fotura_media_objects
     where bucket='fotos' and owner_id=j.user_id
       and object_key like j.prefix || '%'
-    order by object_key limit 100
+    order by object_key limit 20
   ) r;
   return result;
 end;
@@ -49,7 +49,7 @@ begin
     raise exception 'Refusing cleanup of a live gallery';
   end if;
 
-  if jsonb_typeof(p_paths) <> 'array' then
+  if jsonb_typeof(p_paths) is distinct from 'array' then
     raise exception 'Paths must be an array';
   end if;
   n := jsonb_array_length(p_paths);
