@@ -118,7 +118,11 @@ async function deleteObject(key: string) {
   const response = await fetch(signPrivateR2ObjectUrl("DELETE", key, 60), {
     method: "DELETE", cache: "no-store", signal: AbortSignal.timeout(10_000),
   });
-  return response.ok;
+  if (!response.ok && response.status !== 404) return false;
+  const head = await fetch(signPrivateR2ObjectUrl("HEAD", key, 60), {
+    method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(10_000),
+  });
+  return head.status === 404;
 }
 
 export async function GET() {
@@ -195,6 +199,11 @@ export async function POST(req: NextRequest) {
         exp: Date.now() + TICKET_SECONDS * 1000,
       };
       const key = paths(ticket);
+      const { error: reserveError } = await auth.db.from("fotura_r2_upload_reservations").insert({
+        bucket: "fotos", object_key: key.original, thumbnail_key: key.thumb,
+        owner_id: auth.user.id, expires_at: new Date(ticket.exp).toISOString(),
+      });
+      if (reserveError) throw reserveError;
       return json({
         nome: name, ticket: createTicket(ticket),
         original: { url: signPrivateR2ObjectUrl("PUT", key.original, EXPIRES_SECONDS, ticket.mime), contentType: ticket.mime },
@@ -227,12 +236,28 @@ export async function POST(req: NextRequest) {
       if (body.acao === "multipart_iniciar") {
         if (ticket.uploadId) return json({ error: "Transferência já iniciada." }, 409);
         const uploadId = await beginR2Multipart(key, ticket.mime);
+        const { data: reservation, error: reserveError } = await auth.db
+          .from("fotura_r2_upload_reservations")
+          .update({ upload_id: uploadId })
+          .eq("bucket", "fotos").eq("object_key", key).eq("owner_id", auth.user.id)
+          .eq("state", "pending").is("upload_id", null)
+          .select("id").maybeSingle();
+        if (reserveError || !reservation) {
+          await abortR2Multipart(key, uploadId).catch(() => {});
+          return json({ error: "Não foi possível preservar o estado da transferência." }, 503);
+        }
         return json({
           ok: true, nome: ticket.n, ticket: createTicket({ ...ticket, uploadId }),
           partBytes: R2_PART_BYTES, totalParts: Math.ceil(ticket.bytes / R2_PART_BYTES),
         });
       }
       if (!ticket.uploadId) return json({ error: "Transferência não iniciada." }, 409);
+      const { data: reserved, error: reserveError } = await auth.db.from("fotura_r2_upload_reservations")
+        .select("upload_id").eq("bucket", "fotos").eq("object_key", key)
+        .eq("owner_id", auth.user.id).eq("state", "pending").maybeSingle();
+      if (reserveError || !reserved || reserved.upload_id !== ticket.uploadId) {
+        return json({ error: "A transferência não está mais autorizada." }, 409);
+      }
 
       if (body.acao === "multipart_parte") {
         const number = body.partNumber;
@@ -305,7 +330,13 @@ export async function POST(req: NextRequest) {
         // Never delete a confirmed object; only clean a pending random filename.
         if (existing) return json({ error: "Arquivo já registrado; cancelamento negado." }, 409);
         const removed = await Promise.allSettled([deleteObject(key.original), deleteObject(key.thumb)]);
-        return json({ ok: removed.every((x) => x.status === "fulfilled" && x.value) });
+        const allRemoved = removed.every((x) => x.status === "fulfilled" && x.value);
+        if (!allRemoved) return json({ error: "Remoção incompleta. Limpeza pendente." }, 503);
+        const { error: pendingError } = await auth.db.from("fotura_r2_upload_reservations")
+          .delete().eq("bucket", "fotos").eq("object_key", key.original)
+          .eq("owner_id", auth.user.id).eq("state", "pending");
+        if (pendingError) return json({ error: "A limpeza ainda precisa confirmar o registro." }, 503);
+        return json({ ok: true });
       }
 
       if (existing) return existing.bytes === ticket.bytes
