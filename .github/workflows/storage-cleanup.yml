@@ -2,9 +2,9 @@ name: Storage cleanup regression
 on:
   push:
     branches: [main]
-    paths: ["supabase/**", "tests/storage-cleanup.test.ts", ".github/workflows/storage-cleanup.yml"]
+    paths: ["supabase/**", "tests/storage-cleanup.test.ts", "tests/r2-migration-safety.test.ts", ".github/workflows/storage-cleanup.yml"]
   pull_request:
-    paths: ["supabase/**", "tests/storage-cleanup.test.ts", ".github/workflows/storage-cleanup.yml"]
+    paths: ["supabase/**", "tests/storage-cleanup.test.ts", "tests/r2-migration-safety.test.ts", ".github/workflows/storage-cleanup.yml"]
 permissions:
   contents: read
 jobs:
@@ -16,4 +16,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: node --test tests/storage-cleanup.test.ts
+      - run: node --test tests/storage-cleanup.test.ts tests/r2-migration-safety.test.ts
