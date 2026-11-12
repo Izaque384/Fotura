@@ -95,8 +95,12 @@ Deno.serve(async (req: Request) => {
 
   function objectUrl(bucket: string, key: string) {
     const { base } = r2();
-    return base + "/" + encodeURIComponent(bucket) + "/" +
-      key.split("/").map(encodeURIComponent).join("/");
+    // Auxiliary logical buckets share the private R2 bucket but have their
+    // own namespace. Cleanup MUST use the same physical key as the uploader.
+    const physicalKey = bucket === "fotos" || bucket === "abertura-videos"
+      ? key : bucket + "/" + key;
+    return base + "/" + encodeURIComponent("fotura-media") + "/" +
+      physicalKey.split("/").map(encodeURIComponent).join("/");
   }
 
   async function verifyAbsent(url: string) {
