@@ -29,7 +29,7 @@ function xmlValue(xml: string, tag: string): string | null {
 }
 
 function parseEtag(value: string | null): string {
-  const clean = value?.replace(/^"|"$/g, "") ?? "";
+  const clean = (value ?? "").replace(/&quot;|&#34;|&#x22;/gi, '"' ).replace(/^"|"$/g, "");
   if (!/^[a-z0-9_-]{1,128}$/i.test(clean)) {
     throw new Error("ETag R2 inválido.");
   }
