@@ -220,6 +220,27 @@ export async function POST(req: NextRequest) {
         return json({ error: "Não foi possível confirmar a integridade dos arquivos enviados." }, 422);
       }
 
+      // Quotas must also be checked on confirmation, not only when the
+      // five-minute PUT URL is issued. This avoids a stale preflight approval.
+      const current = await contextoPlano(auth.db, auth.user.id);
+      const { data: currentFairUse, error: currentFairUseError } = await auth.db.rpc(
+        "status_uso_justo_upload_backend", { p_user_id: auth.user.id }
+      );
+      if (currentFairUseError || !currentFairUse || currentFairUse.bloqueado ||
+          (Number(currentFairUse.limite_bytes) > 0 &&
+           Number(currentFairUse.bytes_enviados || 0) + ticket.bytes > Number(currentFairUse.limite_bytes))) {
+        return json({ error: "Franquia mensal de envios atingida." }, 403);
+      }
+      const quotaGb = current.limites.armazenamento.limiteGb;
+      if (quotaGb !== null &&
+          current.uso.armazenamentoBytes + ticket.bytes + ticket.thumbBytes > quotaGb * 1024 ** 3) {
+        return json({ error: "Limite de armazenamento atingido." }, 403);
+      }
+      const counted = await listarCatalogoGaleriaHibrido(auth.db, auth.user.id, ticket.g, ticket.v);
+      if (counted.error || !counted.data || !podeAdicionarFotos(current.plano, counted.data.length, 1)) {
+        return json({ error: "Limite de fotos da pasta atingido." }, 403);
+      }
+
       const width = Number.isInteger(body.largura) && Number(body.largura) > 0 && Number(body.largura) <= 50000 ? body.largura : null;
       const height = Number.isInteger(body.altura) && Number(body.altura) > 0 && Number(body.altura) <= 50000 ? body.altura : null;
       const { data, error: registerError } = await auth.db.rpc("registrar_foto_r2_upload_backend", {
