@@ -30,7 +30,7 @@ export async function signPrivateMediaUrl(
   downloadName?: string
 ): Promise<string | null> {
   const r2 = await verifiedR2Keys(db, bucket, [key]);
-  if (r2.has(key)) return signPrivateR2ReadUrl(key, seconds, downloadName);
+  if (r2.has(key)) return signPrivateR2ReadUrl(key, seconds);
   const { data, error } = await db.storage.from(bucket).createSignedUrl(
     key, seconds, downloadName ? { download: downloadName } : undefined
   );
