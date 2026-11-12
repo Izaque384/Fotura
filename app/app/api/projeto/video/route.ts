@@ -124,6 +124,11 @@ export async function POST(req: NextRequest) {
         error: "Limite de versões de vídeo atingido. Remova versões não publicadas antes de enviar outra.",
       }, 409);
       const path = prefixo + "/" + randomUUID() + ".mp4";
+      const { error: pendingError } = await db.from("fotura_r2_upload_reservations").insert({
+        bucket: VIDEO_ABERTURA_BUCKET, object_key: path, thumbnail_key: null,
+        owner_id: userId, expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      });
+      if (pendingError) return json({ error: "Não foi possível reservar o envio R2." }, 503);
       return json({ path, provider: "r2", url: signPrivateR2ObjectUrl("PUT", path, 5 * 60, "video/mp4") });
     }
     const { data: existentes, error: listErro } = await db.storage.from(VIDEO_ABERTURA_BUCKET)
@@ -192,8 +197,13 @@ export async function DELETE(req: NextRequest) {
       .select("object_key").eq("bucket", VIDEO_ABERTURA_BUCKET).eq("object_key", body.path)
       .eq("owner_id", ctx.userId).maybeSingle();
     if (lookupError) return json({ error: "Não foi possível verificar o vídeo." }, 503);
-    const pendingR2 = r2Ready() && !entry ? await r2VideoHead(body.path) : null;
-    if (entry || pendingR2) {
+    const { data: pending, error: pendingError } = r2Ready()
+      ? await ctx.db.from("fotura_r2_upload_reservations")
+          .select("object_key").eq("bucket", VIDEO_ABERTURA_BUCKET).eq("object_key", body.path)
+          .eq("owner_id", ctx.userId).eq("state", "pending").maybeSingle()
+      : { data: null, error: null };
+    if (pendingError) return json({ error: "Não foi possível verificar o envio R2." }, 503);
+    if (entry || pending) {
       const removed = await verifiedR2VideoDelete(body.path);
       if (!removed) return json({ error: "Não foi possível confirmar a exclusão no R2." }, 503);
       if (entry) {
@@ -201,6 +211,12 @@ export async function DELETE(req: NextRequest) {
           .eq("bucket", VIDEO_ABERTURA_BUCKET).eq("object_key", body.path)
           .eq("owner_id", ctx.userId);
         if (error) return json({ error: "Arquivo excluído, mas o registro exige nova tentativa." }, 503);
+      }
+      if (pending) {
+        const { error } = await ctx.db.from("fotura_r2_upload_reservations").delete()
+          .eq("bucket", VIDEO_ABERTURA_BUCKET).eq("object_key", body.path)
+          .eq("owner_id", ctx.userId).eq("state", "pending");
+        if (error) return json({ error: "Arquivo excluído, mas a limpeza exige nova tentativa." }, 503);
       }
       return json({ ok: true });
     }
