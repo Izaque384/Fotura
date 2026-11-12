@@ -61,15 +61,7 @@ export function signPrivateR2ObjectUrl(
   expiresSeconds: number,
   contentType?: string
 ): string {
-  if (contentType && (method !== "PUT" || !/^[a-z0-9][a-z0-9!#export function signPrivateR2ReadUrl(
-  key: string,
-  expiresSeconds: number
-): string {
-^_.+-]*\\/[a-z0-9][a-z0-9!#export function signPrivateR2ReadUrl(
-  key: string,
-  expiresSeconds: number
-): string {
-^_.+-]*$/i.test(contentType))) {
+  if (contentType && (method !== "PUT" || !/^[a-z0-9.+-]+\\/[a-z0-9.+-]+$/i.test(contentType))) {
     throw new Error("Tipo de conteúdo R2 inválido.");
   }
   const { accountId, accessKeyId, secretAccessKey, bucket } = configuration();
