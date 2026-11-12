@@ -92,7 +92,7 @@ export function signPrivateR2ObjectUrl(
     ["X-Amz-SignedHeaders", contentType ? "content-type;host" : "host"],
   ];
   const query = canonicalQuery(params);
-  const headers = contentType ? "content-type:" + contentType + "\\n" + "host:" + hostname + "\\n" : "host:" + hostname + "\\n";
+  const headers = contentType ? "content-type:" + contentType + "\n" + "host:" + hostname + "\n" : "host:" + hostname + "\n";
   const signedHeaders = contentType ? "content-type;host" : "host";
   const request = [method, resource, query, headers, signedHeaders, "UNSIGNED-PAYLOAD"].join("\n");
   const stringToSign = ["AWS4-HMAC-SHA256", now, scope, sha256(request)].join("\n");
