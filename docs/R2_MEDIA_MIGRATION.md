@@ -38,6 +38,16 @@ Manter PostgreSQL/Auth do Supabase e passar arquivos dos buckets **fotos** e **a
 - Roteamento por objeto: R2 **somente** quando existir entrada verificada no registro privado e a flag estiver ativada; caso contrário, Supabase.
 - Migração SQL adiciona apenas tabela privada, sem alterar tabelas/fotos existentes.
 
+## Etapa 5 — vídeos e envios não confirmados (em revisão)
+- O envio de MP4 de abertura agora tem caminho R2 na prévia: PUT temporário, conferência de bytes e tipo, registro atômico no banco e visualização por URL temporária. Em modo R2 não há fallback silencioso para o Supabase.
+- Fotos e vídeos recebem uma reserva privada antes de o sistema fornecer a URL de upload. A confirmação só é aceita quando a reserva ainda é válida, pertence ao usuário e não entrou em limpeza. A confirmação também retira a reserva atomicamente.
+- Uma fila segura para uploads abandonados foi preparada: depois de expirar o ticket de 24 horas e mais 12 horas de margem, o worker pode reivindicar a reserva com lease, cancelar multipartes, apagar somente as chaves registradas e confirmar HEAD 404 antes de remover os metadados pendentes.
+- A fila de exclusão de galerias também verifica reservas pendentes, evitando a marcação incorreta de limpeza concluída. Exclusões de projetos e contas com mídias ou reservas R2 continuam bloqueadas enquanto não houver limpeza segura.
+- Novos limites protegem contra criação excessiva de uploads sem confirmação: até 25 reservas de fotos simultâneas por usuário e 5 vídeos (contabilizando vídeos confirmados e reservas) por projeto.
+- Migrações novas somente versionadas no GitHub: 20261112160000_r2_upload_reservations.sql, 20261112210000_r2_intro_video_registration.sql e 20261112220000_r2_abandoned_upload_cleanup.sql.
+- O teste automatizado tests/r2-migration-safety.test.ts agora verifica isolamentos, reservas e ações destrutivas, via GitHub Actions.
+- **Não habilitar as flags, não aplicar os SQLs e não colocar a Edge Function em produção** até uma validação controlada da tabela de reservas, workflow de limpeza real e casos extremos (falha de rede, retenção, quota, envio com logout, vídeo no Safari).
+
 ## Etapa 4 — limpeza durável preparada (ainda não ativada)
 - Mantida a fila existente de limpeza de galerias; adicionadas RPCs independentes para localizar objetos R2 pelo prefixo exato, validar o lease e reconhecer a remoção após DELETE e HEAD 404 no R2.
 - A Edge Function de limpeza foi adaptada para excluir objetos R2 com credenciais S3 restritas ao bucket e só então reconhecer a retirada dos registros de fotura_media_objects. As credenciais para a função devem ser configuradas como segredos protegidos apenas no rollout.
