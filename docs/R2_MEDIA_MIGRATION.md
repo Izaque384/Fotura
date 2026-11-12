@@ -38,6 +38,15 @@ Manter PostgreSQL/Auth do Supabase e passar arquivos dos buckets **fotos** e **a
 - Roteamento por objeto: R2 **somente** quando existir entrada verificada no registro privado e a flag estiver ativada; caso contrário, Supabase.
 - Migração SQL adiciona apenas tabela privada, sem alterar tabelas/fotos existentes.
 
+## Etapa 6 — compatibilidade de clientes e bloqueio de egress (em revisão)
+
+- A leitura de avatares privados e de miniaturas de capa nos painéis de Clientes/Projetos passou a usar APIs autenticadas que conferem a titularidade do cliente/projeto e assinam o objeto pelo adaptador R2/Supabase.
+- O seletor de fotos da galeria para criar avatares passou a obter miniaturas pelo catálogo híbrido e por download autorizado do servidor, sem acessar diretamente o Supabase Storage no navegador.
+- Upload e remoção de avatares têm agora rota autenticada preparada para o modo R2: chave reservada antes do upload, HEAD de integridade, vinculação transacional no banco, exclusão apenas após desvincular, DELETE e HEAD 404 verificados. O modo R2 permanece desativado.
+- Incluída migração `20261112240000_r2_avatar_registration.sql` e cenários sintéticos de confirmação de avatares no PostgreSQL descartável do CI.
+- Política de custo em `docs/R2_LEGACY_TRANSFER_POLICY.md`: **não transferir mídias reais antes de 23/11/2026**, e mesmo depois somente após confirmar o reset efetivo do egress do Supabase e o orçamento de tráfego disponível. Não há cópia agendada automaticamente.
+- **Pendente:** fluxo de logotipo público do estúdio, atualização de links persistentes, testes autenticados de todos os navegadores, implementação de cópia/checagem de todos os buckets antigos e ativação controlada de produção.
+
 ## Etapa 5 — vídeos e envios não confirmados (em revisão)
 - O envio de MP4 de abertura agora tem caminho R2 na prévia: PUT temporário, conferência de bytes e tipo, registro atômico no banco e visualização por URL temporária. Em modo R2 não há fallback silencioso para o Supabase.
 - Fotos e vídeos recebem uma reserva privada antes de o sistema fornecer a URL de upload. A confirmação só é aceita quando a reserva ainda é válida, pertence ao usuário e não entrou em limpeza. A confirmação também retira a reserva atomicamente.
