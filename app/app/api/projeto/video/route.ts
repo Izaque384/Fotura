@@ -123,6 +123,15 @@ export async function POST(req: NextRequest) {
       if ((existentesR2 ?? []).length >= 5) return json({
         error: "Limite de versões de vídeo atingido. Remova versões não publicadas antes de enviar outra.",
       }, 409);
+      const { count: pendingVideos, error: pendingError } = await db
+        .from("fotura_r2_upload_reservations")
+        .select("id", { count: "exact", head: true })
+        .eq("bucket", VIDEO_ABERTURA_BUCKET).eq("owner_id", userId)
+        .like("object_key", prefixo + "/%");
+      if (pendingError) return json({ error: "Não foi possível verificar uploads pendentes." }, 503);
+      if ((existentesR2 ?? []).length + (pendingVideos ?? 0) >= 5) return json({
+        error: "Limite de vídeos e envios pendentes atingido. Conclua ou cancele um envio anterior.",
+      }, 409);
       const path = prefixo + "/" + randomUUID() + ".mp4";
       const { error: pendingError } = await db.from("fotura_r2_upload_reservations").insert({
         bucket: VIDEO_ABERTURA_BUCKET, object_key: path, thumbnail_key: null,
