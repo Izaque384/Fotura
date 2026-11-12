@@ -139,6 +139,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const started = Date.now();
     const result = await runCleanup({
       claim: () => rpc("storage_cleanup_claim"),
       paths: (job) => rpc("storage_cleanup_paths", args(job)),
@@ -153,7 +154,6 @@ Deno.serve(async (req: Request) => {
     const abandoned = { removed: 0, deferred: 0 };
     // The existing gallery queue has priority. Keep within pg_net's 60s
     // request timeout, and let the next cron tick retry any remaining work.
-    const started = Date.now();
     for (let i = 0; i < 2 && Date.now() - started < 15_000; i++) {
       const pending = await rpc("r2_pending_cleanup_claim") as PendingR2 | null;
       if (!pending) break;
