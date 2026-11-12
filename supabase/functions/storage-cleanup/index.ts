@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.112.3";
 import { runCleanup, type Job } from "./worker.ts";
+import { AwsClient } from "npm:aws4fetch@1.0.20";
 
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return new Response(null, { status: 405 });
@@ -18,6 +19,67 @@ Deno.serve(async (req: Request) => {
     return data;
   }
   const args = (job: Job) => ({ p_id: job.id, p_lease: job.lease_token });
+  let cachedR2: { client: AwsClient; base: string; bucket: string } | null = null;
+  function r2() {
+    if (cachedR2) return cachedR2;
+    const accountId = Deno.env.get("R2_ACCOUNT_ID") ?? "";
+    const accessKeyId = Deno.env.get("R2_ACCESS_KEY_ID") ?? "";
+    const secretAccessKey = Deno.env.get("R2_SECRET_ACCESS_KEY") ?? "";
+    const bucket = Deno.env.get("R2_MEDIA_BUCKET") ?? "";
+    if (!/^[a-f0-9]{32}$/i.test(accountId) ||
+        !accessKeyId || !secretAccessKey || bucket !== "fotura-media") {
+      throw new Error("R2 cleanup credentials not configured");
+    }
+    cachedR2 = {
+      client: new AwsClient({ accessKeyId, secretAccessKey, service: "s3", region: "auto", retries: 0 }),
+      base: "https://" + accountId + ".r2.cloudflarestorage.com",
+      bucket,
+    };
+    return cachedR2;
+  }
+
+  async function deleteVerifiedR2(paths: string[], job: Job) {
+    const { client, base, bucket } = r2();
+    const failures: number[] = [];
+    let cursor = 0;
+    const workers = Array.from({ length: Math.min(4, paths.length) }, async () => {
+      while (cursor < paths.length) {
+        const key = paths[cursor++];
+        if (!key.startsWith(job.prefix) || key.includes("\\") ||
+            key.split("/").some((segment) => !segment || segment === "." || segment === "..")) {
+          failures.push(1);
+          continue;
+        }
+        const resource = "/" + encodeURIComponent(bucket) + "/" +
+          key.split("/").map(encodeURIComponent).join("/");
+        const url = base + resource;
+        try {
+          const deleted = await client.fetch(url, {
+            method: "DELETE",
+            signal: AbortSignal.timeout(10_000),
+          });
+          if (!deleted.ok && deleted.status !== 404) throw new Error("R2 deletion rejected");
+          // A successful DELETE response is not enough to clear our registry:
+          // verify that the object can no longer be accessed.
+          const check = await client.fetch(url, {
+            method: "HEAD",
+            signal: AbortSignal.timeout(10_000),
+          });
+          if (check.status !== 404) throw new Error("R2 object still exists");
+        } catch {
+          failures.push(1);
+        }
+      }
+    });
+    await Promise.all(workers);
+    if (failures.length) throw new Error("R2 verification failed");
+    const acknowledged = await rpc("storage_cleanup_r2_ack", {
+      ...args(job), p_paths: paths,
+    });
+    if (typeof acknowledged !== "number" || acknowledged > paths.length) {
+      throw new Error("Invalid R2 cleanup acknowledgement");
+    }
+  }
   try {
     const result = await runCleanup({
       claim: () => rpc("storage_cleanup_claim"),
@@ -26,6 +88,8 @@ Deno.serve(async (req: Request) => {
         const { error } = await db.storage.from("fotos").remove(paths);
         if (error) throw new Error("Storage remove failed");
       },
+      r2Paths: (job) => rpc("storage_cleanup_r2_paths", args(job)),
+      removeR2: deleteVerifiedR2,
       finish: (job, error) => rpc("storage_cleanup_finish", { ...args(job), p_error: error }),
     });
     return Response.json(result);
