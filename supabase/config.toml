@@ -1,3 +1,5 @@
+project_id = "fotura"
+
 [functions.storage-cleanup]
 # Custom authentication: high-entropy token in Vault, validated server-side.
 verify_jwt = false
