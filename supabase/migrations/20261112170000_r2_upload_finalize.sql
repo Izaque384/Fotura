@@ -54,6 +54,18 @@ begin
       and coalesce(o.is_delete_marker,false)=false
   ) then return false; end if;
 
+
+  -- Under a row lock, reject any upload that was not explicitly reserved
+  -- for this owner/gallery or has entered expired cleanup. Registration
+  -- and the reservation removal commit atomically.
+  if not exists (
+    select 1 from public.fotura_r2_upload_reservations q
+    where q.bucket='fotos' and q.object_key=v_original
+      and q.thumbnail_key=v_thumb and q.owner_id=p_user_id
+      and q.state='pending' and q.expires_at > now()
+    for update
+  ) then return false; end if;
+
   insert into public.fotura_media_objects
     (bucket,object_key,owner_id,bytes,content_type,etag,verified_at)
   values ('fotos',v_original,p_user_id,p_bytes,p_mime_type,p_etag,now())
@@ -91,9 +103,11 @@ begin
     arquivos_enviados=private.upload_fair_use_mensal.arquivos_enviados+1,
     atualizado_em=now();
 
+  delete from public.fotura_r2_upload_reservations q
+  where q.bucket='fotos' and q.object_key=v_original and q.owner_id=p_user_id;
   return true;
 end;
-$$;
+$;
 
 revoke all on function public.registrar_foto_r2_upload_backend(
  uuid,uuid,text,text,bigint,bigint,text,text,text,integer,integer
