@@ -367,6 +367,20 @@ export default function ClientesPage() {
     }
   }
 
+  async function excluirAvatarAntigo(path: string, cliente: string): Promise<boolean> {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session?.access_token) return false;
+    const response = await fetch("/api/clientes/avatar", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + session.session.access_token,
+      },
+      body: JSON.stringify({ cliente, path }),
+    });
+    return response.ok;
+  }
+
   async function salvar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!uid || !editor || salvando) return;
@@ -388,24 +402,37 @@ export default function ClientesPage() {
       let salvo = result.data as Cliente;
       let avisoFoto = "";
       if (imagem) {
-        let caminhoNovo = "";
         try {
           const blob = await recortarAvatar(imagem, zoom, posX, posY);
-          caminhoNovo = uid + "/" + salvo.id + "/" + crypto.randomUUID() + ".webp";
-          const { error: uploadError } = await supabase.storage.from(BUCKET).upload(caminhoNovo, blob, { contentType: "image/webp", cacheControl: "3600", upsert: false });
-          if (uploadError) throw uploadError;
-          const { data: alterado, error: saveError } = await supabase.from("clientes")
-            .update({ avatar_path: caminhoNovo }).eq("id", salvo.id).eq("user_id", uid)
-            .select("id,nome,email,telefone,criado_em,avatar_path,observacoes,etiquetas").single();
-          if (saveError || !alterado) throw new Error("Falha ao vincular a foto.");
+          if (!blob) throw new Error("Não foi possível preparar a imagem.");
+          const { data: session } = await supabase.auth.getSession();
+          if (!session.session?.access_token) throw new Error("Sessão expirada.");
+          const body = new FormData();
+          body.append("cliente", salvo.id);
+          body.append("arquivo", blob, "avatar.webp");
+          const response = await fetch("/api/clientes/avatar", {
+            method: "POST",
+            headers: { Authorization: "Bearer " + session.session.access_token },
+            body,
+          });
+          if (!response.ok) throw new Error("Falha ao enviar o avatar.");
+          const uploaded = await response.json() as { path?: string };
+          if (!uploaded.path) throw new Error("Arquivo não confirmado.");
+          const { data: alterado, error: updateError } = await supabase.from("clientes")
+            .select("id,nome,email,telefone,criado_em,avatar_path,observacoes,etiquetas")
+            .eq("id", salvo.id).eq("user_id", uid).single();
+          if (updateError || !alterado || alterado.avatar_path !== uploaded.path) {
+            throw new Error("Não foi possível atualizar a foto do cliente.");
+          }
           salvo = alterado as Cliente;
-          await assinarAvatar(caminhoNovo);
-          if (previous?.avatar_path && previous.avatar_path !== caminhoNovo) {
-            void supabase.storage.from(BUCKET).remove([previous.avatar_path]);
+          await assinarAvatar(uploaded.path);
+          if (previous?.avatar_path && previous.avatar_path !== uploaded.path) {
+            void excluirAvatarAntigo(previous.avatar_path, previous.id).catch(() => {});
           }
         } catch {
-          if (caminhoNovo) void supabase.storage.from(BUCKET).remove([caminhoNovo]);
-          avisoFoto = " Os dados foram salvos, mas não foi possível atualizar a foto. Tente novamente na edição.";
+          // A timeout after a DB commit must not trigger deletion of the
+          // potentially current avatar. Preserve it for reconciliation.
+          avisoFoto = " Os dados foram salvos, mas não foi possível confirmar a foto. Confira ao reabrir a edição.";
         }
       } else if (removerFoto && previous?.avatar_path) {
         const { data: alterado, error } = await supabase.from("clientes")
@@ -413,7 +440,7 @@ export default function ClientesPage() {
           .select("id,nome,email,telefone,criado_em,avatar_path,observacoes,etiquetas").single();
         if (!error && alterado) {
           salvo = alterado as Cliente;
-          void supabase.storage.from(BUCKET).remove([previous.avatar_path]);
+          void excluirAvatarAntigo(previous.avatar_path, previous.id).catch(() => {});
         } else avisoFoto = " Os dados foram salvos, mas não foi possível remover a foto.";
       }
       setClientes((current) => [...current.filter((c) => c.id !== salvo.id), salvo].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")));
@@ -437,7 +464,7 @@ export default function ClientesPage() {
       setClientes((current) => current.filter((c) => c.id !== alvo.id));
       setProjetos((current) => current.map((p) => p.cliente_id === alvo.id ? { ...p, cliente_id: null } : p));
       setGalerias((current) => current.map((g) => g.cliente_id === alvo.id ? { ...g, cliente_id: null } : g));
-      if (alvo.avatar_path) void supabase.storage.from(BUCKET).remove([alvo.avatar_path]);
+      if (alvo.avatar_path) void excluirAvatarAntigo(alvo.avatar_path, alvo.id).catch(() => {});
       setSelecionado(null);
       setConfirmarExclusao(false);
       setAviso("Cliente excluído. Os projetos e galerias foram preservados.");
