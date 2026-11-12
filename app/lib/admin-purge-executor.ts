@@ -120,6 +120,12 @@ export async function executarPurgeDefinitivo({
     if ((count ?? 0) > 0) {
       throw new Error("Exclusão definitiva bloqueada: mídias R2 exigem limpeza verificada antes do purge.");
     }
+    const { count: pendingCount, error: pendingError } = await supabase
+      .from("fotura_r2_upload_reservations")
+      .select("id", { count: "exact", head: true }).eq("owner_id", userId);
+    if (pendingError || (pendingCount ?? 0) > 0) {
+      throw new Error("Exclusão definitiva bloqueada: uploads R2 pendentes exigem limpeza verificada.");
+    }
   }
 
   let etapa = String(purge.execucao_etapa ?? "nao_iniciada");
