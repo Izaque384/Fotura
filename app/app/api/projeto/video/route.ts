@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
     if (!objeto) return json({ error: "O MP4 enviado não foi encontrado ou excede 25 MB." }, 400);
     const args = r2Ready()
       ? { p_user_id: userId, p_projeto_id: projeto.id, p_path: body.path,
-          p_bytes: objeto.bytes, p_etag: objeto.etag }
+          p_bytes: objeto.bytes, p_etag: "etag" in objeto ? objeto.etag : null }
       : { p_user_id: userId, p_projeto_id: projeto.id, p_path: body.path, p_bytes: objeto.bytes };
     const { data: registrado, error: registroErro } = await db.rpc(
       r2Ready() ? "registrar_video_r2_upload_backend" : "registrar_video_abertura_upload_backend", args);
