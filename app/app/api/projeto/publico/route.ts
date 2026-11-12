@@ -8,6 +8,7 @@ import { dataCalendarioExpirada } from "../../../../lib/date-only";
 import { planoFotura } from "../../../../lib/billing-plans";
 import { estiloHeroEfetivo, heroPresetDataUrl } from "../../../../lib/gallery-hero";
 import { lerAbertura, caminhoVideoValido, VIDEO_ABERTURA_BUCKET, type FotoAberturaPublica } from "../../../../lib/cinematic-intro";
+import { signPrivateMediaUrl, signPrivateMediaUrls } from "../../../../lib/media-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -56,8 +57,7 @@ export async function GET(req: NextRequest) {
     if (usarFotoCapaPublica && p.capa_galeria_id && p.capa_arquivo) {
       const baseCapa = `${p.user_id}/${p.capa_galeria_id}`;
       const caminhoCapa = `${baseCapa}/thumbs/${p.capa_arquivo}`;
-      const { data } = await supabase.storage.from("fotos").createSignedUrl(caminhoCapa, 60 * 60);
-      capaUrl = data?.signedUrl ?? null;
+      capaUrl = await signPrivateMediaUrl(supabase, "fotos", caminhoCapa, 60 * 60);
     } else if (usarHeroEstudio) {
       capaUrl = heroPresetDataUrl(heroCor, heroEstilo);
     }
@@ -84,10 +84,8 @@ export async function GET(req: NextRequest) {
       const base=`${p.user_id}/${galeriaId}`;
       caminhos.push(`${base}/thumbs/${nome}`);
     }
-    const {data:signed}=caminhos.length
-      ? await supabase.storage.from("fotos").createSignedUrls(caminhos,60*60)
-      : {data:[] as Array<{path?:string;signedUrl?:string}>};
-    const mapa=new Map((signed??[]).filter(item=>item.path&&item.signedUrl).map(item=>[item.path!,item.signedUrl!]));
+    const signed = await signPrivateMediaUrls(supabase, "fotos", caminhos, 60 * 60);
+    const mapa = new Map(Object.entries(signed));
     for(const [galeriaId,nome] of arquivosPorGaleria){
       const base=`${p.user_id}/${galeriaId}`;
       miniaturas.set(galeriaId,mapa.get(`${base}/thumbs/${nome}`)??null);
@@ -103,8 +101,7 @@ export async function GET(req: NextRequest) {
     const candidatas = abertura.fotos.filter((foto) => idsVisiveis.has(foto.pastaId));
     if (candidatas.length) {
       const caminhos = candidatas.map((foto) => `${p.user_id}/${foto.pastaId}/thumbs/${foto.arquivo}`);
-      const { data: assinadas } = await supabase.storage.from("fotos").createSignedUrls(caminhos, 10 * 60);
-      const urls = new Map((assinadas ?? []).filter((i) => i.path && i.signedUrl).map((i) => [i.path!, i.signedUrl!]));
+      const urls = new Map(Object.entries(await signPrivateMediaUrls(supabase, "fotos", caminhos, 10 * 60)));
       for (let i = 0; i < candidatas.length; i++) {
         const foto = candidatas[i];
         const url = urls.get(caminhos[i]);
@@ -115,8 +112,7 @@ export async function GET(req: NextRequest) {
   let videoUrl: string | null = null;
   if (abertura.ativo && abertura.fundo === "video" && desbloqueada && !linkExpirado &&
       caminhoVideoValido(abertura.video) && abertura.video.startsWith(`${p.user_id}/${p.id}/`)) {
-    const { data } = await supabase.storage.from(VIDEO_ABERTURA_BUCKET).createSignedUrl(abertura.video, 10 * 60);
-    videoUrl = data?.signedUrl ?? null;
+    videoUrl = await signPrivateMediaUrl(supabase, VIDEO_ABERTURA_BUCKET, abertura.video, 10 * 60);
   }
   const aberturaPublica = {
     ...abertura,
