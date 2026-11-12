@@ -42,3 +42,17 @@ test("provider-aware media adapter uses private object registry, never filename 
   assert.match(source, /r2PhysicalKey\(bucket, key\)/);
   assert.match(source, /createSignedUrls\(legacy, seconds\)/);
 });
+
+test("client gallery picker requires both gallery and client ownership before exposing thumbnails", () => {
+  const route = read("app/app/api/clientes/galeria-fotos/route.ts");
+  const ui = read("app/app/dashboard/clientes/page.tsx");
+  assert.match(route, /db\.auth\.getUser\(token\)/);
+  assert.match(route, /\.from\("galerias"\)/);
+  assert.match(route, /\.from\("clientes"\)/);
+  assert.match(route, /gallery\.cliente_id !== client\.id/);
+  assert.match(route, /listarCatalogoGaleriaHibrido/);
+  assert.match(route, /downloadPrivateMediaBlob/);
+  assert.match(route, /signPrivateMediaUrls\(db, "fotos", paths, 900\)/);
+  assert.match(ui, /\/api\/clientes\/galeria-fotos/);
+  assert.doesNotMatch(ui, /storage\.from\("fotos"\)\.download\(path\)/);
+});
