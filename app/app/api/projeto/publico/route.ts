@@ -9,6 +9,7 @@ import { planoFotura } from "../../../../lib/billing-plans";
 import { estiloHeroEfetivo, heroPresetDataUrl } from "../../../../lib/gallery-hero";
 import { lerAbertura, caminhoVideoValido, VIDEO_ABERTURA_BUCKET, type FotoAberturaPublica } from "../../../../lib/cinematic-intro";
 import { signPrivateMediaUrl, signPrivateMediaUrls } from "../../../../lib/media-storage";
+import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
 
 export const dynamic = "force-dynamic";
 
@@ -70,11 +71,7 @@ export async function GET(req: NextRequest) {
       const galeriaId=String(galeria.id);
       const capa=typeof galeria.capa==="string"&&galeria.capa?galeria.capa:null;
       if(capa){arquivosPorGaleria.set(galeriaId,capa);return}
-      const {data}=await supabase.rpc("listar_fotos_galeria_storage",{
-        p_galeria:galeriaId,
-        p_user:String(p.user_id),
-        p_variante:"principal",
-      });
+      const {data}=await listarCatalogoGaleriaHibrido(supabase, String(p.user_id), galeriaId, "principal");
       const primeira=Array.isArray(data)&&data.length?String((data[0] as {nome?:unknown}).nome||""):"";
       if(primeira)arquivosPorGaleria.set(galeriaId,primeira);
     }));
