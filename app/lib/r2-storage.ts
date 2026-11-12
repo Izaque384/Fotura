@@ -49,7 +49,7 @@ const hmac = (key: Buffer | string, value: string) =>
 
 function canonicalQuery(params: Array<[string, string]>): string {
   return params.map(([key, value]) => [encodeSegment(key), encodeSegment(value)] as const)
-    .sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]))
+    .sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0)
     .map(([key, value]) => key + "=" + value).join("&");
 }
 
