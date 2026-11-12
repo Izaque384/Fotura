@@ -4,6 +4,7 @@ import { createServiceClient } from "../../../lib/supabase-server";
 import { consumirRateLimit } from "../../../lib/rate-limit";
 import { requisicaoMesmoOrigin } from "../../../lib/request-security";
 import { registrarErro } from "../../../lib/observability";
+import { putVerifiedAuxiliaryMedia, selectedMediaUploadProvider } from "../../../lib/r2-aux-media";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -44,6 +45,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const uploadProvider = selectedMediaUploadProvider();
+  if (uploadProvider === "unavailable") return NextResponse.json({ error: "Armazenamento R2 indisponível. Nenhum anexo foi enviado." }, { status: 503 });
+
   try {
     const form = await req.formData();
     const tipo = texto(form, "tipo");
@@ -72,6 +76,7 @@ export async function POST(req: NextRequest) {
     let screenshotNome: string | null = null;
     let screenshotMime: string | null = null;
     let screenshotBytes: number | null = null;
+    let r2Etag: string | null = null;
 
     if (arquivo instanceof File && arquivo.size > 0) {
       if (arquivo.size > MAX_ARQUIVO) {
@@ -88,41 +93,64 @@ export async function POST(req: NextRequest) {
       screenshotPath = `${auth.user.id}/${idArquivo}-${screenshotNome}`;
 
       const bytes = new Uint8Array(await arquivo.arrayBuffer());
-      const { error: uploadError } = await supabase.storage
-        .from("feedback-anexos")
-        .upload(screenshotPath, bytes, { contentType: arquivo.type, upsert: false });
-
-      if (uploadError) throw uploadError;
+      if (uploadProvider === "r2") {
+        const { error: reservationError } = await supabase.from("fotura_r2_upload_reservations")
+          .insert({
+            bucket: "feedback-anexos", object_key: screenshotPath,
+            thumbnail_key: null, owner_id: auth.user.id,
+            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          });
+        if (reservationError) throw reservationError;
+        const verified = await putVerifiedAuxiliaryMedia("feedback-anexos", screenshotPath, bytes, arquivo.type);
+        r2Etag = verified.etag;
+      } else {
+        const { error: uploadError } = await supabase.storage
+          .from("feedback-anexos")
+          .upload(screenshotPath, bytes, { contentType: arquivo.type, upsert: false });
+        if (uploadError) throw uploadError;
+      }
     }
 
-    const { data, error } = await supabase
-      .from("feedbacks")
-      .insert({
-        user_id: auth.user.id,
-        tipo,
-        categoria,
-        assunto,
-        mensagem,
+    let feedbackId: string;
+    let feedbackCreated: string;
+    if (uploadProvider === "r2" && screenshotPath) {
+      // The media registry entry and feedback record are committed together.
+      // On failure, leave the *unconfirmed* reservation for verified cleanup.
+      // Never delete a potentially committed object after an uncertain RPC reply.
+      const { data, error } = await supabase.rpc("registrar_feedback_r2_backend", {
+        p_user_id: auth.user.id,
+        p_tipo: tipo, p_categoria: categoria, p_assunto: assunto, p_mensagem: mensagem,
+        p_nota: tipo === "feedback" ? nota : null,
+        p_pagina_origem: paginaOrigem, p_navegador: navegador,
+        p_screenshot_path: screenshotPath, p_screenshot_nome: screenshotNome,
+        p_screenshot_mime: screenshotMime, p_screenshot_bytes: screenshotBytes,
+        p_etag: r2Etag,
+      });
+      if (error || !data?.[0]?.feedback_id) throw error ?? new Error("O banco não confirmou a imagem R2.");
+      feedbackId = String(data[0].feedback_id);
+      feedbackCreated = String(data[0].feedback_created_at);
+    } else {
+      const { data, error } = await supabase.from("feedbacks").insert({
+        user_id: auth.user.id, tipo, categoria, assunto, mensagem,
         nota: tipo === "feedback" ? nota : null,
-        pagina_origem: paginaOrigem,
-        navegador,
-        screenshot_path: screenshotPath,
-        screenshot_nome: screenshotNome,
-        screenshot_mime: screenshotMime,
-        screenshot_bytes: screenshotBytes,
-      })
-      .select("id,criado_em")
-      .single();
-
-    if (error) {
-      if (screenshotPath) await supabase.storage.from("feedback-anexos").remove([screenshotPath]);
-      throw error;
+        pagina_origem: paginaOrigem, navegador,
+        screenshot_path: screenshotPath, screenshot_nome: screenshotNome,
+        screenshot_mime: screenshotMime, screenshot_bytes: screenshotBytes,
+      }).select("id,criado_em").single();
+      if (error) {
+        if (uploadProvider === "supabase" && screenshotPath) {
+          await supabase.storage.from("feedback-anexos").remove([screenshotPath]);
+        }
+        throw error;
+      }
+      feedbackId = String(data.id);
+      feedbackCreated = String(data.criado_em);
     }
 
     return NextResponse.json({
       ok: true,
-      id: data.id,
-      criadoEm: data.criado_em,
+      id: feedbackId,
+      criadoEm: feedbackCreated,
       mensagem: tipo === "problema"
         ? "Problema enviado. Vamos analisar as informações."
         : tipo === "sugestao"
