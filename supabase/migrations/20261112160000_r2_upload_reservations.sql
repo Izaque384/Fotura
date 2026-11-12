@@ -3,7 +3,7 @@
 -- No existing user files are touched by creating this table.
 create table public.fotura_r2_upload_reservations (
   id uuid primary key default gen_random_uuid(),
-  bucket text not null check (bucket in ('fotos','abertura-videos')),
+  bucket text not null check (bucket in ('fotos','abertura-videos','marca','client-avatars','feedback-anexos')),
   object_key text not null,
   thumbnail_key text,
   owner_id uuid not null references auth.users(id) on delete restrict,
@@ -27,7 +27,7 @@ create table public.fotura_r2_upload_reservations (
   ),
   constraint r2_pending_bucket_thumb check (
     (bucket='fotos' and thumbnail_key is not null) or
-    (bucket='abertura-videos' and thumbnail_key is null)
+    (bucket in ('abertura-videos','marca','client-avatars','feedback-anexos') and thumbnail_key is null)
   ),
   constraint r2_pending_expiry check (expires_at > created_at)
 );
