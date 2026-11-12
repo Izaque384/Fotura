@@ -10,6 +10,8 @@ declare
   thumb_key text;
   video_key text;
   feedback_key text;
+  logo_key text;
+  published_logo text;
   client_id uuid := '77777777-7777-4777-8777-777777777777';
   avatar_key text;
   stored_avatar text;
@@ -19,6 +21,7 @@ declare
   v_bytes bigint;
 begin
   insert into auth.users(id) values (uid);
+  logo_key := uid::text || '/' || '99999999-9999-4999-8999-999999999999.webp';
   insert into public.galeria_projetos(id,user_id) values (project_id,uid);
   insert into public.galerias(id,user_id,projeto_id,etapa) values
     (gallery_id,uid,project_id,'prova');
@@ -32,6 +35,28 @@ begin
   avatar_key := uid::text || '/' || client_id::text || '/' ||
     '88888888-8888-4888-8888-888888888888.webp';
   insert into public.clientes(id,user_id,nome) values (client_id,uid,'Cliente sintético');
+
+  -- The public URL is stable, but a logo may only become public after
+  -- server-side verification and atomic reservation + media registration.
+  insert into public.fotura_r2_upload_reservations
+    (bucket,object_key,owner_id,expires_at)
+  values ('marca',logo_key,uid,now()+interval '24 hours');
+  published_logo := public.registrar_logo_r2_backend(
+    uid,logo_key,320,'image/webp',null
+  );
+  if published_logo is distinct from '/api/marca/' || logo_key then
+    raise exception 'Studio logo URL did not use expected stable prefix';
+  end if;
+  select logo_url into stored_avatar from public.perfis where id=uid;
+  if stored_avatar is distinct from published_logo then
+    raise exception 'Profile logo and registered public URL diverged';
+  end if;
+  select count(*) into v_count from public.fotura_media_objects
+    where bucket='marca' and object_key=logo_key;
+  if v_count<>1 then raise exception 'Logo registry entry missing'; end if;
+  select count(*) into v_count from public.fotura_r2_upload_reservations
+    where bucket='marca' and object_key=logo_key;
+  if v_count<>0 then raise exception 'Logo reservation not cleared'; end if;
 
   -- No upload can be registered without an owner-bound reservation.
   if public.registrar_foto_r2_upload_backend(
