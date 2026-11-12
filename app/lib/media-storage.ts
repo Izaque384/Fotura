@@ -1,9 +1,9 @@
 import "server-only";
 import { createServiceClient } from "./supabase-server";
-import { isR2ReadEnabled, signPrivateR2ReadUrl } from "./r2-storage";
+import { isR2ReadEnabled, r2PhysicalKey, signPrivateR2ReadUrl, type FoturaMediaBucket } from "./r2-storage";
 
 type DatabaseClient = ReturnType<typeof createServiceClient>;
-type MediaBucket = "fotos" | "abertura-videos";
+type MediaBucket = FoturaMediaBucket;
 
 /**
  * Read routing for verified R2 copies. No application path selects R2 by
@@ -30,7 +30,7 @@ export async function signPrivateMediaUrl(
   downloadName?: string
 ): Promise<string | null> {
   const r2 = await verifiedR2Keys(db, bucket, [key]);
-  if (r2.has(key)) return signPrivateR2ReadUrl(key, seconds);
+  if (r2.has(key)) return signPrivateR2ReadUrl(r2PhysicalKey(bucket, key), seconds);
   const { data, error } = await db.storage.from(bucket).createSignedUrl(
     key, seconds, downloadName ? { download: downloadName } : undefined
   );
@@ -48,7 +48,7 @@ export async function signPrivateMediaUrls(
   if (uniqueKeys.length === 0) return {};
   const r2 = await verifiedR2Keys(db, bucket, uniqueKeys);
   const result: Record<string, string> = {};
-  for (const key of r2) result[key] = signPrivateR2ReadUrl(key, seconds);
+  for (const key of r2) result[key] = signPrivateR2ReadUrl(r2PhysicalKey(bucket, key), seconds);
 
   const legacy = uniqueKeys.filter((key) => !r2.has(key));
   if (legacy.length) {
@@ -73,7 +73,7 @@ export async function downloadPrivateMediaBlob(
 ): Promise<Blob | null> {
   const r2 = await verifiedR2Keys(db, bucket, [key]);
   if (r2.has(key)) {
-    const response = await fetch(signPrivateR2ReadUrl(key, 60), { cache: "no-store" });
+    const response = await fetch(signPrivateR2ReadUrl(r2PhysicalKey(bucket, key), 60), { cache: "no-store" });
     return response.ok ? response.blob() : null;
   }
   const { data, error } = await db.storage.from(bucket).download(key);
