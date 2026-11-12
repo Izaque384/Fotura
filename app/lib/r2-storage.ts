@@ -109,6 +109,73 @@ export function signPrivateR2ObjectUrl(
   return "https://" + hostname + resource + "?" + query + "&X-Amz-Signature=" + signature;
 }
 
+/**
+ * S3 multipart control requests MUST use server-side Authorization headers.
+ * Cloudflare R2 documents presigned URL access for GET/HEAD/PUT/DELETE only;
+ * multipart initialization/completion uses POST and is never exposed to browsers.
+ */
+export async function fetchPrivateR2Control(
+  method: "GET" | "POST" | "DELETE",
+  key: string,
+  multipartQuery: MultipartQuery,
+  options: { body?: string; contentType?: string; timeoutMs?: number } = {}
+): Promise<Response> {
+  const { accountId, accessKeyId, secretAccessKey, bucket } = configuration();
+  const safeKey = checkedKey(key);
+  const mime = options.contentType;
+  if (mime && !/^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i.test(mime)) {
+    throw new Error("Tipo MIME do controle R2 inválido.");
+  }
+  if (options.body && method !== "POST") {
+    throw new Error("Payload não permitido nesse controle R2.");
+  }
+  if (multipartQuery.length < 1 || multipartQuery.some(([name, value]) =>
+      (name === "uploads" && value !== "") ||
+      (name === "uploadId" && (!value || value.length > 512 || /[\u0000-\u001f\u007f]/.test(value))) ||
+      (name === "partNumber" && (!/^[1-9][0-9]{0,3}$/.test(value) || Number(value) > 10000))
+  )) {
+    throw new Error("Parâmetros do controle R2 inválidos.");
+  }
+  const hostname = accountId + ".r2.cloudflarestorage.com";
+  const resource = "/" + encodeSegment(bucket) + "/" + safeKey.split("/").map(encodeSegment).join("/");
+  const query = canonicalQuery(multipartQuery.map(([a, b]) => [a, b]));
+  const now = new Date().toISOString().replace(/[:-]|\.\d{3}/g, "");
+  const day = now.slice(0, 8);
+  const scope = day + "/auto/s3/aws4_request";
+  const hash = createHash("sha256").update(options.body ?? "", "utf8").digest("hex");
+
+  const signed = new Map<string, string>([
+    ["host", hostname],
+    ["x-amz-content-sha256", hash],
+    ["x-amz-date", now],
+  ]);
+  if (mime) signed.set("content-type", mime);
+  const names = [...signed.keys()].sort();
+  const signedHeaders = names.join(";");
+  const canonicalHeaders = names.map((name) => name + ":" + signed.get(name)!.trim() + "\n").join("");
+  const canonicalRequest = [method, resource, query, canonicalHeaders, signedHeaders, hash].join("\n");
+  const stringToSign = ["AWS4-HMAC-SHA256", now, scope, sha256(canonicalRequest)].join("\n");
+  const signingKey = hmac(
+    hmac(hmac(hmac("AWS4" + secretAccessKey, day), "auto"), "s3"),
+    "aws4_request"
+  );
+  const signature = createHmac("sha256", signingKey).update(stringToSign, "utf8").digest("hex");
+  const authorization = "AWS4-HMAC-SHA256 Credential=" + accessKeyId + "/" + scope +
+    ", SignedHeaders=" + signedHeaders + ", Signature=" + signature;
+  return fetch("https://" + hostname + resource + "?" + query, {
+    method,
+    headers: {
+      "Authorization": authorization,
+      "X-Amz-Date": now,
+      "X-Amz-Content-Sha256": hash,
+      ...(mime ? { "Content-Type": mime } : {}),
+    },
+    body: options.body,
+    cache: "no-store",
+    signal: AbortSignal.timeout(options.timeoutMs ?? 15_000),
+  });
+}
+
 export function signPrivateR2ReadUrl(key: string, expiresSeconds: number): string {
   return signPrivateR2ObjectUrl("GET", key, expiresSeconds);
 }
