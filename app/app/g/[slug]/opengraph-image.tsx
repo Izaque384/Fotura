@@ -1,14 +1,33 @@
 import { ImageResponse } from "next/og";
 import { resolvePublicGalleryRef } from "../../../lib/gallery-public-ref.server";
 import { createServiceClient } from "../../../lib/supabase-server";
+import { downloadPrivateMediaBlob } from "../../../lib/media-storage";
 
 export const runtime = "nodejs";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-async function carregarLogo(url: string | null) {
+async function carregarLogo(url: string | null, ownerId: string | null) {
   if (!url) return null;
   try {
+    // Public studio logos on R2 use a stable same-origin path, not an
+    // expiring presigned URL. For Open Graph rendering, read the verified
+    // object server-side without making a self-referential HTTP request.
+    if (ownerId && url.startsWith("/api/marca/")) {
+      const prefix = "/api/marca/" + ownerId + "/";
+      if (!url.startsWith(prefix)) return null;
+      const filename = url.slice(prefix.length);
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:png|jpg|webp)$/.test(filename)) return null;
+      const image = await downloadPrivateMediaBlob(
+        createServiceClient(), "marca", ownerId + "/" + filename
+      );
+      if (!image || image.size < 1 || image.size > 5 * 1024 * 1024 ||
+          !["image/jpeg", "image/png", "image/webp"].includes(image.type)) return null;
+      const bytes = Buffer.from(await image.arrayBuffer()).toString("base64");
+      return `data:${image.type};base64,${bytes}`;
+    }
+    // Existing studio logos stay available through their previous public
+    // Supabase Storage URL until the verified migration is completed.
     const resposta = await fetch(url, { cache: "no-store" });
     if (!resposta.ok) return null;
     const tipo = resposta.headers.get("content-type") || "image/png";
@@ -31,9 +50,11 @@ export default async function Image({
   let estudio = "Fotura";
   let cor = "#17152b";
   let logoUrl: string | null = null;
+  let studioOwnerId: string | null = null;
 
   if (galeria) {
     titulo = galeria.titulo;
+    studioOwnerId = galeria.userId;
 
     const supabase = createServiceClient();
     const { data: perfil } = await supabase
@@ -47,7 +68,7 @@ export default async function Image({
     logoUrl = (perfil?.logo_url as string | null) ?? null;
   }
 
-  const logo = await carregarLogo(logoUrl);
+  const logo = await carregarLogo(logoUrl, studioOwnerId);
   const inicial = estudio.trim().charAt(0).toUpperCase() || "F";
 
   return new ImageResponse(
