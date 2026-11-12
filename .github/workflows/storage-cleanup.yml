@@ -44,3 +44,42 @@ jobs:
                   raise SystemExit(f"Invalid SQL syntax in {path}: {error}")
           print(f"Parsed {len(files)} R2 migrations (syntax only; does not execute DDL).")
           PY
+
+  r2-local-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fotura_r2_tests
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d fotura_r2_tests"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: postgres
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGDATABASE: fotura_r2_tests
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL test client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Apply disposable schema fixture (not connected to Supabase production)
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/r2_local_fixture.sql
+      - name: Execute each staged R2 migration
+        run: |
+          set -euo pipefail
+          for migration in supabase/migrations/*_r2_*.sql; do
+            echo "Applying $migration in disposable PostgreSQL"
+            psql -v ON_ERROR_STOP=1 -f "$migration"
+          done
+      - name: Execute R2 registration and cleanup SQL assertions
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/r2_local_contract.sql
