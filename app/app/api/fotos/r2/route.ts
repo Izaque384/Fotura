@@ -168,6 +168,17 @@ export async function POST(req: NextRequest) {
     const allowed = await galleryAllowed(auth.db, auth.user.id, body.galeria, body.variante);
     if (!allowed) return json({ error: "Pasta indisponível para envio." }, 403);
 
+    // Bound reserved-but-unconfirmed uploads to avoid exhausting R2 storage
+    // and bypassing photo/storage quotas with many simultaneous PUT URLs.
+    const { count: pendingCount, error: pendingError } = await auth.db
+      .from("fotura_r2_upload_reservations")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", auth.user.id).eq("state", "pending");
+    if (pendingError) return json({ error: "Não foi possível verificar os envios pendentes." }, 503);
+    if ((pendingCount ?? 0) >= 25) return json({
+      error: "Há muitos envios aguardando confirmação. Conclua ou cancele os anteriores.",
+    }, 429);
+
     try {
       const context = await contextoPlano(auth.db, auth.user.id);
       const { data: fairUse, error: fairUseError } = await auth.db.rpc("status_uso_justo_upload_backend", { p_user_id: auth.user.id });
