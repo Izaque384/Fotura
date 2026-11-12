@@ -42,6 +42,17 @@ Objetivo confirmado: R2 como único storage de mídias após migração; Supabas
 - **Limite dos testes:** PostgreSQL local com tabelas de ensaio não replica integralmente RLS, configuração Supabase Auth/Storage, triggers preexistentes ou rede Cloudflare. E2E autenticado, avatares, logomarcas públicas e recuperação dos objetos reais seguem pendentes.
 - Nenhuma credencial, dado de cliente, upload ou tabela de produção foi alterado nesta etapa.
 
+## Atualização sem transferência de mídia — 12/11/2026 (à noite)
+
+- **Regra acordada:** nenhuma cópia das 1.228 mídias existentes antes de **23/11/2026**, e somente se o dashboard da Supabase confirmar a renovação da franquia. Ver `docs/R2_LEGACY_TRANSFER_POLICY.md`. O dia 22/11 foi apresentado como data provável, ainda não comprovada.
+- A documentação oficial informa 5 GB de egress não cacheado e 5 GB cacheado por ciclo para o plano Free; exceder a franquia pode causar **restrições**, não cobranças automáticas por egress no Free.
+- Telas de clientes e projetos migradas, na branch, para leitura autenticada de avatares e capas via adaptador de mídia; seleção de foto da galeria para avatar usa catálogo híbrido e download autorizado, sem Storage direto pelo navegador.
+- Upload/remoção de avatares preparado com API autenticada que preserva a referência do cliente; R2 usa reserva privada, HEAD de verificação, registro transacional e DELETE/HEAD 404 para limpeza. SQL em `20261112240000_r2_avatar_registration.sql`.
+- Integração de avatares adicionada ao PostgreSQL descartável CI; os três jobs da última execução de segurança foram verdes: cleanup, syntax e SQL integration.
+- O fluxo E2E já executou **Next.js build + TypeScript check com sucesso** na branch; o restante da suíte não está integralmente aprovado.
+- Uma nova prévia Vercel foi recusada por limite **api-deployments-free-per-day** (mais de 100 deployments em 24 horas). Não se alterou o plano nem houve cobrança.
+- **Não mudou**: flags R2 desligadas, produção no commit anterior, registros SQL R2 não aplicados, nenhuma mídia real transferida. Logo público do estúdio continua como bloqueador da mudança integral.
+
 ## Condições obrigatórias para release
 1. Preparar ambiente isolado de teste com as migrações SQL, validar RLS/grants, reservas, jobs, contagem de quota e transações com dados sintéticos.
 2. Configurar segredos R2 também no ambiente correto da Edge Function de limpeza, testar tarefas expiradas de foto, thumb, vídeo e multipart e verificar HEAD 404 antes do ACK.
