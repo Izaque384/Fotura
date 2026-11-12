@@ -60,3 +60,22 @@ export async function signPrivateMediaUrls(
   }
   return result;
 }
+
+
+/**
+ * Server-side access for image transformations (watermark and Open Graph).
+ * Preserves the authorization checks performed by the calling route.
+ */
+export async function downloadPrivateMediaBlob(
+  db: DatabaseClient,
+  bucket: MediaBucket,
+  key: string
+): Promise<Blob | null> {
+  const r2 = await verifiedR2Keys(db, bucket, [key]);
+  if (r2.has(key)) {
+    const response = await fetch(signPrivateR2ReadUrl(key, 60), { cache: "no-store" });
+    return response.ok ? response.blob() : null;
+  }
+  const { data, error } = await db.storage.from(bucket).download(key);
+  return error ? null : data;
+}
