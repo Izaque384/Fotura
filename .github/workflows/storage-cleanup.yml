@@ -17,3 +17,18 @@ jobs:
         with:
           node-version: 24
       - run: node --test tests/storage-cleanup.test.ts tests/r2-migration-safety.test.ts
+  validate-r2-sql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v3
+        with:
+          version: v2.stable
+      - name: Start local Supabase (no hosted database credentials)
+        run: supabase start
+      - name: Replay migrations in disposable local database
+        run: supabase db reset --local --no-seed
+      - name: Stop disposable database
+        if: always()
+        run: supabase stop --no-backup || true
