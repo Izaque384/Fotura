@@ -92,21 +92,37 @@ export default function PerfilPage() {
 
   async function enviarLogo(arquivo: File) {
     setErro(false); setMensagem("");
-    if (!TIPOS_LOGO.has(arquivo.type)) { setErro(true); setMensagem("Use uma imagem PNG, JPG ou WEBP."); return; }
-    if (arquivo.size > MAX_LOGO) { setErro(true); setMensagem("A logo deve ter no máximo 5 MB."); return; }
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) { router.replace("/login"); return; }
+    if (!TIPOS_LOGO.has(arquivo.type)) {
+      setErro(true); setMensagem("Use uma imagem PNG, JPG ou WEBP."); return;
+    }
+    if (arquivo.size <= 0 || arquivo.size > MAX_LOGO) {
+      setErro(true); setMensagem("A logo deve ter no máximo 5 MB."); return;
+    }
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session?.access_token) { router.replace("/login"); return; }
     setEnviandoLogo(true);
-    const ext = arquivo.type === "image/png" ? "png" : arquivo.type === "image/webp" ? "webp" : "jpg";
-    const caminho = `${userData.user.id}/logo-${Date.now()}.${ext}`;
-    const { error: erroUpload } = await supabase.storage.from("marca").upload(caminho, arquivo, { contentType: arquivo.type, upsert: false });
-    if (erroUpload) { setErro(true); setMensagem("Não foi possível enviar a logo."); setEnviandoLogo(false); return; }
-    const { data: urlData } = supabase.storage.from("marca").getPublicUrl(caminho);
-    const url = urlData.publicUrl;
-    const { error: erroPerfil } = await supabase.from("perfis").upsert({ id: userData.user.id, logo_url: url, atualizado_em: new Date().toISOString() });
-    if (erroPerfil) { setErro(true); setMensagem("A imagem foi enviada, mas não foi possível atualizar o perfil."); }
-    else { setLogoUrl(url); setMensagem("Logotipo atualizado. A nova imagem já aparece na prévia."); }
-    setEnviandoLogo(false);
+    try {
+      const form = new FormData();
+      form.append("arquivo", arquivo);
+      const response = await fetch("/api/marca", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + session.session.access_token },
+        cache: "no-store",
+        body: form,
+      });
+      const result = await response.json() as { logoUrl?: string; error?: string };
+      if (!response.ok || !result.logoUrl) {
+        throw new Error(result.error || "Não foi possível confirmar o novo logotipo.");
+      }
+      setLogoUrl(result.logoUrl);
+      setMensagem("Logotipo atualizado. A nova imagem já aparece na prévia.");
+    } catch (error) {
+      setErro(true);
+      setMensagem(error instanceof Error ? error.message :
+        "Não foi possível atualizar o logotipo.");
+    } finally {
+      setEnviandoLogo(false);
+    }
   }
 
   function escolherEstilo(estilo: HeroEstilo) {
