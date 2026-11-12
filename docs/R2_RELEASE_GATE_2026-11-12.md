@@ -32,6 +32,16 @@ Objetivo confirmado: R2 como único storage de mídias após migração; Supabas
 - A última execução E2E concluída após alterações nos seletores/testes registrou 152 aprovações e 18 falhas. Não há aprovação da suíte completa.
 - A branch de teste do Supabase requer aceitação explícita do custo de US$ 0,01344 por hora, conforme retornado pela ferramenta; nenhum custo extra de branch foi autorizado ou ativado.
 - O plano Supabase atual é Free. A plataforma inclui 5 GB de egress não cacheado por ciclo; a cópia integral (~1,69 GB de mídias) precisa respeitar a franquia restante e não deve ser disparada sem medição atual. Consulte a cota em Supabase antes de copiar.
+## Validação sem branch paga — 12/11/2026
+
+- O usuário **não autorizou** o custo de US$ 0,01344/h da branch Supabase. Respeitado: **nenhuma branch hospedada foi criada**.
+- Em vez disso, foi adicionado um teste real de execução SQL em um serviço PostgreSQL 17 temporário do GitHub Actions, com estrutura mínima fictícia (sem conexão ao banco de produção).
+- No workflow de limpeza, os três jobs agora passaram: **limpeza/regressão de segurança**, **parser PostgreSQL das migrações** e **integração SQL local**. O último aplica os scripts R2 e verifica por transações reservas/registro de fotos e miniaturas, vídeo de abertura, anexo de feedback, quota e claim/ack de limpeza órfã.
+- Migrações preparadas para todos os buckets: `fotos`, `abertura-videos`, `marca`, `client-avatars`, `feedback-anexos`. Mídias auxiliares têm namespace físico próprio dentro de `fotura-media`.
+- O upload de anexos de feedback no modo R2 já está preparado em código com verificação HEAD e uma RPC que registra feedback e imagem na mesma transação; visualização administrativa usa o adaptador privado. Continua **desligado** em produção.
+- **Limite dos testes:** PostgreSQL local com tabelas de ensaio não replica integralmente RLS, configuração Supabase Auth/Storage, triggers preexistentes ou rede Cloudflare. E2E autenticado, avatares, logomarcas públicas e recuperação dos objetos reais seguem pendentes.
+- Nenhuma credencial, dado de cliente, upload ou tabela de produção foi alterado nesta etapa.
+
 ## Condições obrigatórias para release
 1. Preparar ambiente isolado de teste com as migrações SQL, validar RLS/grants, reservas, jobs, contagem de quota e transações com dados sintéticos.
 2. Configurar segredos R2 também no ambiente correto da Edge Function de limpeza, testar tarefas expiradas de foto, thumb, vídeo e multipart e verificar HEAD 404 antes do ACK.
