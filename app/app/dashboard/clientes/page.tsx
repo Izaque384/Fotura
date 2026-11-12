@@ -341,8 +341,8 @@ export default function ClientesPage() {
       );
       if (!response.ok) throw new Error("Miniatura indisponível");
       const blob = await response.blob();
-      const mime = /\\.webp$/i.test(path) ? "image/webp" :
-        /\\.png$/i.test(path) ? "image/png" : "image/jpeg";
+      const mime = /\.webp$/i.test(path) ? "image/webp" :
+        /\.png$/i.test(path) ? "image/png" : "image/jpeg";
       const file = new File([blob], "fotura-galeria." + mime.split("/")[1], { type: mime });
       if (file.size > 8 * 1024 * 1024) throw new Error("Arquivo acima do limite");
       escolherFoto(file);
