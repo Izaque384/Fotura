@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validarAdmin, registrarAdminAuditoria } from "../../../../lib/admin-server";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { registrarErro } from "../../../../lib/observability";
+import { signPrivateMediaUrl } from "../../../../lib/media-storage";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -38,10 +39,9 @@ export async function GET(req: NextRequest) {
     const feedbacks = await Promise.all(rows.map(async (item) => {
       let screenshotUrl: string | null = null;
       if (item.screenshot_path) {
-        const { data: signed } = await supabase.storage
-          .from("feedback-anexos")
-          .createSignedUrl(String(item.screenshot_path), 60 * 20);
-        screenshotUrl = signed?.signedUrl ?? null;
+        screenshotUrl = await signPrivateMediaUrl(
+          supabase, "feedback-anexos", String(item.screenshot_path), 60 * 20
+        );
       }
       return {
         ...item,
