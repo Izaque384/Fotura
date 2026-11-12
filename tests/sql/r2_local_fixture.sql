@@ -50,6 +50,12 @@ create table private.upload_fair_use_mensal (
   atualizado_em timestamptz not null default now(),
   primary key (user_id,mes)
 );
+create table public.perfis (
+  id uuid primary key references auth.users(id),
+  logo_url text,
+  nome_estudio text,
+  atualizado_em timestamptz default now()
+);
 create table public.clientes (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id),
