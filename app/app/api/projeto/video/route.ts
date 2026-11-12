@@ -12,8 +12,11 @@ import { signPrivateMediaUrl } from "../../../../lib/media-storage";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const r2Requested = () => process.env.FOTURA_R2_UPLOAD_ENABLED === "true";
-const r2Ready = () => r2Requested() && process.env.VERCEL_ENV === "preview" &&
+const finalCutover = () => process.env.FOTURA_R2_FINAL_CUTOVER === "true";
+const r2Requested = () => process.env.FOTURA_R2_UPLOAD_ENABLED === "true" || finalCutover();
+const r2Ready = () => r2Requested() && process.env.FOTURA_R2_UPLOAD_ENABLED === "true" &&
+  (process.env.VERCEL_ENV === "preview" ||
+    (process.env.VERCEL_ENV === "production" && finalCutover())) &&
   isR2ReadEnabled() && r2CredentialsPresent();
 
 async function r2VideoHead(path: string) {
