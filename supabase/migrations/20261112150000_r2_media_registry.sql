@@ -3,7 +3,7 @@
 -- RESTRICT on auth user deletion prevents loss of registry rows before R2
 -- media is physically and verifiably removed, avoiding orphaned private files.
 create table if not exists public.fotura_media_objects (
-  bucket text not null check (bucket in ('fotos', 'abertura-videos')),
+  bucket text not null check (bucket in ('fotos', 'abertura-videos', 'marca', 'client-avatars', 'feedback-anexos')),
   object_key text not null,
   owner_id uuid not null references auth.users(id) on delete restrict,
   provider text not null default 'r2' check (provider = 'r2'),
