@@ -1,5 +1,5 @@
 import "server-only";
-import { signPrivateR2ObjectUrl } from "./r2-storage";
+import { fetchPrivateR2Control, signPrivateR2ObjectUrl } from "./r2-storage";
 
 /**
  * Multipart S3 compatibility layer for the private Cloudflare R2 bucket.
@@ -45,15 +45,9 @@ async function checkedResponse(response: Response, action: string): Promise<stri
 }
 
 export async function beginR2Multipart(key: string, mime: string): Promise<string> {
-  const response = await fetch(
-    signPrivateR2ObjectUrl("POST", key, 60, mime, [["uploads", ""]]),
-    {
-      method: "POST",
-      headers: { "Content-Type": mime },
-      cache: "no-store",
-      signal: AbortSignal.timeout(15_000),
-    }
-  );
+  const response = await fetchPrivateR2Control("POST", key, [["uploads", ""]], {
+    contentType: mime, timeoutMs: 15_000,
+  });
   const xml = await checkedResponse(response, "iniciar");
   const uploadId = xmlValue(xml, "UploadId");
   if (!uploadId || !validUploadId(uploadId)) {
@@ -74,8 +68,8 @@ export async function listR2MultipartParts(key: string, uploadId: string): Promi
   const found: R2UploadedPart[] = [];
   while (found.length < 10000) {
     // All Fotura originals currently fit on one S3 ListParts page (<10 parts).
-    const response = await fetch(signPrivateR2ObjectUrl("GET", key, 60, undefined, query(uploadId)), {
-      cache: "no-store", signal: AbortSignal.timeout(15_000),
+    const response = await fetchPrivateR2Control("GET", key, query(uploadId), {
+      timeoutMs: 15_000,
     });
     const xml = await checkedResponse(response, "listar partes");
     const chunks = xml.match(/<(?:[a-zA-Z0-9_-]+:)?Part>[\s\S]*?<\/(?:[a-zA-Z0-9_-]+:)?Part>/g) ?? [];
@@ -120,12 +114,9 @@ export async function finishR2Multipart(
     parts.map((part) => "<Part><PartNumber>" + part.partNumber + "</PartNumber><ETag>\"" +
       part.etag + "\"</ETag></Part>").join("") +
     "</CompleteMultipartUpload>";
-  const response = await fetch(
-    signPrivateR2ObjectUrl("POST", key, 60, undefined, query(uploadId)), {
-      method: "POST", headers: { "Content-Type": "application/xml" },
-      body: xml, cache: "no-store", signal: AbortSignal.timeout(30_000),
-    }
-  );
+  const response = await fetchPrivateR2Control("POST", key, query(uploadId), {
+    body: xml, contentType: "application/xml", timeoutMs: 30_000,
+  });
   const body = await checkedResponse(response, "concluir");
   if (!xmlValue(body, "ETag") || !body.includes("CompleteMultipartUploadResult")) {
     throw new Error("R2 não confirmou a conclusão do arquivo.");
@@ -133,11 +124,9 @@ export async function finishR2Multipart(
 }
 
 export async function abortR2Multipart(key: string, uploadId: string): Promise<void> {
-  const response = await fetch(
-    signPrivateR2ObjectUrl("DELETE", key, 60, undefined, query(uploadId)), {
-      method: "DELETE", cache: "no-store", signal: AbortSignal.timeout(15_000),
-    }
-  );
+  const response = await fetchPrivateR2Control("DELETE", key, query(uploadId), {
+    timeoutMs: 15_000,
+  });
   if (!response.ok && response.status !== 404) {
     throw new Error("Falha ao cancelar upload incompleto no R2.");
   }
