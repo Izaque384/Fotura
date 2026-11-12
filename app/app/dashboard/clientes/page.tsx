@@ -147,10 +147,19 @@ export default function ClientesPage() {
     const caminhos = Array.from(new Set(lista.map((c) => c.avatar_path).filter((x): x is string => !!x)));
     if (!caminhos.length) { setSignedAvatars({}); return; }
     const next: Record<string, string> = {};
+    const { data: session } = await supabase.auth.getSession();
+    const token = session.session?.access_token;
+    if (!token) { setSignedAvatars({}); return; }
     for (let i = 0; i < caminhos.length; i += 50) {
-      const batch = caminhos.slice(i, i + 50);
-      const { data } = await supabase.storage.from(BUCKET).createSignedUrls(batch, 3600);
-      data?.forEach((item, index) => { if (item.signedUrl) next[batch[index]] = item.signedUrl; });
+      const response = await fetch("/api/clientes/avatar-urls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        cache: "no-store",
+        body: JSON.stringify({ paths: caminhos.slice(i, i + 50) }),
+      });
+      if (!response.ok) throw new Error("Não foi possível carregar as fotos dos clientes.");
+      const signed = await response.json() as { urls?: Record<string, string> };
+      Object.assign(next, signed.urls ?? {});
     }
     setSignedAvatars(next);
   }, [supabase]);
@@ -328,8 +337,19 @@ export default function ClientesPage() {
     } finally { setCarregandoGaleria(false); }
   }
   async function assinarAvatar(path: string) {
-    const { data } = await supabase.storage.from(BUCKET).createSignedUrl(path, 3600);
-    if (data?.signedUrl) setSignedAvatars((current) => ({ ...current, [path]: data.signedUrl }));
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session?.access_token) return;
+    const response = await fetch("/api/clientes/avatar-urls", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.session.access_token },
+      cache: "no-store",
+      body: JSON.stringify({ paths: [path] }),
+    });
+    if (!response.ok) return;
+    const data = await response.json() as { urls?: Record<string, string> };
+    if (data.urls?.[path]) {
+      setSignedAvatars((current) => ({ ...current, [path]: data.urls![path] }));
+    }
   }
 
   async function salvar(e: FormEvent<HTMLFormElement>) {
