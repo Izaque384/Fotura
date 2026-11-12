@@ -53,17 +53,27 @@ function canonicalQuery(params: Array<[string, string]>): string {
     .map(([key, value]) => key + "=" + value).join("&");
 }
 
-type SignedMethod = "GET" | "PUT" | "HEAD" | "DELETE";
+type SignedMethod = "GET" | "PUT" | "HEAD" | "DELETE" | "POST";
+type MultipartQuery = ReadonlyArray<readonly ["uploads" | "uploadId" | "partNumber", string]>;
 
+/** S3 Signature V4 for private R2 requests, including multipart S3 query parameters. */
 export function signPrivateR2ObjectUrl(
   method: SignedMethod,
   key: string,
   expiresSeconds: number,
-  contentType?: string
+  contentType?: string,
+  multipartQuery: MultipartQuery = []
 ): string {
-  if (contentType && (method !== "PUT" || !/^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i.test(contentType))) {
+  if (contentType && (!["PUT", "POST"].includes(method) ||
+      !/^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i.test(contentType))) {
     throw new Error("Tipo de conteúdo R2 inválido.");
   }
+  if (multipartQuery.some(([name, value]) =>
+    (name === "uploads" && value !== "") ||
+    (name === "uploadId" && (!value || value.length > 512 || /[\u0000-\u001f\u007f]/.test(value))) ||
+    (name === "partNumber" && (!/^[1-9][0-9]{0,3}$/.test(value) || Number(value) > 10000))
+  )) throw new Error("Parâmetro multipartes R2 inválido.");
+
   const { accountId, accessKeyId, secretAccessKey, bucket } = configuration();
   const safeKey = checkedKey(key);
   if (!Number.isInteger(expiresSeconds) || expiresSeconds < 1 || expiresSeconds > 604800) {
@@ -82,9 +92,12 @@ export function signPrivateR2ObjectUrl(
     ["X-Amz-Date", now],
     ["X-Amz-Expires", String(expiresSeconds)],
     ["X-Amz-SignedHeaders", contentType ? "content-type;host" : "host"],
+    ...multipartQuery.map(([k, v]) => [k, v] as [string, string]),
   ];
   const query = canonicalQuery(params);
-  const headers = contentType ? "content-type:" + contentType + "\n" + "host:" + hostname + "\n" : "host:" + hostname + "\n";
+  const headers = contentType ?
+    "content-type:" + contentType + "\n" + "host:" + hostname + "\n" :
+    "host:" + hostname + "\n";
   const signedHeaders = contentType ? "content-type;host" : "host";
   const request = [method, resource, query, headers, signedHeaders, "UNSIGNED-PAYLOAD"].join("\n");
   const stringToSign = ["AWS4-HMAC-SHA256", now, scope, sha256(request)].join("\n");
