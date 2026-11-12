@@ -50,6 +50,12 @@ create table private.upload_fair_use_mensal (
   atualizado_em timestamptz not null default now(),
   primary key (user_id,mes)
 );
+create table public.clientes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id),
+  nome text not null,
+  avatar_path text
+);
 create table public.feedbacks (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id),
