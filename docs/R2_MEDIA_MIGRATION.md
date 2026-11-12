@@ -38,6 +38,16 @@ Manter PostgreSQL/Auth do Supabase e passar arquivos dos buckets **fotos** e **a
 - Roteamento por objeto: R2 **somente** quando existir entrada verificada no registro privado e a flag estiver ativada; caso contrário, Supabase.
 - Migração SQL adiciona apenas tabela privada, sem alterar tabelas/fotos existentes.
 
+## Etapa 4 — limpeza durável preparada (ainda não ativada)
+- Mantida a fila existente de limpeza de galerias; adicionadas RPCs independentes para localizar objetos R2 pelo prefixo exato, validar o lease e reconhecer a remoção após DELETE e HEAD 404 no R2.
+- A Edge Function de limpeza foi adaptada para excluir objetos R2 com credenciais S3 restritas ao bucket e só então reconhecer a retirada dos registros de fotura_media_objects. As credenciais para a função devem ser configuradas como segredos protegidos apenas no rollout.
+- A RPC de conclusão impede marcar o trabalho completo enquanto existir objeto legado no Supabase ou objeto registrado no R2. O dispatcher reabre trabalhos concluídos se uma mídia tardia for registrada sob o mesmo prefixo.
+- Testes unitários de fila mista, falha na verificação remota, nova tentativa, restrição de prefixo e conclusão passaram no GitHub Actions.
+- O painel de armazenamento passa a ter suporte ao uso exclusivo do R2, sem dupla contagem de mídias previamente copiadas.
+- Novas migrações somente no GitHub: 20261112190000_r2_durable_cleanup.sql e 20261112200000_r2_storage_gallery_summary.sql; NÃO aplicadas ao banco.
+- Bloqueadores: limpeza de objetos R2 enviados mas nunca registrados (uploads abandonados), remoção de vídeos R2 por projeto, teste da Edge Function com segredos, testes autenticados de galeria e cutover de todos os uploads (inclusive vídeo).
+- Bloqueios preventivos de exclusão de galerias, projetos e contas com mídia R2 permanecem até termos limpeza completa validada; nenhum arquivo de cliente foi removido.
+
 ## Etapa 3 — envio multipartes (em validação)
 - Foi adicionada a camada S3 multipartes no servidor: início, URL assinada por parte de 8 MiB, consulta de partes, conferência de tamanho antes de finalizar e cancelamento.
 - **Teste sintético aprovado em prévia:** upload em duas partes, listagem e conferência dos bytes, conclusão, HEAD, leitura parcial (Range), exclusão do arquivo e abort de multipart incompleto. A rota temporária de teste foi removida e a flag de teste foi desativada.
