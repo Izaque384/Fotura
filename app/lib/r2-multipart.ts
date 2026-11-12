@@ -6,6 +6,7 @@ import { signPrivateR2ObjectUrl } from "./r2-storage";
  * All control-plane operations run on the server; browsers receive a
  * short-lived signed PUT URL for one part at a time.
  */
+/** 8 MiB satisfies R2/S3's 5 MiB minimum for every non-final part. */
 export const R2_PART_BYTES = 8 * 1024 * 1024;
 export const R2_MIN_PART_BYTES = 5 * 1024 * 1024;
 export const R2_SIGNED_PART_SECONDS = 5 * 60;
