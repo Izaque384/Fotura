@@ -11,6 +11,7 @@ import { heroPresetDataUrl, estiloHeroEfetivo } from "../../../../lib/gallery-he
 import { createGalleryWatermarkUrl } from "../../../../lib/gallery-watermark-token";
 import { ordenarFotos } from "../../../../lib/gallery-photo-order";
 import { signPrivateMediaUrl, signPrivateMediaUrls } from "../../../../lib/media-storage";
+import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
 
 export const dynamic = "force-dynamic";
 const EXPIRA_SEG = 3600;
@@ -110,11 +111,7 @@ export async function GET(req: NextRequest) {
   type FotoListada={name:string;largura?:number;altura?:number;bytes?:number;mimeType?:string|null;criadoEm?:string|null};
   let lista:FotoListada[]=[];
   const variante=entregaFinalDeProva?"entrega":"principal";
-  const { data: catalogo, error: catalogoError } = await supabase.rpc("listar_fotos_galeria_storage", {
-    p_galeria: galeria,
-    p_user: dono,
-    p_variante: variante,
-  });
+  const { data: catalogo, error: catalogoError } = await listarCatalogoGaleriaHibrido(supabase, dono, galeria, variante);
   if (!catalogoError && Array.isArray(catalogo)) {
     lista = catalogo.map((item: {nome?:unknown;largura?:unknown;altura?:unknown;bytes?:unknown;mime_type?:unknown;criado_em?:unknown}) => ({
       name: String(item.nome || ""),
