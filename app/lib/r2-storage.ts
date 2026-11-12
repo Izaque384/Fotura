@@ -55,8 +55,7 @@ function canonicalQuery(params: Array<[string, string]>): string {
 
 export function signPrivateR2ReadUrl(
   key: string,
-  expiresSeconds: number,
-  downloadName?: string
+  expiresSeconds: number
 ): string {
   const { accountId, accessKeyId, secretAccessKey, bucket } = configuration();
   const safeKey = checkedKey(key);
@@ -77,13 +76,6 @@ export function signPrivateR2ReadUrl(
     ["X-Amz-Expires", String(expiresSeconds)],
     ["X-Amz-SignedHeaders", "host"],
   ];
-  if (downloadName !== undefined) {
-    const safeName = downloadName.replace(/[\u0000-\u001f\u007f]/g, "").slice(0, 300);
-    if (!safeName || /[\\/]/.test(safeName)) throw new Error("Nome de download inválido.");
-    params.push(["response-content-disposition",
-      "attachment; filename*=UTF-8''" + encodeSegment(safeName)]);
-  }
-
   const query = canonicalQuery(params);
   const request = ["GET", resource, query, "host:" + hostname + "\n", "host", "UNSIGNED-PAYLOAD"].join("\n");
   const stringToSign = ["AWS4-HMAC-SHA256", now, scope, sha256(request)].join("\n");
