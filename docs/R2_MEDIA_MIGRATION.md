@@ -12,6 +12,9 @@ Status: **etapa 2 em revisão: piloto de escrita na branch de prévia, desativad
 - Zero fotografias de clientes transferidas ou excluídas. SQL do catálogo privado foi **apenas versionado**, não aplicado ao banco de produção.
 
 ## Objetivo
+
+### Decisão de arquitetura confirmada
+Cloudflare R2 será o armazenamento **único e definitivo de todas as mídias** do Fotura: originais, miniaturas, capas, arquivos de entrega e vídeos. Supabase permanecerá para banco de dados, autenticação, permissões e metadados. O modo híbrido de leitura será **temporário**, apenas durante a migração dos arquivos existentes. Não lançar fluxo que envie novas fotos pequenas ao R2 e grandes ao Supabase; em modo R2, uma falha deve ser reportada sem salvar o arquivo em outro storage. A ativação de produção depende da implementação e da validação do multipart/resumível, limpeza, exclusão e rollback.
 Manter PostgreSQL/Auth do Supabase e passar arquivos dos buckets **fotos** e **abertura-videos** ao bucket privado Cloudflare R2 **fotura-media**, sem alterar nomes de arquivos, links de projetos ou qualidade dos originais.
 
 ## Controles de segurança
@@ -28,7 +31,7 @@ Manter PostgreSQL/Auth do Supabase e passar arquivos dos buckets **fotos** e **a
 - **R2_ACCOUNT_ID**: ID da conta Cloudflare (servidor).
 - **R2_MEDIA_BUCKET**: fotura-media.
 - **R2_ACCESS_KEY_ID**, **R2_SECRET_ACCESS_KEY**: credenciais S3 específicas do bucket; exclusivamente servidor.
-- Enquanto o piloto permanecer desativado, **todos os uploads continuam usando Supabase**, assim como exclusões, movimentações e limpeza.
+- **A divisão de uploads novos entre os dois storages é proibida.** Enquanto o piloto permanecer desativado, todos os uploads continuam no Supabase. Quando o R2 estiver pronto e for ativado, **todos os uploads novos** (originais e miniaturas, independentemente do tamanho) deverão ir para o R2. A leitura do Supabase antigo será temporária exclusivamente para migrar arquivos legados com segurança.
 
 ## Escopo já preparado
 - URLs de leitura para downloads autorizados e galeria pública (miniaturas e originais), abertura de projetos (fotos/vídeos) e miniaturas do painel.
@@ -37,8 +40,8 @@ Manter PostgreSQL/Auth do Supabase e passar arquivos dos buckets **fotos** e **a
 
 ## Etapa 2 preparada no código (sem ativação)
 - Endpoint autenticado `POST /api/fotos/r2` gera URL temporária para cada foto e sua miniatura JPEG, validando titularidade da galeria, etapa, tipo, tamanho, franquia de uso justo, armazenamento e limite de fotos. A confirmação usa HEAD assinado para verificar tipo e bytes antes de registrar; uma segunda checagem de cotas acontece antes da confirmação.
-- O endpoint está bloqueado **fora de prévia** e também permanece desativado por flag. Não enviar arquivos reais antes das validações abaixo.
-- `app/lib/r2-photo-upload-client.ts` envia por PUT com progresso e repetição curta; para fotos maiores que **6 MB** o fluxo atual continua usando TUS resumível no Supabase. Piloto sem retomada parcial de PUT: não substituir TUS para arquivos grandes sem multipart/resume.
+- O endpoint está bloqueado **fora de prévia** e também permanece desativado por flag. A escolha do provedor é única por sessão de envio, e falhas ao conferir a configuração não podem provocar fallback silencioso ao Supabase. Não enviar arquivos reais antes das validações abaixo.
+- `app/lib/r2-photo-upload-client.ts` prepara PUT com progresso e repetição curta até **50 MB**, limite atual do Fotura. **Quando o modo R2 estiver habilitado, todas as fotos novas devem ir exclusivamente ao R2, independentemente do tamanho**. Ainda falta implementar multipart com retomada confiável antes da ativação definitiva.
 - As páginas de envio principal e de entrega final já contêm o fallback condicional ao fluxo atual.
 - O catálogo híbrido mescla fotos de ambos os provedores, e o workspace reconhece fotos R2 nas capas e abertura. O gerenciador **bloqueia movimentar arquivos R2** antes de haver cópia verificada e rollback seguro.
 - Duas migrações SQL **versionadas, não aplicadas**: registro privado de objetos R2 e rotina transacional de confirmação com metadados e uso justo, além da contagem de bytes exclusivos do R2 nos limites da conta.
@@ -48,7 +51,7 @@ Manter PostgreSQL/Auth do Supabase e passar arquivos dos buckets **fotos** e **a
 
 ## Escopo ainda obrigatório antes de ativar a migração
 1. **Concluído para a prévia:** credencial restrita ao bucket e teste sintético de PUT/GET/HEAD/DELETE; **falta testar o fluxo de galeria autenticado**.
-2. **Preparado em piloto (até 6 MB, desativado):** foto original, miniatura, confirmação e limites; falta teste real em navegador e multipart/resumível para maiores.
+2. **Preparado em piloto (até 50 MB, desativado):** foto original, miniatura, confirmação e limites; falta teste real em navegador e multipart/resumível para a confiabilidade definitiva.
 3. **Parcial:** catálogo híbrido e quota de armazenamento propostos; faltam painel de storage, rotinas SQL de limpeza, listagens diretas do navegador e testes de volume.
 4. **Parcial:** capas, abertura, entrega e prévias reconhecem R2; movimentação R2 está bloqueada preventivamente, e vídeos ainda gravam no Supabase.
 5. **Bloqueador da ativação:** remover mídias R2 na exclusão de galeria/projeto/conta, tratar uploads abandonados e garantir rollback, contador de quotas e reconciliação consistentes.
