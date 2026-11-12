@@ -6,9 +6,39 @@ import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { contextoPlano } from "../../../../lib/billing-usage";
+import { isR2ReadEnabled, r2CredentialsPresent, signPrivateR2ObjectUrl } from "../../../../lib/r2-storage";
+import { signPrivateMediaUrl } from "../../../../lib/media-storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const r2Requested = () => process.env.FOTURA_R2_UPLOAD_ENABLED === "true";
+const r2Ready = () => r2Requested() && process.env.VERCEL_ENV === "preview" &&
+  isR2ReadEnabled() && r2CredentialsPresent();
+
+async function r2VideoHead(path: string) {
+  const res = await fetch(signPrivateR2ObjectUrl("HEAD", path, 60), {
+    method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(12_000),
+  });
+  if (!res.ok) return null;
+  const bytes = Number(res.headers.get("content-length"));
+  const mime = res.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
+  if (!Number.isSafeInteger(bytes) || bytes <= 0 ||
+      bytes > VIDEO_ABERTURA_MAX_BYTES || mime !== "video/mp4") return null;
+  return { bytes, etag: res.headers.get("etag")?.slice(0, 250) ?? null };
+}
+
+async function verifiedR2VideoDelete(path: string): Promise<boolean> {
+  const result = await fetch(signPrivateR2ObjectUrl("DELETE", path, 60), {
+    method: "DELETE", cache: "no-store", signal: AbortSignal.timeout(12_000),
+  });
+  if (!result.ok && result.status !== 404) return false;
+  const head = await fetch(signPrivateR2ObjectUrl("HEAD", path, 60), {
+    method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(12_000),
+  });
+  return head.status === 404;
+}
+
 
 const json = (data: unknown, status = 200) =>
   NextResponse.json(data, { status, headers: { "Cache-Control": "no-store, private" } });
@@ -30,6 +60,14 @@ function caminhoDoDono(path: unknown, userId: string, projeto: string): path is 
 }
 
 async function objetoVideo(db: ReturnType<typeof createServiceClient>, path: string) {
+  if (isR2ReadEnabled()) {
+    const { data: match, error } = await db.from("fotura_media_objects")
+      .select("bytes").eq("bucket", VIDEO_ABERTURA_BUCKET).eq("object_key", path)
+      .maybeSingle();
+    if (error) return null;
+    if (match) return r2VideoHead(path);
+  }
+
   const slash = path.lastIndexOf("/");
   const { data, error } = await db.storage.from(VIDEO_ABERTURA_BUCKET)
     .list(path.slice(0, slash), { search: path.slice(slash + 1), limit: 100 });
@@ -47,6 +85,10 @@ export async function POST(req: NextRequest) {
   try { body = await req.json(); } catch { return json({ error: "Dados inválidos." }, 400); }
   const ctx = await dono(req, body.projeto ?? "");
   if (!ctx) return json({ error: "Projeto não encontrado ou sessão expirada." }, 401);
+  // A requested R2 cutover must NEVER silently store some media in Supabase.
+  if (r2Requested() && !r2Ready()) return json({
+    error: "Armazenamento R2 indisponível. Nenhum vídeo foi enviado.",
+  }, 503);
   const { db, userId, projeto } = ctx;
   if (!(await consumirRateLimit(req, "cinematic_video_upload", userId, 600, 24)))
     return json({ error: "Muitas tentativas de envio. Tente novamente em alguns minutos." }, 429);
@@ -71,6 +113,19 @@ export async function POST(req: NextRequest) {
       return json({ error: "O vídeo ultrapassaria o limite de armazenamento do seu plano." }, 403);
 
     const prefixo = `${userId}/${projeto.id}`;
+    if (r2Ready()) {
+      // New MP4 uploads go solely to R2. Count verified versions; never
+      // remove the currently published video or expose the bucket publicly.
+      const { data: existentesR2, error: registryError } = await db.from("fotura_media_objects")
+        .select("object_key").eq("bucket", VIDEO_ABERTURA_BUCKET)
+        .eq("owner_id", userId).like("object_key", prefixo + "/%").limit(6);
+      if (registryError) return json({ error: "Não foi possível conferir os vídeos do R2." }, 503);
+      if ((existentesR2 ?? []).length >= 5) return json({
+        error: "Limite de versões de vídeo atingido. Remova versões não publicadas antes de enviar outra.",
+      }, 409);
+      const path = prefixo + "/" + randomUUID() + ".mp4";
+      return json({ path, provider: "r2", url: signPrivateR2ObjectUrl("PUT", path, 5 * 60, "video/mp4") });
+    }
     const { data: existentes, error: listErro } = await db.storage.from(VIDEO_ABERTURA_BUCKET)
       .list(prefixo, { limit: 100 });
     if (listErro) return json({ error: "Não foi possível consultar o armazenamento." }, 503);
@@ -94,15 +149,18 @@ export async function POST(req: NextRequest) {
   if (body.acao === "confirmar") {
     if (!caminhoDoDono(body.path, userId, projeto.id))
       return json({ error: "Vídeo inválido." }, 400);
-    const objeto = await objetoVideo(db, body.path);
+    const objeto = r2Ready() ? await r2VideoHead(body.path) : await objetoVideo(db, body.path);
     if (!objeto) return json({ error: "O MP4 enviado não foi encontrado ou excede 25 MB." }, 400);
-    const { data: registrado, error: registroErro } = await db.rpc("registrar_video_abertura_upload_backend", {
-      p_user_id: userId, p_projeto_id: projeto.id, p_path: body.path, p_bytes: objeto.bytes,
-    });
+    const args = r2Ready()
+      ? { p_user_id: userId, p_projeto_id: projeto.id, p_path: body.path,
+          p_bytes: objeto.bytes, p_etag: objeto.etag }
+      : { p_user_id: userId, p_projeto_id: projeto.id, p_path: body.path, p_bytes: objeto.bytes };
+    const { data: registrado, error: registroErro } = await db.rpc(
+      r2Ready() ? "registrar_video_r2_upload_backend" : "registrar_video_abertura_upload_backend", args);
     if (registroErro || !registrado) return json({ error: "Não foi possível registrar o vídeo enviado." }, 503);
-    const { data, error } = await db.storage.from(VIDEO_ABERTURA_BUCKET).createSignedUrl(body.path, 20 * 60);
-    if (error || !data?.signedUrl) return json({ error: "Não foi possível carregar a prévia." }, 503);
-    return json({ path: body.path, url: data.signedUrl });
+    const url = await signPrivateMediaUrl(db, VIDEO_ABERTURA_BUCKET, body.path, 20 * 60);
+    return url ? json({ path: body.path, url })
+      : json({ error: "Não foi possível carregar a prévia." }, 503);
   }
   return json({ error: "Ação inválida." }, 400);
 }
@@ -115,8 +173,8 @@ export async function GET(req: NextRequest) {
   if (!caminhoDoDono(path, ctx.userId, projeto)) return json({ error: "Vídeo inválido." }, 400);
   const objeto = await objetoVideo(ctx.db, path);
   if (!objeto) return json({ error: "Vídeo não encontrado." }, 404);
-  const { data, error } = await ctx.db.storage.from(VIDEO_ABERTURA_BUCKET).createSignedUrl(path, 20 * 60);
-  return error || !data?.signedUrl ? json({ error: "Não foi possível carregar o vídeo." }, 503) : json({ url: data.signedUrl });
+  const url = await signPrivateMediaUrl(ctx.db, VIDEO_ABERTURA_BUCKET, path, 20 * 60);
+  return url ? json({ url }) : json({ error: "Não foi possível carregar o vídeo." }, 503);
 }
 
 // Remove tentativas não publicadas sem afetar o vídeo em uso no projeto.
@@ -129,6 +187,24 @@ export async function DELETE(req: NextRequest) {
   if (!caminhoDoDono(body.path, ctx.userId, ctx.projeto.id)) return json({ error: "Vídeo inválido." }, 400);
   if (lerAbertura(ctx.projeto.abertura_config).video === body.path)
     return json({ error: "Remova o vídeo das configurações e salve antes de excluí-lo." }, 409);
+  if (isR2ReadEnabled()) {
+    const { data: entry, error: lookupError } = await ctx.db.from("fotura_media_objects")
+      .select("object_key").eq("bucket", VIDEO_ABERTURA_BUCKET).eq("object_key", body.path)
+      .eq("owner_id", ctx.userId).maybeSingle();
+    if (lookupError) return json({ error: "Não foi possível verificar o vídeo." }, 503);
+    const pendingR2 = r2Ready() && !entry ? await r2VideoHead(body.path) : null;
+    if (entry || pendingR2) {
+      const removed = await verifiedR2VideoDelete(body.path);
+      if (!removed) return json({ error: "Não foi possível confirmar a exclusão no R2." }, 503);
+      if (entry) {
+        const { error } = await ctx.db.from("fotura_media_objects").delete()
+          .eq("bucket", VIDEO_ABERTURA_BUCKET).eq("object_key", body.path)
+          .eq("owner_id", ctx.userId);
+        if (error) return json({ error: "Arquivo excluído, mas o registro exige nova tentativa." }, 503);
+      }
+      return json({ ok: true });
+    }
+  }
   const { error } = await ctx.db.storage.from(VIDEO_ABERTURA_BUCKET).remove([body.path]);
   return error ? json({ error: "Não foi possível excluir o vídeo." }, 503) : json({ ok: true });
 }
