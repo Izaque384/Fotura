@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { verifyGalleryWatermarkToken } from "../../../../lib/gallery-watermark-token";
 import { registrarErro } from "../../../../lib/observability";
+import { downloadPrivateMediaBlob } from "../../../../lib/media-storage";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -29,11 +30,14 @@ export async function GET(req: NextRequest) {
 
   const supabase = createServiceClient();
   const caminho = `${token.u}/${token.g}/thumbs/${token.f}`;
-  const { data, error } = await supabase.storage.from("fotos").download(caminho);
-  if (error || !data) {
-    registrarErro("gallery.watermark.thumb", req, error || new Error("thumbnail missing"), { galeria: token.g, arquivo: token.f });
-    return NextResponse.json({ error: "Prévia não disponível." }, { status: 404 });
+  let data: Blob | null;
+  try {
+    data = await downloadPrivateMediaBlob(supabase, "fotos", caminho);
+  } catch (error) {
+    registrarErro("gallery.watermark.thumb", req, error, { galeria: token.g, arquivo: token.f });
+    return NextResponse.json({ error: "Prévia temporariamente indisponível." }, { status: 503 });
   }
+  if (!data) return NextResponse.json({ error: "Prévia não disponível." }, { status: 404 });
 
   try {
     const input = Buffer.from(await data.arrayBuffer());
