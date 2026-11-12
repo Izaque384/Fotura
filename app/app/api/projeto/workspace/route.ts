@@ -10,6 +10,7 @@ import { ordemFotosValida, type OrdemFotos } from "../../../../lib/gallery-photo
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { lerAbertura, validarAbertura, caminhoVideoValido, VIDEO_ABERTURA_BUCKET, VIDEO_ABERTURA_MAX_BYTES } from "../../../../lib/cinematic-intro";
 import { MODELOS_PROJETO,modeloValido,configProjeto } from "../../../../lib/project-templates";
+import { signPrivateMediaUrl, signPrivateMediaUrls } from "../../../../lib/media-storage";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -57,8 +58,7 @@ async function urlCapa(projeto: {
   if (!projeto.capa_galeria_id || !projeto.capa_arquivo) return null;
   const supabase = createServiceClient();
   const caminho=`${projeto.user_id}/${projeto.capa_galeria_id}/thumbs/${projeto.capa_arquivo}`;
-  const { data } = await supabase.storage.from("fotos").createSignedUrl(caminho, 60 * 60);
-  return data?.signedUrl ?? null;
+  return signPrivateMediaUrl(supabase, "fotos", caminho, 60 * 60);
 }
 
 async function urlsCapasPastas(userId: string, pastas: Array<{ id: unknown; capa: unknown }>) {
@@ -71,11 +71,10 @@ async function urlsCapasPastas(userId: string, pastas: Array<{ id: unknown; capa
   const supabase = createServiceClient();
   const thumbs = comCapa.map((g) => `${userId}/${g.id}/thumbs/${g.capa}`);
   const thumbPorPasta = new Map(comCapa.map((g) => [`${userId}/${g.id}/thumbs/${g.capa}`, g.id]));
-  const { data: thumbsAssinadas } = await supabase.storage.from("fotos").createSignedUrls(thumbs, 60 * 60);
-  for (const item of thumbsAssinadas ?? []) {
-    if (!item.path || !item.signedUrl) continue;
-    const pastaId = thumbPorPasta.get(item.path);
-    if (pastaId) mapa.set(pastaId, item.signedUrl);
+  const assinadas = await signPrivateMediaUrls(supabase, "fotos", thumbs, 60 * 60);
+  for (const [path, signedUrl] of Object.entries(assinadas)) {
+    const pastaId = thumbPorPasta.get(path);
+    if (pastaId) mapa.set(pastaId, signedUrl);
   }
 
   return mapa;
@@ -113,9 +112,12 @@ export async function GET(req: NextRequest) {
     const caminhos = nomes.map((nome) => `${user.id}/${capaPasta}/thumbs/${nome}`);
     const mapa = new Map<string, string>();
     for (let i = 0; i < caminhos.length; i += 200) {
-      const { data: thumbs, error } = await supabase.storage.from("fotos").createSignedUrls(caminhos.slice(i, i + 200), 15 * 60);
-      if (error) return json({ error: "Não foi possível carregar as prévias." }, 500);
-      for (const x of thumbs ?? []) if (x.path && x.signedUrl) mapa.set(x.path, x.signedUrl);
+      try {
+        const assinadas = await signPrivateMediaUrls(supabase, "fotos", caminhos.slice(i, i + 200), 15 * 60);
+        for (const [path, signedUrl] of Object.entries(assinadas)) mapa.set(path, signedUrl);
+      } catch {
+        return json({ error: "Não foi possível carregar as prévias." }, 500);
+      }
     }
     return json({
       fotos: nomes.map((nome) => ({
