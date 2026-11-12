@@ -10,6 +10,7 @@ import { planoFotura } from "../../../../lib/billing-plans";
 import { heroPresetDataUrl, estiloHeroEfetivo } from "../../../../lib/gallery-hero";
 import { createGalleryWatermarkUrl } from "../../../../lib/gallery-watermark-token";
 import { ordenarFotos } from "../../../../lib/gallery-photo-order";
+import { signPrivateMediaUrl, signPrivateMediaUrls } from "../../../../lib/media-storage";
 
 export const dynamic = "force-dynamic";
 const EXPIRA_SEG = 3600;
@@ -73,12 +74,15 @@ export async function GET(req: NextRequest) {
       return json({ error: "Alta resolução não está habilitada para esta galeria." }, 403);
     }
     const caminho = `${base}/${arquivo}`;
-    const { data, error } = await supabase.storage.from("fotos").createSignedUrl(caminho, EXPIRA_SEG);
-    if (error || !data?.signedUrl) {
-      registrarErro("gallery.signed.single", req, error || new Error("signed url missing"), { galeria, arquivo });
-      return json({ error: "Não foi possível assinar o arquivo." }, 404);
+    let signedUrl: string | null;
+    try {
+      signedUrl = await signPrivateMediaUrl(supabase, "fotos", caminho, EXPIRA_SEG);
+    } catch (error) {
+      registrarErro("gallery.signed.single", req, error, { galeria, arquivo });
+      return json({ error: "Não foi possível assinar o arquivo." }, 503);
     }
-    return json({ nome: arquivo, url: data.signedUrl, etapa, watermarkProtected: false });
+    if (!signedUrl) return json({ error: "Arquivo não disponível." }, 404);
+    return json({ nome: arquivo, url: signedUrl, etapa, watermarkProtected: false });
   }
 
   if ((modo === "originais" || modo === "completo") && !originalHabilitado) {
@@ -189,9 +193,12 @@ export async function GET(req: NextRequest) {
       while (true) {
         const i = cursor++;
         if (i >= lotes.length || erroAssinatura) return;
-        const { data, error } = await supabase.storage.from("fotos").createSignedUrls(lotes[i], EXPIRA_SEG);
-        if (error) { erroAssinatura = error; return; }
-        for (const s of data ?? []) if (s.signedUrl && s.path) mapa[s.path] = s.signedUrl;
+        try {
+          Object.assign(mapa, await signPrivateMediaUrls(supabase, "fotos", lotes[i], EXPIRA_SEG));
+        } catch (error) {
+          erroAssinatura = error;
+          return;
+        }
       }
     };
     await Promise.all(Array.from({ length: Math.min(CONCORRENCIA_ASSINATURA, Math.max(1, lotes.length)) }, () => worker()));
