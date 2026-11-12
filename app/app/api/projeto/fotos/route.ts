@@ -3,6 +3,7 @@ import {createServiceClient} from "../../../../lib/supabase-server";
 import {requisicaoMesmoOrigin} from "../../../../lib/request-security";
 import {uuidValido} from "../../../../lib/validation";
 import {consumirRateLimit} from "../../../../lib/rate-limit";
+import {signPrivateMediaUrls} from "../../../../lib/media-storage";
 
 export const dynamic="force-dynamic";
 export const runtime="nodejs";
@@ -36,8 +37,8 @@ export async function GET(req:NextRequest){
  const {data,error}=await db.storage.from("fotos").list(`${user.id}/${pasta}`,{limit:120,offset,sortBy:{column:"name",order:"asc"}});
  if(error)return json({error:"Não foi possível listar as fotos."},500);
  const nomes=(data??[]).filter(x=>x.id!==null&&nomeValido(x.name)).map(x=>x.name);
- const {data:urls}=nomes.length?await db.storage.from("fotos").createSignedUrls(nomes.map(n=>`${user.id}/${pasta}/thumbs/${n}`),3600):{data:[]};
- const previews=new Map((urls??[]).filter(x=>x.signedUrl&&x.path).map(x=>[String(x.path).split("/").at(-1),x.signedUrl]));
+ const urls=await signPrivateMediaUrls(db,"fotos",nomes.map(n=>`${user.id}/${pasta}/thumbs/${n}`),3600);
+ const previews=new Map(Object.entries(urls).map(([key,url])=>[key.split("/").at(-1),url]));
  return json({fotos:nomes.map(nome=>({nome,thumb:previews.get(nome)??null})),hasMore:(data??[]).length===120,proximoOffset:offset+(data??[]).length,capa:source.capa,etapa:source.etapa});
 }
 export async function POST(req:NextRequest){
