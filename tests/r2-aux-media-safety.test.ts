@@ -78,3 +78,35 @@ test("avatar deletion refuses a referenced image and verifies R2 absence", () =>
   assert.match(api, /check\.status !== 404/);
   assert.match(api, /\.from\("fotura_media_objects"\)\.delete\(\)/);
 });
+
+
+test("studio logos use a stable public route, never a public R2 bucket", () => {
+  const upload = read("app/app/api/marca/route.ts");
+  const publicRoute = read("app/app/api/marca/[owner]/[filename]/route.ts");
+  const profile = read("app/app/perfil/page.tsx");
+  const og = read("app/app/g/[slug]/opengraph-image.tsx");
+  assert.match(upload, /selectedMediaUploadProvider/);
+  assert.match(upload, /fotura_r2_upload_reservations/);
+  assert.match(upload, /putVerifiedAuxiliaryMedia/);
+  assert.match(upload, /registrar_logo_r2_backend/);
+  assert.match(upload, /return json\(\{ ok: true, logoUrl: url \}\)/);
+  assert.match(publicRoute, /eq\("logo_url", publicPath\)/);
+  assert.match(publicRoute, /eq\("owner_id", owner\)/);
+  assert.match(publicRoute, /downloadPrivateMediaBlob\(db, "marca", key\)/);
+  assert.match(publicRoute, /Content-Type/);
+  assert.match(profile, /fetch\("\/api\/marca"/);
+  assert.doesNotMatch(profile, /storage\.from\("marca"\)\.upload/);
+  assert.match(og, /downloadPrivateMediaBlob/);
+  assert.match(og, /ownerId && url\.startsWith\("\/api\/marca\/"\)/);
+});
+
+test("logo publication is atomic with the private R2 registry", () => {
+  const sql = read("supabase/migrations/20261112243000_r2_studio_logo_registration.sql");
+  assert.match(sql, /fotura_r2_upload_reservations/);
+  assert.match(sql, /for update/);
+  assert.match(sql, /insert into public\.fotura_media_objects/);
+  assert.match(sql, /insert into public\.perfis/);
+  assert.match(sql, /on conflict \(id\) do update/);
+  assert.match(sql, /delete from public\.fotura_r2_upload_reservations/);
+  assert.match(sql, /revoke all on function public\.registrar_logo_r2_backend/);
+});
