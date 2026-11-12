@@ -11,6 +11,7 @@ import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { lerAbertura, validarAbertura, caminhoVideoValido, VIDEO_ABERTURA_BUCKET, VIDEO_ABERTURA_MAX_BYTES } from "../../../../lib/cinematic-intro";
 import { MODELOS_PROJETO,modeloValido,configProjeto } from "../../../../lib/project-templates";
 import { signPrivateMediaUrl, signPrivateMediaUrls } from "../../../../lib/media-storage";
+import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -97,16 +98,9 @@ export async function GET(req: NextRequest) {
       .eq("projeto_id", projeto).eq("user_id", user.id).maybeSingle();
     if (!pasta) return json({ error: "Pasta não encontrada." }, 404);
 
-    const nomes: string[] = [];
-    for (let offset = 0; ; offset += 1000) {
-      const { data: arquivos, error } = await supabase.storage.from("fotos").list(`${user.id}/${capaPasta}`, {
-        limit: 1000, offset, sortBy: { column: "created_at", order: "asc" },
-      });
-      if (error) return json({ error: "Não foi possível carregar as fotos." }, 500);
-      const pagina = arquivos ?? [];
-      nomes.push(...pagina.filter(a => a.id !== null && a.name !== "thumbs" && a.name !== "entrega").map(a => a.name));
-      if (pagina.length < 1000) break;
-    }
+    const { data: catalogo, error: catalogError } = await listarCatalogoGaleriaHibrido(supabase, user.id, capaPasta, "principal");
+    if (catalogError || !catalogo) return json({ error: "Não foi possível carregar as fotos." }, 500);
+    const nomes = catalogo.map((foto) => foto.nome);
     if (!nomes.length) return json({ fotos: [] });
 
     const caminhos = nomes.map((nome) => `${user.id}/${capaPasta}/thumbs/${nome}`);
@@ -298,9 +292,8 @@ export async function PATCH(req: NextRequest) {
         return json({ error: "As fotos da abertura devem pertencer a pastas publicadas deste projeto." }, 400);
       }
       const verificacoes = await Promise.all(abertura.fotos.map(async (foto) => {
-        const { data, error } = await supabase.storage.from("fotos")
-          .list(`${user.id}/${foto.pastaId}`, { limit: 100, search: foto.arquivo });
-        return !error && (data ?? []).some((item) => item.id !== null && item.name === foto.arquivo);
+        const { data, error } = await listarCatalogoGaleriaHibrido(supabase, user.id, foto.pastaId, "principal");
+        return !error && Boolean(data?.some((item) => item.nome === foto.arquivo));
       }));
       if (verificacoes.some((existe) => !existe)) {
         return json({ error: "Uma das fotografias da abertura não está mais disponível." }, 400);
@@ -323,10 +316,9 @@ export async function PATCH(req: NextRequest) {
     const { data: pasta } = await supabase.from("galerias").select("id").eq("id", body.capaPastaId)
       .eq("projeto_id", body.projeto).eq("user_id", user.id).maybeSingle();
     if (!pasta) return json({ error: "A pasta da capa não pertence ao projeto." }, 400);
-    const { data: encontrados } = await supabase.storage.from("fotos").list(`${user.id}/${body.capaPastaId}`, {
-      limit: 20, search: body.capaArquivo,
-    });
-    if (!(encontrados ?? []).some((item) => item.id !== null && item.name === body.capaArquivo)) {
+    const { data: encontrados, error: coverError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.capaPastaId, "principal");
+    if (coverError) return json({ error: "Não foi possível verificar a foto de capa." }, 503);
+    if (!(encontrados ?? []).some((item) => item.nome === body.capaArquivo)) {
       return json({ error: "A foto escolhida para capa não foi encontrada." }, 404);
     }
     update.capa_galeria_id = body.capaPastaId;
@@ -530,10 +522,9 @@ export async function POST(req: NextRequest) {
         if (typeof arquivo !== "string" || !arquivo || arquivo.length > 300 || arquivo.includes("/") || arquivo.includes("\\") || /[\u0000-\u001f\u007f]/.test(arquivo)) {
           return json({ error: "Capa inválida." }, 400);
         }
-        const { data: encontrados, error: storageError } = await supabase.storage.from("fotos")
-          .list(`${user.id}/${body.pastaId}`, { limit: 100, search: arquivo });
-        if (storageError) return json({ error: "Não foi possível verificar a foto." }, 500);
-        if (!(encontrados ?? []).some(item => item.id !== null && item.name === arquivo)) {
+        const { data: encontrados, error: storageError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.pastaId, "principal");
+        if (storageError) return json({ error: "Não foi possível verificar a foto." }, 503);
+        if (!(encontrados ?? []).some((item) => item.nome === arquivo)) {
           return json({ error: "A foto escolhida não pertence a esta pasta." }, 404);
         }
         update.capa = arquivo;
@@ -578,8 +569,11 @@ export async function POST(req: NextRequest) {
     if (p.capa_arquivo) return json({ ok: true, alterada: false });
     const { data: pasta } = await supabase.from("galerias").select("id").eq("id", body.pastaId).eq("projeto_id", body.projetoId).eq("user_id", user.id).maybeSingle();
     if (!pasta) return json({ error: "Pasta inválida." }, 400);
-    const { data: encontrados } = await supabase.storage.from("fotos").list(`${user.id}/${body.pastaId}`, { limit: 20, search: body.arquivo });
-    if (!(encontrados ?? []).some((item) => item.id !== null && item.name === body.arquivo)) return json({ error: "Foto não encontrada." }, 404);
+    const { data: encontrados, error: storageError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.pastaId, "principal");
+    if (storageError) return json({ error: "Não foi possível verificar a fotografia." }, 503);
+    if (!(encontrados ?? []).some((item) => item.nome === body.arquivo)) {
+      return json({ error: "Foto não encontrada." }, 404);
+    }
     const { error } = await supabase.from("galeria_projetos").update({
       capa_galeria_id: body.pastaId, capa_arquivo: body.arquivo, atualizado_em: new Date().toISOString(),
     }).eq("id", body.projetoId).eq("user_id", user.id).is("capa_arquivo", null);
