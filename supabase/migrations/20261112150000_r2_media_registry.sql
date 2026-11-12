@@ -1,9 +1,11 @@
 -- Stage 1: registry for R2 media copies. No existing storage objects are moved.
 -- The legacy Supabase Storage remains the source of truth until verified cutover.
+-- RESTRICT on auth user deletion prevents loss of registry rows before R2
+-- media is physically and verifiably removed, avoiding orphaned private files.
 create table if not exists public.fotura_media_objects (
   bucket text not null check (bucket in ('fotos', 'abertura-videos')),
   object_key text not null,
-  owner_id uuid not null references auth.users(id) on delete cascade,
+  owner_id uuid not null references auth.users(id) on delete restrict,
   provider text not null default 'r2' check (provider = 'r2'),
   bytes bigint check (bytes is null or bytes >= 0),
   content_type text,
