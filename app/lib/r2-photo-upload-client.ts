@@ -1,11 +1,11 @@
 /**
- * R2 pilot browser adapter. All Fotura images must use the same storage
- * provider for a selected upload session: never route by file size.
- * Single-object PUTs can retry the whole image but cannot resume partially.
- * Multipart/resumability is required before the final R2 production cutover.
- * Original and JPEG thumbnail are verified before registration.
+ * Preview-only Cloudflare R2 browser upload adapter.
+ * Never splits new objects between providers: in R2 mode ALL originals and
+ * thumbnails use R2. Large files use the resumable R2 multipart protocol.
  */
 export const R2_PILOT_MAX_BYTES = 50 * 1024 * 1024;
+const PART_BYTES = 8 * 1024 * 1024;
+const MAX_THUMB_BYTES = 4 * 1024 * 1024;
 
 type Variant = "principal" | "entrega";
 type Prepared = {
@@ -14,10 +14,23 @@ type Prepared = {
   original: { url: string; contentType: string };
   thumb: { url: string; contentType: string };
 };
+type MultipartSession = {
+  nome: string;
+  ticket: string;
+  originalBytes: number;
+  thumbBytes: number;
+  mime: string;
+};
+type MultipartStatus = {
+  ok: boolean;
+  registered?: boolean;
+  completed?: boolean;
+  parts?: { number: number; bytes: number }[];
+  thumb?: { url: string; contentType: string };
+  partBytes?: number;
+};
 
 export async function r2PilotAvailable(): Promise<boolean> {
-  // Deliberately fail closed when provider selection cannot be checked.
-  // Falling back to Supabase on a network error would split new uploads.
   const res = await fetch("/api/fotos/r2", { cache: "no-store" });
   if (!res.ok) throw new Error("Não foi possível verificar o armazenamento. Nenhuma foto foi enviada.");
   const data = (await res.json()) as { enabled?: boolean; provider?: string };
@@ -28,7 +41,7 @@ export async function r2PilotAvailable(): Promise<boolean> {
   return data.provider === "r2";
 }
 
-async function callR2Api(token: string, body: Record<string, unknown>) {
+async function callR2Api(token: string, body: Record<string, unknown>): Promise<Record<string, unknown>> {
   const response = await fetch("/api/fotos/r2", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
@@ -70,10 +83,87 @@ async function putWithRetry(
       return;
     } catch (error) {
       if (attempt === 1) throw error;
-      if (onProgress) onProgress(0);
+      onProgress?.(0);
       await new Promise((resolve) => setTimeout(resolve, 650));
     }
   }
+}
+
+function sessionKey(galeria: string, variante: Variant, file: File): string {
+  return "fotura-r2-multipart:" + [galeria, variante, file.name, file.size, file.lastModified]
+    .map(encodeURIComponent).join(":");
+}
+
+function readSession(key: string, original: File, thumb: Blob): MultipartSession | null {
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return null;
+    const state = JSON.parse(raw) as MultipartSession;
+    return state && typeof state.nome === "string" && typeof state.ticket === "string" &&
+      state.originalBytes === original.size && state.thumbBytes === thumb.size &&
+      state.mime === original.type ? state : null;
+  } catch { return null; }
+}
+
+function writeSession(key: string, state: MultipartSession) {
+  try { sessionStorage.setItem(key, JSON.stringify(state)); } catch {
+    // Storage can be blocked in private browsing; current-session retries still work.
+  }
+}
+
+function removeSession(key: string) {
+  try { sessionStorage.removeItem(key); } catch {}
+}
+
+async function uploadMultipart(
+  token: string,
+  arquivo: File,
+  ticket: string,
+  status: MultipartStatus,
+  onProgress: (bytes: number) => void
+): Promise<void> {
+  const completed = status.completed === true;
+  if (completed) {
+    onProgress(arquivo.size);
+    return;
+  }
+  const partBytes = status.partBytes;
+  if (partBytes !== PART_BYTES || !Array.isArray(status.parts)) {
+    throw new Error("Estado das partes R2 inválido.");
+  }
+  const existing = new Map<number, number>();
+  for (const part of status.parts) {
+    if (Number.isInteger(part.number) && Number.isSafeInteger(part.bytes)) {
+      existing.set(part.number, part.bytes);
+    }
+  }
+
+  let done = 0;
+  for (let n = 1; n <= Math.ceil(arquivo.size / PART_BYTES); n++) {
+    const offset = (n - 1) * PART_BYTES;
+    const bytes = Math.min(PART_BYTES, arquivo.size - offset);
+    if (existing.get(n) === bytes) {
+      done += bytes;
+      onProgress(done);
+      continue;
+    }
+
+    const signed = await callR2Api(token, {
+      acao: "multipart_parte", ticket, partNumber: n,
+    }) as { url?: string; bytes?: number };
+    if (!signed.url || signed.bytes !== bytes) throw new Error("Autorização da parte R2 inválida.");
+    const part = arquivo.slice(offset, offset + bytes);
+    await putWithRetry(signed.url, "application/octet-stream", part, (sent) => {
+      onProgress(Math.min(arquivo.size, done + sent));
+    });
+    done += bytes;
+    onProgress(done);
+  }
+  const result = await callR2Api(token, { acao: "multipart_concluir", ticket });
+  if (result.ok !== true || result.bytes !== arquivo.size) {
+    throw new Error("O arquivo R2 não foi concluído corretamente.");
+  }
+  onProgress(arquivo.size);
 }
 
 export async function enviarFotoR2Piloto(options: {
@@ -87,35 +177,75 @@ export async function enviarFotoR2Piloto(options: {
   progresso: (bytes: number) => void;
 }): Promise<{ nome: string }> {
   const { token, galeria, variante, arquivo, thumb, largura, altura, progresso } = options;
-  if (arquivo.size > R2_PILOT_MAX_BYTES || thumb.size <= 0 || thumb.size > 4 * 1024 * 1024) {
-    throw new Error("Arquivo incompatível com o piloto R2.");
+  if (arquivo.size <= 0 || arquivo.size > R2_PILOT_MAX_BYTES ||
+      thumb.size <= 0 || thumb.size > MAX_THUMB_BYTES) {
+    throw new Error("Arquivo incompatível com o limite do Fotura.");
   }
-  const prepared = await callR2Api(token, {
-    acao: "preparar", galeria, variante, nome: arquivo.name,
-    bytes: arquivo.size, mimeType: arquivo.type, thumbBytes: thumb.size,
-  }) as Prepared;
 
-  if (!prepared.ticket || !prepared.original?.url || !prepared.thumb?.url || !prepared.nome) {
-    throw new Error("Permissão de upload R2 incompleta.");
+  const multipart = arquivo.size > PART_BYTES;
+  const key = sessionKey(galeria, variante, arquivo);
+  let persisted = multipart ? readSession(key, arquivo, thumb) : null;
+  let prepared: Prepared | null = null;
+
+  if (!persisted) {
+    prepared = await callR2Api(token, {
+      acao: "preparar", galeria, variante, nome: arquivo.name,
+      bytes: arquivo.size, mimeType: arquivo.type, thumbBytes: thumb.size,
+    }) as Prepared;
+    if (!prepared.ticket || !prepared.original?.url || !prepared.thumb?.url || !prepared.nome) {
+      throw new Error("Permissão de upload R2 incompleta.");
+    }
   }
 
   let confirmed = false;
+  let ticket = persisted?.ticket ?? prepared!.ticket;
+  let nome = persisted?.nome ?? prepared!.nome;
+
   try {
-    await putWithRetry(prepared.original.url, prepared.original.contentType, arquivo, progresso);
-    await putWithRetry(prepared.thumb.url, "image/jpeg", thumb);
+    if (multipart) {
+      if (!persisted) {
+        const start = await callR2Api(token, { acao: "multipart_iniciar", ticket });
+        if (start.ok !== true || typeof start.ticket !== "string" || start.nome !== nome ||
+            start.partBytes !== PART_BYTES) {
+          throw new Error("Não foi possível iniciar upload R2 com retomada.");
+        }
+        ticket = start.ticket;
+        persisted = { nome, ticket, originalBytes: arquivo.size, thumbBytes: thumb.size, mime: arquivo.type };
+        writeSession(key, persisted);
+      }
+
+      const status = await callR2Api(token, { acao: "multipart_resumir", ticket }) as MultipartStatus;
+      if (status.registered === true) {
+        removeSession(key);
+        return { nome };
+      }
+      if (status.ok !== true) throw new Error("Não foi possível retomar o envio R2.");
+      await uploadMultipart(token, arquivo, ticket, status, progresso);
+
+      const renewed = await callR2Api(token, { acao: "multipart_resumir", ticket }) as MultipartStatus;
+      if (renewed.ok !== true || !renewed.completed || !renewed.thumb?.url) {
+        throw new Error("Não foi possível confirmar o original R2 ou renovar a miniatura.");
+      }
+      await putWithRetry(renewed.thumb.url, "image/jpeg", thumb);
+    } else {
+      await putWithRetry(prepared!.original.url, prepared!.original.contentType, arquivo, progresso);
+      await putWithRetry(prepared!.thumb.url, "image/jpeg", thumb);
+    }
+
     const result = await callR2Api(token, {
-      acao: "confirmar", ticket: prepared.ticket, largura, altura,
+      acao: "confirmar", ticket, largura, altura,
     });
-    if (result.ok !== true || result.nome !== prepared.nome) {
+    if (result.ok !== true || result.nome !== nome) {
       throw new Error("Confirmação de integridade R2 inválida.");
     }
     confirmed = true;
-    return { nome: prepared.nome };
+    removeSession(key);
+    return { nome };
   } finally {
-    if (!confirmed) {
-      // Only cancels this newly allocated, unconfirmed object. The server
-      // refuses to delete an object already registered in the photo catalog.
-      void callR2Api(token, { acao: "cancelar", ticket: prepared.ticket }).catch(() => {});
+    if (!confirmed && !multipart && prepared) {
+      // Multipart sessions survive network failures and can be resumed.
+      // Short single-PUT attempts are cleaned up when not registered.
+      void callR2Api(token, { acao: "cancelar", ticket }).catch(() => {});
     }
   }
 }
