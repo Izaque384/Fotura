@@ -14,6 +14,17 @@ Objetivo confirmado: R2 como único storage de mídias após migração; Supabas
 - Supabase Storage: `fotos` = 1.212 objetos (~1.587,53 MB); `abertura-videos` = 2 objetos (~11,42 MB). Sem arquivos copiados para R2.
 - Fotura produção: Vercel READY no commit `35092163fa8b`; não promover um preview incompleto.
 
+## Escopo real do Storage identificado na auditoria
+- `fotos`: 1.212 objetos, 1.664.649.601 bytes (fotografias/miniaturas).
+- `abertura-videos`: 2 objetos, 11.969.667 bytes.
+- `marca`: 12 objetos, 11.013.166 bytes (**bucket público atualmente**; requer estratégia de entrega pública seletiva/segura no R2 privado antes de retirar Supabase).
+- `client-avatars`: 2 objetos, 49.430 bytes (acesso privado e exclusão obrigatórios).
+- `feedback-anexos`: 0 objetos (fluxo de novos anexos deve ser adaptado mesmo sem conteúdo legado).
+- Total: **1.228 objetos**. O escopo anterior cobria apenas fotos e vídeos; não atende o requisito de tirar *todas as mídias* do Supabase Storage.
+- Dependências diretas ainda abertas: `app/perfil/page.tsx` (marca), `app/dashboard/clientes/page.tsx` (avatars e mídias da galeria), `app/dashboard/projetos/page.tsx` (thumbs e avatars), `app/api/feedback/route.ts` e `app/api/admin/feedback/route.ts` (anexos). Não habilitar o cutover até que uploads, leitura/autorização e limpeza desses fluxos sejam atendidos.
+
+## Bloqueio de teste isolado (custo)
+- A ferramenta Supabase não permite criar uma branch de teste sem confirmação explícita de custo. Valor informado pela conta: **US$ 0,01344 por hora**. Não houve autorização dessa despesa, portanto a branch de teste não foi criada e as migrações não foram aplicadas ao banco de produção.
 ## Condições obrigatórias para release
 1. Preparar ambiente isolado de teste com as migrações SQL, validar RLS/grants, reservas, jobs, contagem de quota e transações com dados sintéticos.
 2. Configurar segredos R2 também no ambiente correto da Edge Function de limpeza, testar tarefas expiradas de foto, thumb, vídeo e multipart e verificar HEAD 404 antes do ACK.
