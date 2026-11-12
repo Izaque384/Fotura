@@ -1,6 +1,7 @@
 import "server-only";
 import { createServiceClient } from "./supabase-server";
 import { VIDEO_ABERTURA_BUCKET } from "./cinematic-intro";
+import { isR2ReadEnabled } from "./r2-storage";
 
 const STORAGE_BATCH = 100;
 const STATUS_STRIPE_ATIVOS = new Set(["active", "trialing", "past_due"]);
@@ -103,6 +104,22 @@ export async function executarPurgeDefinitivo({
   if (encerramento?.status !== "confirmado") throw new Error("O encerramento administrativo não está confirmado.");
   if (assinatura?.provedor === "stripe" && assinatura.provedor_assinatura_id && STATUS_STRIPE_ATIVOS.has(String(assinatura.status))) {
     throw new Error("A assinatura Stripe ainda está ativa.");
+  }
+
+
+  // Never erase the account's metadata/auth identity while any R2 media
+  // still exists. In the future this guard must follow verified R2 deletion.
+  if (isR2ReadEnabled()) {
+    const { count, error: registryError } = await supabase
+      .from("fotura_media_objects")
+      .select("object_key", { count: "exact", head: true })
+      .eq("owner_id", userId);
+    if (registryError) {
+      throw new Error("Não foi possível verificar o armazenamento R2 antes da exclusão definitiva.");
+    }
+    if ((count ?? 0) > 0) {
+      throw new Error("Exclusão definitiva bloqueada: mídias R2 exigem limpeza verificada antes do purge.");
+    }
   }
 
   let etapa = String(purge.execucao_etapa ?? "nao_iniciada");
