@@ -6,7 +6,6 @@ import { createClient } from "../../../lib/supabase-client";
 import MenuFotografo from "../../MenuFotografo";
 import FoturaDrawer from "../../components/FoturaDrawer";
 
-const BUCKET = "client-avatars";
 type Cliente = {
   id: string;
   nome: string;
