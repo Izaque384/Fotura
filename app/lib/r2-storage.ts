@@ -2,7 +2,7 @@ import "server-only";
 import { createHash, createHmac } from "node:crypto";
 
 /**
- * Leitura privada de objetos R2 usando URLs S3 SigV4 de curta duração.
+ * Operações privadas de objetos R2 usando URLs S3 SigV4 de curta duração.
  * Credenciais são exclusivas do servidor. Não publica o bucket nem exige
  * uma dependência nova no projeto.
  */
@@ -53,10 +53,25 @@ function canonicalQuery(params: Array<[string, string]>): string {
     .map(([key, value]) => key + "=" + value).join("&");
 }
 
-export function signPrivateR2ReadUrl(
+type SignedMethod = "GET" | "PUT" | "HEAD" | "DELETE";
+
+export function signPrivateR2ObjectUrl(
+  method: SignedMethod,
+  key: string,
+  expiresSeconds: number,
+  contentType?: string
+): string {
+  if (contentType && (method !== "PUT" || !/^[a-z0-9][a-z0-9!#export function signPrivateR2ReadUrl(
   key: string,
   expiresSeconds: number
 ): string {
+^_.+-]*\\/[a-z0-9][a-z0-9!#export function signPrivateR2ReadUrl(
+  key: string,
+  expiresSeconds: number
+): string {
+^_.+-]*$/i.test(contentType))) {
+    throw new Error("Tipo de conteúdo R2 inválido.");
+  }
   const { accountId, accessKeyId, secretAccessKey, bucket } = configuration();
   const safeKey = checkedKey(key);
   if (!Number.isInteger(expiresSeconds) || expiresSeconds < 1 || expiresSeconds > 604800) {
@@ -74,10 +89,12 @@ export function signPrivateR2ReadUrl(
     ["X-Amz-Credential", accessKeyId + "/" + scope],
     ["X-Amz-Date", now],
     ["X-Amz-Expires", String(expiresSeconds)],
-    ["X-Amz-SignedHeaders", "host"],
+    ["X-Amz-SignedHeaders", contentType ? "content-type;host" : "host"],
   ];
   const query = canonicalQuery(params);
-  const request = ["GET", resource, query, "host:" + hostname + "\n", "host", "UNSIGNED-PAYLOAD"].join("\n");
+  const headers = contentType ? "content-type:" + contentType + "\\n" + "host:" + hostname + "\\n" : "host:" + hostname + "\\n";
+  const signedHeaders = contentType ? "content-type;host" : "host";
+  const request = [method, resource, query, headers, signedHeaders, "UNSIGNED-PAYLOAD"].join("\n");
   const stringToSign = ["AWS4-HMAC-SHA256", now, scope, sha256(request)].join("\n");
   const signingKey = hmac(
     hmac(hmac(hmac("AWS4" + secretAccessKey, day), "auto"), "s3"),
@@ -85,4 +102,8 @@ export function signPrivateR2ReadUrl(
   );
   const signature = createHmac("sha256", signingKey).update(stringToSign, "utf8").digest("hex");
   return "https://" + hostname + resource + "?" + query + "&X-Amz-Signature=" + signature;
+}
+
+export function signPrivateR2ReadUrl(key: string, expiresSeconds: number): string {
+  return signPrivateR2ObjectUrl("GET", key, expiresSeconds);
 }
