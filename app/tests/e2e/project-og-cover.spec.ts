@@ -35,7 +35,7 @@ test("geração Open Graph usa somente thumb autorizada, nunca URL pública do S
   expect(fonte).toContain('downloadPrivateMediaBlob(createServiceClient(), "fotos", preview.capaPath)');
   const adapter = fs.readFileSync("lib/media-storage.ts", "utf8");
   expect(adapter).toContain('db.storage.from(bucket).download(key)');
-  expect(adapter).toContain('signPrivateR2ReadUrl(key, 60)');
+  expect(adapter).toContain('signPrivateR2ReadUrl(r2PhysicalKey(bucket, key), 60)');
   expect(fonte).toContain('.resize(1200, 630, { fit: "cover"');
   expect(fonte).toContain('image.length > 600_000');
   expect(workspace).toContain("og_capa_autorizada");
