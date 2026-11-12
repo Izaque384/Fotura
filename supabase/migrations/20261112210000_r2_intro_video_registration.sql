@@ -25,11 +25,20 @@ begin
       where r.bucket='abertura-videos' and r.object_key=p_path
         and r.owner_id=p_user_id and r.bytes=p_bytes and r.content_type='video/mp4');
   end if;
+  if not exists (
+    select 1 from public.fotura_r2_upload_reservations q
+    where q.bucket='abertura-videos' and q.object_key=p_path
+      and q.owner_id=p_user_id and q.thumbnail_key is null
+      and q.state='pending' and q.expires_at > now()
+    for update
+  ) then return false; end if;
   if not public.registrar_video_abertura_upload_backend(
     p_user_id,p_projeto_id,p_path,p_bytes) then return false; end if;
   insert into public.fotura_media_objects
     (bucket,object_key,owner_id,bytes,content_type,etag,verified_at)
   values ('abertura-videos',p_path,p_user_id,p_bytes,'video/mp4',p_etag,now());
+  delete from public.fotura_r2_upload_reservations q
+  where q.bucket='abertura-videos' and q.object_key=p_path and q.owner_id=p_user_id;
   return true;
 end;
 $$;
