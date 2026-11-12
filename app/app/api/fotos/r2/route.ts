@@ -12,7 +12,7 @@ import { validarArquivo } from "../../../../lib/upload-validation";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const MAX_PILOT_ORIGINAL = 6 * 1024 * 1024;
+const MAX_PILOT_ORIGINAL = 50 * 1024 * 1024;
 const MAX_THUMB = 4 * 1024 * 1024;
 const EXPIRES_SECONDS = 300;
 const json = (data: unknown, status = 200) =>
@@ -117,8 +117,17 @@ async function deleteObject(key: string) {
 }
 
 export async function GET() {
-  // Enables the photographer's existing TUS uploader to remain the default.
-  return json({ enabled: available(), maxSinglePutBytes: MAX_PILOT_ORIGINAL });
+  // Provider selection is atomic for an upload session. If R2 was requested
+  // but is not ready, fail closed instead of silently reverting to Supabase.
+  const requested = process.env.FOTURA_R2_UPLOAD_ENABLED === "true";
+  if (requested && !available()) {
+    return json({ error: "Armazenamento R2 indisponível. Nenhum arquivo foi enviado." }, 503);
+  }
+  return json({
+    enabled: requested,
+    provider: requested ? "r2" : "supabase",
+    maxSinglePutBytes: MAX_PILOT_ORIGINAL,
+  });
 }
 
 export async function POST(req: NextRequest) {
