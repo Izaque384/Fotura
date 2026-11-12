@@ -199,9 +199,11 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(masonry).toContain("alturas[destino]");
     expect(tour).toContain("PASSO {step} DE 2");
 
-    expect(signedPhotos).toContain('rpc("listar_fotos_galeria_storage"');
+    expect(signedPhotos).toContain("listarCatalogoGaleriaHibrido");
+    expect(signedPhotos).toContain("signPrivateMediaUrls");
     expect(signedPhotos).toContain("ORIGINAIS_PREASSINADOS_GRADE = 0");
-    expect(projectApi).toContain('rpc("listar_fotos_galeria_storage"');
+    expect(projectApi).toContain("listarCatalogoGaleriaHibrido");
+    expect(projectApi).toContain("signPrivateMediaUrls");
     expect(metadataApi).toContain('from("galeria_foto_metadata").upsert');
     expect(upload).toContain("gerarMiniaturaComMetadata");
     expect(upload).toContain('"principal",metadados');
@@ -214,8 +216,8 @@ test.describe("arquitetura centrada em projetos", () => {
     const og = read("app/p/[slug]/share-image/route.ts");
     const project = read("lib/project-social-preview.server.ts");
     const layout = read("app/p/[slug]/layout.tsx");
-    expect(og).toContain('storage');
-    expect(og).toContain('from("fotos").download(preview.capaPath)');
+    expect(og).toContain("downloadPrivateMediaBlob");
+    expect(og).toContain('downloadPrivateMediaBlob(createServiceClient(), "fotos", preview.capaPath)');
     expect(og).toContain('if (!preview?.capaPath) return unavailable()');
     expect(project).toContain('.eq("visivel", true)');
     expect(layout).toContain('select("nome_estudio")');
