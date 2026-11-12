@@ -53,6 +53,16 @@ Objetivo confirmado: R2 como único storage de mídias após migração; Supabas
 - Uma nova prévia Vercel foi recusada por limite **api-deployments-free-per-day** (mais de 100 deployments em 24 horas). Não se alterou o plano nem houve cobrança.
 - **Não mudou**: flags R2 desligadas, produção no commit anterior, registros SQL R2 não aplicados, nenhuma mídia real transferida. Logo público do estúdio continua como bloqueador da mudança integral.
 
+## Logos dos estúdios — etapa de código e testes locais (12/11/2026)
+- Upload novo: no modo R2, preparação autenticada com chave reservada, PUT direto do navegador ao bucket privado e confirmação por HEAD + RPC transacional. Preserva o limite atual de 5 MB sem atravessar a função Vercel, cujo corpo é limitado a 4,5 MB.
+- Entrega pública: URL relativa estável `/api/marca/{owner}/{filename}`. A rota somente serve o logotipo cujo caminho corresponde ao valor atual de `perfis.logo_url` e cuja chave/tamanho/MIME constam do registro privado R2. O bucket permanece privado.
+- Open Graph de galeria: busca o logotipo R2 por adaptador privado no servidor; imagens antigas continuam pelo URL público legado até a cópia verificada.
+- Migração SQL adicionada: `20261112243000_r2_studio_logo_registration.sql`; casos de integração SQL e de segurança adicionados ao GitHub Actions.
+- Mantém o upload Supabase legado **apenas enquanto o modo R2 estiver desativado**. A escolha do destino não recua silenciosamente do R2 para o Supabase.
+- **Ainda não aprovado para produção:** faltam teste autenticado em navegador com R2 ligado e validação de acessibilidade/preview compartilhado; a Vercel limitou deploys adicionais por dia.
+- Dependência residual: a folha `app/app/lavanda-moderna.css` contém uma imagem estática apontando para `storage/v1/object/public/marca/landing/fotura-wedding-sunset-generated.png`. Deve ser copiada/verificada e apontada para local definitivo antes da retirada total do Storage, observando o bloqueio de egress até 23/11.
+- Verificar também os uploads de avatares (8 MB) e anexos de feedback (5 MB) contra o limite de 4,5 MB do corpo das funções Vercel; os fluxos grandes deverão usar PUT direto ao R2 antes do cutover.
+
 ## Condições obrigatórias para release
 1. Preparar ambiente isolado de teste com as migrações SQL, validar RLS/grants, reservas, jobs, contagem de quota e transações com dados sintéticos.
 2. Configurar segredos R2 também no ambiente correto da Edge Function de limpeza, testar tarefas expiradas de foto, thumb, vídeo e multipart e verificar HEAD 404 antes do ACK.
