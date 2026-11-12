@@ -40,8 +40,8 @@ Manter PostgreSQL/Auth do Supabase e passar arquivos dos buckets **fotos** e **a
 
 ## Etapa 3 — envio multipartes (em validação)
 - Foi adicionada a camada S3 multipartes no servidor: início, URL assinada por parte de 8 MiB, consulta de partes, conferência de tamanho antes de finalizar e cancelamento.
-- Um teste descartável em prévia deve confirmar envio em duas partes, retomada/listagem, conclusão, leitura parcial e abortar sessão incompleta. A rota de teste deve ser removida após a validação.
-- Ainda **não** integrado ao upload autenticado do fotógrafo, nem habilitado no banco ou na produção. Necessário vincular uploadId a um ticket assinado de longa duração e tratar retomada após reconexão.
+- **Teste sintético aprovado em prévia:** upload em duas partes, listagem e conferência dos bytes, conclusão, HEAD, leitura parcial (Range), exclusão do arquivo e abort de multipart incompleto. A rota temporária de teste foi removida e a flag de teste foi desativada.
+- O upload multipartes está **preparado no fluxo autenticado de fotos**, usando ticket HMAC vinculado ao dono/galeria/arquivo (24 horas), URLs temporárias por parte, consulta ao R2 das partes persistidas e retomada via sessionStorage ao recarregar a aba. **Ainda não houve teste de navegador com usuário real, aplicação do SQL ou ativação em produção.**
 - Modo definitivo: **todo arquivo novo vai ao R2**. O Supabase Storage permanece apenas como fonte dos arquivos legados durante sua migração controlada.
 
 ## Etapa 2 preparada no código (sem ativação)
@@ -53,7 +53,9 @@ Manter PostgreSQL/Auth do Supabase e passar arquivos dos buckets **fotos** e **a
 - Duas migrações SQL **versionadas, não aplicadas**: registro privado de objetos R2 e rotina transacional de confirmação com metadados e uso justo, além da contagem de bytes exclusivos do R2 nos limites da conta.
 - CORS e CSP atualizados para o host S3 privado do R2. O token fica restrito ao bucket e suas variáveis apenas na prévia.
 - Verificação da prévia com o piloto desligado: GET /api/fotos/r2 retornou `enabled:false`, conforme esperado.
-- **Não executar a migração nem habilitar flags** antes de: (1) revisar/aplicar SQL em janela controlada e testar RLS/RPC, (2) testar foto sintética de ponta a ponta e integridade, (3) completar exclusão e limpeza R2 e (4) corrigir caminhos que ainda dependem exclusivamente de `storage.objects`.
+- **Não executar a migração nem habilitar flags** antes de: (1) revisar/aplicar SQL em janela controlada e testar RLS/RPC, (2) testar foto sintética de ponta a ponta no navegador autenticado, (3) implementar exclusão e limpeza R2 e (4) corrigir caminhos ainda dependentes de `storage.objects`.
+- Travas preventivas de exclusão: em modo R2, galerias, projetos e purges com arquivos R2 registrados **não são apagados** até existir limpeza verificada. A FK do registro de mídia para auth.users usa **ON DELETE RESTRICT** para evitar perder a rastreabilidade antes da limpeza.
+- O bucket `fotura-media` possui regra padrão Cloudflare que aborta uploads multipartes pendentes após **7 dias**; a retomada da aplicação permite ticket de **24 horas**, reduzindo o risco de operações abandonadas.
 
 ## Escopo ainda obrigatório antes de ativar a migração
 1. **Concluído para a prévia:** credencial restrita ao bucket e teste sintético de PUT/GET/HEAD/DELETE; **falta testar o fluxo de galeria autenticado**.
