@@ -19,6 +19,7 @@ export async function GET() {
   let abortId: string | null = null;
   let stage = "begin";
   let errorCode = 0;
+  let failure = "";
   const result = { begin: false, part1: false, part2: false, listed: false,
     complete: false, head: false, range: false, deleted: false, aborted: false };
 
@@ -71,8 +72,9 @@ export async function GET() {
     await abortR2Multipart(abortKey, abortId);
     abortId = null;
     result.aborted = true;
-  } catch {
-    // No secrets, multipart upload IDs, or object keys are returned to the caller.
+  } catch (error) {
+    // Only bounded, server-owned operational errors; no URL, token or upload ID.
+    failure = error instanceof Error ? error.message.slice(0, 150) : "Unknown test error";
   } finally {
     if (uploadId) { try { await abortR2Multipart(key, uploadId); } catch {} }
     if (abortId) { try { await abortR2Multipart(abortKey, abortId); } catch {} }
@@ -84,7 +86,7 @@ export async function GET() {
     } catch {}
   }
   const ok = Object.values(result).every(Boolean);
-  return NextResponse.json({ ok, stage, httpStatus: errorCode, result }, {
+  return NextResponse.json({ ok, stage, httpStatus: errorCode, failure, result }, {
     status: ok ? 200 : 503, headers: { "Cache-Control": "private, no-store" },
   });
 }
