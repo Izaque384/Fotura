@@ -52,3 +52,29 @@ test("unconfirmed auxiliary uploads remain protected by expiry and owner scope",
   assert.match(reserve, /split_part\(object_key,'\/',1\)=owner_id::text/);
   assert.match(cleanup, /expires_at < now\(\)-interval '12 hours'/);
 });
+
+test("avatar updates are owner-validated and use atomic R2 registration", () => {
+  const api = read("app/app/api/clientes/avatar/route.ts");
+  const sql = read("supabase/migrations/20261112240000_r2_avatar_registration.sql");
+  const page = read("app/app/dashboard/clientes/page.tsx");
+  assert.match(api, /\.from\("clientes"\)/);
+  assert.match(api, /\.eq\("user_id", actor\.user\.id\)/);
+  assert.match(api, /fotura_r2_upload_reservations/);
+  assert.match(api, /registrar_avatar_r2_backend/);
+  assert.match(api, /putVerifiedAuxiliaryMedia/);
+  assert.match(sql, /for update/);
+  assert.match(sql, /insert into public\.fotura_media_objects/);
+  assert.match(sql, /update public\.clientes set avatar_path=p_key/);
+  assert.match(sql, /delete from public\.fotura_r2_upload_reservations/);
+  assert.match(page, /\/api\/clientes\/avatar/);
+  assert.doesNotMatch(page, /storage\.from\("client-avatars"\)\.upload/);
+});
+
+test("avatar deletion refuses a referenced image and verifies R2 absence", () => {
+  const api = read("app/app/api/clientes/avatar/route.ts");
+  assert.match(api, /\.eq\("avatar_path", path\)/);
+  assert.match(api, /linked\?\.length/);
+  assert.match(api, /signPrivateR2ObjectUrl\("DELETE", physical/);
+  assert.match(api, /check\.status !== 404/);
+  assert.match(api, /\.from\("fotura_media_objects"\)\.delete\(\)/);
+});
