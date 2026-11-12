@@ -607,6 +607,14 @@ export async function POST(req: NextRequest) {
         if ((photos ?? []).length) return json({
           error: "Este projeto tem fotografias no R2. A exclusão segura ainda está em preparação; nada foi removido.",
         }, 409);
+        const { data: pendingPhotos, error: pendingError } = await supabase
+          .from("fotura_r2_upload_reservations").select("object_key")
+          .eq("bucket", "fotos").eq("owner_id", user.id)
+          .or(expressions.join(",")).limit(1);
+        if (pendingError) return json({ error: "Não foi possível verificar envios pendentes no R2." }, 503);
+        if ((pendingPhotos ?? []).length) return json({
+          error: "Este projeto possui fotografias R2 em envio. Nenhum dado foi excluído.",
+        }, 409);
       }
       const { data: videos, error: videoError } = await supabase.from("fotura_media_objects")
         .select("object_key").eq("bucket", VIDEO_ABERTURA_BUCKET).eq("owner_id", user.id)
@@ -614,6 +622,14 @@ export async function POST(req: NextRequest) {
       if (videoError) return json({ error: "Não foi possível conferir os vídeos R2." }, 503);
       if ((videos ?? []).length) return json({
         error: "Este projeto tem vídeos no R2. A exclusão segura ainda está em preparação; nada foi removido.",
+      }, 409);
+      const { data: pendingVideos, error: pendingVideoError } = await supabase
+        .from("fotura_r2_upload_reservations").select("object_key")
+        .eq("bucket", VIDEO_ABERTURA_BUCKET).eq("owner_id", user.id)
+        .like("object_key", user.id + "/" + body.projetoId + "/%").limit(1);
+      if (pendingVideoError) return json({ error: "Não foi possível verificar vídeos R2 pendentes." }, 503);
+      if ((pendingVideos ?? []).length) return json({
+        error: "Este projeto possui vídeos R2 em envio. Nenhum dado foi excluído.",
       }, 409);
     }
 
