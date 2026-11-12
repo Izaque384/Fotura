@@ -100,21 +100,62 @@ export default function PerfilPage() {
     }
     const { data: session } = await supabase.auth.getSession();
     if (!session.session?.access_token) { router.replace("/login"); return; }
+    const authHeader = { Authorization: "Bearer " + session.session.access_token };
     setEnviandoLogo(true);
     try {
-      const form = new FormData();
-      form.append("arquivo", arquivo);
-      const response = await fetch("/api/marca", {
-        method: "POST",
-        headers: { Authorization: "Bearer " + session.session.access_token },
-        cache: "no-store",
-        body: form,
-      });
-      const result = await response.json() as { logoUrl?: string; error?: string };
-      if (!response.ok || !result.logoUrl) {
-        throw new Error(result.error || "Não foi possível confirmar o novo logotipo.");
+      const mode = await fetch("/api/marca", { cache: "no-store" });
+      if (!mode.ok) throw new Error("Não foi possível verificar o armazenamento.");
+      const destination = await mode.json() as { provider?: string };
+      let url: string;
+
+      if (destination.provider === "r2") {
+        const prepare = await fetch("/api/marca", {
+          method: "POST", cache: "no-store",
+          headers: { ...authHeader, "Content-Type": "application/json" },
+          body: JSON.stringify({ acao: "preparar", mime: arquivo.type, bytes: arquivo.size }),
+        });
+        const reserved = await prepare.json() as {
+          path?: string; url?: string; contentType?: string; error?: string
+        };
+        if (!prepare.ok || !reserved.url || !reserved.path ||
+            reserved.contentType !== arquivo.type) {
+          throw new Error(reserved.error || "Não foi possível preparar o envio ao R2.");
+        }
+        const uploaded = await fetch(reserved.url, {
+          method: "PUT", headers: { "Content-Type": arquivo.type }, body: arquivo,
+        });
+        if (!uploaded.ok) throw new Error("O upload do logotipo para o R2 falhou.");
+        const commit = await fetch("/api/marca", {
+          method: "POST", cache: "no-store",
+          headers: { ...authHeader, "Content-Type": "application/json" },
+          body: JSON.stringify({ acao: "confirmar", path: reserved.path }),
+        });
+        const verified = await commit.json() as { logoUrl?: string; error?: string };
+        if (!commit.ok || !verified.logoUrl) {
+          throw new Error(verified.error || "Não foi possível confirmar o logotipo.");
+        }
+        url = verified.logoUrl;
+      } else if (destination.provider === "supabase") {
+        // Existing upload flow remains unchanged until final R2 cutover.
+        const ext = arquivo.type === "image/png" ? "png" :
+          arquivo.type === "image/webp" ? "webp" : "jpg";
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) throw new Error("Sessão expirada.");
+        const caminho = userData.user.id + "/logo-" + Date.now() + "." + ext;
+        const { error: uploadError } = await supabase.storage.from("marca")
+          .upload(caminho, arquivo, { contentType: arquivo.type, upsert: false });
+        if (uploadError) throw new Error("Não foi possível enviar a logo.");
+        const { data } = supabase.storage.from("marca").getPublicUrl(caminho);
+        url = data.publicUrl;
+        const { error: profileError } = await supabase.from("perfis").upsert({
+          id: userData.user.id, logo_url: url, atualizado_em: new Date().toISOString(),
+        });
+        if (profileError) throw new Error("O arquivo foi enviado, mas não foi possível atualizar o perfil.");
+      } else {
+        // Never fall back to Supabase when the provider selection is invalid.
+        throw new Error("Destino de armazenamento inválido. Nada foi enviado.");
       }
-      setLogoUrl(result.logoUrl);
+      setLogoUrl(url);
       setMensagem("Logotipo atualizado. A nova imagem já aparece na prévia.");
     } catch (error) {
       setErro(true);
