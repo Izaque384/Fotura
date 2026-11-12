@@ -61,6 +61,16 @@ export async function DELETE(req: NextRequest) {
         error: "A exclusão de galerias com arquivos no R2 está em preparação. Nenhum dado foi excluído.",
       }, { status: 409 });
     }
+    const { data: pending, error: pendingError } = await supabase
+      .from("fotura_r2_upload_reservations").select("object_key")
+      .eq("bucket", "fotos").eq("owner_id", auth.user.id)
+      .like("object_key", prefix + "%").limit(1);
+    if (pendingError) return NextResponse.json({
+      error: "Não foi possível verificar os uploads R2 pendentes.",
+    }, { status: 503 });
+    if ((pending ?? []).length) return NextResponse.json({
+      error: "Esta galeria possui um envio R2 pendente. Nenhum arquivo foi excluído.",
+    }, { status: 409 });
   }
 
 
