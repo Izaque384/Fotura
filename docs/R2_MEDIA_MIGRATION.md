@@ -38,6 +38,12 @@ Manter PostgreSQL/Auth do Supabase e passar arquivos dos buckets **fotos** e **a
 - Roteamento por objeto: R2 **somente** quando existir entrada verificada no registro privado e a flag estiver ativada; caso contrário, Supabase.
 - Migração SQL adiciona apenas tabela privada, sem alterar tabelas/fotos existentes.
 
+## Etapa 3 — envio multipartes (em validação)
+- Foi adicionada a camada S3 multipartes no servidor: início, URL assinada por parte de 8 MiB, consulta de partes, conferência de tamanho antes de finalizar e cancelamento.
+- Um teste descartável em prévia deve confirmar envio em duas partes, retomada/listagem, conclusão, leitura parcial e abortar sessão incompleta. A rota de teste deve ser removida após a validação.
+- Ainda **não** integrado ao upload autenticado do fotógrafo, nem habilitado no banco ou na produção. Necessário vincular uploadId a um ticket assinado de longa duração e tratar retomada após reconexão.
+- Modo definitivo: **todo arquivo novo vai ao R2**. O Supabase Storage permanece apenas como fonte dos arquivos legados durante sua migração controlada.
+
 ## Etapa 2 preparada no código (sem ativação)
 - Endpoint autenticado `POST /api/fotos/r2` gera URL temporária para cada foto e sua miniatura JPEG, validando titularidade da galeria, etapa, tipo, tamanho, franquia de uso justo, armazenamento e limite de fotos. A confirmação usa HEAD assinado para verificar tipo e bytes antes de registrar; uma segunda checagem de cotas acontece antes da confirmação.
 - O endpoint está bloqueado **fora de prévia** e também permanece desativado por flag. A escolha do provedor é única por sessão de envio, e falhas ao conferir a configuração não podem provocar fallback silencioso ao Supabase. Não enviar arquivos reais antes das validações abaixo.
