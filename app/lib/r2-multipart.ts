@@ -71,13 +71,9 @@ export function signedR2PartUrl(key: string, uploadId: string, number: number): 
 
 export async function listR2MultipartParts(key: string, uploadId: string): Promise<R2UploadedPart[]> {
   const found: R2UploadedPart[] = [];
-  let after = 0;
   while (found.length < 10000) {
-    const items = [...query(uploadId)] as Array<readonly ["uploadId" | "part-number-marker", string]>;
-    // signPrivateR2ObjectUrl supports uploadId and partNumber; all Fotura
-    // originals currently fit into a single list page (<10 parts).
-    if (after) throw new Error("Paginação multipart R2 requer suporte adicional.");
-    const response = await fetch(signPrivateR2ObjectUrl("GET", key, 60, undefined, items), {
+    // All Fotura originals currently fit on one S3 ListParts page (<10 parts).
+    const response = await fetch(signPrivateR2ObjectUrl("GET", key, 60, undefined, query(uploadId)), {
       cache: "no-store", signal: AbortSignal.timeout(15_000),
     });
     const xml = await checkedResponse(response, "listar partes");
@@ -94,8 +90,6 @@ export async function listR2MultipartParts(key: string, uploadId: string): Promi
       found.push({ partNumber, etag, bytes });
     }
     if (xmlValue(xml, "IsTruncated") === "true") {
-      after = Number(xmlValue(xml, "NextPartNumberMarker"));
-      if (after <= 0) throw new Error("Cursor de multipart R2 inválido.");
       throw new Error("Listagem de partes R2 truncada; não é seguro concluir.");
     }
     return found.sort((a, b) => a.partNumber - b.partNumber);
