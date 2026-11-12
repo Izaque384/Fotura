@@ -24,6 +24,7 @@ create index if not exists fotura_media_objects_owner_idx
 
 alter table public.fotura_media_objects enable row level security;
 revoke all on public.fotura_media_objects from public, anon, authenticated;
+grant select, insert, update, delete on public.fotura_media_objects to service_role;
 
 comment on table public.fotura_media_objects is
   'Verified private R2 object copies. Service-role only; never an authorization policy for public media access.';
