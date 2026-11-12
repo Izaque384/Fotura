@@ -299,36 +299,51 @@ export default function ClientesPage() {
   }
   async function carregarFotosDaGaleria(id: string) {
     if (!uid || !id) { setImagensGaleria([]); return; }
-    // Só permite navegar nas pastas que estão vinculadas ao cliente editado.
     if (!clienteEditando || !galeriasDe(clienteEditando.id).some((g) => g.id === id)) return;
     setCarregandoGaleria(true); setErroGaleria(""); setImagensGaleria([]);
-    const prefixo = uid + "/" + id + "/thumbs";
     try {
-      const { data: arquivos, error } = await supabase.storage.from("fotos").list(prefixo, {
-        limit: 36,
-        sortBy: { column: "created_at", order: "desc" }
-      });
-      if (error) throw error;
-      const caminhos = (arquivos || []).filter((a) => a.name && /\.(?:webp|jpg|jpeg|png)$/i.test(a.name))
-        .map((a) => prefixo + "/" + a.name);
-      if (!caminhos.length) { setErroGaleria("Nenhuma miniatura disponível nesta pasta."); return; }
-      const { data: urls, error: signedError } = await supabase.storage.from("fotos").createSignedUrls(caminhos, 900);
-      if (signedError) throw signedError;
-      const imagens = (urls || []).flatMap((item, index) => item.signedUrl ? [{ path: caminhos[index], url: item.signedUrl }] : []);
-      setImagensGaleria(imagens);
-      if (!imagens.length) setErroGaleria("Não foi possível abrir as fotos desta pasta.");
+      const { data: session } = await supabase.auth.getSession();
+      const access = session.session?.access_token;
+      if (!access) throw new Error("Sessão expirada");
+      const response = await fetch(
+        "/api/clientes/galeria-fotos?galeria=" + encodeURIComponent(id) +
+        "&cliente=" + encodeURIComponent(clienteEditando.id),
+        { headers: { Authorization: "Bearer " + access }, cache: "no-store" }
+      );
+      if (!response.ok) throw new Error("Não foi possível carregar a galeria");
+      const signed = await response.json() as { fotos?: { path: string; url: string }[] };
+      const images = signed.fotos ?? [];
+      setImagensGaleria(images);
+      if (!images.length) setErroGaleria("Nenhuma miniatura disponível nesta pasta.");
     } catch {
       setErroGaleria("Não foi possível carregar as fotos. Tente outra pasta.");
     } finally { setCarregandoGaleria(false); }
   }
   async function selecionarFotoDaGaleria(path: string) {
-    if (!clienteEditando || !galeriasDe(clienteEditando.id).some((g) => path.startsWith(uid + "/" + g.id + "/thumbs/"))) return;
+    if (!clienteEditando || !galeriasDe(clienteEditando.id).some((g) =>
+      path.startsWith(uid + "/" + g.id + "/thumbs/"))) return;
     setCarregandoGaleria(true); setErroGaleria("");
     try {
-      const { data, error } = await supabase.storage.from("fotos").download(path);
-      if (error || !data) throw new Error("Download indisponível");
-      const mime = /\.webp$/i.test(path) ? "image/webp" : /\.png$/i.test(path) ? "image/png" : "image/jpeg";
-      const file = new File([data], "fotura-galeria." + mime.split("/")[1], { type: mime });
+      const parts = path.split("/");
+      const galeria = parts[1];
+      const nome = parts[3];
+      if (parts.length !== 4 || parts[2] !== "thumbs" || !galeria || !nome) {
+        throw new Error("Caminho inválido");
+      }
+      const { data: session } = await supabase.auth.getSession();
+      const access = session.session?.access_token;
+      if (!access) throw new Error("Sessão expirada");
+      const response = await fetch(
+        "/api/clientes/galeria-fotos?galeria=" + encodeURIComponent(galeria) +
+        "&cliente=" + encodeURIComponent(clienteEditando.id) +
+        "&arquivo=" + encodeURIComponent(nome),
+        { headers: { Authorization: "Bearer " + access }, cache: "no-store" }
+      );
+      if (!response.ok) throw new Error("Miniatura indisponível");
+      const blob = await response.blob();
+      const mime = /\\.webp$/i.test(path) ? "image/webp" :
+        /\\.png$/i.test(path) ? "image/png" : "image/jpeg";
+      const file = new File([blob], "fotura-galeria." + mime.split("/")[1], { type: mime });
       if (file.size > 8 * 1024 * 1024) throw new Error("Arquivo acima do limite");
       escolherFoto(file);
       setGaleriaPicker(false);
