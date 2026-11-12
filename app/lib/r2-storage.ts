@@ -18,6 +18,20 @@ function configuration() {
   return { accountId, accessKeyId, secretAccessKey, bucket };
 }
 
+/** Isolate additional logical Supabase buckets in the single private R2 bucket.
+ * The original photo/video layout is preserved for backward compatibility.
+ * Every new auxiliary object has an explicit bucket namespace in R2.
+ */
+export type FoturaMediaBucket = "fotos" | "abertura-videos" |
+  "marca" | "client-avatars" | "feedback-anexos";
+
+export function r2PhysicalKey(bucket: FoturaMediaBucket, key: string): string {
+  const safe = checkedKey(key);
+  return bucket === "fotos" || bucket === "abertura-videos"
+    ? safe
+    : bucket + "/" + safe;
+}
+
 export function r2CredentialsPresent(): boolean {
   return Boolean(
     process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID &&
