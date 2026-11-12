@@ -61,8 +61,8 @@ test("avatar updates are owner-validated and use atomic R2 registration", () => 
   assert.match(api, /\.eq\("user_id", actor\.user\.id\)/);
   assert.match(api, /fotura_r2_upload_reservations/);
   assert.match(api, /registrar_avatar_r2_backend/);
-  assert.match(api, /signPrivateR2ObjectUrl\("PUT"/);
-  assert.match(api, /signPrivateR2ObjectUrl\("HEAD"/);
+  assert.match(api, /signPrivateR2ObjectUrl\(\s*"PUT"/);
+  assert.match(api, /signPrivateR2ObjectUrl\(\s*"HEAD"/);
   assert.match(api, /acao === "preparar"/);
   assert.match(api, /acao === "confirmar"/);
   assert.match(sql, /for update/);
