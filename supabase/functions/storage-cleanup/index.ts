@@ -48,7 +48,7 @@ Deno.serve(async (req: Request) => {
   async function delegateR2(input: Record<string, unknown>) {
     const response = await fetch("https://foturax.com.br/api/internal/r2-cleanup", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-cleanup-token": token },
+      headers: { "Content-Type": "application/json", "x-cleanup-token": token! },
       body: JSON.stringify(input),
       signal: AbortSignal.timeout(30_000),
     });
