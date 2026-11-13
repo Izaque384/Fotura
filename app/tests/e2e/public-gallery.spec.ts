@@ -261,9 +261,9 @@ test("galeria pequena prepara assinaturas em lote e abre a quinta foto original 
   await expect.poll(()=>lotes).toBe(1);
   await page.locator('.gc-grid-img[src*="Miniatura%205"]').click();
   await expect(page.getByRole("dialog",{name:"Foto 5 de 6"})).toBeVisible();
-  await expect(page.locator(".gc-photo img")).toHaveAttribute("src",/Original%205/);
+  await expect(page.locator(".gc-photo-original")).toHaveAttribute("src",/Original%205/);
   expect(assinaturasAvulsas).not.toContain("foto-5.jpg");
-  await expect(page.locator(".gc-photo img")).not.toHaveCSS("visibility","hidden");
+  await expect(page.locator(".gc-photo-progress-preview")).toHaveCount(0);
 });
 
 test("galeria de prova não solicita originais antes da entrega", async ({ page }) => {
