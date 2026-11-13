@@ -147,7 +147,7 @@ export default function ProjectCinematicSettings({ projeto, nome, descricao, pas
           throw new Error("Autorização de vídeo R2 inválida.");
         }
         const uploaded = await fetch(dados.url, {
-          method: "PUT", headers: { "Content-Type": "video/mp4" }, body: file,
+          method: "PUT", headers: { "Content-Type": "video/mp4", "If-None-Match": "*" }, body: file,
         });
         if (!uploaded.ok) throw new Error("Falha no envio do vídeo ao R2. Tente novamente.");
       } else if (dados.provider === undefined && typeof dados.token === "string") {

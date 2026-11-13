@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
         owner_id: userId, expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       });
       if (reserveError) return json({ error: "Não foi possível reservar o envio R2." }, 503);
-      return json({ path, provider: "r2", url: signPrivateR2ObjectUrl("PUT", path, 5 * 60, "video/mp4") });
+      return json({ path, provider: "r2", url: signPrivateR2ObjectUrl("PUT", path, 5 * 60, "video/mp4", [], true) });
     }
     const { data: existentes, error: listErro } = await db.storage.from(VIDEO_ABERTURA_BUCKET)
       .list(prefixo, { limit: 100 });

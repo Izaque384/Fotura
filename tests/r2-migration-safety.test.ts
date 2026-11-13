@@ -64,3 +64,22 @@ test("gallery cleanup remains pending while R2 reservations still exist", () => 
     assert.match(source, /fotura_r2_upload_reservations/);
   }
 });
+
+test("R2 object writes cannot overwrite already committed objects", () => {
+  const signer = read("app/lib/r2-storage.ts");
+  const multipart = read("app/lib/r2-multipart.ts");
+  const photos = read("app/app/api/fotos/r2/route.ts");
+  const video = read("app/app/api/projeto/video/route.ts");
+  const videoClient = read("app/app/dashboard/ProjectCinematicSettings.tsx");
+  const client = read("app/lib/r2-photo-upload-client.ts");
+  assert.ok(signer.includes('if-none-match:*'));
+  assert.ok(signer.includes('"If-None-Match": "*"'));
+  assert.ok(signer.includes('method !== "PUT" || multipartQuery.length !== 0'));
+  assert.ok(multipart.includes('createOnly: true'));
+  assert.ok(photos.includes('ticket.mime, [], true'));
+  assert.ok(photos.includes('"image/jpeg", [], true'));
+  assert.ok(video.includes('"video/mp4", [], true'));
+  assert.ok(videoClient.includes('"If-None-Match": "*"'));
+  assert.ok(client.includes('xhr.setRequestHeader("If-None-Match", "*")'));
+  assert.ok(client.includes('arquivo, progresso, true'));
+});

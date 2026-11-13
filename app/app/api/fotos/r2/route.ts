@@ -224,8 +224,8 @@ export async function POST(req: NextRequest) {
       if (reserveError) throw reserveError;
       return json({
         nome: name, ticket: createTicket(ticket),
-        original: { url: signPrivateR2ObjectUrl("PUT", key.original, EXPIRES_SECONDS, ticket.mime), contentType: ticket.mime },
-        thumb: { url: signPrivateR2ObjectUrl("PUT", key.thumb, EXPIRES_SECONDS, "image/jpeg"), contentType: "image/jpeg" },
+        original: { url: signPrivateR2ObjectUrl("PUT", key.original, EXPIRES_SECONDS, ticket.mime, [], true), contentType: ticket.mime },
+        thumb: { url: signPrivateR2ObjectUrl("PUT", key.thumb, EXPIRES_SECONDS, "image/jpeg", [], true), contentType: "image/jpeg" },
       });
     } catch {
       return json({ error: "Falha ao preparar o envio." }, 503);
@@ -297,7 +297,7 @@ export async function POST(req: NextRequest) {
           parts: parts.map((item) => ({ number: item.partNumber, bytes: item.bytes })),
           thumb: {
             url: signPrivateR2ObjectUrl(
-              "PUT", paths(ticket).thumb, EXPIRES_SECONDS, "image/jpeg"
+              "PUT", paths(ticket).thumb, EXPIRES_SECONDS, "image/jpeg", [], true
             ),
             contentType: "image/jpeg",
           },

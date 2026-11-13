@@ -115,7 +115,7 @@ export async function finishR2Multipart(
       part.etag + "\"</ETag></Part>").join("") +
     "</CompleteMultipartUpload>";
   const response = await fetchPrivateR2Control("POST", key, query(uploadId), {
-    body: xml, contentType: "application/xml", timeoutMs: 30_000,
+    body: xml, contentType: "application/xml", timeoutMs: 30_000, createOnly: true,
   });
   const body = await checkedResponse(response, "concluir");
   if (!xmlValue(body, "ETag") || !body.includes("CompleteMultipartUploadResult")) {

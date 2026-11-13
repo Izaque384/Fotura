@@ -76,8 +76,12 @@ export function signPrivateR2ObjectUrl(
   key: string,
   expiresSeconds: number,
   contentType?: string,
-  multipartQuery: MultipartQuery = []
+  multipartQuery: MultipartQuery = [],
+  createOnly = false
 ): string {
+  if (createOnly && (method !== "PUT" || multipartQuery.length !== 0)) {
+    throw new Error("Condição create-only permitida apenas em PUT simples R2.");
+  }
   if (contentType && (!["PUT", "POST"].includes(method) ||
       !/^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i.test(contentType))) {
     throw new Error("Tipo de conteúdo R2 inválido.");
@@ -100,19 +104,20 @@ export function signPrivateR2ObjectUrl(
   const now = new Date().toISOString().replace(/[:-]|\.\d{3}/g, "");
   const day = now.slice(0, 8);
   const scope = day + "/auto/s3/aws4_request";
+  const signedHeaders = [
+    ...(contentType ? ["content-type"] : []), "host", ...(createOnly ? ["if-none-match"] : []),
+  ].join(";");
   const params: Array<[string, string]> = [
     ["X-Amz-Algorithm", "AWS4-HMAC-SHA256"],
     ["X-Amz-Credential", accessKeyId + "/" + scope],
     ["X-Amz-Date", now],
     ["X-Amz-Expires", String(expiresSeconds)],
-    ["X-Amz-SignedHeaders", contentType ? "content-type;host" : "host"],
+    ["X-Amz-SignedHeaders", signedHeaders],
     ...multipartQuery.map(([k, v]) => [k, v] as [string, string]),
   ];
   const query = canonicalQuery(params);
-  const headers = contentType ?
-    "content-type:" + contentType + "\n" + "host:" + hostname + "\n" :
-    "host:" + hostname + "\n";
-  const signedHeaders = contentType ? "content-type;host" : "host";
+  const headers = (contentType ? "content-type:" + contentType + "\n" : "") +
+    "host:" + hostname + "\n" + (createOnly ? "if-none-match:*\n" : "");
   const request = [method, resource, query, headers, signedHeaders, "UNSIGNED-PAYLOAD"].join("\n");
   const stringToSign = ["AWS4-HMAC-SHA256", now, scope, sha256(request)].join("\n");
   const signingKey = hmac(
@@ -132,11 +137,15 @@ export async function fetchPrivateR2Control(
   method: "GET" | "POST" | "DELETE",
   key: string,
   multipartQuery: MultipartQuery,
-  options: { body?: string; contentType?: string; timeoutMs?: number } = {}
+  options: { body?: string; contentType?: string; timeoutMs?: number; createOnly?: boolean } = {}
 ): Promise<Response> {
   const { accountId, accessKeyId, secretAccessKey, bucket } = configuration();
   const safeKey = checkedKey(key);
   const mime = options.contentType;
+  if (options.createOnly && (method !== "POST" ||
+      !multipartQuery.some(([name]) => name === "uploadId") || !options.body)) {
+    throw new Error("Condição create-only exige conclusão multipartes R2.");
+  }
   if (mime && !/^[a-z0-9.+-]+\/[a-z0-9.+-]+$/i.test(mime)) {
     throw new Error("Tipo MIME do controle R2 inválido.");
   }
@@ -164,6 +173,7 @@ export async function fetchPrivateR2Control(
     ["x-amz-date", now],
   ]);
   if (mime) signed.set("content-type", mime);
+  if (options.createOnly) signed.set("if-none-match", "*");
   const names = [...signed.keys()].sort();
   const signedHeaders = names.join(";");
   const canonicalHeaders = names.map((name) => name + ":" + signed.get(name)!.trim() + "\n").join("");
@@ -183,6 +193,7 @@ export async function fetchPrivateR2Control(
       "X-Amz-Date": now,
       "X-Amz-Content-Sha256": hash,
       ...(mime ? { "Content-Type": mime } : {}),
+      ...(options.createOnly ? { "If-None-Match": "*" } : {}),
     },
     body: options.body,
     cache: "no-store",

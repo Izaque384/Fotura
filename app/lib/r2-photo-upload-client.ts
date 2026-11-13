@@ -56,13 +56,15 @@ async function callR2Api(token: string, body: Record<string, unknown>): Promise<
 }
 
 function uploadOnce(
-  url: string, contentType: string, body: Blob, onProgress?: (bytes: number) => void
+  url: string, contentType: string, body: Blob, onProgress?: (bytes: number) => void,
+  createOnly = false
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", url, true);
     xhr.timeout = 240_000;
     xhr.setRequestHeader("Content-Type", contentType);
+    if (createOnly) xhr.setRequestHeader("If-None-Match", "*");
     if (onProgress) xhr.upload.onprogress = (event) => onProgress(Math.min(event.loaded, body.size));
     xhr.onload = () => xhr.status >= 200 && xhr.status < 300
       ? resolve()
@@ -75,11 +77,12 @@ function uploadOnce(
 }
 
 async function putWithRetry(
-  url: string, contentType: string, body: Blob, onProgress?: (bytes: number) => void
+  url: string, contentType: string, body: Blob, onProgress?: (bytes: number) => void,
+  createOnly = false
 ) {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      await uploadOnce(url, contentType, body, onProgress);
+      await uploadOnce(url, contentType, body, onProgress, createOnly);
       return;
     } catch (error) {
       if (attempt === 1) throw error;
@@ -226,10 +229,10 @@ export async function enviarFotoR2Piloto(options: {
       if (renewed.ok !== true || !renewed.completed || !renewed.thumb?.url) {
         throw new Error("Não foi possível confirmar o original R2 ou renovar a miniatura.");
       }
-      await putWithRetry(renewed.thumb.url, "image/jpeg", thumb);
+      await putWithRetry(renewed.thumb.url, "image/jpeg", thumb, undefined, true);
     } else {
-      await putWithRetry(prepared!.original.url, prepared!.original.contentType, arquivo, progresso);
-      await putWithRetry(prepared!.thumb.url, "image/jpeg", thumb);
+      await putWithRetry(prepared!.original.url, prepared!.original.contentType, arquivo, progresso, true);
+      await putWithRetry(prepared!.thumb.url, "image/jpeg", thumb, undefined, true);
     }
 
     const result = await callR2Api(token, {
