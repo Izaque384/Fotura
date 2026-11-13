@@ -162,7 +162,46 @@ export default function AjudaPage() {
       form.set("pagina_origem", origem);
       form.set("navegador", navigator.userAgent.slice(0, 500));
       if (tipo === "feedback" && nota) form.set("nota", String(nota));
-      if (tipo === "problema" && arquivo) form.set("screenshot", arquivo);
+      if (tipo === "problema" && arquivo) {
+        const configResponse = await fetch("/api/feedback/anexo", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        const config = await configResponse.json().catch(() => ({})) as {
+          provider?: string; error?: string;
+        };
+        if (!configResponse.ok) throw new Error(config.error || "Armazenamento indisponível.");
+
+        if (config.provider === "r2") {
+          const prepararResposta = await fetch("/api/feedback/anexo", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ nome: arquivo.name, mime: arquivo.type, bytes: arquivo.size }),
+          });
+          const preparo = await prepararResposta.json().catch(() => ({})) as {
+            error?: string; path?: string; nome?: string; contentType?: string; url?: string;
+          };
+          if (!prepararResposta.ok || !preparo.path || !preparo.url ||
+              !preparo.nome || !preparo.contentType) {
+            throw new Error(preparo.error || "Não foi possível preparar o envio do anexo.");
+          }
+          const upload = await fetch(preparo.url, {
+            method: "PUT",
+            headers: { "Content-Type": preparo.contentType },
+            body: arquivo,
+          });
+          if (!upload.ok) throw new Error("O anexo não foi recebido pelo R2. Tente novamente.");
+          form.set("screenshot_path", preparo.path);
+          form.set("screenshot_nome", preparo.nome);
+          form.set("screenshot_mime", preparo.contentType);
+          form.set("screenshot_bytes", String(arquivo.size));
+        } else if (config.provider === "supabase") {
+          // Only the pre-cutover legacy upload uses Supabase Storage.
+          form.set("screenshot", arquivo);
+        } else {
+          throw new Error("Destino do anexo não reconhecido.");
+        }
+      }
 
       const resposta = await fetch("/api/feedback", {
         method: "POST",

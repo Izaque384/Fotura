@@ -102,3 +102,9 @@ Manter PostgreSQL/Auth do Supabase e passar arquivos dos buckets **fotos** e **a
 
 ## Notas sobre custos
 R2 não cobra tarifa por egress, mas cobra armazenamento e operações além da franquia; transferir arquivos existentes **para fora do Supabase pode consumir o Egress do Supabase**.
+
+## Anexos de feedback — 13/11/2026 (somente código de prévia)
+- Imagens PNG/JPG/WebP até 5 MB são enviadas diretamente do navegador para `feedback-anexos/` no bucket R2 privado, sob reserva autenticada. A função Vercel recebe apenas metadados, evitando o limite de 4,5 MB.
+- O POST do feedback consulta reserva pendente, confere HEAD (MIME e bytes) e chama a RPC transacional já versionada. Em modo R2 não há fallback de anexos para Supabase.
+- O fluxo Supabase anterior é preservado enquanto as flags R2 estiverem desligadas. Limite de reservas pendentes e rate limit na preparação evitam abuso.
+- Necessário CI completo, teste no navegador com login, falhas de PUT/CORS, envio de imagem acima de 4,5 MB, limpeza de reserva abandonada e visualização administrativa, antes do cutover. Nenhuma mídia real transferida.

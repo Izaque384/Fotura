@@ -20,7 +20,17 @@ test("new media cannot silently return to Supabase after cutover", () => {
   assert.match(util, /FOTURA_R2_FINAL_CUTOVER/);
   assert.match(util, /return "unavailable"/);
   assert.match(feedback, /uploadProvider === "unavailable"/);
-  assert.match(feedback, /putVerifiedAuxiliaryMedia/);
+  const prepare = read("app/app/api/feedback/anexo/route.ts");
+  const help = read("app/app/ajuda/page.tsx");
+  assert.match(prepare, /selectedMediaUploadProvider\\(\\) !== "r2"/);
+  assert.match(prepare, /fotura_r2_upload_reservations/);
+  assert.match(prepare, /signPrivateR2ObjectUrl/);
+  assert.match(feedback, /signPrivateR2ObjectUrl\\("HEAD"/);
+  assert.match(feedback, /registrar_feedback_r2_backend/);
+  assert.doesNotMatch(feedback, /putVerifiedAuxiliaryMedia/);
+  assert.match(help, /fetch\\("\\/api\\/feedback\\/anexo"/);
+  assert.match(help, /method: "PUT"/);
+  assert.match(help, /screenshot_path/);
 });
 
 test("feedback screenshot registration is atomic with feedback record", () => {
