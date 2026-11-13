@@ -4,7 +4,7 @@ test("landing substitui completamente a seleção de fotos pela abertura cinemat
   await page.goto("/pt");
   const secao = page.getByRole("region", { name: "Antes das fotos, uma história." });
   await expect(secao).toBeVisible();
-  await expect(secao.getByText("Vídeo ou fotografias", { exact: true })).toBeVisible();
+  await expect(secao.getByText("Abertura com vídeo ou fotos", { exact: true })).toBeVisible();
   await expect(page.getByText("Seu cliente vê o ensaio. Não o sistema.")).toHaveCount(0);
   await expect(page.locator(".lp2-client-grid")).toHaveCount(0);
   await expect(page.locator(".lp2-client-photo")).toHaveCount(0);
@@ -31,7 +31,7 @@ test("demonstração da abertura funciona no celular, sem transbordamento horizo
   });
   expect(left).toBeGreaterThanOrEqual(0);
   expect(right).toBeLessThanOrEqual(viewport + 1);
-  await secao.getByRole("button", { name: /Experimentar a abertura/ }).click();
+  await secao.getByRole("button", { name: /Ver uma abertura de exemplo/ }).click();
   await expect(page.getByRole("dialog", { name: "Apresentação do projeto" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Apresentação do projeto" })).toHaveCount(0);

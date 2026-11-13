@@ -21,15 +21,22 @@ const payload = {
 
 test("carregamento público é cinematográfico, responsivo e não depende de fotos privadas", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  let releaseResponse: () => void = () => {};
+  const heldResponse = new Promise<void>((resolve) => { releaseResponse = resolve; });
   await page.route("**/api/projeto/publico?**", async (route) => {
-    // Simula apenas na suíte uma resposta lenta para observar a tela de espera.
-    await new Promise((resolve) => setTimeout(resolve, 1400));
+    // Hold the API until the actual loading UI has been asserted. A fixed
+    // 1400ms timeout was flaky under slow Next dev compilation in CI.
+    await heldResponse;
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) });
   });
 
-  await page.goto("/p/ensaio-1e86ef4c");
+  await page.goto("/p/ensaio-1e86ef4c", { waitUntil: "domcontentloaded" });
   const status = page.getByRole("status", { name: "Carregando projeto fotográfico" });
-  await expect(status).toBeVisible();
+  try {
+    await expect(status).toBeVisible();
+  } finally {
+    releaseResponse();
+  }
   await expect(status.getByText("Cada momento merece ser revivido.")).toHaveCount(0);
   await expect(status.getByText("Preparando suas fotografias...")).toBeVisible();
   await expect(status.locator(".fpl-progress span")).toHaveCount(1);

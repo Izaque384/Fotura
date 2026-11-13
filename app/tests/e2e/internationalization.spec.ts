@@ -8,7 +8,7 @@ test.describe("international routes", () => {
     });
 
     await page.goto("/en/login");
-    await expect(page.getByRole("heading", { name: "Sign in to your account" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
     await expect(page.getByLabel("Email")).toBeVisible();
     await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
@@ -17,7 +17,7 @@ test.describe("international routes", () => {
 
   test("Spanish login renders in Spanish", async ({ page }) => {
     await page.goto("/es/login");
-    await expect(page.getByRole("heading", { name: "Entra en tu cuenta" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Qué bueno verte de nuevo." })).toBeVisible();
     await expect(page.getByLabel("Correo electrónico")).toBeVisible();
     await expect(page.getByLabel("Contraseña", { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible();
