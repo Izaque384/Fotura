@@ -104,3 +104,9 @@ Não fazer merge deste PR, não habilitar flags, não aplicar todas as migraçõ
 - A limpeza órfã com lease só retoma depois de dez minutos, dando tempo para expirar as URLs de PUT de cinco minutos e uploads já iniciados, e verifica novamente ausência no registro antes do DELETE e do ACK.
 - Contagem de pendentes contempla apenas reservas `pending` ainda válidas. Não gera exclusão de objetos antigos, mudança em produção nem mídia de cliente.
 - Necessário teste com falhas reais de rede, abortos multipart e confirmações concorrentes antes do cutover.
+
+## Reconciliação de PUT com resposta perdida — 13/11/2026
+- Implementado `verificar` autenticado na API de fotos R2: somente dono + ticket assinado + reserva pendente válida ou mídia já registrada podem consultar `HEAD` de original e thumb. Confere MIME e quantidade exata de bytes.
+- PUT create-only que recebeu erro de rede, timeout ou HTTP 412 só é considerado concluído após `HEAD` positivo; 412 isolado nunca indica sucesso nem autoriza substituição.
+- Confirmação de banco que perdeu a resposta é tentada novamente de forma idempotente após reconciliação. Se original e thumb foram conferidos, falhas de confirmação não cancelam a reserva automaticamente; prevenção de perda de upload em estado ambíguo.
+- Ainda são necessários teste real com R2 e perda simulada de resposta, e comparação de hash para provas de integridade mais fortes.

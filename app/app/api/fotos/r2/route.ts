@@ -44,7 +44,7 @@ type Ticket = {
   bytes: number; thumbBytes: number; mime: string; exp: number; uploadId?: string;
 };
 type Incoming = {
-  acao?: "preparar" | "confirmar" | "cancelar" | "multipart_iniciar" | "multipart_parte" | "multipart_listar" | "multipart_resumir" | "multipart_concluir" | "multipart_abortar";
+  acao?: "preparar" | "verificar" | "confirmar" | "cancelar" | "multipart_iniciar" | "multipart_parte" | "multipart_listar" | "multipart_resumir" | "multipart_concluir" | "multipart_abortar";
   galeria?: string; variante?: Variant;
   nome?: string; bytes?: number; mimeType?: string;
   thumbBytes?: number; ticket?: string; partNumber?: number;
@@ -325,6 +325,49 @@ export async function POST(req: NextRequest) {
       return json({ error: "Não foi possível operar a transferência multipartes." }, 503);
     }
     return json({ error: "Operação multipartes inválida." }, 400);
+  }
+
+  if (body.acao === "verificar") {
+    // An ambiguous browser PUT can succeed at R2 and lose its HTTP reply.
+    // Read-only reconciliation, scoped by owner + signed ticket + live
+    // reservation. An HTTP 412 (create-only) is never enough to declare
+    // success without checking the exact MIME and byte count via HEAD.
+    const ticket = validateTicket(body.ticket);
+    if (!ticket || ticket.u !== auth.user.id) {
+      return json({ error: "Autorização de upload inválida." }, 403);
+    }
+    if (!await galleryAllowed(auth.db, auth.user.id, ticket.g, ticket.v)) {
+      return json({ error: "Pasta indisponível." }, 403);
+    }
+    const key = paths(ticket);
+    const { data: reserved, error: reserveError } = await auth.db
+      .from("fotura_r2_upload_reservations")
+      .select("id").eq("bucket", "fotos").eq("object_key", key.original)
+      .eq("owner_id", auth.user.id).eq("state", "pending")
+      .gt("expires_at", new Date().toISOString()).maybeSingle();
+    const { data: registered, error: registryError } = await auth.db
+      .from("fotura_media_objects")
+      .select("object_key").eq("bucket", "fotos").eq("object_key", key.original)
+      .eq("owner_id", auth.user.id).maybeSingle();
+    if (reserveError || registryError) {
+      return json({ error: "Não foi possível verificar o upload." }, 503);
+    }
+    if (!reserved && !registered) {
+      return json({ error: "Reserva de upload não está mais válida." }, 409);
+    }
+    try {
+      const [original, thumb] = await Promise.all([
+        headObject(key.original), headObject(key.thumb),
+      ]);
+      return json({
+        ok: true,
+        original: Boolean(original && original.bytes === ticket.bytes && original.type === ticket.mime),
+        thumb: Boolean(thumb && thumb.bytes === ticket.thumbBytes && thumb.type === "image/jpeg"),
+        registered: Boolean(registered),
+      });
+    } catch {
+      return json({ error: "R2 não respondeu à verificação do arquivo." }, 503);
+    }
   }
 
   if (body.acao === "confirmar" || body.acao === "cancelar") {

@@ -113,3 +113,20 @@ test("cancelling an upload cannot delete a concurrently confirmed photo", () => 
   assert.match(sql, /r\.state='cleaning' and r\.lease_until < now\(\)/);
   assert.match(sql, /not exists \(select 1 from public\.fotura_media_objects/);
 });
+
+test("a lost success response is reconciled by exact server-side R2 HEAD", () => {
+  const photos = read("app/app/api/fotos/r2/route.ts");
+  const client = read("app/lib/r2-photo-upload-client.ts");
+  assert.ok(photos.includes('body.acao === "verificar"'));
+  assert.ok(photos.includes('ticket.u !== auth.user.id'));
+  assert.ok(photos.includes('.gt("expires_at", new Date().toISOString())'));
+  assert.ok(photos.includes('original.bytes === ticket.bytes'));
+  assert.ok(photos.includes('thumb.bytes === ticket.thumbBytes'));
+  assert.ok(photos.includes('original.type === ticket.mime'));
+  assert.ok(photos.includes('thumb.type === "image/jpeg"'));
+  assert.ok(client.includes('verifyCommitted().catch(() => false)'));
+  assert.ok(client.includes('() => verify("original")'));
+  assert.ok(client.includes('() => verify("thumb")'));
+  assert.ok(client.includes('bothUploaded = true'));
+  assert.ok(client.includes('&& !bothUploaded'));
+});

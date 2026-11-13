@@ -78,14 +78,23 @@ function uploadOnce(
 
 async function putWithRetry(
   url: string, contentType: string, body: Blob, onProgress?: (bytes: number) => void,
-  createOnly = false
+  createOnly = false, verifyCommitted?: () => Promise<boolean>
 ) {
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       await uploadOnce(url, contentType, body, onProgress, createOnly);
       return;
     } catch (error) {
-      if (attempt === 1) throw error;
+      // A write can commit at R2 while its HTTP response is lost. Repeating a
+      // create-only PUT then returns 412. Confirm the expected object with
+      // owner-scoped server HEAD rather than overwriting or failing blindly.
+      if (createOnly && verifyCommitted) {
+        const verified = await verifyCommitted().catch(() => false);
+        if (verified) { onProgress?.(body.size); return; }
+      }
+      if (attempt === 1 || (error instanceof Error && /HTTP 412/.test(error.message))) {
+        throw error;
+      }
       onProgress?.(0);
       await new Promise((resolve) => setTimeout(resolve, 650));
     }
@@ -201,8 +210,13 @@ export async function enviarFotoR2Piloto(options: {
   }
 
   let confirmed = false;
+  let bothUploaded = false;
   let ticket = persisted?.ticket ?? prepared!.ticket;
   let nome = persisted?.nome ?? prepared!.nome;
+  const verify = async (which: "original" | "thumb"): Promise<boolean> => {
+    const state = await callR2Api(token, { acao: "verificar", ticket });
+    return state.ok === true && state[which] === true;
+  };
 
   try {
     if (multipart) {
@@ -229,15 +243,28 @@ export async function enviarFotoR2Piloto(options: {
       if (renewed.ok !== true || !renewed.completed || !renewed.thumb?.url) {
         throw new Error("Não foi possível confirmar o original R2 ou renovar a miniatura.");
       }
-      await putWithRetry(renewed.thumb.url, "image/jpeg", thumb, undefined, true);
+      await putWithRetry(renewed.thumb.url, "image/jpeg", thumb, undefined, true,
+        () => verify("thumb"));
     } else {
-      await putWithRetry(prepared!.original.url, prepared!.original.contentType, arquivo, progresso, true);
-      await putWithRetry(prepared!.thumb.url, "image/jpeg", thumb, undefined, true);
+      await putWithRetry(prepared!.original.url, prepared!.original.contentType, arquivo,
+        progresso, true, () => verify("original"));
+      await putWithRetry(prepared!.thumb.url, "image/jpeg", thumb, undefined, true,
+        () => verify("thumb"));
     }
 
-    const result = await callR2Api(token, {
-      acao: "confirmar", ticket, largura, altura,
-    });
+    bothUploaded = true;
+    const confirmPayload = { acao: "confirmar", ticket, largura, altura };
+    let result: Record<string, unknown>;
+    try {
+      result = await callR2Api(token, confirmPayload);
+    } catch (error) {
+      // A request can commit the database transaction and lose its response.
+      // Retry only if both objects are still verified. Registration is
+      // idempotent and rejects expired/cancelled reservations.
+      if (!await verify("original").catch(() => false) ||
+          !await verify("thumb").catch(() => false)) throw error;
+      result = await callR2Api(token, confirmPayload);
+    }
     if (result.ok !== true || result.nome !== nome) {
       throw new Error("Confirmação de integridade R2 inválida.");
     }
@@ -245,9 +272,10 @@ export async function enviarFotoR2Piloto(options: {
     removeSession(key);
     return { nome };
   } finally {
-    if (!confirmed && !multipart && prepared) {
-      // Multipart sessions survive network failures and can be resumed.
-      // Short single-PUT attempts are cleaned up when not registered.
+    if (!confirmed && !multipart && prepared && !bothUploaded) {
+      // Failed short uploads are fenced for delayed orphan cleanup. Once
+      // both files were verified, keep the reservation alive after an
+      // ambiguous confirmation reply; never cancel a possible DB commit.
       void callR2Api(token, { acao: "cancelar", ticket }).catch(() => {});
     }
   }
