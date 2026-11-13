@@ -12,7 +12,7 @@ import { lerAbertura, validarAbertura, caminhoVideoValido, VIDEO_ABERTURA_BUCKET
 import { MODELOS_PROJETO,modeloValido,configProjeto } from "../../../../lib/project-templates";
 import { signPrivateMediaUrl, signPrivateMediaUrls } from "../../../../lib/media-storage";
 import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
-import { isR2ReadEnabled } from "../../../../lib/r2-storage";
+import { isR2ReadEnabled, signPrivateR2ObjectUrl } from "../../../../lib/r2-storage";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -276,14 +276,44 @@ export async function PATCH(req: NextRequest) {
       const path = abertura.video;
       if (!caminhoVideoValido(path) || !path.startsWith(`${user.id}/${body.projeto}/`))
         return json({ error: "O vídeo não pertence a este projeto." }, 403);
-      const nome = path.split("/").pop()!;
-      const { data: objetos, error: videoErro } = await supabase.storage.from(VIDEO_ABERTURA_BUCKET)
-        .list(`${user.id}/${body.projeto}`, { search: nome, limit: 100 });
-      const video = objetos?.find((item) => item.id && item.name === nome);
-      const bytes = Number(video?.metadata?.size ?? 0);
-      if (videoErro || !video || bytes <= 0 || bytes > VIDEO_ABERTURA_MAX_BYTES ||
-        String(video.metadata?.mimetype ?? "") !== "video/mp4")
-        return json({ error: "Vídeo de abertura inválido ou indisponível. Envie um MP4 de até 25 MB." }, 400);
+      // A newly uploaded R2 MP4 will not appear in Supabase Storage listings.
+      // Check owner-bound private registry first; only legacy paths are listed.
+      let r2Verified = false;
+      let r2Registered = false;
+      if (isR2ReadEnabled()) {
+        const { data: object, error: registryError } = await supabase.from("fotura_media_objects")
+          .select("bytes,content_type").eq("bucket", VIDEO_ABERTURA_BUCKET)
+          .eq("object_key", path).eq("owner_id", user.id).maybeSingle();
+        if (registryError) return json({ error: "Não foi possível conferir o vídeo no R2." }, 503);
+        if (object) {
+          r2Registered = true;
+          try {
+            const head = await fetch(signPrivateR2ObjectUrl("HEAD", path, 60), {
+              method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(12_000),
+            });
+            const bytes = Number(head.headers.get("content-length"));
+            const mime = head.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
+            r2Verified = head.ok && Number.isSafeInteger(bytes) && bytes > 0 &&
+              bytes <= VIDEO_ABERTURA_MAX_BYTES && bytes === Number(object.bytes) &&
+              mime === "video/mp4" && object.content_type === "video/mp4";
+          } catch {
+            return json({ error: "Não foi possível verificar o MP4 privado no R2." }, 503);
+          }
+        }
+      }
+      if (r2Registered) {
+        if (!r2Verified) return json({ error: "Vídeo R2 não passou na conferência de integridade." }, 422);
+      } else {
+        const nome = path.split("/").pop()!;
+        const { data: objetos, error: videoErro } = await supabase.storage.from(VIDEO_ABERTURA_BUCKET)
+          .list(`${user.id}/${body.projeto}`, { search: nome, limit: 100 });
+        const video = objetos?.find((item) => item.id && item.name === nome);
+        const bytes = Number(video?.metadata?.size ?? 0);
+        if (videoErro || !video || bytes <= 0 || bytes > VIDEO_ABERTURA_MAX_BYTES ||
+            String(video.metadata?.mimetype ?? "") !== "video/mp4") {
+          return json({ error: "Vídeo de abertura inválido ou indisponível. Envie um MP4 de até 25 MB." }, 400);
+        }
+      }
     }
     if (abertura.ativo && abertura.fotos.length) {
       const ids = [...new Set(abertura.fotos.map((foto) => foto.pastaId))];
@@ -332,8 +362,23 @@ export async function PATCH(req: NextRequest) {
   if (body.abertura !== undefined) {
     const antigo = lerAbertura(p.abertura_config).video;
     const atual = lerAbertura(update.abertura_config).video;
-    if (antigo && antigo !== atual && antigo.startsWith(`${user.id}/${body.projeto}/`))
-      await supabase.storage.from(VIDEO_ABERTURA_BUCKET).remove([antigo]);
+    if (antigo && antigo !== atual && antigo.startsWith(`${user.id}/${body.projeto}/`)) {
+      // Never send an R2-registered object to the legacy Supabase delete API.
+      // Retain old R2 versions for explicit owner-scoped cleanup. A deletion
+      // raced with concurrent project edits could remove a published video.
+      let keepPrivateR2 = false;
+      let registryFailed = false;
+      if (isR2ReadEnabled()) {
+        const { data: oldObject, error: oldError } = await supabase.from("fotura_media_objects")
+          .select("object_key").eq("bucket", VIDEO_ABERTURA_BUCKET).eq("object_key", antigo)
+          .eq("owner_id", user.id).maybeSingle();
+        keepPrivateR2 = Boolean(oldObject);
+        registryFailed = Boolean(oldError);
+      }
+      if (!keepPrivateR2 && !registryFailed) {
+        await supabase.storage.from(VIDEO_ABERTURA_BUCKET).remove([antigo]);
+      }
+    }
   }
   // Os controles de prova e entrega são globais no workspace: manter cada pasta alinhada.
   const camposPasta = ["prova","limite","prazo","link_ate","download_ativo","download_individual","download_completo","download_tamanho","download_pin_hash","watermark_ativo","watermark_texto","watermark_opacidade","assistente_ativo"];

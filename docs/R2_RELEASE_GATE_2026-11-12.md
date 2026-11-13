@@ -126,3 +126,9 @@ Não fazer merge deste PR, não habilitar flags, não aplicar todas as migraçõ
 - `ModalSelecao` não faz mais `supabase.storage.createSignedUrls()` diretamente. Usa GET `/api/fotos/selecao-proprietario` com sessão autenticada.
 - O servidor verifica `galerias.user_id`, seleciona somente arquivos presentes em `selecoes.fotos` ou `comentarios` e no catálogo autorizado da pasta, e assina originais e miniaturas por `signPrivateMediaUrls`.
 - Incluídos contratos estáticos e teste HTTP sem autenticação. A listagem usa lotes limitados de 200 chaves e no máximo 500 fotos; leituras legadas continuam disponíveis.
+
+## Vídeo de abertura publicado: validação de salvamento R2 — 13/11/2026
+- Corrigido POST/PATCH do workspace: salvar abertura com MP4 privado R2 previamente registrado não depende mais da listagem do Supabase Storage.
+- Para objeto R2, exige vínculo owner+key no registro privado, HEAD remoto, tamanho exato, MIME video/mp4 e limite 25 MB. Objetos não registrados continuam no caminho legado Supabase.
+- Depois de salvar nova configuração, vídeo antigo R2 não é removido via API Supabase: permanece íntegro para exclusão explicitamente validada. Remoção antiga Supabase continua quando há certeza de que não existe registro R2.
+- Pendente: protocolo de limpeza segura de versões R2 já registradas e testes reais de publicação e reprodução em iPhone; não considerar Marco 1 autorizado até esses testes.

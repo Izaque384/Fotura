@@ -82,3 +82,13 @@ test("selection modal signs R2 and legacy objects through the authenticated owne
   assert.match(route, /signPrivateMediaUrls\(db, "fotos", keys\.slice/);
   assert.match(route, /Cache-Control/);
 });
+
+test("saving the cinematic opening supports registered private R2 videos", () => {
+  const workspace = read("app/app/api/projeto/workspace/route.ts");
+  assert.match(workspace, /\.select\("bytes,content_type"\)\.eq\("bucket", VIDEO_ABERTURA_BUCKET\)/);
+  assert.match(workspace, /\.eq\("owner_id", user\.id\)/);
+  assert.match(workspace, /signPrivateR2ObjectUrl\("HEAD", path, 60\)/);
+  assert.match(workspace, /bytes === Number\(object\.bytes\)/);
+  assert.match(workspace, /if \(r2Registered\)/);
+  assert.match(workspace, /if \(!keepPrivateR2 && !registryFailed\)/);
+});
