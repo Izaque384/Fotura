@@ -7,7 +7,8 @@ import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { uuidValido } from "../../../../lib/validation";
 import { contextoPlano, podeAdicionarFotos } from "../../../../lib/billing-usage";
 import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
-import { signPrivateR2ObjectUrl, r2CredentialsPresent, isR2ReadEnabled } from "../../../../lib/r2-storage";
+import { signPrivateR2ObjectUrl } from "../../../../lib/r2-storage";
+import { selectedMediaUploadProvider } from "../../../../lib/r2-aux-media";
 import { validarArquivo } from "../../../../lib/upload-validation";
 import { R2_PART_BYTES, beginR2Multipart, signedR2PartUrl, listR2MultipartParts, finishR2Multipart, abortR2Multipart } from "../../../../lib/r2-multipart";
 
@@ -27,15 +28,9 @@ const json = (data: unknown, status = 200) =>
  * reviewed and all real gallery flows pass in a separate test project.
  */
 function available() {
-  // Production needs an explicit one-way cutover gate in addition to the
-  // upload/read flags. A rollout failure MUST NOT redirect new photos to
-  // Supabase once R2 has become the only storage.
-  const finalCutover = process.env.FOTURA_R2_FINAL_CUTOVER === "true";
-  const permittedEnvironment = process.env.VERCEL_ENV === "preview" ||
-    (process.env.VERCEL_ENV === "production" && finalCutover);
-  return permittedEnvironment &&
-    process.env.FOTURA_R2_UPLOAD_ENABLED === "true" &&
-    isR2ReadEnabled() && r2CredentialsPresent();
+  // Photos, videos and auxiliary media MUST share one release gate.
+  // A partially configured production cutover fails closed everywhere.
+  return selectedMediaUploadProvider() === "r2";
 }
 
 type Variant = "principal" | "entrega";

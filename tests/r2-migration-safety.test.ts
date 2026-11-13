@@ -8,11 +8,13 @@ test("R2 provider is exclusive for new uploads and is preview-gated", () => {
   const photo = read("app/app/api/fotos/r2/route.ts");
   const video = read("app/app/api/projeto/video/route.ts");
   const client = read("app/lib/r2-photo-upload-client.ts");
-  assert.match(photo, /VERCEL_ENV === "preview"/);
-  assert.match(photo, /FOTURA_R2_UPLOAD_ENABLED/);
-  assert.match(photo, /FOTURA_R2_FINAL_CUTOVER/);
+  const provider = read("app/lib/r2-aux-media.ts");
+  assert.match(provider, /VERCEL_ENV === "preview"/);
+  assert.match(provider, /FOTURA_R2_UPLOAD_ENABLED/);
+  assert.match(provider, /FOTURA_R2_FINAL_CUTOVER/);
+  assert.match(photo, /selectedMediaUploadProvider\(\) === "r2"/);
   assert.match(photo, /requested && !available\(\)/);
-  assert.match(video, /FOTURA_R2_FINAL_CUTOVER/);
+  assert.match(video, /selectedMediaUploadProvider\(\) === "r2"/);
   assert.match(video, /r2Requested\(\) && !r2Ready\(\)/);
   assert.match(video, /provider: "r2"/);
   assert.match(client, /never|Never/);
