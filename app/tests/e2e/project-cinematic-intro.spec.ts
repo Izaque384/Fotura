@@ -364,7 +364,11 @@ test("Safari: bloqueio real do autoplay preserva fotos como fallback, sem adicio
     Object.defineProperty(el, "paused", { configurable: true, get: () => true });
   });
   await video.dispatchEvent("canplay");
-  await expect(tela.locator(".fci-images img")).toHaveCount(1);
+  // The video fallback also has a 12-second watchdog: some CI Chromium
+  // workers suppress the mocked canplay/play() rejection until foregrounded.
+  // Wait for the actual production deadline instead of assuming immediate fallback.
+  await page.bringToFront();
+  await expect(tela.locator(".fci-images img")).toHaveCount(1, { timeout: 15_000 });
   await expect(video).toHaveCSS("opacity", "0");
   await expect(tela.getByRole("button")).toHaveCount(1);
 });
