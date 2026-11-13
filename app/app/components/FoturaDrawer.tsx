@@ -29,7 +29,9 @@ export default function FoturaDrawer({ title, description, onClose, children, fo
     closeRef.current?.focus();
 
     function onKeyDown(event: KeyboardEvent) {
-      if (suspendedLatest.current) return;
+      // Previews such as the cinematic opening render their own modal inside the drawer.
+      // Let the topmost dialog handle Escape and keyboard navigation first.
+      if (suspendedLatest.current || panelRef.current?.querySelector('[role="dialog"][aria-modal="true"]')) return;
       if (event.key === "Escape") {
         event.preventDefault();
         closeLatest.current();
