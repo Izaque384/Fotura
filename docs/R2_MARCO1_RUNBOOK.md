@@ -40,3 +40,7 @@ Estado em 13/11/2026: **PREPARADO NO CÓDIGO, AINDA NÃO ATIVADO NA PRODUÇÃO**
 - Nada de cópias de arquivos reais antes de 23/11/2026, e mesmo depois só com egress comprovado.
 - Nunca excluir a origem Supabase porque a cópia R2 aparentemente funcionou.
 - Não tratar a aprovação de CI simulada ou API Cloudflare como comprovação de navegador/S3 real.
+
+## Edge Function publicada no Supabase
+- Auditoria em 13/11: `storage-cleanup` no Supabase de produção continua **ACTIVE version 1**, sem a rotina de claim/ack R2 da branch. Não a substituir até testar o trabalhador no ambiente isolado com migrações e segredos de escopo mínimo.
+- CI passa a executar `deno check` da implementação versionada, sem acesso a credenciais nem deploy. Typecheck não substitui execução com leases e objetos remotos.

@@ -83,3 +83,15 @@ jobs:
           done
       - name: Execute R2 registration and cleanup SQL assertions
         run: psql -v ON_ERROR_STOP=1 -f tests/sql/r2_local_contract.sql
+
+  edge-typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Typecheck staged Supabase R2 cleanup Edge Function
+        # No function is deployed; no user data or Supabase credentials.
+        run: deno check supabase/functions/storage-cleanup/index.ts
