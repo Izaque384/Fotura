@@ -115,3 +115,9 @@ Não fazer merge deste PR, não habilitar flags, não aplicar todas as migraçõ
 - Cancelar upload MP4 ainda pendente não executa `DELETE` no objeto: marca a reserva como `cleaning` com 10 minutos de proteção antes da limpeza verificada, permitindo que URLs de PUT de 5 minutos expirem.
 - O limite de cinco versões deixa de contar reservas que não estão pendentes e válidas. Para vídeos já registrados, o DELETE revalida o vídeo publicado no banco imediatamente antes de removê-lo.
 - Pendente para publicação: garantir atomicidade de exclusão de vídeo registrado com mudanças simultâneas de configuração (um segundo GET não equivale a uma transação). A limpeza de vídeos não confirmados fica isolada e com lease.
+
+## Bloqueio corrigido: fotos selecionadas na preparação da entrega — 13/11/2026
+- A tela `/dashboard/entrega/[id]` ainda chamava o Supabase Storage diretamente para assinar fotos da seleção, e falharia para originais que fossem criados exclusivamente no R2.
+- Agora `GET /api/galeria/entrega`, já autenticado pelo dono, usa o catálogo da galeria para validar nomes e o adaptador `signPrivateMediaUrls` para assinar cada objeto conforme registro privado R2 ou legado Supabase. URLs só são devolvidas após `galerias.user_id = auth.user.id`.
+- A tela consome `selecionadas` já assinadas pelo servidor. Teste de regressão impede a reintrodução de `createSignedUrls` direto na tela.
+- Resta validar manualmente seleção e download reais com arquivos R2, incluindo expirados, falhas parciais e iPhone.
