@@ -8,11 +8,14 @@ export type UploadProvider = "supabase" | "r2" | "unavailable";
  * fails closed rather than redirecting an upload to the old Storage. */
 export function selectedMediaUploadProvider(): UploadProvider {
   const finalCutover = process.env.FOTURA_R2_FINAL_CUTOVER === "true";
-  const requested = finalCutover || process.env.FOTURA_R2_UPLOAD_ENABLED === "true";
+  const uploadsEnabled = process.env.FOTURA_R2_UPLOAD_ENABLED === "true";
+  const requested = finalCutover || uploadsEnabled;
   if (!requested) return "supabase";
   const allowedEnvironment = process.env.VERCEL_ENV === "preview" ||
     (process.env.VERCEL_ENV === "production" && finalCutover);
-  if (!allowedEnvironment || !isR2ReadEnabled() || !r2CredentialsPresent()) {
+  // The final production gate alone must not enable only auxiliary uploads;
+  // photos and videos also require UPLOAD_ENABLED. Fail closed everywhere.
+  if (!uploadsEnabled || !allowedEnvironment || !isR2ReadEnabled() || !r2CredentialsPresent()) {
     return "unavailable";
   }
   return "r2";

@@ -148,3 +148,13 @@ test("auxiliary media uploads are create-only even while signed URLs remain vali
     assert.ok(browser.includes('"If-None-Match": "*"'));
   }
 });
+
+test("final cutover flag cannot enable only auxiliary media if upload flag is missing", () => {
+  const aux = read("app/lib/r2-aux-media.ts");
+  const photo = read("app/app/api/fotos/r2/route.ts");
+  const video = read("app/app/api/projeto/video/route.ts");
+  assert.ok(aux.includes('const uploadsEnabled = process.env.FOTURA_R2_UPLOAD_ENABLED === "true"'));
+  assert.ok(aux.includes('if (!uploadsEnabled || !allowedEnvironment'));
+  assert.ok(photo.includes('process.env.FOTURA_R2_UPLOAD_ENABLED === "true"'));
+  assert.ok(video.includes('process.env.FOTURA_R2_UPLOAD_ENABLED === "true"'));
+});

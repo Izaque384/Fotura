@@ -82,3 +82,7 @@ Não fazer merge deste PR, não habilitar flags, não aplicar todas as migraçõ
 - Bucket `fotura-media`: CORS atualizado exclusivamente para aceitar `If-None-Match`, preservando origens, métodos e privacidade.
 - Introduzido teste E2E de barreiras de autenticação e origem externa das APIs de mídia, separado da suíte completa. A última suíte completa conhecida continua com **152 aprovados e 18 falhas**; não é gate verde. Não remover o bloqueio de publicação.
 - **Pendente:** validar PUT/412 reais, uploads autenticados, reconciliação de respostas ambíguas, limites de egress, acessos públicos seletivos e limpeza end-to-end.
+
+## Flag de cutover consistente — 13/11/2026
+- Revisada a configuração de todas as classes de mídia: mesmo com `FOTURA_R2_FINAL_CUTOVER=true`, o upload auxiliar não será ativado se `FOTURA_R2_UPLOAD_ENABLED` estiver ausente ou falso. Isso evita iniciar apenas logotipos, avatares e anexos enquanto fotos e vídeos falhariam por configuração incompleta.
+- Não alterou as flags atuais (todas continuam desativadas), nem os arquivos existentes. A ativação final continua bloqueada até validação completa.
