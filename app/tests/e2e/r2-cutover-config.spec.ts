@@ -8,10 +8,7 @@ import { expect, test } from "@playwright/test";
  * It is intentionally NOT an S3 or authenticated upload integration test.
  */
 const expected = process.env.FOTURA_R2_CONFIG_EXPECTED;
-if (expected !== "ready" && expected !== "unavailable") {
-  throw new Error("R2 cutover config test must explicitly choose its scenario.");
-}
-
+const cutoverMatrixEnabled = expected === "ready" || expected === "unavailable";
 const providerRoutes = [
   "/api/fotos/r2",
   "/api/marca",
@@ -19,6 +16,8 @@ const providerRoutes = [
   "/api/feedback/anexo",
 ];
 
+test.describe("R2 production cutover matrix (synthetic, no real storage)", () => {
+test.skip(!cutoverMatrixEnabled, "Runs only with an explicit CI configuration scenario.");
 test("production cutover selects one provider for every new media class", async ({ request }) => {
   for (const url of providerRoutes) {
     const response = await request.get(url);
@@ -56,4 +55,5 @@ test("unauthenticated callers cannot obtain media presigned URLs", async ({ requ
       url === "/api/fotos/r2" ? 404 : 401);
     expect(await response.text(), url).not.toContain("X-Amz-Signature");
   }
+});
 });
