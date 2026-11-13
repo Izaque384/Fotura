@@ -71,7 +71,7 @@ test("painel largo, navegação lateral e backdrop desfocado no desktop", async 
     return {
       panelWidth: panel.width, panelLeft: panel.left, navWidth: nav.width,
       navRight: nav.right, contentLeft: content.left,
-      blur: backdrop.backdropFilter || backdrop.webkitBackdropFilter,
+      blur: backdrop.getPropertyValue("backdrop-filter") || backdrop.getPropertyValue("-webkit-backdrop-filter"),
     };
   });
   expect(m.panelWidth).toBeGreaterThan(800);
