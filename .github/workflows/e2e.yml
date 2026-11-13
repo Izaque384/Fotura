@@ -41,6 +41,28 @@ jobs:
       - name: R2 release gate - unauthenticated and cross-origin requests
         run: npx playwright test tests/e2e/r2-storage-security.spec.ts --workers=1
       - run: npm run test:e2e
+      # No real R2 secret, browser or Supabase credentials are used. These
+      # tests only inspect anonymous provider discovery and authorization.
+      - name: R2 cutover simulation - complete production configuration
+        env:
+          VERCEL_ENV: production
+          FOTURA_R2_FINAL_CUTOVER: "true"
+          FOTURA_R2_UPLOAD_ENABLED: "true"
+          FOTURA_R2_READ_ENABLED: "true"
+          R2_ACCOUNT_ID: "00000000000000000000000000000000"
+          R2_ACCESS_KEY_ID: synthetic-ci-credential
+          R2_SECRET_ACCESS_KEY: synthetic-ci-secret-never-usable
+          R2_MEDIA_BUCKET: fotura-media
+          FOTURA_R2_CONFIG_EXPECTED: ready
+        run: npx playwright test tests/e2e/r2-cutover-config.spec.ts --workers=1
+      - name: R2 cutover simulation - incomplete configuration fails closed
+        env:
+          VERCEL_ENV: production
+          FOTURA_R2_FINAL_CUTOVER: "true"
+          FOTURA_R2_UPLOAD_ENABLED: "false"
+          FOTURA_R2_READ_ENABLED: "false"
+          FOTURA_R2_CONFIG_EXPECTED: unavailable
+        run: npx playwright test tests/e2e/r2-cutover-config.spec.ts --workers=1
       - name: Production dependency security audit
         run: npm audit --omit=dev --audit-level=high
 

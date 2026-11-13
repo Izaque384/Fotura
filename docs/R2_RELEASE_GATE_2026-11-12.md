@@ -136,3 +136,9 @@ Não fazer merge deste PR, não habilitar flags, não aplicar todas as migraçõ
 ## Assinatura de seleções grandes na preparação de entrega
 - A GET de entrega assina fotos selecionadas em lotes de até 200 por chamada ao adaptador híbrido, evitando limites de URI e de requisição no Supabase Data API quando galerias possuem muitas fotos.
 - Não muda autorização, quota nem a validade dos links; os caminhos continuam filtrados pelo catálogo da galeria do proprietário.
+
+## CI de simulação do corte de produção — 13/11/2026
+- Uma suíte E2E independente roda com `VERCEL_ENV=production`, `FOTURA_R2_FINAL_CUTOVER=true` e **credenciais R2 fictícias**. Confere que descoberta de fotos, marca, avatar e anexos seleciona exclusivamente `r2` e bloqueia origem externa/ausência de autenticação.
+- A mesma suíte roda com a configuração de produção **incompleta** e exige HTTP 503 em todas as descobertas, sem fallback para o Supabase.
+- Os testes são isolados e não assinam URLs para contas reais, nem consomem objetos de R2 ou alteram o banco.
+- Observação obrigatória: isto valida apenas escolha de provedor e barreiras de autorização. Ainda falta teste S3 SigV4 real com navegador autenticado e banco de homologação.
