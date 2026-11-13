@@ -108,3 +108,12 @@ R2 não cobra tarifa por egress, mas cobra armazenamento e operações além da 
 - O POST do feedback consulta reserva pendente, confere HEAD (MIME e bytes) e chama a RPC transacional já versionada. Em modo R2 não há fallback de anexos para Supabase.
 - O fluxo Supabase anterior é preservado enquanto as flags R2 estiverem desligadas. Limite de reservas pendentes e rate limit na preparação evitam abuso.
 - Necessário CI completo, teste no navegador com login, falhas de PUT/CORS, envio de imagem acima de 4,5 MB, limpeza de reserva abandonada e visualização administrativa, antes do cutover. Nenhuma mídia real transferida.
+
+## Proteção contra sobrescrita e testes — 13/11/2026 (sem cutover)
+
+- Todos os PUTs simples R2 de mídias novas têm assinatura e envio do cabeçalho `If-None-Match: *`. R2 rejeita com HTTP 412 a tentativa de sobrescrever um objeto já existente durante a validade da URL.
+- A conclusão de fotos multipartes também usa a condição create-only, assinada pelo servidor diretamente em `CompleteMultipartUpload`. As partes isoladas não usam a condição: só a conclusão publica o arquivo.
+- No Cloudflare, o CORS de `fotura-media` passou a permitir `If-None-Match`, além de `Content-Type`. O bucket continua privado, `r2.dev` desligado, com as duas origens anteriormente permitidas e apenas GET/HEAD/PUT.
+- Criado teste E2E focalizado no bloqueio de APIs R2 sem autenticação e com `Origin` externo, executado em uma etapa independente antes da suíte geral, usando credenciais Supabase sintéticas.
+- **Limites:** o teste de segurança usa requisições não autenticadas; não valida PUT S3 real nem a confirmação de mídia de usuário. Um 412 após falha de rede deve levar à reconciliação do estado por HEAD/reserva e não ao overwrite.
+- Nenhuma mídia legada foi copiada, nenhuma migração foi aplicada ao Postgres de produção e nenhuma flag R2 foi ativada.

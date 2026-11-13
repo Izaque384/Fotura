@@ -38,6 +38,8 @@ jobs:
       - name: Production build and TypeScript check
         run: npm run build
       - run: npx playwright install --with-deps chromium
+      - name: R2 release gate - unauthenticated and cross-origin requests
+        run: npx playwright test tests/e2e/r2-storage-security.spec.ts --workers=1
       - run: npm run test:e2e
       - name: Production dependency security audit
         run: npm audit --omit=dev --audit-level=high

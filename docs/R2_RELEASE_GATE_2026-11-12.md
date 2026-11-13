@@ -76,3 +76,9 @@ Objetivo confirmado: R2 como único storage de mídias após migração; Supabas
 
 ## Ação proibida até os gates verdes
 Não fazer merge deste PR, não habilitar flags, não aplicar todas as migrações diretamente em produção nem apagar arquivos do Supabase; não afirmar que todos os testes passaram ou que a migração terminou.
+
+## Continuação de segurança — 13/11/2026
+- Todas as novas URLs R2 de PUT simples foram preparadas com assinatura de condição `If-None-Match: *`, usada também nos uploads pelo navegador. A conclusão de fotos multipartes tem a mesma condição assinada no servidor. Essa proteção impede que uma URL de escrita temporária substitua um objeto já registrado.
+- Bucket `fotura-media`: CORS atualizado exclusivamente para aceitar `If-None-Match`, preservando origens, métodos e privacidade.
+- Introduzido teste E2E de barreiras de autenticação e origem externa das APIs de mídia, separado da suíte completa. A última suíte completa conhecida continua com **152 aprovados e 18 falhas**; não é gate verde. Não remover o bloqueio de publicação.
+- **Pendente:** validar PUT/412 reais, uploads autenticados, reconciliação de respostas ambíguas, limites de egress, acessos públicos seletivos e limpeza end-to-end.
