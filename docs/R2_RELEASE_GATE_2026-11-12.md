@@ -121,3 +121,8 @@ Não fazer merge deste PR, não habilitar flags, não aplicar todas as migraçõ
 - Agora `GET /api/galeria/entrega`, já autenticado pelo dono, usa o catálogo da galeria para validar nomes e o adaptador `signPrivateMediaUrls` para assinar cada objeto conforme registro privado R2 ou legado Supabase. URLs só são devolvidas após `galerias.user_id = auth.user.id`.
 - A tela consome `selecionadas` já assinadas pelo servidor. Teste de regressão impede a reintrodução de `createSignedUrls` direto na tela.
 - Resta validar manualmente seleção e download reais com arquivos R2, incluindo expirados, falhas parciais e iPhone.
+
+## Seleção do fotógrafo usa URL assinada híbrida — 13/11/2026
+- `ModalSelecao` não faz mais `supabase.storage.createSignedUrls()` diretamente. Usa GET `/api/fotos/selecao-proprietario` com sessão autenticada.
+- O servidor verifica `galerias.user_id`, seleciona somente arquivos presentes em `selecoes.fotos` ou `comentarios` e no catálogo autorizado da pasta, e assina originais e miniaturas por `signPrivateMediaUrls`.
+- Incluídos contratos estáticos e teste HTTP sem autenticação. A listagem usa lotes limitados de 200 chaves e no máximo 500 fotos; leituras legadas continuam disponíveis.

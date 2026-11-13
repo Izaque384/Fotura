@@ -47,3 +47,9 @@ test("R2 provider discovery never issues a signed write URL", async ({ request }
     expect(JSON.stringify(payload), route).not.toContain("SECRET_ACCESS_KEY");
   }
 });
+
+test("owner selection private media signatures require authentication", async ({ request }) => {
+  const response = await request.get("/api/fotos/selecao-proprietario?galeria=11111111-1111-4111-8111-111111111111");
+  expect(response.status()).toBe(401);
+  expect(await response.text()).not.toContain("X-Amz-Signature");
+});

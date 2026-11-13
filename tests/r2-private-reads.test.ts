@@ -68,3 +68,17 @@ test("delivery photographer page uses owner-scoped mixed-provider signing, not d
   assert.ok(page.includes('setSelecionadas(e.selecionadas??[])'));
   assert.ok(!page.includes('supabase.storage.from("fotos").createSignedUrls('));
 });
+
+test("selection modal signs R2 and legacy objects through the authenticated owner endpoint", () => {
+  const ui = read("app/app/components/ModalSelecao.tsx");
+  const route = read("app/app/api/fotos/selecao-proprietario/route.ts");
+  assert.match(ui, /\/api\/fotos\/selecao-proprietario/);
+  assert.doesNotMatch(ui, /storage\.from\("fotos"\)\.createSignedUrls/);
+  assert.match(route, /db\.auth\.getUser\(token\)/);
+  assert.match(route, /\.eq\("user_id", session\.user\.id\)/);
+  assert.match(route, /\.from\("selecoes"\)/);
+  assert.match(route, /listarCatalogoGaleriaHibrido/);
+  assert.match(route, /available\.has\(name\)/);
+  assert.match(route, /signPrivateMediaUrls\(db, "fotos", keys\.slice/);
+  assert.match(route, /Cache-Control/);
+});
