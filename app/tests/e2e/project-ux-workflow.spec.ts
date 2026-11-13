@@ -12,8 +12,12 @@ test.describe("Fotura: UX dos projetos",()=>{
    expect(configProjeto(modelo.config)).not.toBeNull();
    expect(JSON.stringify(modelo.config)).not.toContain("senha");
    expect(JSON.stringify(modelo.config)).not.toContain("cliente_id");
+   expect(modelo.config.download_tamanho).toBe("original");
+   expect(modelo.config.watermark_ativo).toBe(false);
   }
   expect(configProjeto({...MODELOS_PROJETO.ensaio.config,download_tamanho:"arquivos-secretos"})).toBeNull();
+  expect(configProjeto({...MODELOS_PROJETO.ensaio.config,download_tamanho:"web",watermark_ativo:true})?.download_tamanho).toBe("original");
+  expect(configProjeto({...MODELOS_PROJETO.ensaio.config,download_tamanho:"web",watermark_ativo:true})?.watermark_ativo).toBe(false);
   expect(configProjeto({...MODELOS_PROJETO.ensaio.config,limite:-1})).toBeNull();
  });
  test("a lista oferece filtros de fluxo e alternância entre grade e lista",()=>{

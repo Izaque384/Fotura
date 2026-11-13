@@ -286,8 +286,9 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(publicProjectApi).not.toContain('caminhos.push(`\${base}/thumbs/\${nome}`,`\${base}/\${nome}`)');
 
     // Novos projetos entregam originais por padrão, sem prejudicar as thumbs.
-    expect(workspace).toContain("Original · recomendado para entrega");
-    expect(workspace).toContain("Web · 960 px para compartilhamento leve");
+    expect(workspace).toContain("Qualidade máxima · arquivos originais");
+    expect(workspace).not.toContain("compartilhamento leve");
+    expect(workspace).not.toContain("Marca d’água nas prévias");
     expect(migration).toContain("ALTER TABLE public.galeria_projetos");
     expect(migration).toContain("ALTER TABLE public.galerias");
     expect(migration).toContain("SET DEFAULT 'original'");

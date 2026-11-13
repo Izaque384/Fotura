@@ -86,7 +86,7 @@ test("cliente seleciona, comenta e finaliza uma prova", async ({ page }) => {
   expect(salvamentos.at(-1)?.comentarios["foto-1.jpg"]).toBe("Minha favorita");
 });
 
-test("lightbox usa somente o original sem exibir miniatura intermediária", async ({ page }) => {
+test("lightbox exibe a prévia imediatamente e troca pelo original após carregar", async ({ page }) => {
   let originaisSolicitados = 0;
   let liberarOriginal!: () => void;
   const assinaturaAguardada = new Promise<void>(resolve => { liberarOriginal = resolve; });
@@ -146,22 +146,22 @@ test("lightbox usa somente o original sem exibir miniatura intermediária", asyn
 
   await page.goto("/g/00000000-0000-4000-8000-000000000002");
   await expect(page.locator(".gc-grid-img")).toHaveAttribute("src", foto("Miniatura"));
-  // A primeira foto começa a aquecer discretamente após a grade ficar pronta.
-  // A grade continua renderizando apenas a miniatura.
-  await expect.poll(() => originaisSolicitados).toBe(1);
+  // O primeiro carregamento recebe apenas miniaturas, não arquivos pesados.
+  await expect(page.locator(".gc-grid-img")).toBeVisible();
+  expect(originaisSolicitados).toBe(0);
   await page.locator(".gc-card img").click();
   await expect(page.getByRole("dialog", { name: "Foto 1 de 1" })).toBeVisible();
-  // Nenhum <img> de miniatura aparece no lightbox antes da URL do original.
-  await expect(page.locator(".gc-photo img")).toHaveCount(0);
+  await expect(page.locator(".gc-photo-progress-preview")).toHaveAttribute("src", foto("Miniatura"));
   await expect(page.getByRole("status", { name: "Carregando fotografia original" })).toBeVisible();
   await expect.poll(() => originaisSolicitados).toBe(1);
   liberarOriginal();
-  await expect(page.locator(".gc-photo img")).toHaveAttribute("src", /Original%20em%20alta/, { timeout: 5000 });
+  await expect(page.locator(".gc-photo-original")).toHaveAttribute("src", /Original%20em%20alta/, { timeout: 5000 });
+  await expect(page.locator(".gc-photo-progress-preview")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Carregar foto em alta resolução" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Baixar foto original" })).toBeVisible();
 });
 
-test("entrega com download web ainda exibe original no lightbox", async ({ page }) => {
+test("configuração legada web continua oferecendo somente original", async ({ page }) => {
   let originaisSolicitados = 0;
   await page.route("**/api/galeria/publica**", route => route.fulfill({
     status: 200, contentType: "application/json",
@@ -187,10 +187,11 @@ test("entrega com download web ainda exibe original no lightbox", async ({ page 
       body: JSON.stringify({ fotos: [{ nome: "foto.jpg", url: foto("Miniatura"), thumb: foto("Miniatura") }], capaUrl: null }) });
   });
   await page.goto("/g/00000000-0000-4000-8000-000000000012");
-  await expect.poll(() => originaisSolicitados).toBe(1);
+  await expect(page.locator(".gc-grid-img")).toBeVisible();
+  expect(originaisSolicitados).toBe(0);
   await page.locator(".gc-card img").click();
-  await expect(page.locator(".gc-photo img")).toHaveAttribute("src", /Original/);
-  await expect(page.getByRole("button", { name: "Baixar foto em qualidade web" })).toBeVisible();
+  await expect(page.locator(".gc-photo-original")).toHaveAttribute("src", /Original/);
+  await expect(page.getByRole("button", { name: "Baixar foto original" })).toBeVisible();
 });
 
 test("pré-aquecimento respeita PIN e nunca libera original protegido", async ({ page }) => {
@@ -260,9 +261,9 @@ test("galeria pequena prepara assinaturas em lote e abre a quinta foto original 
   await expect.poll(()=>lotes).toBe(1);
   await page.locator('.gc-grid-img[src*="Miniatura%205"]').click();
   await expect(page.getByRole("dialog",{name:"Foto 5 de 6"})).toBeVisible();
-  await expect(page.locator(".gc-photo img")).toHaveAttribute("src",/Original%205/);
+  await expect(page.locator(".gc-photo-original")).toHaveAttribute("src",/Original%205/);
   expect(assinaturasAvulsas).not.toContain("foto-5.jpg");
-  await expect(page.locator(".gc-photo img")).not.toHaveCSS("visibility","hidden");
+  await expect(page.locator(".gc-photo-progress-preview")).toHaveCount(0);
 });
 
 test("galeria de prova não solicita originais antes da entrega", async ({ page }) => {

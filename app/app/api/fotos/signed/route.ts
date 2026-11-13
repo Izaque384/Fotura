@@ -8,7 +8,6 @@ import { uuidValido } from "../../../../lib/validation";
 import { dataCalendarioExpirada } from "../../../../lib/date-only";
 import { planoFotura } from "../../../../lib/billing-plans";
 import { heroPresetDataUrl, estiloHeroEfetivo } from "../../../../lib/gallery-hero";
-import { createGalleryWatermarkUrl } from "../../../../lib/gallery-watermark-token";
 import { ordenarFotos } from "../../../../lib/gallery-photo-order";
 import { signPrivateMediaUrl, signPrivateMediaUrls } from "../../../../lib/media-storage";
 import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
@@ -40,7 +39,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galleryError } = await supabase
     .from("galerias")
-    .select("user_id,capa,visivel,link_ate,tem_senha,etapa,prova,ordem_fotos,download_ativo,download_tamanho,download_pin_hash,watermark_ativo,watermark_texto,watermark_opacidade")
+    .select("user_id,capa,visivel,link_ate,tem_senha,etapa,prova,ordem_fotos,download_ativo,download_tamanho,download_pin_hash")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -57,7 +56,6 @@ export async function GET(req: NextRequest) {
   const etapa = (g.etapa as string | null) || (g.prova ? "prova" : "entrega");
   const entregaFinalDeProva = etapa === "entrega" && Boolean(g.prova);
   const base = entregaFinalDeProva ? `${dono}/${galeria}/entrega` : `${dono}/${galeria}`;
-  const protegerOriginais = Boolean(g.watermark_ativo) && etapa !== "entrega";
   const originalHabilitado = (etapa === "entrega" || !g.prova) && Boolean(g.download_ativo);
 
   // Uma URL assinada da imagem original também permite salvá-la: manter PIN e
@@ -150,35 +148,6 @@ export async function GET(req: NextRequest) {
   const capaFile = (g.capa as string | null) ?? null;
   const capaNome = capaFile && lista.some((f) => f.name === capaFile) ? capaFile : lista[0]?.name;
 
-  if (protegerOriginais) {
-    const watermarkTexto = ((g.watermark_texto as string | null) ?? (perfil?.nome_estudio as string | null) ?? "FOTURA").trim() || "FOTURA";
-    const watermarkOpacidade = Number(g.watermark_opacidade ?? 22);
-    try {
-      const urlProtegida = (nome: string) => createGalleryWatermarkUrl({
-        g: galeria,
-        u: dono,
-        f: nome,
-        t: watermarkTexto,
-        o: watermarkOpacidade,
-      });
-      const fotos = lista.map((f) => {
-        const url = urlProtegida(f.name);
-        return { nome: f.name, url, thumb: url, largura:f.largura, altura:f.altura, bytes:f.bytes, mimeType:f.mimeType };
-      });
-      const fotoCapaUrl = usarFotoHero && capaNome ? urlProtegida(capaNome) : null;
-      const marcadorPreset = usarHeroEstudio ? `#fotura-hero-${heroEstilo}` : "";
-      const capaUrl = usarFotoHero && fotoCapaUrl
-        ? `${fotoCapaUrl}${marcadorPreset}`
-        : usarHeroEstudio
-          ? heroPresetDataUrl(heroCor, heroEstilo)
-          : null;
-      return json({ fotos, capaUrl, etapa, modo, watermarkProtected: true });
-    } catch (error) {
-      registrarErro("gallery.signed.watermark_urls", req, error, { galeria, modo });
-      return json({ error: "Não foi possível proteger as prévias." }, 503);
-    }
-  }
-
   const assinar = async (entrada: string[]) => {
     const caminhos = [...new Set(entrada)];
     const lotes: string[][] = [];
@@ -203,9 +172,7 @@ export async function GET(req: NextRequest) {
   };
 
   let caminhos: string[] = [];
-  if (protegerOriginais) {
-    caminhos = lista.map((f) => `${base}/thumbs/${f.name}`);
-  } else if (modo === "grade") {
+  if (modo === "grade") {
     caminhos = lista.map((f) => `${base}/thumbs/${f.name}`);
     caminhos.push(...lista.slice(0, ORIGINAIS_PREASSINADOS_GRADE).map((f) => `${base}/${f.name}`));
   } else if (modo === "originais") {
@@ -232,10 +199,9 @@ export async function GET(req: NextRequest) {
       return { nome: f.name, url: preview, thumb: preview, largura:f.largura, altura:f.altura, bytes:f.bytes, mimeType:f.mimeType };
     }
     if (modo === "originais") {
-      const protegida = protegerOriginais ? (thumbAssinada || original) : original;
-      return { nome: f.name, url: protegida, thumb: protegida, largura:f.largura, altura:f.altura, bytes:f.bytes, mimeType:f.mimeType };
+      return { nome: f.name, url: original, thumb: original, largura:f.largura, altura:f.altura, bytes:f.bytes, mimeType:f.mimeType };
     }
-    return { nome: f.name, url: protegerOriginais ? (thumbAssinada || original) : original, thumb: thumbAssinada || original, largura:f.largura, altura:f.altura, bytes:f.bytes, mimeType:f.mimeType };
+    return { nome: f.name, url: original, thumb: thumbAssinada || original, largura:f.largura, altura:f.altura, bytes:f.bytes, mimeType:f.mimeType };
   });
 
   const fotoCapaUrl = usarFotoHero && capaNome ? (mapa[`${base}/thumbs/${capaNome}`] ?? mapa[`${base}/${capaNome}`] ?? null) : null;
@@ -245,5 +211,5 @@ export async function GET(req: NextRequest) {
     : usarHeroEstudio
       ? heroPresetDataUrl(heroCor, heroEstilo)
       : null;
-  return json({ fotos, capaUrl, etapa, modo, watermarkProtected: protegerOriginais });
+  return json({ fotos, capaUrl, etapa, modo, watermarkProtected: false });
 }

@@ -153,6 +153,7 @@ export async function GET(req: NextRequest) {
   return json({
     projeto: {
       ...p,
+      download_tamanho: "original", watermark_ativo: false, watermark_texto: null,
       download_pin_configurado: Boolean(p.download_pin_hash),
       download_pin_hash: undefined,
       publicRef: publicProjectRef(String(p.slug || "projeto"), String(p.id)),
@@ -251,7 +252,8 @@ export async function PATCH(req: NextRequest) {
   if (typeof body.downloadAtivo === "boolean") update.download_ativo = body.downloadAtivo;
   if (typeof body.downloadIndividual === "boolean") update.download_individual = body.downloadIndividual;
   if (typeof body.downloadCompleto === "boolean") update.download_completo = body.downloadCompleto;
-  if (body.downloadTamanho === "original" || body.downloadTamanho === "web") update.download_tamanho = body.downloadTamanho;
+  // Nunca reativar a entrega reduzida, mesmo usando versões antigas do cliente.
+  update.download_tamanho = "original";
   if (body.downloadPin !== undefined) {
     if (body.downloadPin === null || body.downloadPin.trim() === "") update.download_pin_hash = null;
     else {
@@ -260,13 +262,9 @@ export async function PATCH(req: NextRequest) {
       update.download_pin_hash = hashDownloadPin(pin);
     }
   }
-  if (typeof body.watermarkAtivo === "boolean") update.watermark_ativo = body.watermarkAtivo;
-  if (body.watermarkTexto !== undefined) update.watermark_texto = body.watermarkTexto?.trim().slice(0, 80) || null;
-  if (body.watermarkOpacidade !== undefined) {
-    const op = Math.round(Number(body.watermarkOpacidade));
-    if (!Number.isFinite(op) || op < 5 || op > 70) return json({ error: "Opacidade inválida." }, 400);
-    update.watermark_opacidade = op;
-  }
+  // Desativação definitiva da marca d’água nas prévias.
+  update.watermark_ativo = false;
+  update.watermark_texto = null;
   if (typeof body.assistenteAtivo === "boolean") update.assistente_ativo = body.assistenteAtivo;
   if (typeof body.ogCapaAutorizada === "boolean") update.og_capa_autorizada = body.ogCapaAutorizada;
   if (body.abertura !== undefined) {

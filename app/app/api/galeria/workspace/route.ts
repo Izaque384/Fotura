@@ -56,6 +56,7 @@ export async function GET(req: NextRequest) {
   return json({
     galeria: {
       ...g,
+      download_tamanho: "original", watermark_ativo: false, watermark_texto: null,
       download_pin_configurado: Boolean(g.download_pin_hash),
       download_pin_hash: undefined,
       publicRef: ref,
@@ -99,7 +100,7 @@ export async function PATCH(req: NextRequest) {
   if (typeof body.downloadAtivo === "boolean") update.download_ativo = body.downloadAtivo;
   if (typeof body.downloadIndividual === "boolean") update.download_individual = body.downloadIndividual;
   if (typeof body.downloadCompleto === "boolean") update.download_completo = body.downloadCompleto;
-  if (body.downloadTamanho === "original" || body.downloadTamanho === "web") update.download_tamanho = body.downloadTamanho;
+  update.download_tamanho = "original";
   if (body.downloadPin !== undefined) {
     if (body.downloadPin === null || body.downloadPin.trim() === "") update.download_pin_hash = null;
     else {
@@ -108,13 +109,8 @@ export async function PATCH(req: NextRequest) {
       update.download_pin_hash = hashDownloadPin(pin);
     }
   }
-  if (typeof body.watermarkAtivo === "boolean") update.watermark_ativo = body.watermarkAtivo;
-  if (body.watermarkTexto !== undefined) update.watermark_texto = body.watermarkTexto?.trim().slice(0, 80) || null;
-  if (body.watermarkOpacidade !== undefined) {
-    const op = Math.round(Number(body.watermarkOpacidade));
-    if (!Number.isFinite(op) || op < 5 || op > 70) return json({ error: "Opacidade inválida." }, 400);
-    update.watermark_opacidade = op;
-  }
+  update.watermark_ativo = false;
+  update.watermark_texto = null;
   if (typeof body.assistenteAtivo === "boolean") update.assistente_ativo = body.assistenteAtivo;
   if (body.projetoId !== undefined) {
     if (body.projetoId === null || body.projetoId === "") update.projeto_id = null;
@@ -180,9 +176,9 @@ export async function POST(req: NextRequest) {
       downloadAtivo: Boolean(g.download_ativo),
       downloadIndividual: Boolean(g.download_individual),
       downloadCompleto: Boolean(g.download_completo),
-      downloadTamanho: String(g.download_tamanho || "original"),
-      watermarkAtivo: Boolean(g.watermark_ativo),
-      watermarkTexto: (g.watermark_texto as string | null) ?? null,
+      downloadTamanho: "original",
+      watermarkAtivo: false,
+      watermarkTexto: null,
       watermarkOpacidade: Number(g.watermark_opacidade ?? 22),
       assistenteAtivo: Boolean(g.assistente_ativo),
     };
@@ -226,9 +222,9 @@ export async function POST(req: NextRequest) {
       download_ativo: c.downloadAtivo !== false,
       download_individual: c.downloadIndividual !== false,
       download_completo: c.downloadCompleto !== false,
-      download_tamanho: c.downloadTamanho === "web" ? "web" : "original",
-      watermark_ativo: c.watermarkAtivo === true,
-      watermark_texto: typeof c.watermarkTexto === "string" ? c.watermarkTexto.slice(0, 80) : null,
+      download_tamanho: "original",
+      watermark_ativo: false,
+      watermark_texto: null,
       watermark_opacidade: Math.min(70, Math.max(5, Number(c.watermarkOpacidade ?? 22) || 22)),
       assistente_ativo: c.assistenteAtivo !== false,
     };
