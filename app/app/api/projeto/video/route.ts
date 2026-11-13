@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { caminhoVideoValido, VIDEO_ABERTURA_BUCKET, VIDEO_ABERTURA_MAX_BYTES, lerAbertura } from "../../../../lib/cinematic-intro";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
+import { readBoundedRequestText, RequestBodyTooLargeError } from "../../../../lib/limited-request-body";
 import { uuidValido } from "../../../../lib/validation";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { contextoPlano } from "../../../../lib/billing-usage";
@@ -85,7 +86,14 @@ async function objetoVideo(db: ReturnType<typeof createServiceClient>, path: str
 export async function POST(req: NextRequest) {
   if (!requisicaoMesmoOrigin(req)) return json({ error: "Origem inválida." }, 403);
   let body: { projeto?: string; acao?: string; path?: string; bytes?: number };
-  try { body = await req.json(); } catch { return json({ error: "Dados inválidos." }, 400); }
+  try {
+    body = JSON.parse(await readBoundedRequestText(req, 4096));
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw Error("invalid");
+  } catch (error) {
+    return error instanceof RequestBodyTooLargeError
+      ? json({ error: "Requisição muito grande." }, 413)
+      : json({ error: "Dados inválidos." }, 400);
+  }
   const ctx = await dono(req, body.projeto ?? "");
   if (!ctx) return json({ error: "Projeto não encontrado ou sessão expirada." }, 401);
   // A requested R2 cutover must NEVER silently store some media in Supabase.
@@ -198,7 +206,14 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   if (!requisicaoMesmoOrigin(req)) return json({ error: "Origem inválida." }, 403);
   let body: { projeto?: string; path?: string };
-  try { body = await req.json(); } catch { return json({ error: "Dados inválidos." }, 400); }
+  try {
+    body = JSON.parse(await readBoundedRequestText(req, 4096));
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw Error("invalid");
+  } catch (error) {
+    return error instanceof RequestBodyTooLargeError
+      ? json({ error: "Requisição muito grande." }, 413)
+      : json({ error: "Dados inválidos." }, 400);
+  }
   const ctx = await dono(req, body.projeto ?? "");
   if (!ctx) return json({ error: "Não autorizado." }, 401);
   if (!caminhoDoDono(body.path, ctx.userId, ctx.projeto.id)) return json({ error: "Vídeo inválido." }, 400);

@@ -83,3 +83,20 @@ test("R2 object writes cannot overwrite already committed objects", () => {
   assert.ok(client.includes('xhr.setRequestHeader("If-None-Match", "*")'));
   assert.ok(client.includes('arquivo, progresso, true'));
 });
+
+test("all R2 media control APIs bound received metadata bytes", () => {
+  for (const path of [
+    "app/app/api/fotos/r2/route.ts",
+    "app/app/api/projeto/video/route.ts",
+    "app/app/api/marca/route.ts",
+    "app/app/api/clientes/avatar/route.ts",
+    "app/app/api/feedback/route.ts",
+    "app/app/api/feedback/anexo/route.ts",
+  ]) {
+    const source = read(path);
+    assert.ok(
+      source.includes("readBoundedRequestText(") || source.includes("readBoundedFormData("),
+      path + " must bound streamed metadata by actual bytes."
+    );
+  }
+});

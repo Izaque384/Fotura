@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../lib/supabase-server";
 import { requisicaoMesmoOrigin } from "../../../lib/request-security";
+import { readBoundedRequestText, RequestBodyTooLargeError } from "../../../lib/limited-request-body";
 import { consumirRateLimit } from "../../../lib/rate-limit";
 import { selectedMediaUploadProvider } from "../../../lib/r2-aux-media";
 import { r2PhysicalKey, signPrivateR2ObjectUrl } from "../../../lib/r2-storage";
@@ -40,8 +41,14 @@ export async function POST(req: NextRequest) {
   if (selectedMediaUploadProvider() !== "r2") {
     return json({ error: "Envio R2 não habilitado." }, 404);
   }
-  const raw = await req.text().catch(() => "");
-  if (!raw || raw.length > 2048) return json({ error: "Requisição inválida." }, 400);
+  let raw: string;
+  try { raw = await readBoundedRequestText(req, 2048); }
+  catch (error) {
+    return error instanceof RequestBodyTooLargeError
+      ? json({ error: "Requisição muito grande." }, 413)
+      : json({ error: "Requisição inválida." }, 400);
+  }
+  if (!raw) return json({ error: "Requisição inválida." }, 400);
   let body: { acao?: string; mime?: string; bytes?: number; path?: string };
   try {
     body = JSON.parse(raw);

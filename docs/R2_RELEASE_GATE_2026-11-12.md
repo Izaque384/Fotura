@@ -92,3 +92,8 @@ Não fazer merge deste PR, não habilitar flags, não aplicar todas as migraçõ
 - Testes Node sem rede validam requisições chunked, ausência de Content-Length, UTF-8 multibyte, multipart pequeno e bloqueio de imagem indevida pelo endpoint de metadados.
 - Caminho Supabase legado permanece igual até o corte autorizado. Não há alteração de mídias, schema ou flags.
 - Ainda são necessários testes autenticados e reais de S3/R2 antes de habilitar uploads.
+
+## Proteção de metadados nas demais APIs — 13/11/2026
+- Leitura limitada por bytes também em fotos (`8 KiB`), vídeo de abertura (`4 KiB`), marca (`2 KiB`), avatares (`4 KiB POST`, `2.500 bytes DELETE`).
+- Resposta HTTP 413 para corpo excessivo independentemente de `Content-Length`; alterações restritas ao processamento de JSON e sem mexer em banco, objetos ou flags.
+- Novo teste de contrato verifica que as seis rotas R2 não fazem leitura integral sem limite. Integração autenticada com Cloudflare continua pendente.

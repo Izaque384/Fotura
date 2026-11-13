@@ -2,6 +2,7 @@ import { randomUUID, createHmac, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
+import { readBoundedRequestText, RequestBodyTooLargeError } from "../../../../lib/limited-request-body";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { uuidValido } from "../../../../lib/validation";
 import { contextoPlano, podeAdicionarFotos } from "../../../../lib/billing-usage";
@@ -156,10 +157,15 @@ export async function POST(req: NextRequest) {
     return json({ error: "Limite de solicitações atingido." }, 429);
   }
 
+  let raw: string;
+  try { raw = await readBoundedRequestText(req, 8192); }
+  catch (error) {
+    return error instanceof RequestBodyTooLargeError
+      ? json({ error: "Requisição muito grande." }, 413)
+      : json({ error: "Dados inválidos." }, 400);
+  }
   let body: Incoming;
   try {
-    const raw = await req.text();
-    if (raw.length > 8192) return json({ error: "Requisição muito grande." }, 413);
     body = JSON.parse(raw) as Incoming;
     if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Dados inválidos." }, 400);
   } catch { return json({ error: "Dados inválidos." }, 400); }

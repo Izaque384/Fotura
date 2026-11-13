@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
+import { readBoundedRequestText, RequestBodyTooLargeError } from "../../../../lib/limited-request-body";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { uuidValido } from "../../../../lib/validation";
 import { selectedMediaUploadProvider } from "../../../../lib/r2-aux-media";
@@ -44,8 +45,14 @@ export async function POST(req: NextRequest) {
   if (selectedMediaUploadProvider() !== "r2") return json({
     error: "Upload R2 não habilitado. O modo Supabase usa o envio legado no navegador.",
   }, 404);
-  const raw = await req.text().catch(() => "");
-  if (!raw || raw.length > 4096) return json({ error: "Dados inválidos." }, 400);
+  let raw: string;
+  try { raw = await readBoundedRequestText(req, 4096); }
+  catch (error) {
+    return error instanceof RequestBodyTooLargeError
+      ? json({ error: "Requisição muito grande." }, 413)
+      : json({ error: "Dados inválidos." }, 400);
+  }
+  if (!raw) return json({ error: "Dados inválidos." }, 400);
   let input: { acao?: string; cliente?: string; bytes?: number; mime?: string; path?: string };
   try {
     input = JSON.parse(raw);
@@ -125,8 +132,13 @@ export async function DELETE(req: NextRequest) {
   if (!requisicaoMesmoOrigin(req)) return json({ error: "Origem inválida." }, 403);
   const actor = await auth(req);
   if (!actor) return json({ error: "Não autorizado." }, 401);
-  const raw = await req.text().catch(() => "");
-  if (raw.length > 2500) return json({ error: "Requisição muito grande." }, 413);
+  let raw: string;
+  try { raw = await readBoundedRequestText(req, 2500); }
+  catch (error) {
+    return error instanceof RequestBodyTooLargeError
+      ? json({ error: "Requisição muito grande." }, 413)
+      : json({ error: "Dados inválidos." }, 400);
+  }
   let clientId: string;
   let path: string;
   try {
