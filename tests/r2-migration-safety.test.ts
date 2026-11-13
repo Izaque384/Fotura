@@ -144,3 +144,20 @@ test("unconfirmed R2 videos are fenced for delayed cleanup before DELETE", () =>
   assert.ok(video.includes('.gt("expires_at", new Date().toISOString())'));
   assert.ok(video.includes('const { data: current, error: freshError }'));
 });
+
+test("Vercel delegated R2 cleanup rechecks live SQL lease and never exposes storage tokens", () => {
+  const edge = read("supabase/functions/storage-cleanup/index.ts");
+  const route = read("app/app/api/internal/r2-cleanup/route.ts");
+  assert.ok(edge.includes('x-cleanup-token'));
+  assert.ok(edge.includes('https://foturax.com.br/api/internal/r2-cleanup'));
+  assert.ok(route.includes('storage_cleanup_authorized'));
+  assert.ok(route.includes('storage_cleanup_r2_paths'));
+  assert.ok(route.includes('storage_cleanup_r2_ack'));
+  assert.ok(route.includes('r2_pending_cleanup_finish') === false);
+  assert.ok(route.includes('.eq("state", "cleaning")'));
+  assert.ok(route.includes('new Date(p.lease_until).getTime() <= Date.now()'));
+  assert.ok(route.includes('registryError || registered'));
+  assert.ok(route.includes('await deleteAndVerify(original)'));
+  assert.ok(route.includes('check.status !== 404'));
+  assert.ok(route.includes('abortR2Multipart'));
+});

@@ -38,7 +38,28 @@ Deno.serve(async (req: Request) => {
     return cachedR2;
   }
 
+  // R2 credentials stay on Vercel. If not explicitly provided in Supabase
+  // Edge secrets, delegate only verified leases to the private production route.
+  // This avoids spreading S3 secrets across two hosting providers.
+  function hasDirectR2Credentials() {
+    return Boolean(Deno.env.get("R2_ACCOUNT_ID") && Deno.env.get("R2_ACCESS_KEY_ID") &&
+      Deno.env.get("R2_SECRET_ACCESS_KEY") && Deno.env.get("R2_MEDIA_BUCKET"));
+  }
+  async function delegateR2(input: Record<string, unknown>) {
+    const response = await fetch("https://foturax.com.br/api/internal/r2-cleanup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-cleanup-token": token },
+      body: JSON.stringify(input),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!response.ok) throw new Error("Remote R2 cleanup failed");
+  }
+
   async function deleteVerifiedR2(paths: string[], job: Job) {
+    if (!hasDirectR2Credentials()) {
+      await delegateR2({ kind: "gallery", id: job.id, lease_token: job.lease_token, paths });
+      return;
+    }
     const { client, base, bucket } = r2();
     const failures: number[] = [];
     let cursor = 0;
@@ -116,6 +137,10 @@ Deno.serve(async (req: Request) => {
   }
 
   async function cleanupAbandonedR2(job: PendingR2) {
+    if (!hasDirectR2Credentials()) {
+      await delegateR2({ kind: "pending", id: job.id, lease_token: job.lease_token });
+      return;
+    }
     if (!job.id || !job.lease_token || !job.owner_id ||
         !pendingPathIsSafe(job, job.object_key) ||
         (job.thumbnail_key !== null && !pendingPathIsSafe(job, job.thumbnail_key))) {

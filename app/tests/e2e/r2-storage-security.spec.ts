@@ -53,3 +53,12 @@ test("owner selection private media signatures require authentication", async ({
   expect(response.status()).toBe(401);
   expect(await response.text()).not.toContain("X-Amz-Signature");
 });
+
+test("R2 remote cleanup refuses requests without a valid signed dispatcher token", async ({ request }) => {
+  const res = await request.post("/api/internal/r2-cleanup", {
+    data: { kind: "pending", id: "00000000-0000-4000-8000-000000000001",
+      lease_token: "00000000-0000-4000-8000-000000000002" },
+  });
+  expect(res.status()).toBe(401);
+  expect(await res.text()).not.toMatch(/X-Amz-Signature|R2_SECRET_ACCESS_KEY/);
+});
