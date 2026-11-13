@@ -132,3 +132,7 @@ Não fazer merge deste PR, não habilitar flags, não aplicar todas as migraçõ
 - Para objeto R2, exige vínculo owner+key no registro privado, HEAD remoto, tamanho exato, MIME video/mp4 e limite 25 MB. Objetos não registrados continuam no caminho legado Supabase.
 - Depois de salvar nova configuração, vídeo antigo R2 não é removido via API Supabase: permanece íntegro para exclusão explicitamente validada. Remoção antiga Supabase continua quando há certeza de que não existe registro R2.
 - Pendente: protocolo de limpeza segura de versões R2 já registradas e testes reais de publicação e reprodução em iPhone; não considerar Marco 1 autorizado até esses testes.
+
+## Assinatura de seleções grandes na preparação de entrega
+- A GET de entrega assina fotos selecionadas em lotes de até 200 por chamada ao adaptador híbrido, evitando limites de URI e de requisição no Supabase Data API quando galerias possuem muitas fotos.
+- Não muda autorização, quota nem a validade dos links; os caminhos continuam filtrados pelo catálogo da galeria do proprietário.

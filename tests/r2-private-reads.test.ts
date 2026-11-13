@@ -60,7 +60,8 @@ test("client gallery picker requires both gallery and client ownership before ex
 test("delivery photographer page uses owner-scoped mixed-provider signing, not direct Supabase Storage", () => {
   const route = readFileSync("app/app/api/galeria/entrega/route.ts", "utf8");
   const page = readFileSync("app/app/dashboard/entrega/[id]/page.tsx", "utf8");
-  assert.ok(route.includes('signPrivateMediaUrls(auth.supabase, "fotos", paths, 3600)'));
+  assert.ok(route.includes('signPrivateMediaUrls('));
+  assert.ok(route.includes('paths.slice(i, i + 200), 3600'));
   assert.ok(route.includes('.eq("user_id", auth.user.id)'));
   assert.ok(route.includes('listarCatalogoGaleriaHibrido('));
   assert.ok(route.includes('allow.has(nome)'));

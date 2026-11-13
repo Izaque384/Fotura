@@ -87,7 +87,12 @@ export async function GET(req: NextRequest) {
         nome !== "." && nome !== ".." && allow.has(nome)
       ))];
       const paths = nomes.map(nome => auth.user.id + "/" + galeria + "/" + nome);
-      const urls = await signPrivateMediaUrls(auth.supabase, "fotos", paths, 3600);
+      const urls: Record<string, string> = {};
+      for (let i = 0; i < paths.length; i += 200) {
+        Object.assign(urls, await signPrivateMediaUrls(
+          auth.supabase, "fotos", paths.slice(i, i + 200), 3600
+        ));
+      }
       selecionadas = nomes.map(nome => ({
         nome, url: urls[auth.user.id + "/" + galeria + "/" + nome] || "",
       })).filter(item => Boolean(item.url));
