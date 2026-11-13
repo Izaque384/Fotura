@@ -5,8 +5,8 @@ export type ConfigProjeto = {
  watermark_texto:string|null;watermark_opacidade:number;assistente_ativo:boolean;
 };
 export const MODELOS_PROJETO:Record<ModeloProjeto,{nome:string;descricao:string;config:ConfigProjeto}>={
- ensaio:{nome:"Seleção de fotos",descricao:"Uma galeria única para o cliente escolher as favoritas e comentar antes da entrega.",config:{prova:true,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"web",watermark_ativo:true,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
- casamento:{nome:"Projeto com pastas",descricao:"Crie várias galerias em um projeto, organizadas e compartilhadas pelo mesmo link.",config:{prova:false,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"web",watermark_ativo:false,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
+ ensaio:{nome:"Seleção de fotos",descricao:"Uma galeria única para o cliente escolher as favoritas e comentar antes da entrega.",config:{prova:true,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"original",watermark_ativo:false,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
+ casamento:{nome:"Projeto com pastas",descricao:"Crie várias galerias em um projeto, organizadas e compartilhadas pelo mesmo link.",config:{prova:false,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"original",watermark_ativo:false,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
  entrega:{nome:"Entrega direta",descricao:"Uma galeria única para compartilhar fotos prontas, sem pastas ou seleção.",config:{prova:false,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"original",watermark_ativo:false,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
 };
 export function modeloValido(x:unknown):x is ModeloProjeto{return x==="ensaio"||x==="casamento"||x==="entrega"}
@@ -20,5 +20,5 @@ export function configProjeto(x:unknown):ConfigProjeto|null{
  if(v.download_tamanho!=="web"&&v.download_tamanho!=="original")return null;
  if(!Number.isInteger(v.watermark_opacidade)||Number(v.watermark_opacidade)<5||Number(v.watermark_opacidade)>70)return null;
  if(v.watermark_texto!==null&&(typeof v.watermark_texto!=="string"||(v.watermark_texto as string).length>80))return null;
- return {prova:v.prova as boolean,limite:v.limite as number,download_ativo:v.download_ativo as boolean,download_individual:v.download_individual as boolean,download_completo:v.download_completo as boolean,download_tamanho:v.download_tamanho as "web"|"original",watermark_ativo:v.watermark_ativo as boolean,watermark_texto:v.watermark_texto as string|null,watermark_opacidade:v.watermark_opacidade as number,assistente_ativo:v.assistente_ativo as boolean};
+ return {prova:v.prova as boolean,limite:v.limite as number,download_ativo:v.download_ativo as boolean,download_individual:v.download_individual as boolean,download_completo:v.download_completo as boolean,download_tamanho:"original",watermark_ativo:false,watermark_texto:null,watermark_opacidade:v.watermark_opacidade as number,assistente_ativo:v.assistente_ativo as boolean};
 }
