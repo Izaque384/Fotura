@@ -22,13 +22,13 @@ test("new media cannot silently return to Supabase after cutover", () => {
   assert.match(feedback, /uploadProvider === "unavailable"/);
   const prepare = read("app/app/api/feedback/anexo/route.ts");
   const help = read("app/app/ajuda/page.tsx");
-  assert.match(prepare, /selectedMediaUploadProvider\\(\\) !== "r2"/);
+  assert.ok(prepare.includes('selectedMediaUploadProvider() !== "r2"'));
   assert.match(prepare, /fotura_r2_upload_reservations/);
   assert.match(prepare, /signPrivateR2ObjectUrl/);
-  assert.match(feedback, /signPrivateR2ObjectUrl\\("HEAD"/);
+  assert.ok(feedback.includes('signPrivateR2ObjectUrl("HEAD"'));
   assert.match(feedback, /registrar_feedback_r2_backend/);
   assert.doesNotMatch(feedback, /putVerifiedAuxiliaryMedia/);
-  assert.match(help, /fetch\\("\\/api\\/feedback\\/anexo"/);
+  assert.ok(help.includes('fetch("/api/feedback/anexo"'));
   assert.match(help, /method: "PUT"/);
   assert.match(help, /screenshot_path/);
 });
