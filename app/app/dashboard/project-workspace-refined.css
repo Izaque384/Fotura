@@ -166,3 +166,29 @@
 
 /* A navegação principal reúne agora visão geral e gerenciamento de galerias. */
 .pw-page #pw-gallery-section{margin-top:18px;scroll-margin-top:20px}
+
+/* Configurações do projeto: painel contextual lateral, com página desfocada. */
+.pw-page .pw-project-settings-drawer-content{padding:0!important;min-height:0;max-width:none;border:0;border-radius:0;background:transparent;box-shadow:none}
+.pw-page .pw-settings-drawer-intro{margin:0 0 20px}
+.pw-page .pw-settings-drawer-intro>span{display:block;font-size:9px;letter-spacing:1.5px;font-weight:800;color:#9382bc}
+.pw-page .pw-settings-drawer-intro>p{margin:8px 0 0;color:#81849b;font-size:11.5px;line-height:1.55}
+.pw-page .pw-settings-drawer-notice{margin:0 0 16px;padding:11px 13px;border:1px solid #dcd1ed;border-radius:11px;background:#f3effb;color:#5a4a8b;font-size:12px}
+.pw-page .pw-settings-drawer-layout{display:grid;grid-template-columns:200px minmax(0,1fr);align-items:start;gap:23px;min-width:0}
+.pw-page .pw-settings-drawer-main{min-width:0}
+.pw-page .pw-project-settings-drawer-content .pw-config-nav{position:sticky;top:0;display:flex;flex-direction:column;gap:5px;min-width:0;margin:0;padding:8px;background:#f3eff9;border:1px solid #e7e0f0;border-radius:14px}
+.pw-page .pw-project-settings-drawer-content .pw-config-nav button{width:100%;min-height:43px;justify-content:flex-start;font-size:11px}
+.pw-page .pw-project-settings-drawer-content .pw-config-nav button.on{border-color:#e1d5f2;box-shadow:0 3px 9px rgba(70,50,110,.07)}
+.pw-page .pw-project-settings-drawer-content .pw-config-grid{width:100%;max-width:none}
+.pw-page .pw-project-settings-drawer-content .pw-config-card{background:#fff}
+.pw-page .ft-drawer-panel--wide .ft-drawer-content{padding:22px 27px 28px}
+.pw-page .ft-drawer-panel--wide .ft-drawer-footer{padding:12px 27px 17px;display:block;background:#fff}
+.pw-page .ft-drawer-panel--wide .pw-settings-savebar{position:static;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0;padding:0;background:transparent;border:0;box-shadow:none}
+.pw-page .pw-project-modal-above-drawer{z-index:260}
+@media(max-width:700px){
+  .pw-page .pw-settings-drawer-layout{display:block}
+  .pw-page .pw-project-settings-drawer-content .pw-config-nav{position:static;display:flex;flex-direction:row;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;margin-bottom:18px;padding:6px;white-space:nowrap}
+  .pw-page .pw-project-settings-drawer-content .pw-config-nav button{flex:0 0 auto;width:auto;min-height:39px;padding:7px 11px;font-size:10.5px}
+  .pw-page .ft-drawer-panel--wide .ft-drawer-content{padding:19px 16px 23px}
+  .pw-page .ft-drawer-panel--wide .ft-drawer-footer{padding:12px 16px}
+  .pw-page .ft-drawer-panel--wide .pw-settings-savebar .pw-save{min-width:0;width:100%}
+}
