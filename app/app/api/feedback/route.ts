@@ -6,6 +6,7 @@ import { requisicaoMesmoOrigin } from "../../../lib/request-security";
 import { registrarErro } from "../../../lib/observability";
 import { selectedMediaUploadProvider } from "../../../lib/r2-aux-media";
 import { r2PhysicalKey, signPrivateR2ObjectUrl } from "../../../lib/r2-storage";
+import { readBoundedFormData, RequestBodyTooLargeError } from "../../../lib/limited-request-body";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -50,11 +51,23 @@ export async function POST(req: NextRequest) {
   if (uploadProvider === "unavailable") return NextResponse.json({ error: "Armazenamento R2 indisponível. Nenhum anexo foi enviado." }, { status: 503 });
 
   try {
-    // R2 only accepts small metadata here: image bytes must travel directly to R2.
-    if (uploadProvider === "r2" && Number(req.headers.get("content-length") || 0) > 32_768) {
-      return NextResponse.json({ error: "Envie o anexo diretamente para o R2." }, { status: 413 });
+    // Metadata-only request in R2 mode: never stream file bytes through Vercel,
+    // even if Content-Length is missing or incorrectly specified.
+    let form: FormData;
+    if (uploadProvider === "r2") {
+      try {
+        form = await readBoundedFormData(req, 32_768);
+      } catch (error) {
+        return NextResponse.json({
+          error: error instanceof RequestBodyTooLargeError
+            ? "Envie o anexo diretamente para o R2."
+            : "Dados do formulário inválidos.",
+        }, { status: error instanceof RequestBodyTooLargeError ? 413 : 400 });
+      }
+    } else {
+      // Preserve the legacy Supabase path until the authorized cutover.
+      form = await req.formData();
     }
-    const form = await req.formData();
     const tipo = texto(form, "tipo");
     const categoria = texto(form, "categoria");
     const assunto = texto(form, "assunto");

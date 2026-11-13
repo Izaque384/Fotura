@@ -86,3 +86,9 @@ Não fazer merge deste PR, não habilitar flags, não aplicar todas as migraçõ
 ## Flag de cutover consistente — 13/11/2026
 - Revisada a configuração de todas as classes de mídia: mesmo com `FOTURA_R2_FINAL_CUTOVER=true`, o upload auxiliar não será ativado se `FOTURA_R2_UPLOAD_ENABLED` estiver ausente ou falso. Isso evita iniciar apenas logotipos, avatares e anexos enquanto fotos e vídeos falhariam por configuração incompleta.
 - Não alterou as flags atuais (todas continuam desativadas), nem os arquivos existentes. A ativação final continua bloqueada até validação completa.
+
+## Limite real de corpos de metadados R2 — 13/11/2026
+- No modo R2, o formulário de feedback lê no máximo **32 KiB de bytes**. A preparação de anexo lê no máximo **2 KiB**, independentemente de Content-Length, rejeitando o excesso e cancelando o stream.
+- Testes Node sem rede validam requisições chunked, ausência de Content-Length, UTF-8 multibyte, multipart pequeno e bloqueio de imagem indevida pelo endpoint de metadados.
+- Caminho Supabase legado permanece igual até o corte autorizado. Não há alteração de mídias, schema ou flags.
+- Ainda são necessários testes autenticados e reais de S3/R2 antes de habilitar uploads.

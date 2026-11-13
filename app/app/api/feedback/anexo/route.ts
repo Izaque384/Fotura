@@ -5,6 +5,7 @@ import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { selectedMediaUploadProvider } from "../../../../lib/r2-aux-media";
 import { r2PhysicalKey, signPrivateR2ObjectUrl } from "../../../../lib/r2-storage";
+import { readBoundedRequestText, RequestBodyTooLargeError } from "../../../../lib/limited-request-body";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,11 +46,15 @@ export async function POST(req: NextRequest) {
   if (!await consumirRateLimit(req, "feedback_attachment_prepare", auth.user.id, 3600, 18)) {
     return json({ error: "Muitas tentativas de envio de anexos." }, 429);
   }
-  if (Number(req.headers.get("content-length") || 0) > 2048) {
-    return json({ error: "Dados do anexo muito grandes." }, 413);
+  let raw: string;
+  try {
+    raw = await readBoundedRequestText(req, 2048);
+  } catch (error) {
+    return error instanceof RequestBodyTooLargeError
+      ? json({ error: "Dados do anexo muito grandes." }, 413)
+      : json({ error: "Dados inválidos." }, 400);
   }
-  const raw = await req.text().catch(() => "");
-  if (!raw || raw.length > 2048) return json({ error: "Dados inválidos." }, 400);
+  if (!raw) return json({ error: "Dados inválidos." }, 400);
 
   let body: { nome?: unknown; mime?: unknown; bytes?: unknown };
   try {
