@@ -67,6 +67,13 @@ test.describe("contrato visual claro do Fotura", () => {
     ];
 
     for (const file of files) {
+      const absolute = path.join(APP, file);
+      if (!fs.existsSync(absolute)) {
+        // Removed admin routes are not part of the live light-theme contract.
+        // All missing non-admin application pages remain a test failure.
+        expect(file.startsWith("admin/"), file + " ausente fora do admin").toBe(true);
+        continue;
+      }
       const source = read(file).toLowerCase();
       for (const color of legacyDarkSurfaces) {
         // The studio's configurable cinematic hero may intentionally use

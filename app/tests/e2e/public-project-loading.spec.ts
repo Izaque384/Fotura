@@ -34,15 +34,15 @@ test("carregamento público é cinematográfico, responsivo e não depende de fo
   const status = page.getByRole("status", { name: "Carregando projeto fotográfico" });
   try {
     await expect(status).toBeVisible();
+    await expect(status.getByText("Cada momento merece ser revivido.")).toHaveCount(0);
+    await expect(status.getByText("Preparando suas fotografias...")).toBeVisible();
+    await expect(status.locator(".fpl-progress span")).toHaveCount(1);
+    await expect(status).toHaveCSS("background-color", "rgb(13, 14, 25)");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   } finally {
+    // Release only *after* verifying all loading screen details.
     releaseResponse();
   }
-  await expect(status.getByText("Cada momento merece ser revivido.")).toHaveCount(0);
-  await expect(status.getByText("Preparando suas fotografias...")).toBeVisible();
-  await expect(status.locator(".fpl-progress span")).toHaveCount(1);
-  await expect(status).toHaveCSS("background-color", "rgb(13, 14, 25)");
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-
   await expect(status).toHaveCount(0);
   await expect(page.getByText("Ensaio ao pôr do sol")).toBeVisible();
 });

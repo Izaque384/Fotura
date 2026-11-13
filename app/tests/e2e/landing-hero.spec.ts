@@ -13,7 +13,7 @@ test.describe("landing hero", () => {
     expect(home).toContain("<LandingHeroVideo />");
     expect(home).toContain('className="lp2-hero lp2-hero-cinematic"');
     expect(video).toContain('className="lp2-hero-poster"');
-    expect(video).toContain('className="lp2-hero-video"');
+    expect(video).toContain('className={"lp2-hero-video" + (reproduzindo ? " is-playing" : "")}');
     expect(video).toContain("prefers-reduced-motion");
     expect(video).toContain("saveData");
     expect(theme).not.toContain("lp2HeroPhotoRotate");

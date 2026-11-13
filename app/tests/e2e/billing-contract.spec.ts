@@ -75,7 +75,8 @@ test.describe("contrato de planos e armazenamento", () => {
     expect(workspace).toContain("Usar capa do projeto");
     expect(workspace).toContain("ProjectShareCenter");
     expect(workspace).toContain("Mostrar capa no compartilhamento, mesmo com senha");
-    expect(perfil).toContain("Usar a capa do projeto como fundo do hero");
+    expect(perfil).toContain("Usar a foto de capa do projeto como fundo");
+    expect(perfil).toContain("hero_foto_capa_ativo");
     expect(perfil).not.toContain('router.push("/dashboard/heros")');
   });
 
