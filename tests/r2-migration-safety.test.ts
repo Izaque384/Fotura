@@ -81,7 +81,8 @@ test("R2 object writes cannot overwrite already committed objects", () => {
   assert.ok(video.includes('"video/mp4", [], true'));
   assert.ok(videoClient.includes('"If-None-Match": "*"'));
   assert.ok(client.includes('xhr.setRequestHeader("If-None-Match", "*")'));
-  assert.ok(client.includes('arquivo, progresso, true'));
+  assert.ok(client.includes('progresso, true, () => verify("original")'));
+  assert.ok(client.includes('() => verify("thumb")'));
 });
 
 test("all R2 media control APIs bound received metadata bytes", () => {
