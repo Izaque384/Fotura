@@ -141,6 +141,40 @@ begin
   select count(*) into v_count from public.fotura_r2_upload_reservations
     where bucket='feedback-anexos';
   if v_count<>0 then raise exception 'Orphan cleanup left a reservation'; end if;
+
+  -- Photo cancellation fences registration and defers deletion until all
+  -- previously signed PUT permissions have expired. No remote bytes here.
+  insert into public.fotura_r2_upload_reservations
+    (bucket,object_key,thumbnail_key,owner_id,expires_at,state,lease_until)
+  values ('fotos',
+    uid::text || '/' || gallery_id::text || '/' ||
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa-cancel.jpg',
+    uid::text || '/' || gallery_id::text || '/thumbs/' ||
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa-cancel.jpg',
+    uid,now()+interval '24 hours','cleaning',now()+interval '10 minutes');
+
+  if public.registrar_foto_r2_upload_backend(
+    uid,gallery_id,'principal',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa-cancel.jpg',
+    1000,200,'image/jpeg'
+  ) then raise exception 'Cancelled photo was registered'; end if;
+  if public.r2_pending_cleanup_claim() is not null then
+    raise exception 'Cancelled upload was claimed before the grace period';
+  end if;
+
+  update public.fotura_r2_upload_reservations set lease_until=now()-interval '1 minute'
+  where bucket='fotos' and owner_id=uid and state='cleaning';
+  cleanup_ticket := public.r2_pending_cleanup_claim();
+  if cleanup_ticket is null or cleanup_ticket->>'bucket'<>'fotos'
+      or cleanup_ticket->>'thumbnail_key' is null then
+    raise exception 'Cancelled photo cleanup did not claim both keys';
+  end if;
+  if not public.r2_pending_cleanup_finish(
+    (cleanup_ticket->>'id')::uuid,(cleanup_ticket->>'lease_token')::uuid,true
+  ) then raise exception 'Cancelled photo cleanup failed to acknowledge'; end if;
+  select count(*) into v_count from public.fotura_r2_upload_reservations
+    where bucket='fotos' and owner_id=uid;
+  if v_count<>0 then raise exception 'Cancelled photo reservation remained'; end if;
 end;
 $check$;
 
