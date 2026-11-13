@@ -97,3 +97,10 @@ Não fazer merge deste PR, não habilitar flags, não aplicar todas as migraçõ
 - Leitura limitada por bytes também em fotos (`8 KiB`), vídeo de abertura (`4 KiB`), marca (`2 KiB`), avatares (`4 KiB POST`, `2.500 bytes DELETE`).
 - Resposta HTTP 413 para corpo excessivo independentemente de `Content-Length`; alterações restritas ao processamento de JSON e sem mexer em banco, objetos ou flags.
 - Novo teste de contrato verifica que as seis rotas R2 não fazem leitura integral sem limite. Integração autenticada com Cloudflare continua pendente.
+
+## Cancelamento sem corrida entre R2 e Postgres — 13/11/2026
+- Cancelar envio de foto **não faz mais DELETE imediato** no R2: antes havia janela entre consulta do registro e exclusão física, durante a qual a outra requisição poderia confirmar a foto. Removida essa janela de perda de mídia.
+- Agora o cancelamento altera atomicamente a reserva de `pending` para `cleaning`, desautorizando confirmação e novas partes assinadas. Com o mesmo row-lock usado na RPC de confirmação, uma confirmação concorrente vence ou perde o bloqueio antes de qualquer limpeza.
+- A limpeza órfã com lease só retoma depois de dez minutos, dando tempo para expirar as URLs de PUT de cinco minutos e uploads já iniciados, e verifica novamente ausência no registro antes do DELETE e do ACK.
+- Contagem de pendentes contempla apenas reservas `pending` ainda válidas. Não gera exclusão de objetos antigos, mudança em produção nem mídia de cliente.
+- Necessário teste com falhas reais de rede, abortos multipart e confirmações concorrentes antes do cutover.

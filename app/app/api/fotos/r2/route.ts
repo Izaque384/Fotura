@@ -121,17 +121,6 @@ async function headObject(key: string) {
   };
 }
 
-async function deleteObject(key: string) {
-  const response = await fetch(signPrivateR2ObjectUrl("DELETE", key, 60), {
-    method: "DELETE", cache: "no-store", signal: AbortSignal.timeout(10_000),
-  });
-  if (!response.ok && response.status !== 404) return false;
-  const head = await fetch(signPrivateR2ObjectUrl("HEAD", key, 60), {
-    method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(10_000),
-  });
-  return head.status === 404;
-}
-
 export async function GET() {
   // Provider selection is atomic for an upload session. If R2 was requested
   // but is not ready, fail closed instead of silently reverting to Supabase.
@@ -186,7 +175,8 @@ export async function POST(req: NextRequest) {
     const { count: pendingCount, error: pendingError } = await auth.db
       .from("fotura_r2_upload_reservations")
       .select("id", { count: "exact", head: true })
-      .eq("owner_id", auth.user.id).eq("state", "pending");
+      .eq("owner_id", auth.user.id).eq("state", "pending")
+      .gt("expires_at", new Date().toISOString());
     if (pendingError) return json({ error: "Não foi possível verificar os envios pendentes." }, 503);
     if ((pendingCount ?? 0) >= 25) return json({
       error: "Há muitos envios aguardando confirmação. Conclua ou cancele os anteriores.",
@@ -351,16 +341,28 @@ export async function POST(req: NextRequest) {
       if (error) throw error;
 
       if (body.acao === "cancelar") {
-        // Never delete a confirmed object; only clean a pending random filename.
         if (existing) return json({ error: "Arquivo já registrado; cancelamento negado." }, 409);
-        const removed = await Promise.allSettled([deleteObject(key.original), deleteObject(key.thumb)]);
-        const allRemoved = removed.every((x) => x.status === "fulfilled" && x.value);
-        if (!allRemoved) return json({ error: "Remoção incompleta. Limpeza pendente." }, 503);
-        const { error: pendingError } = await auth.db.from("fotura_r2_upload_reservations")
-          .delete().eq("bucket", "fotos").eq("object_key", key.original)
-          .eq("owner_id", auth.user.id).eq("state", "pending");
-        if (pendingError) return json({ error: "A limpeza ainda precisa confirmar o registro." }, 503);
-        return json({ ok: true });
+        // Invalidate the reservation atomically in PostgreSQL instead of
+        // deleting directly from R2. A concurrent confirmation also locks this
+        // row: whichever commits first wins. Immediate GET/DELETE/HEAD here
+        // could delete a just-registered photo after a stale registry read.
+        //
+        // Existing signed URLs may still finish in flight for up to five
+        // minutes. Let the leased orphan worker reclaim the entire upload
+        // (original, thumbnail and incomplete multipart) only after 10 minutes.
+        const { data: cancelled, error: pendingError } = await auth.db
+          .from("fotura_r2_upload_reservations")
+          .update({
+            state: "cleaning",
+            lease_token: null,
+            lease_until: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+          })
+          .eq("bucket", "fotos").eq("object_key", key.original)
+          .eq("owner_id", auth.user.id).eq("state", "pending")
+          .select("id").maybeSingle();
+        if (pendingError) return json({ error: "Não foi possível suspender o envio." }, 503);
+        if (!cancelled) return json({ error: "Envio já concluído ou cancelado." }, 409);
+        return json({ ok: true, cleanupScheduled: true });
       }
 
       if (existing) return existing.bytes === ticket.bytes

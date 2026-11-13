@@ -100,3 +100,16 @@ test("all R2 media control APIs bound received metadata bytes", () => {
     );
   }
 });
+
+test("cancelling an upload cannot delete a concurrently confirmed photo", () => {
+  const api = read("app/app/api/fotos/r2/route.ts");
+  const sql = read("supabase/migrations/20261112220000_r2_abandoned_upload_cleanup.sql");
+  const cancellation = api.slice(api.indexOf('if (body.acao === "cancelar")'), api.indexOf('if (existing) return existing.bytes'));
+  assert.ok(cancellation.includes('state: "cleaning"'));
+  assert.ok(cancellation.includes('lease_until: new Date(Date.now() + 10 * 60 * 1000)'));
+  assert.ok(cancellation.includes('.eq("state", "pending")'));
+  assert.doesNotMatch(cancellation, /deleteObject\(|"DELETE"|\.delete\(\)/);
+  assert.ok(api.includes('.gt("expires_at", new Date().toISOString())'));
+  assert.match(sql, /r\.state='cleaning' and r\.lease_until < now\(\)/);
+  assert.match(sql, /not exists \(select 1 from public\.fotura_media_objects/);
+});
