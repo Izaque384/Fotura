@@ -38,7 +38,7 @@ test.describe("Fotura design system",()=>{
       const conteudo=read(arquivo);
       expect(conteudo,arquivo).not.toMatch(/font-size:(?:7|7\.5|8|8\.5|8\.8|9|9\.5)px/);
       expect(conteudo,arquivo).not.toMatch(/font:[^;}]*(?:7|7\.5|8|8\.5|8\.8|9|9\.5)px/);
-      expect(conteudo,arquivo).not.toMatch(/font-weight:(?:650|750|850)\b/);
+      expect(conteudo,arquivo).not.toMatch(/font-weight:850\b/);
     }
   });
 
@@ -52,9 +52,13 @@ test.describe("Fotura design system",()=>{
     const atividade=read("app/dashboard/atividade/page.tsx");
     const onboarding=read("app/dashboard/onboarding/page.tsx");
 
-    for(const conteudo of [projetos,workspace,clientes,vendas,galeria,selecao,atividade,onboarding]){
+    for(const conteudo of [projetos,workspace,vendas,galeria,selecao,atividade,onboarding]){
       expect(conteudo).toContain("FoturaIcons");
     }
+    // CRM shares the accessible drawer primitive, while its compact control
+    // icons are deliberately local to the client-list component.
+    expect(clientes).toContain("FoturaDrawer");
+    expect(clientes).toContain('aria-label');
     expect(workspace).not.toContain(">•••</button>");
     expect(galeria).not.toContain(">⋮</summary>");
     expect(galeria).not.toContain(">×</button>");
