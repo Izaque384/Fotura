@@ -4,6 +4,7 @@ import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import MenuFotografo from "../../../MenuFotografo";
 import FolderSettingsDrawer from "../../../components/FolderSettingsDrawer";
+import FoturaDrawer from "../../../components/FoturaDrawer";
 import ModalSelecao from "../../../components/ModalSelecao";
 import ProjectShareCenter from "../../ProjectShareCenter";
 import ProjectPhotoManager from "../../ProjectPhotoManager";
@@ -57,6 +58,7 @@ export default function ProjetoWorkspacePage(){
  const[compartilharAberto,setCompartilharAberto]=useState(false),[gerenciadorPasta,setGerenciadorPasta]=useState<string|null>(null); 
  const[menuProjetoAberto,setMenuProjetoAberto]=useState(false),[menuPastaAberta,setMenuPastaAberta]=useState<string|null>(null);
  const[configSecao,setConfigSecao]=useState<ConfigSecao>("projeto");
+ const[configuracoesAbertas,setConfiguracoesAbertas]=useState(false);
  const[modalPasta,setModalPasta]=useState(false),[nomePasta,setNomePasta]=useState(""),[criandoPasta,setCriandoPasta]=useState(false),[selecaoModal,setSelecaoModal]=useState<string|null>(null);
  const[pastaDetalhes,setPastaDetalhes]=useState<string|null>(null);
  const[editandoPasta,setEditandoPasta]=useState<string|null>(null),[nomePastaEdicao,setNomePastaEdicao]=useState(""),[salvandoPasta,setSalvandoPasta]=useState<string|null>(null),[excluirPasta,setExcluirPasta]=useState<Pasta|null>(null),[excluindoPasta,setExcluindoPasta]=useState(false),[reordenandoPastas,setReordenandoPastas]=useState(false),[arrastandoPasta,setArrastandoPasta]=useState<string|null>(null);
@@ -87,7 +89,7 @@ export default function ProjetoWorkspacePage(){
   const recebido=d as Dados;const w={...recebido,comercial:recebido.comercial??{planoCodigo:"sem_plano",assinaturaAtiva:false,stripeRecebimentosAtivo:false,vendaFotosDisponivel:false}};setDados(w);aplicarForm(w.projeto);setOrigem(window.location.origin);setCarregando(false);
  }
  useEffect(()=>{void carregar()},[id]);
- useEffect(()=>{const valor=new URLSearchParams(window.location.search).get("aba");if(valor==="pastas")setAba("resumo");else if(valor&&["resumo","selecao","entrega","atividade","configuracoes","vendas"].includes(valor))setAba(valor as Aba)},[id]);
+ useEffect(()=>{const valor=new URLSearchParams(window.location.search).get("aba");if(valor==="configuracoes")setConfiguracoesAbertas(true);else if(valor==="pastas")setAba("resumo");else if(valor&&["resumo","selecao","entrega","atividade","vendas"].includes(valor))setAba(valor as Aba)},[id]);
  useEffect(()=>{if(dados&&!dados.projeto.prova&&(aba==="selecao"||aba==="entrega"))setAba("resumo")},[dados,aba]);
  useEffect(()=>{
   function fecharMenus(event:PointerEvent){
@@ -201,6 +203,9 @@ export default function ProjetoWorkspacePage(){
   }finally{setExcluindoProjeto(false)}
  }
 
+ function abrirConfiguracoes(){setConfigSecao("projeto");setMenuProjetoAberto(false);setConfiguracoesAbertas(true)}
+ function fecharConfiguracoes(){if(!salvando&&!modalCapa&&!modalExcluirProjeto)setConfiguracoesAbertas(false)}
+
  async function salvarConfiguracoes(){
   if(!dados||salvando)return;setSalvando(true);setAviso("");
   try{
@@ -312,7 +317,7 @@ export default function ProjetoWorkspacePage(){
         {menuProjetoAberto&&<div className="pw-overflow-menu project" role="menu">
           <div className="pw-menu-label">APRESENTAÇÃO</div>
           <button role="menuitem" onClick={()=>{setMenuProjetoAberto(false);if(publicUrl)window.open(publicUrl,"_blank","noopener,noreferrer")}} disabled={!dados.pastas.length}><EyeIcon size={16}/> Ver como cliente</button>
-          <button role="menuitem" className={aba==="configuracoes"?"active":""} onClick={()=>{setConfigSecao("projeto");setAba("configuracoes");setMenuProjetoAberto(false)}}><SettingsIcon size={16}/> Configurações do projeto</button>
+          <button role="menuitem" className={configuracoesAbertas?"active":""} onClick={abrirConfiguracoes}><SettingsIcon size={16}/> Configurações do projeto</button>
           <div className="pw-menu-sep"/>
           <div className="pw-menu-label">ACOMPANHAMENTO</div>
           <button role="menuitem" className={aba==="atividade"?"active":""} onClick={()=>{setAba("atividade");setMenuProjetoAberto(false)}}><ActivityIcon size={16}/> Atividade do cliente</button>
@@ -328,7 +333,7 @@ export default function ProjetoWorkspacePage(){
          {a==="resumo"?<FolderIcon size={17}/>:a==="selecao"?<CheckIcon size={17}/>:<DownloadIcon size={17}/>}
          <span>{a==="resumo"?(galeriaUnica?"Minha galeria":"Galerias e fotos"):a==="selecao"?"Seleção":"Entrega"}</span>
        </button>)}
-     {(["atividade","vendas","configuracoes"] as Aba[]).includes(aba)&&<span className="pw-secondary-current" aria-current="page">
+     {(["atividade","vendas"] as Aba[]).includes(aba)&&<span className="pw-secondary-current" aria-current="page">
        {aba==="atividade"?<ActivityIcon size={17}/>:aba==="vendas"?<ShoppingBagIcon size={17}/>:<SettingsIcon size={17}/>}
        <span>{aba==="atividade"?"Atividade":aba==="vendas"?"Vendas":"Configurações"}</span>
      </span>}
@@ -385,8 +390,13 @@ export default function ProjetoWorkspacePage(){
 
   {aba==="atividade"&&<section className="pw-section"><div className="pw-section-head"><div><span>ATIVIDADE</span><h2>O que aconteceu no projeto</h2><p>Visualizações, comentários, seleções e downloads aparecem em uma linha do tempo.</p></div></div><div className="pw-timeline">{dados.eventos.length?dados.eventos.map(e=>{const pasta=dados.pastas.find(x=>x.id===e.entidade_id||x.publicRef===e.entidade_id);return <article key={e.id}><i/><div><strong>{EVENTOS[e.evento]||e.evento.replaceAll("_"," ")}</strong><p>{pasta?.titulo||"Projeto"}{typeof e.detalhes?.arquivo==="string"?` · ${e.detalhes.arquivo}`:""}</p></div><time>{data(e.criado_em)}</time></article>}):<div className="pw-empty">As novas interações do cliente aparecerão aqui.</div>}</div></section>}
 
-  {aba==="configuracoes"&&<section className="pw-section pw-settings-section">
-    <div className="pw-section-head"><div><span>PERSONALIZAÇÃO</span><h2>Configurações do projeto</h2><p>Organize as preferências por assunto. Tudo pode ser salvo de uma vez.</p></div></div>
+  {configuracoesAbertas&&<FoturaDrawer size="wide" title="Configurações do projeto" description={`Personalize “${p.nome}” sem sair do projeto.`} onClose={fecharConfiguracoes} suspended={modalCapa||modalExcluirProjeto} footer={
+    <div className="pw-settings-savebar"><span>As mudanças são aplicadas depois de salvar.</span><button className="primary pw-save" onClick={()=>void salvarConfiguracoes()} disabled={salvando}><CheckIcon size={16}/>{salvando?"Salvando…":"Salvar alterações"}</button></div>
+  }>
+  <section className="pw-section pw-settings-section pw-project-settings-drawer-content">
+    <div className="pw-settings-drawer-intro"><span>PERSONALIZAÇÃO</span><p>Organize as preferências por assunto. Tudo pode ser salvo de uma vez.</p></div>
+    {aviso&&<div className="pw-settings-drawer-notice" role="status">{aviso}</div>}
+    <div className="pw-settings-drawer-layout">
     <nav className="pw-config-nav" aria-label="Categorias das configurações">
       {(["projeto","abertura","selecao","entrega","vendas","avancado"] as ConfigSecao[]).map(sec=>
         <button key={sec} type="button" className={configSecao===sec?"on":""} aria-current={configSecao===sec?"page":undefined} onClick={()=>setConfigSecao(sec)}>
@@ -394,6 +404,7 @@ export default function ProjetoWorkspacePage(){
           <span>{sec==="projeto"?"Projeto e acesso":sec==="abertura"?"Abertura":sec==="selecao"?"Seleção":sec==="entrega"?"Entrega":sec==="vendas"?"Fotos extras":"Avançado"}</span>
         </button>)}
     </nav>
+    <div className="pw-settings-drawer-main">
     <div className="pw-config-grid" data-active={configSecao}><div className="pw-config-column">
    <div className="pw-config-intro"><ProjectCinematicSettings projeto={id} nome={nome} descricao={descricao} pastas={dados.pastas} value={abertura} onChange={setAbertura} token={token}/></div>
 <div className="pw-config-card pw-config-identity"><span>IDENTIDADE</span><h3>Detalhes do projeto</h3><label className="pw-field">Nome<input value={nome} onChange={e=>setNome(e.target.value)}/></label><label className="pw-field">Descrição<textarea value={descricao} onChange={e=>setDescricao(e.target.value)} placeholder="Opcional"/></label><label className="pw-field">Cliente<select value={clienteId} onChange={e=>setClienteId(e.target.value)}><option value="">Sem cliente vinculado</option>{dados.clientes.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}</select></label><div className="pw-cover-config"><div>{p.capaUrl?<img src={p.capaUrl} alt=""/>:<span>Sem capa</span>}</div><button onClick={()=>void abrirCapa()} disabled={!dados.pastas.length}>Escolher capa do projeto</button></div><p className="pw-note">A imagem aparece na prévia do link compartilhado e nas galerias que ainda não têm uma capa própria.</p>
@@ -410,8 +421,9 @@ export default function ProjetoWorkspacePage(){
   </div></div>
   {configSecao==="avancado"&&<div className="pw-config-advanced-note"><SettingsIcon size={18}/><p>Estas ações são permanentes e não afetam as demais configurações até que você as confirme.</p></div>}
   {configSecao==="avancado"&&<div className="pw-danger-zone"><div><span>ZONA DE PERIGO</span><h3>Excluir este projeto</h3><p>Remove permanentemente o projeto e suas {dados.pastas.length} galeria{dados.pastas.length===1?"":"s"}, {totalFotos} foto{totalFotos===1?"":"s"}, seleções, comentários, entregas e dados associados.</p></div><button type="button" onClick={()=>{setConfirmacaoProjeto("");setModalExcluirProjeto(true)}}>Excluir projeto</button></div>}
-  <div className="pw-settings-savebar"><span>As mudanças são aplicadas depois de salvar.</span><button className="primary pw-save" onClick={()=>void salvarConfiguracoes()} disabled={salvando}><CheckIcon size={16}/>{salvando?"Salvando…":"Salvar alterações"}</button></div>
-  </section>}
+  </div>
+  </div>
+  </section></FoturaDrawer>}
 
   {aba==="vendas"&&<section className="pw-section"><div className="pw-sales-summary"><div><span>Volume pago</span><strong>{dinheiro(receita,dados.vendas[0]?.moeda||"brl")}</strong></div><div><span>Fotos extras</span><strong>{extras}</strong></div><div><span>Vendas</span><strong>{vendasPagas.length}</strong></div></div><div className="pw-sales-list">{dados.vendas.length?dados.vendas.map(v=>{const pasta=dados.pastas.find(x=>x.id===v.galeria);return <article key={v.id}><div><strong>{pasta?.titulo||"Pasta"}</strong><p>{v.qtd_extras} foto{v.qtd_extras===1?"":"s"} extra{v.qtd_extras===1?"":"s"} · {data(v.criado_em)}</p></div><div><strong>{dinheiro(v.valor_total_centavos,v.moeda)}</strong><span className={"sale-"+v.status}>{v.status}</span></div></article>}):<div className="pw-empty">Nenhuma venda registrada neste projeto.</div>}</div></section>}
  </main>
@@ -430,18 +442,18 @@ export default function ProjetoWorkspacePage(){
     onManage={()=>{setPastaDetalhes(null);setGerenciadorPasta(pastaNoPainel.id)}}
     onAction={()=>{setPastaDetalhes(null);abrirAcaoPasta(pastaNoPainel)}}
     actionLabel={rotuloAcaoPasta(pastaNoPainel)}
-    onProjectSettings={()=>{setPastaDetalhes(null);setAba("configuracoes")}}
+    onProjectSettings={()=>{setPastaDetalhes(null);abrirConfiguracoes()}}
   />}
  {gerenciadorPasta&&<ProjectPhotoManager projetoId={id} galeriaUnica={galeriaUnica} pastas={dados.pastas.map(x=>({id:x.id,titulo:x.titulo,etapa:x.etapa,qtd:x.qtd}))} pastaInicial={gerenciadorPasta} fechar={()=>setGerenciadorPasta(null)} atualizar={()=>{void carregar()}}/>}
- <ProjectShareCenter aberto={compartilharAberto} galeriaUnica={galeriaUnica} fechar={()=>setCompartilharAberto(false)} nome={p.nome} url={publicUrl} cliente={dados.cliente?.nome??null} protegido={p.tem_senha} linkAte={p.link_ate} prova={p.prova} downloadAtivo={p.download_ativo} downloadIndividual={p.download_individual} downloadCompleto={p.download_completo} downloadTamanho={p.download_tamanho} downloadPin={p.download_pin_configurado} pastas={dados.pastas} copiar={()=>{void copiarLinkProjeto();setCompartilharAberto(false)}} configurar={()=>{setAba("configuracoes");setCompartilharAberto(false)}}/>
+ <ProjectShareCenter aberto={compartilharAberto} galeriaUnica={galeriaUnica} fechar={()=>setCompartilharAberto(false)} nome={p.nome} url={publicUrl} cliente={dados.cliente?.nome??null} protegido={p.tem_senha} linkAte={p.link_ate} prova={p.prova} downloadAtivo={p.download_ativo} downloadIndividual={p.download_individual} downloadCompleto={p.download_completo} downloadTamanho={p.download_tamanho} downloadPin={p.download_pin_configurado} pastas={dados.pastas} copiar={()=>{void copiarLinkProjeto();setCompartilharAberto(false)}} configurar={()=>{setCompartilharAberto(false);abrirConfiguracoes()}}/>
  {modalPasta&&!galeriaUnica&&<div className="pw-modal" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!criandoPasta)setModalPasta(false)}}><form className="pw-modal-card" onSubmit={criarPasta}><div className="pw-modal-head"><div><span>NOVA GALERIA</span><h2>Organize mais fotografias</h2><p>Esta galeria será exibida dentro do mesmo link do projeto.</p></div><button type="button" onClick={()=>setModalPasta(false)} disabled={criandoPasta}><CloseIcon size={18}/></button></div><label className="pw-field">Nome da galeria<input autoFocus value={nomePasta} onChange={e=>setNomePasta(e.target.value)} placeholder="Ex.: Bastidores, Retratos ou Destaques" required/></label><div className="pw-modal-actions"><button type="button" onClick={()=>setModalPasta(false)} disabled={criandoPasta}>Cancelar</button><button className="primary" type="submit" disabled={!nomePasta.trim()||criandoPasta}>{criandoPasta?"Criando…":"Criar galeria e adicionar fotos"}</button></div></form></div>}
 
- {modalExcluirProjeto&&<div className="pw-modal" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!excluindoProjeto){setModalExcluirProjeto(false);setConfirmacaoProjeto("")}}}><div className="pw-modal-card pw-danger-modal" role="dialog" aria-modal="true" aria-labelledby="pw-delete-project-title" onKeyDown={e=>{if(e.key==="Escape"&&!excluindoProjeto){setModalExcluirProjeto(false);setConfirmacaoProjeto("")}}}><div className="pw-modal-head"><div><span>ZONA DE PERIGO</span><h2 id="pw-delete-project-title">Excluir “{p.nome}”?</h2><p>Esta ação não pode ser desfeita. Todas as galerias, fotos, thumbnails, seleções, comentários, entregas e vendas relacionadas a este Projeto serão removidas.</p></div><button type="button" onClick={()=>{setModalExcluirProjeto(false);setConfirmacaoProjeto("")}} disabled={excluindoProjeto}><CloseIcon size={18}/></button></div><div className="pw-danger-summary"><strong>{dados.pastas.length} galeria{dados.pastas.length===1?"":"s"} · {totalFotos} foto{totalFotos===1?"":"s"}</strong><span>O link público do Projeto também deixará de funcionar imediatamente.</span></div><label className="pw-field pw-confirm-field">Para confirmar, digite exatamente <b>{p.nome}</b><input autoFocus autoComplete="off" value={confirmacaoProjeto} onChange={e=>setConfirmacaoProjeto(e.target.value)} placeholder={p.nome}/></label><div className="pw-modal-actions"><button type="button" onClick={()=>{setModalExcluirProjeto(false);setConfirmacaoProjeto("")}} disabled={excluindoProjeto}>Cancelar</button><button type="button" className="pw-delete-project" onClick={()=>void confirmarExclusaoProjeto()} disabled={excluindoProjeto||confirmacaoProjeto.trim()!==p.nome}>{excluindoProjeto?"Excluindo…":"Excluir projeto permanentemente"}</button></div></div></div>}
+ {modalExcluirProjeto&&<div className="pw-modal pw-project-modal-above-drawer" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!excluindoProjeto){setModalExcluirProjeto(false);setConfirmacaoProjeto("")}}}><div className="pw-modal-card pw-danger-modal" role="dialog" aria-modal="true" aria-labelledby="pw-delete-project-title" onKeyDown={e=>{if(e.key==="Escape"&&!excluindoProjeto){setModalExcluirProjeto(false);setConfirmacaoProjeto("")}}}><div className="pw-modal-head"><div><span>ZONA DE PERIGO</span><h2 id="pw-delete-project-title">Excluir “{p.nome}”?</h2><p>Esta ação não pode ser desfeita. Todas as galerias, fotos, thumbnails, seleções, comentários, entregas e vendas relacionadas a este Projeto serão removidas.</p></div><button type="button" onClick={()=>{setModalExcluirProjeto(false);setConfirmacaoProjeto("")}} disabled={excluindoProjeto}><CloseIcon size={18}/></button></div><div className="pw-danger-summary"><strong>{dados.pastas.length} galeria{dados.pastas.length===1?"":"s"} · {totalFotos} foto{totalFotos===1?"":"s"}</strong><span>O link público do Projeto também deixará de funcionar imediatamente.</span></div><label className="pw-field pw-confirm-field">Para confirmar, digite exatamente <b>{p.nome}</b><input autoFocus autoComplete="off" value={confirmacaoProjeto} onChange={e=>setConfirmacaoProjeto(e.target.value)} placeholder={p.nome}/></label><div className="pw-modal-actions"><button type="button" onClick={()=>{setModalExcluirProjeto(false);setConfirmacaoProjeto("")}} disabled={excluindoProjeto}>Cancelar</button><button type="button" className="pw-delete-project" onClick={()=>void confirmarExclusaoProjeto()} disabled={excluindoProjeto||confirmacaoProjeto.trim()!==p.nome}>{excluindoProjeto?"Excluindo…":"Excluir projeto permanentemente"}</button></div></div></div>}
 
  <ConfirmDialog open={Boolean(excluirPasta)} title={excluirPasta?`Excluir “${excluirPasta.titulo}”?`:"Excluir pasta?"} description={excluirPasta?`Esta ação é permanente: ${excluirPasta.qtd} foto${excluirPasta.qtd===1?"":"s"}, seleção, comentários e dados de entrega desta pasta serão excluídos. Se ela estiver sendo usada como origem da capa do Projeto, a capa também será removida.`:""} confirmLabel="Excluir pasta" cancelLabel="Cancelar" danger loading={excluindoPasta} onConfirm={()=>void confirmarExclusaoPasta()} onCancel={()=>{if(!excluindoPasta)setExcluirPasta(null)}}/>
 
  {selecaoModal&&dados.pastas.find(x=>x.id===selecaoModal)?.selecao&&<ModalSelecao uid={p.user_id} galeriaId={selecaoModal} titulo={dados.pastas.find(x=>x.id===selecaoModal)?.titulo||"Pasta"} selecao={dados.pastas.find(x=>x.id===selecaoModal)!.selecao!} onFechar={()=>setSelecaoModal(null)}/>}
- {modalCapa&&<div className="pw-modal" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!salvandoCapa)setModalCapa(false)}}><div className="pw-modal-card pw-cover-modal"><div className="pw-modal-head"><div><span>{capaIndividual?"CAPA DA PASTA":"CAPA DO PROJETO"}</span><h2>{capaIndividual?dados.pastas.find(x=>x.id===pastaCapa)?.titulo:"Escolha uma foto de qualquer pasta"}</h2><p>{capaIndividual?"Escolha a foto que representa esta pasta.":"Usada nas pastas que ainda não têm uma capa própria."}</p></div><button type="button" onClick={()=>setModalCapa(false)} disabled={salvandoCapa}><CloseIcon size={18}/></button></div>{capaIndividual&&dados.pastas.find(x=>x.id===pastaCapa)?.capa&&<button className="pw-cover-reset" type="button" disabled={salvandoCapa} onClick={()=>void removerCapaPasta()}>Usar capa do projeto</button>}{!capaIndividual&&<label className="pw-field">Pasta<select value={pastaCapa} onChange={e=>void carregarFotosCapa(e.target.value)}>{dados.pastas.map(x=><option key={x.id} value={x.id}>{x.titulo}</option>)}</select></label>}{carregandoCapa?<div className="pw-empty">Carregando fotos…</div>:fotosCapa.length?<div className="pw-cover-grid">{fotosCapa.map(f=><button type="button" key={f.nome} aria-label={`Usar ${f.nome} como capa`} aria-pressed={capaIndividual?dados.pastas.find(x=>x.id===pastaCapa)?.capa===f.nome:p.capa_arquivo===f.nome&&p.capa_galeria_id===pastaCapa} onClick={()=>void definirCapa(f)} disabled={salvandoCapa}><img src={f.url} alt="" loading="lazy"/><span>{f.nome}</span></button>)}</div>:<div className="pw-empty">Esta pasta ainda não tem fotos.</div>}</div></div>}
+ {modalCapa&&<div className="pw-modal pw-project-modal-above-drawer" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!salvandoCapa)setModalCapa(false)}}><div className="pw-modal-card pw-cover-modal" role="dialog" aria-modal="true" aria-label={capaIndividual?"Escolher capa da galeria":"Escolher capa do projeto"} onKeyDown={e=>{if(e.key==="Escape"&&!salvandoCapa){e.stopPropagation();setModalCapa(false)}}}><div className="pw-modal-head"><div><span>{capaIndividual?"CAPA DA PASTA":"CAPA DO PROJETO"}</span><h2>{capaIndividual?dados.pastas.find(x=>x.id===pastaCapa)?.titulo:"Escolha uma foto de qualquer pasta"}</h2><p>{capaIndividual?"Escolha a foto que representa esta pasta.":"Usada nas pastas que ainda não têm uma capa própria."}</p></div><button type="button" onClick={()=>setModalCapa(false)} disabled={salvandoCapa}><CloseIcon size={18}/></button></div>{capaIndividual&&dados.pastas.find(x=>x.id===pastaCapa)?.capa&&<button className="pw-cover-reset" type="button" disabled={salvandoCapa} onClick={()=>void removerCapaPasta()}>Usar capa do projeto</button>}{!capaIndividual&&<label className="pw-field">Pasta<select value={pastaCapa} onChange={e=>void carregarFotosCapa(e.target.value)}>{dados.pastas.map(x=><option key={x.id} value={x.id}>{x.titulo}</option>)}</select></label>}{carregandoCapa?<div className="pw-empty">Carregando fotos…</div>:fotosCapa.length?<div className="pw-cover-grid">{fotosCapa.map(f=><button type="button" key={f.nome} aria-label={`Usar ${f.nome} como capa`} aria-pressed={capaIndividual?dados.pastas.find(x=>x.id===pastaCapa)?.capa===f.nome:p.capa_arquivo===f.nome&&p.capa_galeria_id===pastaCapa} onClick={()=>void definirCapa(f)} disabled={salvandoCapa}><img src={f.url} alt="" loading="lazy"/><span>{f.nome}</span></button>)}</div>:<div className="pw-empty">Esta pasta ainda não tem fotos.</div>}</div></div>}
  </div>
 }
 

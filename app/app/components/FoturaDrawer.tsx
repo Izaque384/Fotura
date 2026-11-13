@@ -8,15 +8,19 @@ type Props = {
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
+  size?: "default" | "wide";
+  suspended?: boolean;
 };
 
-export default function FoturaDrawer({ title, description, onClose, children, footer }: Props) {
+export default function FoturaDrawer({ title, description, onClose, children, footer, size = "default", suspended = false }: Props) {
   const titleId = useId();
   const descriptionId = useId();
   const panelRef = useRef<HTMLElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const closeLatest = useRef(onClose);
   closeLatest.current = onClose;
+  const suspendedLatest = useRef(suspended);
+  suspendedLatest.current = suspended;
 
   useEffect(() => {
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -25,6 +29,9 @@ export default function FoturaDrawer({ title, description, onClose, children, fo
     closeRef.current?.focus();
 
     function onKeyDown(event: KeyboardEvent) {
+      // Previews such as the cinematic opening render their own modal inside the drawer.
+      // Let the topmost dialog handle Escape and keyboard navigation first.
+      if (suspendedLatest.current || panelRef.current?.querySelector('[role="dialog"][aria-modal="true"]')) return;
       if (event.key === "Escape") {
         event.preventDefault();
         closeLatest.current();
@@ -50,13 +57,17 @@ export default function FoturaDrawer({ title, description, onClose, children, fo
     };
   }, []);
 
+  useEffect(() => {
+    if (!suspended) closeRef.current?.focus({ preventScroll: true });
+  }, [suspended]);
+
   return (
-    <div className="ft-drawer-overlay" onMouseDown={(event) => {
-      if (event.currentTarget === event.target) onClose();
+    <div className={"ft-drawer-overlay" + (size === "wide" ? " ft-drawer-overlay--wide" : "")} onMouseDown={(event) => {
+      if (!suspended && event.currentTarget === event.target) onClose();
     }}>
       <aside
         ref={panelRef}
-        className="ft-drawer-panel"
+        className={"ft-drawer-panel" + (size === "wide" ? " ft-drawer-panel--wide" : "")}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

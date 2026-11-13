@@ -125,3 +125,8 @@ html body .pw-page.mf-shift .pw-folder-open:focus-visible{outline:2px solid #897
   font-size:12px;font-weight:800;letter-spacing:.03em;
 }
 .ft-drawer-avatar img{display:block;width:100%;height:100%;object-fit:cover}
+
+/* Espaço ampliado para formulários de projeto: mesma transição e fundo desfocado. */
+.ft-drawer-overlay--wide{background:rgba(22,20,39,.53);-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px)}
+.ft-drawer-panel--wide{width:min(960px,100%);background:#fbfafd}
+@media(max-width:640px){.ft-drawer-panel--wide{width:100%}}
