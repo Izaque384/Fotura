@@ -29,7 +29,10 @@ test("new media upload APIs refuse unsigned user requests", async ({ request }) 
     const response = await request.post(route, {
       data: { acao: "preparar", bytes: 100 },
     });
-    expect(response.status(), route).toBe(401);
+    // The photo pilot returns 404 before checking auth while disabled;
+    // when enabled, it must reject a missing token with 401.
+    if (route === "/api/fotos/r2") expect([401, 404], route).toContain(response.status());
+    else expect(response.status(), route).toBe(401);
     expect(await response.text(), route).not.toMatch(/X-Amz-Signature|R2_SECRET_ACCESS_KEY/);
   }
 });

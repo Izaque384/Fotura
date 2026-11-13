@@ -147,8 +147,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!available()) return json({ error: "Envio R2 ainda não habilitado." }, 404);
   if (!requisicaoMesmoOrigin(req)) return json({ error: "Origem inválida." }, 403);
+  if (!available()) return json({ error: "Envio R2 ainda não habilitado." }, 404);
 
   const auth = await authenticate(req);
   if (!auth) return json({ error: "Não autorizado." }, 401);
