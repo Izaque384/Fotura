@@ -26,7 +26,8 @@ test("drawer bloqueia rolagem da página, captura foco e pausa durante diálogos
   expect(drawer).toContain('document.body.style.overflow = "hidden"');
   expect(drawer).toContain('previousFocus?.focus({ preventScroll: true })');
   expect(drawer).toContain('aria-modal="true"');
-  expect(drawer).toContain('if (suspendedLatest.current) return;');
+  expect(drawer).toContain("suspendedLatest.current || panelRef.current?.querySelector");
+  expect(workspace).toContain('aria-label={capaIndividual?"Escolher capa da galeria":"Escolher capa do projeto"}');
   expect(drawer).toContain('if (event.key === "Escape")');
   expect(workspace).toContain('pw-project-modal-above-drawer');
   expect(workspaceCss).toContain('.pw-page .pw-project-modal-above-drawer{z-index:260}');
