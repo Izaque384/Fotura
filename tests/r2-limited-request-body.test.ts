@@ -66,6 +66,15 @@ test("accepts short multipart metadata", async () => {
 test("blocks accidental screenshot bytes in metadata-only multipart", async () => {
   const form = new FormData();
   form.set("screenshot", new Blob([new Uint8Array(34000)], { type: "image/png" }), "shot.png");
-  const req = new Request("https://example.invalid/api", { method: "POST", body: form });
+  // Serialize the browser FormData before simulating the incoming server
+  // request. Node's synthetic FormData upload producer may otherwise enqueue
+  // more chunks after the reader has been deliberately cancelled.
+  const generated = new Request("https://example.invalid/api", { method: "POST", body: form });
+  const serialized = await generated.arrayBuffer();
+  const req = new Request("https://example.invalid/api", {
+    method: "POST",
+    headers: { "Content-Type": generated.headers.get("content-type")! },
+    body: serialized,
+  });
   await assert.rejects(readBoundedFormData(req, 32768), RequestBodyTooLargeError);
 });
