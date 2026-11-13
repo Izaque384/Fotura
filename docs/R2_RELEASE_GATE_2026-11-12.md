@@ -110,3 +110,8 @@ Não fazer merge deste PR, não habilitar flags, não aplicar todas as migraçõ
 - PUT create-only que recebeu erro de rede, timeout ou HTTP 412 só é considerado concluído após `HEAD` positivo; 412 isolado nunca indica sucesso nem autoriza substituição.
 - Confirmação de banco que perdeu a resposta é tentada novamente de forma idempotente após reconciliação. Se original e thumb foram conferidos, falhas de confirmação não cancelam a reserva automaticamente; prevenção de perda de upload em estado ambíguo.
 - Ainda são necessários teste real com R2 e perda simulada de resposta, e comparação de hash para provas de integridade mais fortes.
+
+## Cancelamento de vídeos e limite de versões — 13/11/2026
+- Cancelar upload MP4 ainda pendente não executa `DELETE` no objeto: marca a reserva como `cleaning` com 10 minutos de proteção antes da limpeza verificada, permitindo que URLs de PUT de 5 minutos expirem.
+- O limite de cinco versões deixa de contar reservas que não estão pendentes e válidas. Para vídeos já registrados, o DELETE revalida o vídeo publicado no banco imediatamente antes de removê-lo.
+- Pendente para publicação: garantir atomicidade de exclusão de vídeo registrado com mudanças simultâneas de configuração (um segundo GET não equivale a uma transação). A limpeza de vídeos não confirmados fica isolada e com lease.

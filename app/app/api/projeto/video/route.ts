@@ -138,6 +138,7 @@ export async function POST(req: NextRequest) {
         .from("fotura_r2_upload_reservations")
         .select("id", { count: "exact", head: true })
         .eq("bucket", VIDEO_ABERTURA_BUCKET).eq("owner_id", userId)
+        .eq("state", "pending").gt("expires_at", new Date().toISOString())
         .like("object_key", prefixo + "/%");
       if (pendingError) return json({ error: "Não foi possível verificar uploads pendentes." }, 503);
       if ((existentesR2 ?? []).length + (pendingVideos ?? 0) >= 5) return json({
@@ -230,21 +231,39 @@ export async function DELETE(req: NextRequest) {
           .eq("owner_id", ctx.userId).eq("state", "pending").maybeSingle()
       : { data: null, error: null };
     if (pendingError) return json({ error: "Não foi possível verificar o envio R2." }, 503);
-    if (entry || pending) {
+    if (pending && !entry) {
+      // Fence a video still being uploaded before physical deletion. Its
+      // create-only signed PUT may remain active for five more minutes.
+      // The orphan worker rechecks the media registry under a lease after
+      // ten minutes, avoiding a race against successful confirmation.
+      const { data: cancelled, error: cancelError } = await ctx.db
+        .from("fotura_r2_upload_reservations")
+        .update({
+          state: "cleaning",
+          lease_token: null,
+          lease_until: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+        })
+        .eq("bucket", VIDEO_ABERTURA_BUCKET).eq("object_key", body.path)
+        .eq("owner_id", ctx.userId).eq("state", "pending")
+        .select("id").maybeSingle();
+      if (cancelError) return json({ error: "Falha ao cancelar envio do vídeo." }, 503);
+      if (!cancelled) return json({ error: "Envio já finalizado ou cancelado." }, 409);
+      return json({ ok: true, cleanupScheduled: true });
+    }
+    if (entry) {
+      // Published videos cannot be deleted by this endpoint.
+      const { data: current, error: freshError } = await ctx.db.from("galeria_projetos")
+        .select("abertura_config").eq("id", ctx.projeto.id).eq("user_id", ctx.userId).single();
+      if (freshError || !current) return json({ error: "Não foi possível verificar o vídeo publicado." }, 503);
+      if (lerAbertura(current.abertura_config).video === body.path) {
+        return json({ error: "Vídeo ainda publicado. Remova-o das configurações antes de excluir." }, 409);
+      }
       const removed = await verifiedR2VideoDelete(body.path);
       if (!removed) return json({ error: "Não foi possível confirmar a exclusão no R2." }, 503);
-      if (entry) {
-        const { error } = await ctx.db.from("fotura_media_objects").delete()
-          .eq("bucket", VIDEO_ABERTURA_BUCKET).eq("object_key", body.path)
-          .eq("owner_id", ctx.userId);
-        if (error) return json({ error: "Arquivo excluído, mas o registro exige nova tentativa." }, 503);
-      }
-      if (pending) {
-        const { error } = await ctx.db.from("fotura_r2_upload_reservations").delete()
-          .eq("bucket", VIDEO_ABERTURA_BUCKET).eq("object_key", body.path)
-          .eq("owner_id", ctx.userId).eq("state", "pending");
-        if (error) return json({ error: "Arquivo excluído, mas a limpeza exige nova tentativa." }, 503);
-      }
+      const { error } = await ctx.db.from("fotura_media_objects").delete()
+        .eq("bucket", VIDEO_ABERTURA_BUCKET).eq("object_key", body.path)
+        .eq("owner_id", ctx.userId);
+      if (error) return json({ error: "Arquivo excluído, mas o registro exige nova tentativa." }, 503);
       return json({ ok: true });
     }
   }

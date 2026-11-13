@@ -130,3 +130,14 @@ test("a lost success response is reconciled by exact server-side R2 HEAD", () =>
   assert.ok(client.includes('bothUploaded = true'));
   assert.ok(client.includes('&& !bothUploaded'));
 });
+
+test("unconfirmed R2 videos are fenced for delayed cleanup before DELETE", () => {
+  const video = read("app/app/api/projeto/video/route.ts");
+  const pending = video.slice(video.indexOf("if (pending && !entry)"), video.indexOf("if (entry) {", video.indexOf("if (pending && !entry)")));
+  assert.ok(pending.includes('state: "cleaning"'));
+  assert.ok(pending.includes('lease_until: new Date(Date.now() + 10 * 60 * 1000)'));
+  assert.ok(pending.includes('.eq("state", "pending")'));
+  assert.doesNotMatch(pending, /verifiedR2VideoDelete|\.delete\(\)/);
+  assert.ok(video.includes('.gt("expires_at", new Date().toISOString())'));
+  assert.ok(video.includes('const { data: current, error: freshError }'));
+});
