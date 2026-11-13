@@ -187,7 +187,7 @@ export default function AjudaPage() {
           }
           const upload = await fetch(preparo.url, {
             method: "PUT",
-            headers: { "Content-Type": preparo.contentType },
+            headers: { "Content-Type": preparo.contentType, "If-None-Match": "*" },
             body: arquivo,
           });
           if (!upload.ok) throw new Error("O anexo não foi recebido pelo R2. Tente novamente.");

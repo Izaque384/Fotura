@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     return json({
       path,
       url: signPrivateR2ObjectUrl(
-        "PUT", r2PhysicalKey("client-avatars", path), 300, "image/webp"
+        "PUT", r2PhysicalKey("client-avatars", path), 300, "image/webp", [], true
       ),
       contentType: "image/webp",
     });

@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     if (reservationError) return json({ error: "Não foi possível reservar o envio do logotipo." }, 503);
     return json({
       path: key,
-      url: signPrivateR2ObjectUrl("PUT", r2PhysicalKey("marca", key), 300, body.mime),
+      url: signPrivateR2ObjectUrl("PUT", r2PhysicalKey("marca", key), 300, body.mime, [], true),
       contentType: body.mime,
     });
   }

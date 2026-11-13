@@ -132,3 +132,19 @@ test("logo publication is atomic with the private R2 registry", () => {
   assert.match(sql, /delete from public\.fotura_r2_upload_reservations/);
   assert.match(sql, /revoke all on function public\.registrar_logo_r2_backend/);
 });
+
+test("auxiliary media uploads are create-only even while signed URLs remain valid", () => {
+  const avatar = read("app/app/api/clientes/avatar/route.ts");
+  const clients = read("app/app/dashboard/clientes/page.tsx");
+  const logo = read("app/app/api/marca/route.ts");
+  const profile = read("app/app/perfil/page.tsx");
+  const feedback = read("app/app/api/feedback/anexo/route.ts");
+  const help = read("app/app/ajuda/page.tsx");
+  const util = read("app/lib/r2-aux-media.ts");
+  for (const server of [avatar, logo, feedback, util]) {
+    assert.ok(server.includes('[], true'));
+  }
+  for (const browser of [clients, profile, help, util]) {
+    assert.ok(browser.includes('"If-None-Match": "*"'));
+  }
+});

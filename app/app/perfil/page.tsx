@@ -122,7 +122,7 @@ export default function PerfilPage() {
           throw new Error(reserved.error || "Não foi possível preparar o envio ao R2.");
         }
         const uploaded = await fetch(reserved.url, {
-          method: "PUT", headers: { "Content-Type": arquivo.type }, body: arquivo,
+          method: "PUT", headers: { "Content-Type": arquivo.type, "If-None-Match": "*" }, body: arquivo,
         });
         if (!uploaded.ok) throw new Error("O upload do logotipo para o R2 falhou.");
         const commit = await fetch("/api/marca", {

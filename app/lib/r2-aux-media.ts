@@ -31,9 +31,9 @@ export async function putVerifiedAuxiliaryMedia(
     throw new Error("Envio R2 de mídia auxiliar não autorizado.");
   }
   const physical = r2PhysicalKey(bucket, key);
-  const upload = await fetch(signPrivateR2ObjectUrl("PUT", physical, 120, mime), {
+  const upload = await fetch(signPrivateR2ObjectUrl("PUT", physical, 120, mime, [], true), {
     method: "PUT",
-    headers: { "Content-Type": mime },
+    headers: { "Content-Type": mime, "If-None-Match": "*" },
     body: Buffer.from(bytes),
     cache: "no-store",
     signal: AbortSignal.timeout(30_000),

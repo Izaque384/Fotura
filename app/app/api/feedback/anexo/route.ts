@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
   return json({
     path, nome, contentType: body.mime,
     url: signPrivateR2ObjectUrl(
-      "PUT", r2PhysicalKey("feedback-anexos", path), 300, body.mime
+      "PUT", r2PhysicalKey("feedback-anexos", path), 300, body.mime, [], true
     ),
   });
 }

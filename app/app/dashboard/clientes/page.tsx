@@ -430,7 +430,7 @@ export default function ClientesPage() {
               throw new Error(reserved.error || "Não foi possível preparar o avatar.");
             }
             const sent = await fetch(reserved.url, {
-              method: "PUT", headers: { "Content-Type": "image/webp" }, body: blob,
+              method: "PUT", headers: { "Content-Type": "image/webp", "If-None-Match": "*" }, body: blob,
             });
             if (!sent.ok) throw new Error("Falha no envio direto ao R2.");
             const confirm = await fetch("/api/clientes/avatar", {
