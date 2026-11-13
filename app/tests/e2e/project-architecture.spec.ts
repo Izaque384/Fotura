@@ -17,47 +17,32 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(blocoItens).not.toContain('rota: "/dashboard/selecoes"');
 
     expect(projetos).toContain("Cada projeto reúne suas pastas, seleção, entrega e um único link para o cliente.");
-    expect(workspace).toContain('["resumo","pastas","selecao","entrega"]');
-    expect(workspace).toContain("Mais ações do projeto");
-    expect(workspace).toContain("Um link para todo o projeto");
+    expect(workspace).toContain('(["resumo",...(p.prova?["selecao","entrega"]:[])] as Aba[])');
+    expect(workspace).toContain('className="pw-share"');
+    expect(workspace).toContain("Copiar link do projeto");
+    expect(workspace).toContain("pw-overflow-menu project");
   });
 
-  test("configurações equilibram cartões e removem modelos reutilizáveis", () => {
+  test("configurações usam categorias visíveis e não modelos reutilizáveis", () => {
     const workspace = read("app/dashboard/projetos/[id]/page.tsx");
     const projectList = read("app/dashboard/projetos/page.tsx");
-    const configuracoes = workspace.slice(
-      workspace.indexOf('{aba==="configuracoes"&&'),
-      workspace.indexOf('{aba==="vendas"&&')
-    );
+    const styles = read("app/dashboard/project-workspace-refined.css");
 
     expect(workspace).not.toContain("ProjectPresetSave");
-    expect(configuracoes).not.toContain("Repetir configurações sem refazer tudo");
     expect(projectList).not.toContain("/api/projeto/presets");
-    expect(projectList).not.toContain("Meu modelo");
-    expect(projectList).toContain("MODELOS_PROJETO");
-
-    expect(workspace).toContain(".pw-config-grid{column-count:2;column-gap:14px;column-fill:balance;direction:rtl}");
-    expect(workspace).toContain("break-inside:avoid-column");
-    expect(workspace).toContain(".pw-config-grid{display:flex;flex-direction:column;gap:12px;direction:ltr}");
-    expect(configuracoes).not.toContain("pw-config-column-main");
-    expect(configuracoes).not.toContain("pw-config-column-experience");
-    const sectionStart = configuracoes.indexOf("<div className=\"pw-config-grid\">");
-    const titles = [
-      "ProjectCinematicSettings",
-      "pw-config-identity",
-      "pw-config-proof",
-      "pw-config-downloads",
-      "pw-config-protection",
-      "pw-config-extras",
-    ];
-    let previous = sectionStart;
-    for (const title of titles) {
-      const index = configuracoes.indexOf(title);
-      expect(index).toBeGreaterThan(previous);
-      previous = index;
-    }
-    expect(configuracoes).toContain("salvarConfiguracoes()");
-    expect(configuracoes).toContain("Excluir projeto");
+    expect(projectList).toContain("estruturaProjeto");
+    expect(projectList).toContain("fluxoProjeto");
+    expect(workspace).toContain('<div className="pw-config-grid" data-active={configSecao}>');
+    expect(workspace).toContain("ProjectCinematicSettings");
+    for (const item of [
+      "pw-config-identity", "pw-config-proof", "pw-config-downloads",
+      "pw-config-protection", "pw-config-extras",
+    ]) expect(workspace).toContain(item);
+    expect(styles).toContain('.pw-page .pw-config-grid[data-active="projeto"]');
+    expect(styles).toContain('.pw-page .pw-config-grid[data-active="entrega"]');
+    expect(styles).toContain('.pw-page .pw-config-grid[data-active="vendas"]');
+    expect(workspace).toContain("salvarConfiguracoes()");
+    expect(workspace).toContain("Excluir projeto");
   });
 
   test("pastas podem ter capa própria com fallback do projeto", () => {
@@ -65,8 +50,9 @@ test.describe("arquitetura centrada em projetos", () => {
     const api = read("app/api/projeto/workspace/route.ts");
     const publicGallery = read("app/g/[slug]/page.tsx");
     const migration = read("sql/project_folder_covers_2026.sql");
-    expect(workspace).toContain("Configurar capa");
+    expect(workspace).toContain("abrirCapa(");
     expect(workspace).toContain("Usar capa do projeto");
+    expect(workspace).toContain("setModalCapa(true)");
     expect(api).toContain("update.capa = arquivo");
     expect(publicGallery).toContain("imageUrl={projectContext.capaUrl}");
     expect(publicGallery).toContain("title={projectContext.nome}");
@@ -117,7 +103,9 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(workspace).toContain("pw-overflow-menu project");
     expect(workspace).toContain("pw-overflow-menu folder");
     expect(workspace).toContain("Ver como cliente");
-    expect(workspace).toContain("Compartilhar no WhatsApp");
+    const share = read("app/dashboard/ProjectShareCenter.tsx");
+    expect(workspace).toContain("ProjectShareCenter");
+    expect(share).toContain("https://wa.me/");
     expect(workspace).toContain("Configurações");
     expect(workspace).toContain("Adicionar fotos");
     expect(workspace).not.toContain("pw-order-buttons");
@@ -132,7 +120,9 @@ test.describe("arquitetura centrada em projetos", () => {
     const publicGallery = read("app/api/galeria/publica/route.ts");
     const signedPhotos = read("app/api/fotos/signed/route.ts");
 
-    expect(workspace).toContain("Arraste para reordenar.");
+    expect(workspace).toContain("Arraste para ordenar");
+    expect(workspace).toContain("onDragStart");
+    expect(workspace).toContain("onDrop");
     expect(workspace).toContain("Renomear");
     expect(workspace).toContain('x.visivel?"Ocultar do cliente":"Publicar para o cliente"');
     expect(workspace).toContain("Excluir pasta");
