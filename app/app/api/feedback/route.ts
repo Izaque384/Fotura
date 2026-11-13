@@ -4,6 +4,9 @@ import { createServiceClient } from "../../../lib/supabase-server";
 import { consumirRateLimit } from "../../../lib/rate-limit";
 import { requisicaoMesmoOrigin } from "../../../lib/request-security";
 import { registrarErro } from "../../../lib/observability";
+import { selectedMediaUploadProvider } from "../../../lib/r2-aux-media";
+import { r2PhysicalKey, signPrivateR2ObjectUrl } from "../../../lib/r2-storage";
+import { readBoundedFormData, RequestBodyTooLargeError } from "../../../lib/limited-request-body";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -44,8 +47,27 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const uploadProvider = selectedMediaUploadProvider();
+  if (uploadProvider === "unavailable") return NextResponse.json({ error: "Armazenamento R2 indisponível. Nenhum anexo foi enviado." }, { status: 503 });
+
   try {
-    const form = await req.formData();
+    // Metadata-only request in R2 mode: never stream file bytes through Vercel,
+    // even if Content-Length is missing or incorrectly specified.
+    let form: FormData;
+    if (uploadProvider === "r2") {
+      try {
+        form = await readBoundedFormData(req, 32_768);
+      } catch (error) {
+        return NextResponse.json({
+          error: error instanceof RequestBodyTooLargeError
+            ? "Envie o anexo diretamente para o R2."
+            : "Dados do formulário inválidos.",
+        }, { status: error instanceof RequestBodyTooLargeError ? 413 : 400 });
+      }
+    } else {
+      // Preserve the legacy Supabase path until the authorized cutover.
+      form = await req.formData();
+    }
     const tipo = texto(form, "tipo");
     const categoria = texto(form, "categoria");
     const assunto = texto(form, "assunto");
@@ -68,61 +90,123 @@ export async function POST(req: NextRequest) {
     }
 
     const arquivo = form.get("screenshot");
+    const caminhoPreparado = texto(form, "screenshot_path");
     let screenshotPath: string | null = null;
     let screenshotNome: string | null = null;
     let screenshotMime: string | null = null;
     let screenshotBytes: number | null = null;
+    let r2Etag: string | null = null;
 
-    if (arquivo instanceof File && arquivo.size > 0) {
-      if (arquivo.size > MAX_ARQUIVO) {
-        return NextResponse.json({ error: "A imagem deve ter no máximo 5 MB." }, { status: 400 });
+    if (uploadProvider === "r2") {
+      // An R2 screenshot is uploaded by the browser, after a server-side
+      // reservation. Never accept its bytes through the Vercel Function.
+      if (arquivo !== null) {
+        return NextResponse.json({ error: "O anexo deve ser enviado diretamente ao R2." }, { status: 400 });
       }
-      if (!MIMES.has(arquivo.type)) {
-        return NextResponse.json({ error: "Envie uma imagem PNG, JPG ou WebP." }, { status: 400 });
+      if (caminhoPreparado) {
+        screenshotNome = texto(form, "screenshot_nome");
+        screenshotMime = texto(form, "screenshot_mime");
+        screenshotBytes = Number(texto(form, "screenshot_bytes"));
+        const tail = caminhoPreparado.slice(auth.user.id.length + 1);
+        const prefix = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-(.+)$/;
+        const match = tail.match(prefix);
+        if (tipo !== "problema" ||
+            !caminhoPreparado.startsWith(auth.user.id + "/") ||
+            !match || !screenshotNome || match[2] !== screenshotNome ||
+            !/^[A-Za-z0-9._-]{1,100}$/.test(screenshotNome) ||
+            !MIMES.has(screenshotMime) ||
+            !Number.isSafeInteger(screenshotBytes) ||
+            screenshotBytes < 1 || screenshotBytes > MAX_ARQUIVO) {
+          return NextResponse.json({ error: "Dados do anexo R2 inválidos." }, { status: 400 });
+        }
+        const { data: pending, error: pendingError } = await supabase
+          .from("fotura_r2_upload_reservations").select("id")
+          .eq("bucket", "feedback-anexos").eq("object_key", caminhoPreparado)
+          .eq("owner_id", auth.user.id).eq("state", "pending")
+          .gt("expires_at", new Date().toISOString()).maybeSingle();
+        if (pendingError || !pending) {
+          return NextResponse.json({ error: "O envio do anexo expirou ou foi cancelado." }, { status: 409 });
+        }
+        const head = await fetch(
+          signPrivateR2ObjectUrl("HEAD", r2PhysicalKey("feedback-anexos", caminhoPreparado), 60),
+          { method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(12_000) }
+        );
+        const remoteMime = head.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
+        const remoteBytes = Number(head.headers.get("content-length"));
+        if (!head.ok || remoteMime !== screenshotMime ||
+            !Number.isSafeInteger(remoteBytes) || remoteBytes !== screenshotBytes) {
+          return NextResponse.json({ error: "O anexo não passou na verificação de integridade." }, { status: 422 });
+        }
+        screenshotPath = caminhoPreparado;
+        r2Etag = head.headers.get("etag")?.slice(0, 250) ?? null;
+      } else if (["screenshot_nome", "screenshot_mime", "screenshot_bytes"].some(key => form.has(key))) {
+        return NextResponse.json({ error: "Reserva R2 incompleta." }, { status: 400 });
       }
-
-      const idArquivo = randomUUID();
-      screenshotNome = nomeSeguro(arquivo.name);
-      screenshotMime = arquivo.type;
-      screenshotBytes = arquivo.size;
-      screenshotPath = `${auth.user.id}/${idArquivo}-${screenshotNome}`;
-
-      const bytes = new Uint8Array(await arquivo.arrayBuffer());
-      const { error: uploadError } = await supabase.storage
-        .from("feedback-anexos")
-        .upload(screenshotPath, bytes, { contentType: arquivo.type, upsert: false });
-
-      if (uploadError) throw uploadError;
+    } else {
+      if (caminhoPreparado) {
+        return NextResponse.json({ error: "O envio R2 não está habilitado." }, { status: 409 });
+      }
+      if (arquivo instanceof File && arquivo.size > 0) {
+        if (tipo !== "problema" || arquivo.size > MAX_ARQUIVO) {
+          return NextResponse.json({ error: "A imagem deve ter no máximo 5 MB." }, { status: 400 });
+        }
+        if (!MIMES.has(arquivo.type)) {
+          return NextResponse.json({ error: "Envie uma imagem PNG, JPG ou WebP." }, { status: 400 });
+        }
+        const idArquivo = randomUUID();
+        screenshotNome = nomeSeguro(arquivo.name);
+        screenshotMime = arquivo.type;
+        screenshotBytes = arquivo.size;
+        screenshotPath = `${auth.user.id}/${idArquivo}-${screenshotNome}`;
+        const { error: uploadError } = await supabase.storage
+          .from("feedback-anexos").upload(
+            screenshotPath, new Uint8Array(await arquivo.arrayBuffer()),
+            { contentType: arquivo.type, upsert: false }
+          );
+        if (uploadError) throw uploadError;
+      }
     }
 
-    const { data, error } = await supabase
-      .from("feedbacks")
-      .insert({
-        user_id: auth.user.id,
-        tipo,
-        categoria,
-        assunto,
-        mensagem,
+    let feedbackId: string;
+    let feedbackCreated: string;
+    if (uploadProvider === "r2" && screenshotPath) {
+      // The media registry entry and feedback record are committed together.
+      // On failure, leave the *unconfirmed* reservation for verified cleanup.
+      // Never delete a potentially committed object after an uncertain RPC reply.
+      const { data, error } = await supabase.rpc("registrar_feedback_r2_backend", {
+        p_user_id: auth.user.id,
+        p_tipo: tipo, p_categoria: categoria, p_assunto: assunto, p_mensagem: mensagem,
+        p_nota: tipo === "feedback" ? nota : null,
+        p_pagina_origem: paginaOrigem, p_navegador: navegador,
+        p_screenshot_path: screenshotPath, p_screenshot_nome: screenshotNome,
+        p_screenshot_mime: screenshotMime, p_screenshot_bytes: screenshotBytes,
+        p_etag: r2Etag,
+      });
+      if (error || !data?.[0]?.feedback_id) throw error ?? new Error("O banco não confirmou a imagem R2.");
+      feedbackId = String(data[0].feedback_id);
+      feedbackCreated = String(data[0].feedback_created_at);
+    } else {
+      const { data, error } = await supabase.from("feedbacks").insert({
+        user_id: auth.user.id, tipo, categoria, assunto, mensagem,
         nota: tipo === "feedback" ? nota : null,
-        pagina_origem: paginaOrigem,
-        navegador,
-        screenshot_path: screenshotPath,
-        screenshot_nome: screenshotNome,
-        screenshot_mime: screenshotMime,
-        screenshot_bytes: screenshotBytes,
-      })
-      .select("id,criado_em")
-      .single();
-
-    if (error) {
-      if (screenshotPath) await supabase.storage.from("feedback-anexos").remove([screenshotPath]);
-      throw error;
+        pagina_origem: paginaOrigem, navegador,
+        screenshot_path: screenshotPath, screenshot_nome: screenshotNome,
+        screenshot_mime: screenshotMime, screenshot_bytes: screenshotBytes,
+      }).select("id,criado_em").single();
+      if (error) {
+        if (uploadProvider === "supabase" && screenshotPath) {
+          await supabase.storage.from("feedback-anexos").remove([screenshotPath]);
+        }
+        throw error;
+      }
+      feedbackId = String(data.id);
+      feedbackCreated = String(data.criado_em);
     }
 
     return NextResponse.json({
       ok: true,
-      id: data.id,
-      criadoEm: data.criado_em,
+      id: feedbackId,
+      criadoEm: feedbackCreated,
       mensagem: tipo === "problema"
         ? "Problema enviado. Vamos analisar as informações."
         : tipo === "sugestao"

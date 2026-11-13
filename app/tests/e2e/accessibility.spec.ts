@@ -4,7 +4,7 @@ test("login expõe campos rotulados e feedback de erro acessível", async ({ pag
   await page.goto("/login");
 
   const email = page.getByLabel("E-mail");
-  const senha = page.getByLabel("Senha");
+  const senha = page.getByLabel("Senha", { exact: true });
   await expect(email).toBeVisible();
   await expect(senha).toBeVisible();
 

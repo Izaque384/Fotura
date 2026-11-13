@@ -6,7 +6,6 @@ import { createClient } from "../../../lib/supabase-client";
 import MenuFotografo from "../../MenuFotografo";
 import FoturaDrawer from "../../components/FoturaDrawer";
 
-const BUCKET = "client-avatars";
 type Cliente = {
   id: string;
   nome: string;
@@ -147,10 +146,19 @@ export default function ClientesPage() {
     const caminhos = Array.from(new Set(lista.map((c) => c.avatar_path).filter((x): x is string => !!x)));
     if (!caminhos.length) { setSignedAvatars({}); return; }
     const next: Record<string, string> = {};
+    const { data: session } = await supabase.auth.getSession();
+    const token = session.session?.access_token;
+    if (!token) { setSignedAvatars({}); return; }
     for (let i = 0; i < caminhos.length; i += 50) {
-      const batch = caminhos.slice(i, i + 50);
-      const { data } = await supabase.storage.from(BUCKET).createSignedUrls(batch, 3600);
-      data?.forEach((item, index) => { if (item.signedUrl) next[batch[index]] = item.signedUrl; });
+      const response = await fetch("/api/clientes/avatar-urls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        cache: "no-store",
+        body: JSON.stringify({ paths: caminhos.slice(i, i + 50) }),
+      });
+      if (!response.ok) throw new Error("Não foi possível carregar as fotos dos clientes.");
+      const signed = await response.json() as { urls?: Record<string, string> };
+      Object.assign(next, signed.urls ?? {});
     }
     setSignedAvatars(next);
   }, [supabase]);
@@ -290,36 +298,51 @@ export default function ClientesPage() {
   }
   async function carregarFotosDaGaleria(id: string) {
     if (!uid || !id) { setImagensGaleria([]); return; }
-    // Só permite navegar nas pastas que estão vinculadas ao cliente editado.
     if (!clienteEditando || !galeriasDe(clienteEditando.id).some((g) => g.id === id)) return;
     setCarregandoGaleria(true); setErroGaleria(""); setImagensGaleria([]);
-    const prefixo = uid + "/" + id + "/thumbs";
     try {
-      const { data: arquivos, error } = await supabase.storage.from("fotos").list(prefixo, {
-        limit: 36,
-        sortBy: { column: "created_at", order: "desc" }
-      });
-      if (error) throw error;
-      const caminhos = (arquivos || []).filter((a) => a.name && /\.(?:webp|jpg|jpeg|png)$/i.test(a.name))
-        .map((a) => prefixo + "/" + a.name);
-      if (!caminhos.length) { setErroGaleria("Nenhuma miniatura disponível nesta pasta."); return; }
-      const { data: urls, error: signedError } = await supabase.storage.from("fotos").createSignedUrls(caminhos, 900);
-      if (signedError) throw signedError;
-      const imagens = (urls || []).flatMap((item, index) => item.signedUrl ? [{ path: caminhos[index], url: item.signedUrl }] : []);
-      setImagensGaleria(imagens);
-      if (!imagens.length) setErroGaleria("Não foi possível abrir as fotos desta pasta.");
+      const { data: session } = await supabase.auth.getSession();
+      const access = session.session?.access_token;
+      if (!access) throw new Error("Sessão expirada");
+      const response = await fetch(
+        "/api/clientes/galeria-fotos?galeria=" + encodeURIComponent(id) +
+        "&cliente=" + encodeURIComponent(clienteEditando.id),
+        { headers: { Authorization: "Bearer " + access }, cache: "no-store" }
+      );
+      if (!response.ok) throw new Error("Não foi possível carregar a galeria");
+      const signed = await response.json() as { fotos?: { path: string; url: string }[] };
+      const images = signed.fotos ?? [];
+      setImagensGaleria(images);
+      if (!images.length) setErroGaleria("Nenhuma miniatura disponível nesta pasta.");
     } catch {
       setErroGaleria("Não foi possível carregar as fotos. Tente outra pasta.");
     } finally { setCarregandoGaleria(false); }
   }
   async function selecionarFotoDaGaleria(path: string) {
-    if (!clienteEditando || !galeriasDe(clienteEditando.id).some((g) => path.startsWith(uid + "/" + g.id + "/thumbs/"))) return;
+    if (!clienteEditando || !galeriasDe(clienteEditando.id).some((g) =>
+      path.startsWith(uid + "/" + g.id + "/thumbs/"))) return;
     setCarregandoGaleria(true); setErroGaleria("");
     try {
-      const { data, error } = await supabase.storage.from("fotos").download(path);
-      if (error || !data) throw new Error("Download indisponível");
-      const mime = /\.webp$/i.test(path) ? "image/webp" : /\.png$/i.test(path) ? "image/png" : "image/jpeg";
-      const file = new File([data], "fotura-galeria." + mime.split("/")[1], { type: mime });
+      const parts = path.split("/");
+      const galeria = parts[1];
+      const nome = parts[3];
+      if (parts.length !== 4 || parts[2] !== "thumbs" || !galeria || !nome) {
+        throw new Error("Caminho inválido");
+      }
+      const { data: session } = await supabase.auth.getSession();
+      const access = session.session?.access_token;
+      if (!access) throw new Error("Sessão expirada");
+      const response = await fetch(
+        "/api/clientes/galeria-fotos?galeria=" + encodeURIComponent(galeria) +
+        "&cliente=" + encodeURIComponent(clienteEditando.id) +
+        "&arquivo=" + encodeURIComponent(nome),
+        { headers: { Authorization: "Bearer " + access }, cache: "no-store" }
+      );
+      if (!response.ok) throw new Error("Miniatura indisponível");
+      const blob = await response.blob();
+      const mime = /\.webp$/i.test(path) ? "image/webp" :
+        /\.png$/i.test(path) ? "image/png" : "image/jpeg";
+      const file = new File([blob], "fotura-galeria." + mime.split("/")[1], { type: mime });
       if (file.size > 8 * 1024 * 1024) throw new Error("Arquivo acima do limite");
       escolherFoto(file);
       setGaleriaPicker(false);
@@ -328,8 +351,33 @@ export default function ClientesPage() {
     } finally { setCarregandoGaleria(false); }
   }
   async function assinarAvatar(path: string) {
-    const { data } = await supabase.storage.from(BUCKET).createSignedUrl(path, 3600);
-    if (data?.signedUrl) setSignedAvatars((current) => ({ ...current, [path]: data.signedUrl }));
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session?.access_token) return;
+    const response = await fetch("/api/clientes/avatar-urls", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.session.access_token },
+      cache: "no-store",
+      body: JSON.stringify({ paths: [path] }),
+    });
+    if (!response.ok) return;
+    const data = await response.json() as { urls?: Record<string, string> };
+    if (data.urls?.[path]) {
+      setSignedAvatars((current) => ({ ...current, [path]: data.urls![path] }));
+    }
+  }
+
+  async function excluirAvatarAntigo(path: string, cliente: string): Promise<boolean> {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session?.access_token) return false;
+    const response = await fetch("/api/clientes/avatar", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + session.session.access_token,
+      },
+      body: JSON.stringify({ cliente, path }),
+    });
+    return response.ok;
   }
 
   async function salvar(e: FormEvent<HTMLFormElement>) {
@@ -353,24 +401,82 @@ export default function ClientesPage() {
       let salvo = result.data as Cliente;
       let avisoFoto = "";
       if (imagem) {
-        let caminhoNovo = "";
         try {
           const blob = await recortarAvatar(imagem, zoom, posX, posY);
-          caminhoNovo = uid + "/" + salvo.id + "/" + crypto.randomUUID() + ".webp";
-          const { error: uploadError } = await supabase.storage.from(BUCKET).upload(caminhoNovo, blob, { contentType: "image/webp", cacheControl: "3600", upsert: false });
-          if (uploadError) throw uploadError;
-          const { data: alterado, error: saveError } = await supabase.from("clientes")
-            .update({ avatar_path: caminhoNovo }).eq("id", salvo.id).eq("user_id", uid)
-            .select("id,nome,email,telefone,criado_em,avatar_path,observacoes,etiquetas").single();
-          if (saveError || !alterado) throw new Error("Falha ao vincular a foto.");
+          if (!blob) throw new Error("Não foi possível preparar a imagem.");
+          const { data: session } = await supabase.auth.getSession();
+          if (!session.session?.access_token) throw new Error("Sessão expirada.");
+          const providerResponse = await fetch("/api/clientes/avatar", { cache: "no-store" });
+          if (!providerResponse.ok) throw new Error("Armazenamento indisponível.");
+          const provider = await providerResponse.json() as { provider?: string };
+          let uploadedPath: string;
+
+          if (provider.provider === "r2") {
+            const headers = {
+              Authorization: "Bearer " + session.session.access_token,
+              "Content-Type": "application/json",
+            };
+            const prepare = await fetch("/api/clientes/avatar", {
+              method: "POST", headers, cache: "no-store",
+              body: JSON.stringify({
+                acao: "preparar", cliente: salvo.id, bytes: blob.size, mime: "image/webp",
+              }),
+            });
+            const reserved = await prepare.json() as {
+              path?: string; url?: string; contentType?: string; error?: string
+            };
+            if (!prepare.ok || !reserved.url || !reserved.path ||
+                reserved.contentType !== "image/webp") {
+              throw new Error(reserved.error || "Não foi possível preparar o avatar.");
+            }
+            const sent = await fetch(reserved.url, {
+              method: "PUT", headers: { "Content-Type": "image/webp", "If-None-Match": "*" }, body: blob,
+            });
+            if (!sent.ok) throw new Error("Falha no envio direto ao R2.");
+            const confirm = await fetch("/api/clientes/avatar", {
+              method: "POST", headers, cache: "no-store",
+              body: JSON.stringify({
+                acao: "confirmar", cliente: salvo.id, path: reserved.path, bytes: blob.size,
+              }),
+            });
+            const verified = await confirm.json() as { path?: string; error?: string };
+            if (!confirm.ok || verified.path !== reserved.path) {
+              throw new Error(verified.error || "Não foi possível confirmar o avatar R2.");
+            }
+            uploadedPath = reserved.path;
+          } else if (provider.provider === "supabase") {
+            // Legacy mode uses the original browser-to-Supabase upload, not a
+            // 4.5 MB-limited Vercel Function. Never run this branch in R2 mode.
+            if (!uid) throw new Error("Sessão expirada.");
+            uploadedPath = uid + "/" + salvo.id + "/" + crypto.randomUUID() + ".webp";
+            const { error: uploadError } = await supabase.storage.from("client-avatars")
+              .upload(uploadedPath, blob, { contentType: "image/webp", upsert: false });
+            if (uploadError) throw uploadError;
+            const { error: updateError } = await supabase.from("clientes")
+              .update({ avatar_path: uploadedPath })
+              .eq("id", salvo.id).eq("user_id", uid);
+            if (updateError) {
+              await supabase.storage.from("client-avatars").remove([uploadedPath]);
+              throw updateError;
+            }
+          } else {
+            throw new Error("Destino de armazenamento inválido.");
+          }
+          const { data: alterado, error: updateError } = await supabase.from("clientes")
+            .select("id,nome,email,telefone,criado_em,avatar_path,observacoes,etiquetas")
+            .eq("id", salvo.id).eq("user_id", uid).single();
+          if (updateError || !alterado || alterado.avatar_path !== uploadedPath) {
+            throw new Error("Não foi possível atualizar a foto do cliente.");
+          }
           salvo = alterado as Cliente;
-          await assinarAvatar(caminhoNovo);
-          if (previous?.avatar_path && previous.avatar_path !== caminhoNovo) {
-            void supabase.storage.from(BUCKET).remove([previous.avatar_path]);
+          await assinarAvatar(uploadedPath);
+          if (previous?.avatar_path && previous.avatar_path !== uploadedPath) {
+            void excluirAvatarAntigo(previous.avatar_path, previous.id).catch(() => {});
           }
         } catch {
-          if (caminhoNovo) void supabase.storage.from(BUCKET).remove([caminhoNovo]);
-          avisoFoto = " Os dados foram salvos, mas não foi possível atualizar a foto. Tente novamente na edição.";
+          // A timeout after a DB commit must not trigger deletion of the
+          // potentially current avatar. Preserve it for reconciliation.
+          avisoFoto = " Os dados foram salvos, mas não foi possível confirmar a foto. Confira ao reabrir a edição.";
         }
       } else if (removerFoto && previous?.avatar_path) {
         const { data: alterado, error } = await supabase.from("clientes")
@@ -378,7 +484,7 @@ export default function ClientesPage() {
           .select("id,nome,email,telefone,criado_em,avatar_path,observacoes,etiquetas").single();
         if (!error && alterado) {
           salvo = alterado as Cliente;
-          void supabase.storage.from(BUCKET).remove([previous.avatar_path]);
+          void excluirAvatarAntigo(previous.avatar_path, previous.id).catch(() => {});
         } else avisoFoto = " Os dados foram salvos, mas não foi possível remover a foto.";
       }
       setClientes((current) => [...current.filter((c) => c.id !== salvo.id), salvo].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")));
@@ -402,7 +508,7 @@ export default function ClientesPage() {
       setClientes((current) => current.filter((c) => c.id !== alvo.id));
       setProjetos((current) => current.map((p) => p.cliente_id === alvo.id ? { ...p, cliente_id: null } : p));
       setGalerias((current) => current.map((g) => g.cliente_id === alvo.id ? { ...g, cliente_id: null } : g));
-      if (alvo.avatar_path) void supabase.storage.from(BUCKET).remove([alvo.avatar_path]);
+      if (alvo.avatar_path) void excluirAvatarAntigo(alvo.avatar_path, alvo.id).catch(() => {});
       setSelecionado(null);
       setConfirmarExclusao(false);
       setAviso("Cliente excluído. Os projetos e galerias foram preservados.");

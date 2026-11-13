@@ -27,6 +27,8 @@ test.describe("ajuda e feedback", () => {
     expect(route).toContain("image/png");
     expect(route).toContain("image/jpeg");
     expect(route).toContain("image/webp");
+    expect(route).toContain("registrar_feedback_r2_backend");
+    expect(route).toContain("signPrivateR2ObjectUrl");
   });
 
   test("admin consegue classificar mensagens em todo o ciclo", () => {
@@ -37,7 +39,7 @@ test.describe("ajuda e feedback", () => {
       expect(route).toContain(status);
     }
     expect(route).toContain("registrarAdminAuditoria");
-    expect(route).toContain("createSignedUrl");
+    expect(route).toContain("signPrivateMediaUrl");
   });
 
   test("menu oferece entrada voluntária e preserva a página de origem", () => {

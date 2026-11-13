@@ -142,11 +142,25 @@ export default function ProjectCinematicSettings({ projeto, nome, descricao, pas
       const dados = await preparar.json().catch(() => ({}));
       if (!preparar.ok) throw new Error(dados.error || "Não foi possível preparar o vídeo.");
       criado = dados.path;
-      const storage = createClient().storage.from(VIDEO_ABERTURA_BUCKET);
-      const { error: erroUpload } = await storage.uploadToSignedUrl(dados.path, dados.token, file, {
-        contentType: "video/mp4", cacheControl: "3600",
-      });
-      if (erroUpload) throw new Error("Falha no envio do vídeo. Tente novamente.");
+      if (dados.provider === "r2") {
+        if (typeof dados.url !== "string" || !dados.url.startsWith("https://")) {
+          throw new Error("Autorização de vídeo R2 inválida.");
+        }
+        const uploaded = await fetch(dados.url, {
+          method: "PUT", headers: { "Content-Type": "video/mp4", "If-None-Match": "*" }, body: file,
+        });
+        if (!uploaded.ok) throw new Error("Falha no envio do vídeo ao R2. Tente novamente.");
+      } else if (dados.provider === undefined && typeof dados.token === "string") {
+        // Legacy projects remain in Supabase only while the migration is disabled.
+        const storage = createClient().storage.from(VIDEO_ABERTURA_BUCKET);
+        const { error: erroUpload } = await storage.uploadToSignedUrl(dados.path, dados.token, file, {
+          contentType: "video/mp4", cacheControl: "3600",
+        });
+        if (erroUpload) throw new Error("Falha no envio do vídeo. Tente novamente.");
+      } else {
+        // Never silently fall back to Supabase after a malformed R2 response.
+        throw new Error("Destino de armazenamento inválido. Nenhum vídeo foi enviado.");
+      }
       const confirmar = await fetch("/api/projeto/video", {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${access}` },
         body: JSON.stringify({ projeto, acao: "confirmar", path: dados.path }),

@@ -70,3 +70,58 @@ test('time budget defers unfinished work', async () => {
   assert.equal((await runCleanup(f.backend, () => (clock += 15000))).deferred, 1);
   assert.equal(f.files.size, 1500);
 });
+
+
+test('cleans verified R2 registry only after legacy storage is exhausted', async () => {
+  const f = fixture(4);
+  const r2 = new Set(["owner/gallery/photo.jpg","owner/gallery/thumbs/photo.jpg"]);
+  const removed: string[] = [];
+  f.backend.r2Paths = async () => [...r2];
+  f.backend.removeR2 = async (paths) => {
+    assert.equal(f.files.size, 0, 'legacy storage must be drained first');
+    for (const path of paths) {
+      removed.push(path);
+      r2.delete(path); // Simulates remote delete+HEAD then database acknowledgement.
+    }
+  };
+  f.backend.finish = async (_job, error) => !error && f.files.size === 0 && r2.size === 0;
+  assert.deepEqual(await runCleanup(f.backend), { completed: 1, deferred: 0 });
+  assert.deepEqual(removed.sort(), [
+    "owner/gallery/photo.jpg", "owner/gallery/thumbs/photo.jpg",
+  ]);
+});
+
+test('R2 remote verification failures keep cleanup pending for retry', async () => {
+  const f = fixture(0);
+  const r2 = new Set(["owner/gallery/photo.jpg"]);
+  f.backend.r2Paths = async () => [...r2];
+  f.backend.removeR2 = async () => { throw new Error("Synthetic R2 HEAD verification failed"); };
+  f.backend.finish = async (_job, error) => !error && r2.size === 0;
+  assert.deepEqual(await runCleanup(f.backend), { completed: 0, deferred: 1 });
+  assert.equal(r2.size, 1, 'no registry acknowledgement on remote failure');
+  f.backend.removeR2 = async (paths) => { paths.forEach((path) => r2.delete(path)); };
+  let available = true;
+  f.backend.claim = async () => available
+    ? (available = false, { id: "job", lease_token: "new", prefix: "owner/gallery/" })
+    : null;
+  assert.equal((await runCleanup(f.backend)).completed, 1);
+  assert.equal(r2.size, 0);
+});
+
+test('refuses R2 paths outside the exact deleted-gallery prefix', async () => {
+  const f = fixture(0);
+  let called = false;
+  f.backend.r2Paths = async () => ["owner/gallery-other/intruder.jpg"];
+  f.backend.removeR2 = async () => { called = true; };
+  assert.equal((await runCleanup(f.backend)).deferred, 1);
+  assert.equal(called, false);
+});
+
+test('does not mark R2 cleanup complete until both stores are empty', async () => {
+  const f = fixture(0);
+  let remaining = true;
+  f.backend.r2Paths = async () => remaining ? ["owner/gallery/photo.jpg"] : [];
+  f.backend.removeR2 = async () => { remaining = false; };
+  f.backend.finish = async (_job, err) => !err && !f.files.size && !remaining;
+  assert.deepEqual(await runCleanup(f.backend), { completed: 1, deferred: 0 });
+});

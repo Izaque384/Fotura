@@ -10,6 +10,9 @@ import { ordemFotosValida, type OrdemFotos } from "../../../../lib/gallery-photo
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { lerAbertura, validarAbertura, caminhoVideoValido, VIDEO_ABERTURA_BUCKET, VIDEO_ABERTURA_MAX_BYTES } from "../../../../lib/cinematic-intro";
 import { MODELOS_PROJETO,modeloValido,configProjeto } from "../../../../lib/project-templates";
+import { signPrivateMediaUrl, signPrivateMediaUrls } from "../../../../lib/media-storage";
+import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
+import { isR2ReadEnabled, signPrivateR2ObjectUrl } from "../../../../lib/r2-storage";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -57,8 +60,7 @@ async function urlCapa(projeto: {
   if (!projeto.capa_galeria_id || !projeto.capa_arquivo) return null;
   const supabase = createServiceClient();
   const caminho=`${projeto.user_id}/${projeto.capa_galeria_id}/thumbs/${projeto.capa_arquivo}`;
-  const { data } = await supabase.storage.from("fotos").createSignedUrl(caminho, 60 * 60);
-  return data?.signedUrl ?? null;
+  return signPrivateMediaUrl(supabase, "fotos", caminho, 60 * 60);
 }
 
 async function urlsCapasPastas(userId: string, pastas: Array<{ id: unknown; capa: unknown }>) {
@@ -71,11 +73,10 @@ async function urlsCapasPastas(userId: string, pastas: Array<{ id: unknown; capa
   const supabase = createServiceClient();
   const thumbs = comCapa.map((g) => `${userId}/${g.id}/thumbs/${g.capa}`);
   const thumbPorPasta = new Map(comCapa.map((g) => [`${userId}/${g.id}/thumbs/${g.capa}`, g.id]));
-  const { data: thumbsAssinadas } = await supabase.storage.from("fotos").createSignedUrls(thumbs, 60 * 60);
-  for (const item of thumbsAssinadas ?? []) {
-    if (!item.path || !item.signedUrl) continue;
-    const pastaId = thumbPorPasta.get(item.path);
-    if (pastaId) mapa.set(pastaId, item.signedUrl);
+  const assinadas = await signPrivateMediaUrls(supabase, "fotos", thumbs, 60 * 60);
+  for (const [path, signedUrl] of Object.entries(assinadas)) {
+    const pastaId = thumbPorPasta.get(path);
+    if (pastaId) mapa.set(pastaId, signedUrl);
   }
 
   return mapa;
@@ -98,24 +99,20 @@ export async function GET(req: NextRequest) {
       .eq("projeto_id", projeto).eq("user_id", user.id).maybeSingle();
     if (!pasta) return json({ error: "Pasta não encontrada." }, 404);
 
-    const nomes: string[] = [];
-    for (let offset = 0; ; offset += 1000) {
-      const { data: arquivos, error } = await supabase.storage.from("fotos").list(`${user.id}/${capaPasta}`, {
-        limit: 1000, offset, sortBy: { column: "created_at", order: "asc" },
-      });
-      if (error) return json({ error: "Não foi possível carregar as fotos." }, 500);
-      const pagina = arquivos ?? [];
-      nomes.push(...pagina.filter(a => a.id !== null && a.name !== "thumbs" && a.name !== "entrega").map(a => a.name));
-      if (pagina.length < 1000) break;
-    }
+    const { data: catalogo, error: catalogError } = await listarCatalogoGaleriaHibrido(supabase, user.id, capaPasta, "principal");
+    if (catalogError || !catalogo) return json({ error: "Não foi possível carregar as fotos." }, 500);
+    const nomes = catalogo.map((foto) => foto.nome);
     if (!nomes.length) return json({ fotos: [] });
 
     const caminhos = nomes.map((nome) => `${user.id}/${capaPasta}/thumbs/${nome}`);
     const mapa = new Map<string, string>();
     for (let i = 0; i < caminhos.length; i += 200) {
-      const { data: thumbs, error } = await supabase.storage.from("fotos").createSignedUrls(caminhos.slice(i, i + 200), 15 * 60);
-      if (error) return json({ error: "Não foi possível carregar as prévias." }, 500);
-      for (const x of thumbs ?? []) if (x.path && x.signedUrl) mapa.set(x.path, x.signedUrl);
+      try {
+        const assinadas = await signPrivateMediaUrls(supabase, "fotos", caminhos.slice(i, i + 200), 15 * 60);
+        for (const [path, signedUrl] of Object.entries(assinadas)) mapa.set(path, signedUrl);
+      } catch {
+        return json({ error: "Não foi possível carregar as prévias." }, 500);
+      }
     }
     return json({
       fotos: nomes.map((nome) => ({
@@ -279,14 +276,44 @@ export async function PATCH(req: NextRequest) {
       const path = abertura.video;
       if (!caminhoVideoValido(path) || !path.startsWith(`${user.id}/${body.projeto}/`))
         return json({ error: "O vídeo não pertence a este projeto." }, 403);
-      const nome = path.split("/").pop()!;
-      const { data: objetos, error: videoErro } = await supabase.storage.from(VIDEO_ABERTURA_BUCKET)
-        .list(`${user.id}/${body.projeto}`, { search: nome, limit: 100 });
-      const video = objetos?.find((item) => item.id && item.name === nome);
-      const bytes = Number(video?.metadata?.size ?? 0);
-      if (videoErro || !video || bytes <= 0 || bytes > VIDEO_ABERTURA_MAX_BYTES ||
-        String(video.metadata?.mimetype ?? "") !== "video/mp4")
-        return json({ error: "Vídeo de abertura inválido ou indisponível. Envie um MP4 de até 25 MB." }, 400);
+      // A newly uploaded R2 MP4 will not appear in Supabase Storage listings.
+      // Check owner-bound private registry first; only legacy paths are listed.
+      let r2Verified = false;
+      let r2Registered = false;
+      if (isR2ReadEnabled()) {
+        const { data: object, error: registryError } = await supabase.from("fotura_media_objects")
+          .select("bytes,content_type").eq("bucket", VIDEO_ABERTURA_BUCKET)
+          .eq("object_key", path).eq("owner_id", user.id).maybeSingle();
+        if (registryError) return json({ error: "Não foi possível conferir o vídeo no R2." }, 503);
+        if (object) {
+          r2Registered = true;
+          try {
+            const head = await fetch(signPrivateR2ObjectUrl("HEAD", path, 60), {
+              method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(12_000),
+            });
+            const bytes = Number(head.headers.get("content-length"));
+            const mime = head.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
+            r2Verified = head.ok && Number.isSafeInteger(bytes) && bytes > 0 &&
+              bytes <= VIDEO_ABERTURA_MAX_BYTES && bytes === Number(object.bytes) &&
+              mime === "video/mp4" && object.content_type === "video/mp4";
+          } catch {
+            return json({ error: "Não foi possível verificar o MP4 privado no R2." }, 503);
+          }
+        }
+      }
+      if (r2Registered) {
+        if (!r2Verified) return json({ error: "Vídeo R2 não passou na conferência de integridade." }, 422);
+      } else {
+        const nome = path.split("/").pop()!;
+        const { data: objetos, error: videoErro } = await supabase.storage.from(VIDEO_ABERTURA_BUCKET)
+          .list(`${user.id}/${body.projeto}`, { search: nome, limit: 100 });
+        const video = objetos?.find((item) => item.id && item.name === nome);
+        const bytes = Number(video?.metadata?.size ?? 0);
+        if (videoErro || !video || bytes <= 0 || bytes > VIDEO_ABERTURA_MAX_BYTES ||
+            String(video.metadata?.mimetype ?? "") !== "video/mp4") {
+          return json({ error: "Vídeo de abertura inválido ou indisponível. Envie um MP4 de até 25 MB." }, 400);
+        }
+      }
     }
     if (abertura.ativo && abertura.fotos.length) {
       const ids = [...new Set(abertura.fotos.map((foto) => foto.pastaId))];
@@ -296,9 +323,8 @@ export async function PATCH(req: NextRequest) {
         return json({ error: "As fotos da abertura devem pertencer a pastas publicadas deste projeto." }, 400);
       }
       const verificacoes = await Promise.all(abertura.fotos.map(async (foto) => {
-        const { data, error } = await supabase.storage.from("fotos")
-          .list(`${user.id}/${foto.pastaId}`, { limit: 100, search: foto.arquivo });
-        return !error && (data ?? []).some((item) => item.id !== null && item.name === foto.arquivo);
+        const { data, error } = await listarCatalogoGaleriaHibrido(supabase, user.id, foto.pastaId, "principal");
+        return !error && Boolean(data?.some((item) => item.nome === foto.arquivo));
       }));
       if (verificacoes.some((existe) => !existe)) {
         return json({ error: "Uma das fotografias da abertura não está mais disponível." }, 400);
@@ -321,10 +347,9 @@ export async function PATCH(req: NextRequest) {
     const { data: pasta } = await supabase.from("galerias").select("id").eq("id", body.capaPastaId)
       .eq("projeto_id", body.projeto).eq("user_id", user.id).maybeSingle();
     if (!pasta) return json({ error: "A pasta da capa não pertence ao projeto." }, 400);
-    const { data: encontrados } = await supabase.storage.from("fotos").list(`${user.id}/${body.capaPastaId}`, {
-      limit: 20, search: body.capaArquivo,
-    });
-    if (!(encontrados ?? []).some((item) => item.id !== null && item.name === body.capaArquivo)) {
+    const { data: encontrados, error: coverError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.capaPastaId, "principal");
+    if (coverError) return json({ error: "Não foi possível verificar a foto de capa." }, 503);
+    if (!(encontrados ?? []).some((item) => item.nome === body.capaArquivo)) {
       return json({ error: "A foto escolhida para capa não foi encontrada." }, 404);
     }
     update.capa_galeria_id = body.capaPastaId;
@@ -337,8 +362,23 @@ export async function PATCH(req: NextRequest) {
   if (body.abertura !== undefined) {
     const antigo = lerAbertura(p.abertura_config).video;
     const atual = lerAbertura(update.abertura_config).video;
-    if (antigo && antigo !== atual && antigo.startsWith(`${user.id}/${body.projeto}/`))
-      await supabase.storage.from(VIDEO_ABERTURA_BUCKET).remove([antigo]);
+    if (antigo && antigo !== atual && antigo.startsWith(`${user.id}/${body.projeto}/`)) {
+      // Never send an R2-registered object to the legacy Supabase delete API.
+      // Retain old R2 versions for explicit owner-scoped cleanup. A deletion
+      // raced with concurrent project edits could remove a published video.
+      let keepPrivateR2 = false;
+      let registryFailed = false;
+      if (isR2ReadEnabled()) {
+        const { data: oldObject, error: oldError } = await supabase.from("fotura_media_objects")
+          .select("object_key").eq("bucket", VIDEO_ABERTURA_BUCKET).eq("object_key", antigo)
+          .eq("owner_id", user.id).maybeSingle();
+        keepPrivateR2 = Boolean(oldObject);
+        registryFailed = Boolean(oldError);
+      }
+      if (!keepPrivateR2 && !registryFailed) {
+        await supabase.storage.from(VIDEO_ABERTURA_BUCKET).remove([antigo]);
+      }
+    }
   }
   // Os controles de prova e entrega são globais no workspace: manter cada pasta alinhada.
   const camposPasta = ["prova","limite","prazo","link_ate","download_ativo","download_individual","download_completo","download_tamanho","download_pin_hash","watermark_ativo","watermark_texto","watermark_opacidade","assistente_ativo"];
@@ -528,10 +568,9 @@ export async function POST(req: NextRequest) {
         if (typeof arquivo !== "string" || !arquivo || arquivo.length > 300 || arquivo.includes("/") || arquivo.includes("\\") || /[\u0000-\u001f\u007f]/.test(arquivo)) {
           return json({ error: "Capa inválida." }, 400);
         }
-        const { data: encontrados, error: storageError } = await supabase.storage.from("fotos")
-          .list(`${user.id}/${body.pastaId}`, { limit: 100, search: arquivo });
-        if (storageError) return json({ error: "Não foi possível verificar a foto." }, 500);
-        if (!(encontrados ?? []).some(item => item.id !== null && item.name === arquivo)) {
+        const { data: encontrados, error: storageError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.pastaId, "principal");
+        if (storageError) return json({ error: "Não foi possível verificar a foto." }, 503);
+        if (!(encontrados ?? []).some((item) => item.nome === arquivo)) {
           return json({ error: "A foto escolhida não pertence a esta pasta." }, 404);
         }
         update.capa = arquivo;
@@ -576,8 +615,11 @@ export async function POST(req: NextRequest) {
     if (p.capa_arquivo) return json({ ok: true, alterada: false });
     const { data: pasta } = await supabase.from("galerias").select("id").eq("id", body.pastaId).eq("projeto_id", body.projetoId).eq("user_id", user.id).maybeSingle();
     if (!pasta) return json({ error: "Pasta inválida." }, 400);
-    const { data: encontrados } = await supabase.storage.from("fotos").list(`${user.id}/${body.pastaId}`, { limit: 20, search: body.arquivo });
-    if (!(encontrados ?? []).some((item) => item.id !== null && item.name === body.arquivo)) return json({ error: "Foto não encontrada." }, 404);
+    const { data: encontrados, error: storageError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.pastaId, "principal");
+    if (storageError) return json({ error: "Não foi possível verificar a fotografia." }, 503);
+    if (!(encontrados ?? []).some((item) => item.nome === body.arquivo)) {
+      return json({ error: "Foto não encontrada." }, 404);
+    }
     const { error } = await supabase.from("galeria_projetos").update({
       capa_galeria_id: body.pastaId, capa_arquivo: body.arquivo, atualizado_em: new Date().toISOString(),
     }).eq("id", body.projetoId).eq("user_id", user.id).is("capa_arquivo", null);
@@ -592,6 +634,48 @@ export async function POST(req: NextRequest) {
     const confirmacao = body.confirmacao?.trim() ?? "";
     if (!confirmacao || confirmacao !== String(projeto.nome)) {
       return json({ error: "Digite o nome exato do projeto para confirmar a exclusão." }, 400);
+    }
+
+    // Prevent orphaned R2 media until cross-provider cleanup is transactional.
+    if (isR2ReadEnabled()) {
+      const { data: folders, error: foldersError } = await supabase.from("galerias")
+        .select("id").eq("projeto_id", body.projetoId).eq("user_id", user.id);
+      if (foldersError) return json({ error: "Não foi possível conferir os arquivos do projeto." }, 503);
+      const folderIds = (folders ?? []).map((folder) => String(folder.id));
+      for (let start = 0; start < folderIds.length; start += 20) {
+        const expressions = folderIds.slice(start, start + 20)
+          .map((id) => "object_key.like." + user.id + "/" + id + "/%");
+        const { data: photos, error: registryError } = await supabase.from("fotura_media_objects")
+          .select("object_key").eq("bucket", "fotos").eq("owner_id", user.id)
+          .or(expressions.join(",")).limit(1);
+        if (registryError) return json({ error: "Não foi possível conferir as mídias R2." }, 503);
+        if ((photos ?? []).length) return json({
+          error: "Este projeto tem fotografias no R2. A exclusão segura ainda está em preparação; nada foi removido.",
+        }, 409);
+        const { data: pendingPhotos, error: pendingError } = await supabase
+          .from("fotura_r2_upload_reservations").select("object_key")
+          .eq("bucket", "fotos").eq("owner_id", user.id)
+          .or(expressions.join(",")).limit(1);
+        if (pendingError) return json({ error: "Não foi possível verificar envios pendentes no R2." }, 503);
+        if ((pendingPhotos ?? []).length) return json({
+          error: "Este projeto possui fotografias R2 em envio. Nenhum dado foi excluído.",
+        }, 409);
+      }
+      const { data: videos, error: videoError } = await supabase.from("fotura_media_objects")
+        .select("object_key").eq("bucket", VIDEO_ABERTURA_BUCKET).eq("owner_id", user.id)
+        .like("object_key", user.id + "/" + body.projetoId + "/%").limit(1);
+      if (videoError) return json({ error: "Não foi possível conferir os vídeos R2." }, 503);
+      if ((videos ?? []).length) return json({
+        error: "Este projeto tem vídeos no R2. A exclusão segura ainda está em preparação; nada foi removido.",
+      }, 409);
+      const { data: pendingVideos, error: pendingVideoError } = await supabase
+        .from("fotura_r2_upload_reservations").select("object_key")
+        .eq("bucket", VIDEO_ABERTURA_BUCKET).eq("owner_id", user.id)
+        .like("object_key", user.id + "/" + body.projetoId + "/%").limit(1);
+      if (pendingVideoError) return json({ error: "Não foi possível verificar vídeos R2 pendentes." }, 503);
+      if ((pendingVideos ?? []).length) return json({
+        error: "Este projeto possui vídeos R2 em envio. Nenhum dado foi excluído.",
+      }, 409);
     }
 
     // Não excluir o registro sem primeiro remover os vídeos privados. A limpeza

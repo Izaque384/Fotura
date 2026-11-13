@@ -38,7 +38,7 @@ test.describe("contrato de planos e armazenamento", () => {
     );
     expect(landing).toContain('import { PLANOS_FOTURA');
     expect(landing).toContain('plano.limites.armazenamentoGb');
-    expect(landing).toContain("Projetos, pastas, clientes e fotos sem limite por quantidade");
+    expect(landing).toContain("Crie projetos, pastas e cadastre clientes sem limite de quantidade");
 
     for (const codigo of ["gratis", "essencial", "profissional", "studio"] as const) {
       expect(PLANOS_FOTURA[codigo].limites.galeriasAtivas).toBeNull();
@@ -72,9 +72,11 @@ test.describe("contrato de planos e armazenamento", () => {
     expect(projetoPublico).toContain("plano.recursos.heroFotoGaleria");
     expect(projetoPublico).toContain("capa_galeria_id");
     expect(projetoPublico).toContain("capa_arquivo");
-    expect(workspace).toContain("A capa do projeto aparece nas pastas que ainda não têm uma capa própria e na prévia do link compartilhado no WhatsApp.");
+    expect(workspace).toContain("Usar capa do projeto");
+    expect(workspace).toContain("ProjectShareCenter");
     expect(workspace).toContain("Mostrar capa no compartilhamento, mesmo com senha");
-    expect(perfil).toContain("Usar a capa do projeto como fundo do hero");
+    expect(perfil).toContain("Usar a foto de capa do projeto como fundo");
+    expect(perfil).toContain("hero_foto_capa_ativo");
     expect(perfil).not.toContain('router.push("/dashboard/heros")');
   });
 

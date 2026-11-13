@@ -4,6 +4,7 @@ import { registrarErro } from "../../../../lib/observability";
 import { uuidValido } from "../../../../lib/validation";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
+import { isR2ReadEnabled } from "../../../../lib/r2-storage";
 
 export async function DELETE(req: NextRequest) {
   if (!requisicaoMesmoOrigin(req)) return NextResponse.json({ error: "Origem inválida." }, { status: 403 });
@@ -43,6 +44,35 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Não foi possível verificar a galeria." }, { status: 500 });
   }
   if (!g || g.user_id !== auth.user.id) return NextResponse.json({ error: "Galeria não encontrada." }, { status: 404 });
+
+  // Until the R2 cleanup worker is implemented, refuse destructive actions
+  // involving registered R2 photos instead of orphaning them after DB deletion.
+  if (isR2ReadEnabled()) {
+    const prefix = auth.user.id + "/" + galeria + "/";
+    const { data: r2Files, error: r2LookupError } = await supabase
+      .from("fotura_media_objects").select("object_key")
+      .eq("bucket", "fotos").eq("owner_id", auth.user.id)
+      .like("object_key", prefix + "%").limit(1);
+    if (r2LookupError) {
+      return NextResponse.json({ error: "Não foi possível validar os arquivos da galeria." }, { status: 503 });
+    }
+    if ((r2Files ?? []).length) {
+      return NextResponse.json({
+        error: "A exclusão de galerias com arquivos no R2 está em preparação. Nenhum dado foi excluído.",
+      }, { status: 409 });
+    }
+    const { data: pending, error: pendingError } = await supabase
+      .from("fotura_r2_upload_reservations").select("object_key")
+      .eq("bucket", "fotos").eq("owner_id", auth.user.id)
+      .like("object_key", prefix + "%").limit(1);
+    if (pendingError) return NextResponse.json({
+      error: "Não foi possível verificar os uploads R2 pendentes.",
+    }, { status: 503 });
+    if ((pending ?? []).length) return NextResponse.json({
+      error: "Esta galeria possui um envio R2 pendente. Nenhum arquivo foi excluído.",
+    }, { status: 409 });
+  }
+
 
   let eraCapaProjeto = false;
   if (g.projeto_id) {

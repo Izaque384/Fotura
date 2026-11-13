@@ -3,6 +3,9 @@ import {createServiceClient} from "../../../../lib/supabase-server";
 import {requisicaoMesmoOrigin} from "../../../../lib/request-security";
 import {uuidValido} from "../../../../lib/validation";
 import {consumirRateLimit} from "../../../../lib/rate-limit";
+import {signPrivateMediaUrls} from "../../../../lib/media-storage";
+import {listarCatalogoGaleriaHibrido} from "../../../../lib/gallery-media-catalog";
+import {isR2ReadEnabled} from "../../../../lib/r2-storage";
 
 export const dynamic="force-dynamic";
 export const runtime="nodejs";
@@ -17,14 +20,9 @@ async function pastaDoProjeto(db:ReturnType<typeof createServiceClient>,uid:stri
  return data;
 }
 async function nomesNaPasta(db:ReturnType<typeof createServiceClient>,uid:string,id:string){
- const nomes=new Set<string>();
- for(let offset=0;offset<4000;offset+=100){
-  const {data,error}=await db.storage.from("fotos").list(`${uid}/${id}`,{limit:100,offset,sortBy:{column:"name",order:"asc"}});
-  if(error)throw error;
-  for(const x of data??[])if(x.id!==null&&nomeValido(x.name))nomes.add(x.name);
-  if((data??[]).length<100)break;
- }
- return nomes;
+ const {data,error}=await listarCatalogoGaleriaHibrido(db,uid,id,"principal");
+ if(error||!data)throw error||new Error("Não foi possível listar os arquivos da pasta.");
+ return new Set(data.map(x=>x.nome).filter(nomeValido));
 }
 export async function GET(req:NextRequest){
  const user=await session(req);if(!user)return json({error:"Não autorizado."},401);
@@ -33,12 +31,13 @@ export async function GET(req:NextRequest){
  if(!uuidValido(projeto)||!uuidValido(pasta))return json({error:"Parâmetros inválidos."},400);
  const db=createServiceClient();const source=await pastaDoProjeto(db,user.id,projeto,pasta);
  if(!source)return json({error:"Pasta não encontrada."},404);
- const {data,error}=await db.storage.from("fotos").list(`${user.id}/${pasta}`,{limit:120,offset,sortBy:{column:"name",order:"asc"}});
- if(error)return json({error:"Não foi possível listar as fotos."},500);
- const nomes=(data??[]).filter(x=>x.id!==null&&nomeValido(x.name)).map(x=>x.name);
- const {data:urls}=nomes.length?await db.storage.from("fotos").createSignedUrls(nomes.map(n=>`${user.id}/${pasta}/thumbs/${n}`),3600):{data:[]};
- const previews=new Map((urls??[]).filter(x=>x.signedUrl&&x.path).map(x=>[String(x.path).split("/").at(-1),x.signedUrl]));
- return json({fotos:nomes.map(nome=>({nome,thumb:previews.get(nome)??null})),hasMore:(data??[]).length===120,proximoOffset:offset+(data??[]).length,capa:source.capa,etapa:source.etapa});
+ const {data:catalogo,error}=await listarCatalogoGaleriaHibrido(db,user.id,pasta,"principal");
+ if(error||!catalogo)return json({error:"Não foi possível listar as fotos."},500);
+ const todos=catalogo.map(x=>x.nome).filter(nomeValido).sort((a,b)=>a.localeCompare(b));
+ const nomes=todos.slice(offset,offset+120);
+ const urls=await signPrivateMediaUrls(db,"fotos",nomes.map(n=>`${user.id}/${pasta}/thumbs/${n}`),3600);
+ const previews=new Map(Object.entries(urls).map(([key,url])=>[key.split("/").at(-1),url]));
+ return json({fotos:nomes.map(nome=>({nome,thumb:previews.get(nome)??null})),hasMore:todos.length>offset+120,proximoOffset:offset+nomes.length,capa:source.capa,etapa:source.etapa});
 }
 export async function POST(req:NextRequest){
  if(!requisicaoMesmoOrigin(req))return json({error:"Origem inválida."},403);
@@ -70,6 +69,17 @@ export async function POST(req:NextRequest){
  if((selecoes??[]).length||(vendas??[]).length)return json({error:"Essas pastas já possuem seleções ou vendas. Mantenha a organização atual para proteger o histórico do cliente."},409);
  const [srcNames,dstNames]=await Promise.all([nomesNaPasta(db,user.id,origem.id),nomesNaPasta(db,user.id,dest.id)]);
  if(b.fotos.some(n=>!srcNames.has(n)||dstNames.has(n)))return json({error:"Alguma foto não existe na origem ou já tem o mesmo nome no destino."},409);
+ if(isR2ReadEnabled()){
+  // Do not execute legacy Storage.move for verified R2 files. A mixed-
+  // provider move must be copy+verified before changing metadata and source.
+  const keys=b.fotos.map(nome=>user.id+"/"+origem.id+"/"+nome);
+  const {data:stored,error:r2Error}=await db.from("fotura_media_objects")
+    .select("object_key").eq("bucket","fotos").in("object_key",keys);
+  if(r2Error)return json({error:"Não foi possível verificar a origem dos arquivos."},503);
+  if((stored??[]).length)return json({
+    error:"A movimentação de fotografias armazenadas no R2 ainda está em preparação. Nenhum arquivo foi movido."
+  },409);
+ }
  const thumbNames=new Set<string>();
  for(let offset=0;offset<4000;offset+=100){const r=await db.storage.from("fotos").list(`${user.id}/${origem.id}/thumbs`,{limit:100,offset});if(r.error)return json({error:"Não foi possível verificar as miniaturas."},500);for(const x of r.data??[])if(x.id!==null)thumbNames.add(x.name);if((r.data??[]).length<100)break}
  const movidas:string[]=[];

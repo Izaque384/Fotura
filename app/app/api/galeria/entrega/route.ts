@@ -7,6 +7,8 @@ import { uuidValido } from "../../../../lib/validation";
 import { planoEfetivoAssinatura } from "../../../../lib/billing-plans";
 import { normalizeLocale, translate, withLocalePath } from "../../../../lib/i18n";
 import { publicProjectRef } from "../../../../lib/project-links";
+import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
+import { signPrivateMediaUrls } from "../../../../lib/media-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -25,11 +27,7 @@ async function listarFinais(
   userId: string,
   galeriaId: string
 ) {
-  const { data, error } = await supabase.rpc("listar_fotos_galeria_storage", {
-    p_galeria: galeriaId,
-    p_user: userId,
-    p_variante: "entrega",
-  });
+  const { data, error } = await listarCatalogoGaleriaHibrido(supabase, userId, galeriaId, "entrega");
   if (error) throw error;
   return (data ?? []).map((item: { nome?: unknown }) => String(item.nome || "")).filter(Boolean);
 }
@@ -72,7 +70,40 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Não foi possível carregar a entrega final." }, { status: 500 });
   }
 
+  // Authorize once through galeria.user_id, then only sign filenames present
+  // in this exact gallery. Verified R2 objects and legacy Supabase objects
+  // are resolved per key by the server-side private media registry.
+  const nomesSelecionados = Array.isArray(selecao?.fotos) ? selecao.fotos as string[] : [];
+  let selecionadas: Array<{ nome: string; url: string }> = [];
+  if (nomesSelecionados.length) {
+    try {
+      const { data: catalogo, error: catalogError } = await listarCatalogoGaleriaHibrido(
+        auth.supabase, auth.user.id, galeria, "principal"
+      );
+      if (catalogError) throw catalogError;
+      const allow = new Set((catalogo ?? []).map(item => String(item.nome || "")));
+      const nomes = [...new Set(nomesSelecionados.filter(nome =>
+        typeof nome === "string" && /^[A-Za-z0-9._-]{1,230}$/.test(nome) &&
+        nome !== "." && nome !== ".." && allow.has(nome)
+      ))];
+      const paths = nomes.map(nome => auth.user.id + "/" + galeria + "/" + nome);
+      const urls: Record<string, string> = {};
+      for (let i = 0; i < paths.length; i += 200) {
+        Object.assign(urls, await signPrivateMediaUrls(
+          auth.supabase, "fotos", paths.slice(i, i + 200), 3600
+        ));
+      }
+      selecionadas = nomes.map(nome => ({
+        nome, url: urls[auth.user.id + "/" + galeria + "/" + nome] || "",
+      })).filter(item => Boolean(item.url));
+    } catch (error) {
+      registrarErro("gallery.delivery.selected_sign", req, error, { galeria });
+      return NextResponse.json({ error: "Não foi possível assinar a seleção privada." }, { status: 503 });
+    }
+  }
+
   return NextResponse.json({
+    selecionadas,
     galeria: {
       id: g.id,
       titulo: (g.titulo as string) || "Galeria",

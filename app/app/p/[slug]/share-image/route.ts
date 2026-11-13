@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import sharp from "sharp";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { loadProjectSocialPreview } from "../../../../lib/project-social-preview.server";
+import { downloadPrivateMediaBlob } from "../../../../lib/media-storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,9 +25,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slu
   if (!preview?.capaPath) return unavailable();
 
   try {
-    const { data, error } = await createServiceClient().storage
-      .from("fotos").download(preview.capaPath);
-    if (error || !data || data.size > 15 * 1024 * 1024) return unavailable();
+    const data = await downloadPrivateMediaBlob(createServiceClient(), "fotos", preview.capaPath);
+    if (!data || data.size > 15 * 1024 * 1024) return unavailable();
     const original = Buffer.from(await data.arrayBuffer());
     const compress = (quality: number) => sharp(original).rotate()
       .resize(1200, 630, { fit: "cover", position: "centre" })

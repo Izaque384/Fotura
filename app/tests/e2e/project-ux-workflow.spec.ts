@@ -19,7 +19,8 @@ test.describe("Fotura: UX dos projetos",()=>{
  test("a lista oferece filtros de fluxo e alternância entre grade e lista",()=>{
   const codigo=read("app/dashboard/projetos/page.tsx");
   for(const t of ["Aguardando cliente","Seleção concluída","Preparando entrega","Entregues","fotura-projetos-modo","project-grid","aria-pressed"])expect(codigo).toContain(t);
-  expect(codigo).toContain("Modelo do projeto");
+  expect(codigo).toContain("fluxoProjeto");
+  expect(codigo).toContain("estruturaProjeto");
  });
  test("novas pastas herdam o modelo e alterações do projeto são sincronizadas",()=>{
   const api=read("app/api/projeto/workspace/route.ts");
@@ -27,7 +28,7 @@ test.describe("Fotura: UX dos projetos",()=>{
  });
  test("compartilhamento revisa o acesso antes de enviar o link",()=>{
   const codigo=read("app/dashboard/ProjectShareCenter.tsx");
-  for(const t of ["Pastas visíveis","DOWNLOADS","VALIDADE","PIN DE DOWNLOAD","Ver como cliente","Copiar link"])expect(codigo).toContain(t);
+  for(const t of ["Galerias visíveis para o cliente","DOWNLOADS","VALIDADE","PIN DE DOWNLOAD","Ver como cliente","Copiar link"])expect(codigo).toContain(t);
   expect(codigo).toContain('disabled={!pronto}');
  });
  test("movimentações não alteram seleções e entregas",()=>{

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { planoEfetivoAssinatura, planoFotura, type PlanoFotura } from "./billing-plans";
+import { isR2ReadEnabled } from "./r2-storage";
 
 const GIB = 1024 * 1024 * 1024;
 
@@ -21,7 +22,21 @@ export async function obterUsoPlano(supabase: SupabaseClient, userId: string): P
   if (error) throw error;
 
   const row = Array.isArray(data) ? data[0] : data;
-  const armazenamentoBytes = Number(row?.armazenamento_bytes ?? 0);
+  const legadoBytes = Number(row?.armazenamento_bytes ?? 0);
+  // Include only R2 objects not duplicated in Supabase Storage so the
+  // subscription quota remains enforceable during the dual-provider period.
+  let r2ExclusivoBytes = 0;
+  if (isR2ReadEnabled()) {
+    const { data: extra, error: r2Error } = await supabase.rpc("r2_only_storage_bytes_backend", {
+      p_user_id: userId,
+    });
+    if (r2Error) throw r2Error;
+    r2ExclusivoBytes = Number(extra ?? 0);
+    if (!Number.isSafeInteger(r2ExclusivoBytes) || r2ExclusivoBytes < 0) {
+      throw new Error("Uso de armazenamento R2 inválido.");
+    }
+  }
+  const armazenamentoBytes = legadoBytes + r2ExclusivoBytes;
 
   return {
     galeriasAtivas: Number(row?.galerias_ativas ?? 0),
