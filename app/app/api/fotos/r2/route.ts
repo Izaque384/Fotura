@@ -134,10 +134,6 @@ export async function POST(req: NextRequest) {
 
   const auth = await authenticate(req);
   if (!auth) return json({ error: "Não autorizado." }, 401);
-  if (!await consumirRateLimit(req, "r2_photo_write", auth.user.id, 600, 150)) {
-    return json({ error: "Limite de solicitações atingido." }, 429);
-  }
-
   let raw: string;
   try { raw = await readBoundedRequestText(req, 8192); }
   catch (error) {
@@ -150,6 +146,24 @@ export async function POST(req: NextRequest) {
     body = JSON.parse(raw) as Incoming;
     if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Dados inválidos." }, 400);
   } catch { return json({ error: "Dados inválidos." }, 400); }
+
+  // One photo needs several authenticated API calls (prepare, verify,
+  // multipart parts, confirm). A single 150-request bucket blocked valid
+  // batches after ~74 photographs. Keep separate per-user/IP safeguards
+  // sized for the UI's 500-photo limit and up to seven 8-MiB R2 parts.
+  const quota = body.acao === "preparar"
+    ? { scope: "r2_photo_prepare", limit: 750 }
+    : body.acao?.startsWith("multipart_")
+      ? { scope: "r2_photo_multipart", limit: 6500 }
+      : body.acao === "verificar"
+        ? { scope: "r2_photo_verify", limit: 2500 }
+        : { scope: "r2_photo_finalize", limit: 1500 };
+  if (!await consumirRateLimit(req, quota.scope, auth.user.id, 600, quota.limit)) {
+    return json({
+      error: "Limite temporário de operações de upload atingido. Aguarde alguns minutos e tente novamente; as fotos já enviadas foram preservadas.",
+      code: "UPLOAD_RATE_LIMIT",
+    }, 429);
+  }
 
   if (body.acao === "preparar") {
     if (!uuidValido(body.galeria) || (body.variante !== "principal" && body.variante !== "entrega") ||

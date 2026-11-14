@@ -16,6 +16,8 @@ export function explicarFalhaUpload(erro: unknown): string {
     "Não foi possível preparar uma miniatura.",
     "Arquivo incompatível com o limite do Fotura.",
     "Não foi possível verificar os envios pendentes.",
+    "Limite temporário de operações de upload atingido.",
+    "Limite de solicitações atingido.",
   ];
   const conhecida = conhecidas.find((item) => mensagem.includes(item));
   if (conhecida) return conhecida;

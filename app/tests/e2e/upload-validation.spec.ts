@@ -75,6 +75,18 @@ test("detalha falhas de upload sem revelar URLs assinadas ou segredos", () => {
   expect(mensagem).not.toContain("secret");
 });
 
+test("limite do R2 respeita grandes lotes sem bloquear 74 fotos e distingue ações", () => {
+  const route = fs.readFileSync(path.join(process.cwd(), "app", "api", "fotos", "r2", "route.ts"), "utf8");
+  expect(route).not.toContain('consumirRateLimit(req, "r2_photo_write", auth.user.id, 600, 150)');
+  expect(route).toContain('scope: "r2_photo_prepare", limit: 750');
+  expect(route).toContain('scope: "r2_photo_multipart", limit: 6500');
+  expect(route).toContain('scope: "r2_photo_verify", limit: 2500');
+  expect(route).toContain('scope: "r2_photo_finalize", limit: 1500');
+  expect(route).toContain('code: "UPLOAD_RATE_LIMIT"');
+  expect(explicarFalhaUpload(new Error("Limite temporário de operações de upload atingido."))).toContain("Limite temporário");
+  expect(explicarFalhaUpload(new Error("Limite de solicitações atingido."))).toContain("Limite de solicitações");
+});
+
 test("upload não repete nome quando o projeto e a galeria têm o mesmo título", () => {
   const source = fs.readFileSync(path.join(process.cwd(), "app", "upload", "page.tsx"), "utf8");
   expect(source).toContain('projetoNome.trim().toLocaleLowerCase("pt-BR")!==tituloTravado.trim().toLocaleLowerCase("pt-BR")');
