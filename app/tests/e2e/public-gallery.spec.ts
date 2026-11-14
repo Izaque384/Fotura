@@ -119,7 +119,7 @@ test("guia de seleção tem dois passos e bolinha perfeitamente circular no celu
   await expect(guide.getByText("Amplie e comente")).toBeVisible();
   await guide.getByRole("button", { name: /Concluir/ }).click();
   await expect(guide).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Abrir guia de seleção em duas etapas" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Abrir guia de seleção em duas etapas" })).toHaveCount(0);
   await expect(page.locator(".gc-hint")).toHaveCount(0);
 
   const check = page.locator(".gc-select").first();
@@ -128,10 +128,9 @@ test("guia de seleção tem dois passos e bolinha perfeitamente circular no celu
   expect(Math.abs(rect!.width - rect!.height)).toBeLessThan(1);
   expect(rect!.width).toBeGreaterThanOrEqual(44);
 
-  await page.getByRole("button", { name: "Abrir guia de seleção em duas etapas" }).click();
-  await expect(guide).toBeVisible();
-  await guide.getByRole("button", { name: "Pular" }).click();
+  await page.reload();
   await expect(guide).toHaveCount(0);
+  await expect(page.locator(".gc-select").first()).toBeVisible();
 });
 
 test("lightbox exibe a prévia imediatamente e troca pelo original após carregar", async ({ page }) => {
