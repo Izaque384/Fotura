@@ -3,11 +3,11 @@ import fs from "node:fs";
 import path from "node:path";
 
 test.describe("landing: demonstração da arquitetura atual", () => {
-  test("não apresenta a antiga navegação de galerias nem formulário de nova galeria", () => {
+  test("não apresenta a antiga navegação e mostra galerias no contexto do projeto", () => {
     const home = fs.readFileSync(path.join(process.cwd(), "app", "HomeClient.tsx"), "utf8");
     expect(home).toContain('["Painel","Projetos","Clientes","Vendas","Planos","Configurações","Ajuda e feedback"]');
     expect(home).not.toContain('["Painel","Galerias"');
-    expect(home).not.toContain("Nova galeria");
+    expect(home).toContain("+ Nova galeria");
     expect(home).not.toContain("<small>GALERIAS</small>");
     expect(home).toContain("lp2-real-projects");
     expect(home).toContain("lp2-real-project-folders");
