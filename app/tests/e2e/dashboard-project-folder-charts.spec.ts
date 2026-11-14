@@ -74,3 +74,13 @@ test("painel permite alternar projetos e pastas sem mudar a lista recente nem bu
   expect(page).toContain("const capasProjetos=projetosBase.slice(0,2)");
   expect(page).not.toContain('.limit(2)]');
 });
+
+test("painel assina capas R2 por rota autenticada e mantém capa do projeto como fallback da galeria", () => {
+  const page = fs.readFileSync("app/dashboard/page.tsx", "utf8");
+  expect(page).toContain('"/api/projetos/preview-urls"');
+  expect(page).toContain('Authorization:`Bearer ${token}`');
+  expect(page).toContain("caminhosProjetos");
+  expect(page).toContain("caminhosLegados");
+  expect(page).toContain("projetosBase.find(p=>p.id===g.projeto_id");
+  expect(page).not.toContain("createSignedUrls(caminhos.slice");
+});
