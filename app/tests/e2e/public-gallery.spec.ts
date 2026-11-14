@@ -86,6 +86,54 @@ test("cliente seleciona, comenta e finaliza uma prova", async ({ page }) => {
   expect(salvamentos.at(-1)?.comentarios["foto-1.jpg"]).toBe("Minha favorita");
 });
 
+test("guia de seleção tem dois passos e bolinha perfeitamente circular no celular", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("**/api/galeria/publica**", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      galeria: {
+        titulo: "Prova guiada", publicRef: "prova-guiada", capa: null, prova: true, etapa: "prova",
+        limite: 0, prazo: null, linkAte: null, temSenha: false, desbloqueada: true, linkExpirado: false,
+        downloadAtivo: false, downloadIndividual: false, downloadCompleto: false,
+        watermarkAtivo: false, watermarkTexto: null, watermarkOpacidade: 22, assistenteAtivo: true,
+      },
+      perfil: { nome: "Estúdio Teste", logo: null, cor: "#25213c" }, selecao: null,
+    }),
+  }));
+  await page.route("**/api/fotos/signed**", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ fotos: [
+      { nome: "foto-1.jpg", url: foto("Foto 1"), thumb: foto("Foto 1") },
+      { nome: "foto-2.jpg", url: foto("Foto 2"), thumb: foto("Foto 2") },
+    ], capaUrl: null }),
+  }));
+  await page.route("**/api/analytics/event", route => route.fulfill({ status: 200, body: "{}" }));
+  await page.goto("/g/00000000-0000-4000-8000-000000000001");
+
+  const guide = page.getByRole("dialog", { name: "Guia rápido de seleção de fotos" });
+  await expect(guide).toBeVisible();
+  await expect(guide.getByText("PASSO 1 DE 2")).toBeVisible();
+  await expect(guide.getByText("Escolha suas fotos favoritas")).toBeVisible();
+  await guide.getByRole("button", { name: /Próximo/ }).click();
+  await expect(guide.getByText("PASSO 2 DE 2")).toBeVisible();
+  await expect(guide.getByText("Amplie e comente")).toBeVisible();
+  await guide.getByRole("button", { name: /Concluir/ }).click();
+  await expect(guide).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Abrir guia de seleção em duas etapas" })).toBeVisible();
+  await expect(page.locator(".gc-hint")).toHaveCount(0);
+
+  const check = page.locator(".gc-select").first();
+  const rect = await check.boundingBox();
+  expect(rect).not.toBeNull();
+  expect(Math.abs(rect!.width - rect!.height)).toBeLessThan(1);
+  expect(rect!.width).toBeGreaterThanOrEqual(44);
+
+  await page.getByRole("button", { name: "Abrir guia de seleção em duas etapas" }).click();
+  await expect(guide).toBeVisible();
+  await guide.getByRole("button", { name: "Pular" }).click();
+  await expect(guide).toHaveCount(0);
+});
+
 test("lightbox exibe a prévia imediatamente e troca pelo original após carregar", async ({ page }) => {
   let originaisSolicitados = 0;
   let liberarOriginal!: () => void;
