@@ -98,9 +98,8 @@ export function signPrivateR2ObjectUrl(
     throw new Error("Prazo de assinatura R2 inválido.");
   }
 
-  const hostname = accountId + ".r2.cloudflarestorage.com";
-  const resource = "/" + encodeSegment(bucket) + "/" +
-    safeKey.split("/").map(encodeSegment).join("/");
+  const hostname = bucket + "." + accountId + ".r2.cloudflarestorage.com";
+  const resource = "/" + safeKey.split("/").map(encodeSegment).join("/");
   const now = new Date().toISOString().replace(/[:-]|\.\d{3}/g, "");
   const day = now.slice(0, 8);
   const scope = day + "/auto/s3/aws4_request";
