@@ -152,7 +152,11 @@ test("lightbox exibe a prévia imediatamente e troca pelo original após carrega
   await page.locator(".gc-card img").click();
   await expect(page.getByRole("dialog", { name: "Foto 1 de 1" })).toBeVisible();
   await expect(page.locator(".gc-photo-progress-preview")).toHaveAttribute("src", foto("Miniatura"));
-  await expect(page.getByRole("status", { name: "Carregando fotografia original" })).toBeVisible();
+  // A imagem prévia fica visível, sem mensagens ou instruções sobrepostas.
+  await expect(page.getByRole("status", { name: "Carregando fotografia original" })).toHaveCount(1);
+  await expect(page.getByText("Preparando qualidade original…")).toHaveCount(0);
+  await expect(page.getByText(/Para navegar|Esc para fechar|Deslize para ver outras fotos/)).toHaveCount(0);
+  await expect(page.locator(".gc-lightbox-hint, .gc-photo-original-loading")).toHaveCount(0);
   await expect.poll(() => originaisSolicitados).toBe(1);
   liberarOriginal();
   await expect(page.locator(".gc-photo-original")).toHaveAttribute("src", /Original%20em%20alta/, { timeout: 5000 });
