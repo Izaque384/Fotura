@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { signPrivateR2ObjectUrl } from "../../../../lib/r2-storage";
+import { beginR2Multipart, abortR2Multipart } from "../../../../lib/r2-multipart";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -94,6 +95,25 @@ export async function POST(req: NextRequest) {
     phases.push({ stage, status: get.status, match });
     if (!match) {
       return NextResponse.json({ ok: false, phases, issue: "read_integrity" }, { status: 502 });
+    }
+    stage = "multipart_init";
+    const multipartKey = "_fotura_diagnostics/r2-multipart-" + randomUUID() + ".jpg";
+    let multipartId: string | null = null;
+    try {
+      multipartId = await beginR2Multipart(multipartKey, "image/jpeg");
+      phases.push({ stage, ok: true });
+    } catch (err) {
+      phases.push({ stage, ok: false, reason: err instanceof Error ? err.message.slice(0,180) : "unknown" });
+      return NextResponse.json({ ok: false, phases, issue: "multipart_init_failed" }, { status: 502 });
+    } finally {
+      if (multipartId) {
+        try {
+          await abortR2Multipart(multipartKey, multipartId);
+          phases.push({ stage: "multipart_abort", ok: true });
+        } catch {
+          phases.push({ stage: "multipart_abort", ok: false });
+        }
+      }
     }
     return NextResponse.json({ ok: true, phases });
   } catch {
