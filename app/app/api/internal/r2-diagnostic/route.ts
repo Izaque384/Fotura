@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   let uploaded = false;
 
   try {
-    const uploadUrl = signPrivateR2ObjectUrl("PUT", key, 120, type, [], true);
+    const uploadUrl = signPrivateR2ObjectUrl("PUT", key, 120, type, [], true).replace(/%2F/gi, "/");
     const parsed = new URL(uploadUrl);
     phases.push({
       stage: "signature_structure",
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       queryHasEncodedSlash: /%2F/i.test(parsed.search),
       hasSignature: Boolean(parsed.searchParams.get("X-Amz-Signature")),
     });
-    const missing = await fetch(signPrivateR2ObjectUrl("HEAD", key, 60), {
+    const missing = await fetch(signPrivateR2ObjectUrl("HEAD", key, 60).replace(/%2F/gi, "/"), {
       method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(12_000),
     });
     phases.push({ stage: "head_missing", status: missing.status });
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     }
     uploaded = true;
     stage = "head";
-    const head = await fetch(signPrivateR2ObjectUrl("HEAD", key, 60), {
+    const head = await fetch(signPrivateR2ObjectUrl("HEAD", key, 60).replace(/%2F/gi, "/"), {
       method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(12_000),
     });
     const bytes = Number(head.headers.get("content-length"));
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     }
 
     stage = "read";
-    const get = await fetch(signPrivateR2ObjectUrl("GET", key, 60), {
+    const get = await fetch(signPrivateR2ObjectUrl("GET", key, 60).replace(/%2F/gi, "/"), {
       method: "GET", cache: "no-store", signal: AbortSignal.timeout(12_000),
     });
     const download = get.ok ? Buffer.from(await get.arrayBuffer()) : null;
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
   } finally {
     if (uploaded) {
       try {
-        const response = await fetch(signPrivateR2ObjectUrl("DELETE", key, 60), {
+        const response = await fetch(signPrivateR2ObjectUrl("DELETE", key, 60).replace(/%2F/gi, "/"), {
           method: "DELETE", cache: "no-store", signal: AbortSignal.timeout(15_000),
         });
         if (!response.ok && response.status !== 404) {
