@@ -56,7 +56,8 @@ export async function POST(req: NextRequest) {
     });
     const xml = put.ok ? "" : await put.text().catch(() => "");
     const code = xml.match(/<Code>([^<]{1,120})<\/Code>/)?.[1] ?? "no_code";
-    phases.push({ stage, status: put.status, code });
+    const detail = xml.match(/<Message>([^<]{1,220})<\/Message>/)?.[1] ?? "sem detalhes";
+    phases.push({ stage, status: put.status, code, detail });
     if (!put.ok) {
       return NextResponse.json({ ok: false, phases, issue: "signed_put_rejected" }, { status: 502 });
     }
