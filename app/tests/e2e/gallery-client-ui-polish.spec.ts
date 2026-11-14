@@ -70,7 +70,9 @@ test("lightbox mobile evita controles sobrepostos e respeita largura da tela", a
   await page.locator(".gc-grid-img").first().click();
   const lightbox = page.getByRole("dialog", { name: "Foto 1 de 2" });
   await expect(lightbox).toBeVisible();
-  await expect(lightbox.getByText("Deslize para ver outras fotos")).toBeVisible();
+  // A navegação por toque permanece disponível, sem texto auxiliar na tela.
+  await expect(lightbox.getByText("Deslize para ver outras fotos")).toHaveCount(0);
+  await expect(lightbox.getByText(/Para navegar|Esc para fechar|Preparando qualidade original/)).toHaveCount(0);
   const result = await lightbox.evaluate(el => {
     const box = (selector:string) => el.querySelector(selector)!.getBoundingClientRect();
     const meta=box(".gc-lightbox-meta"), download=box(".gc-lightbox-download"),
