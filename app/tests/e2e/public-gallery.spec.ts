@@ -128,9 +128,10 @@ test("guia de seleção tem dois passos e bolinha perfeitamente circular no celu
   expect(Math.abs(rect!.width - rect!.height)).toBeLessThan(1);
   expect(rect!.width).toBeGreaterThanOrEqual(44);
 
-  await page.reload();
-  await expect(guide).toHaveCount(0);
+  // Navigate through the stable gallery ID: a publicRef rewrite in this mock has no resolver.
+  await page.goto("/g/00000000-0000-4000-8000-000000000001");
   await expect(page.locator(".gc-select").first()).toBeVisible();
+  await expect(guide).toHaveCount(0);
 });
 
 test("lightbox exibe a prévia imediatamente e troca pelo original após carregar", async ({ page }) => {
