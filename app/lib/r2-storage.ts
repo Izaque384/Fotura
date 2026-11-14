@@ -109,6 +109,7 @@ export function signPrivateR2ObjectUrl(
   ].join(";");
   const params: Array<[string, string]> = [
     ["X-Amz-Algorithm", "AWS4-HMAC-SHA256"],
+    ["X-Amz-Content-Sha256", "UNSIGNED-PAYLOAD"],
     ["X-Amz-Credential", accessKeyId + "/" + scope],
     ["X-Amz-Date", now],
     ["X-Amz-Expires", String(expiresSeconds)],
