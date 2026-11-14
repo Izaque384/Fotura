@@ -6,6 +6,7 @@ import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
 import { uuidValido } from "../../../../lib/validation";
 import { dataCalendarioExpirada } from "../../../../lib/date-only";
+import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
 
 let webPushConfigurado = false;
 function configurarWebPush() {
@@ -44,30 +45,19 @@ function comentariosValidos(valor: unknown) {
   return saida;
 }
 
+/** Fotos elegíveis na prova: catálogo privado do Storage legado + objetos
+ * confirmados no Cloudflare R2. Nunca listar somente o Supabase Storage,
+ * pois galerias novas existem exclusivamente no R2.
+ */
 async function nomesOriginaisGaleria(
   supabase: ReturnType<typeof createServiceClient>,
   userId: string,
   galeria: string
 ) {
-  const nomes = new Set<string>();
-  const pageSize = 1000;
-  let offset = 0;
-
-  while (true) {
-    const { data, error } = await supabase.storage
-      .from("fotos")
-      .list(`${userId}/${galeria}`, { limit: pageSize, offset, sortBy: { column: "name", order: "asc" } });
-
-    if (error) return { nomes: null, error };
-    for (const item of data ?? []) {
-      if (item.name !== "thumbs") nomes.add(item.name);
-    }
-
-    if (!data || data.length < pageSize) break;
-    offset += pageSize;
-  }
-
-  return { nomes, error: null };
+  const { data, error } = await listarCatalogoGaleriaHibrido(
+    supabase, userId, galeria, "principal"
+  );
+  return { nomes: data ? new Set(data.map(foto => foto.nome)) : null, error };
 }
 
 async function notificar(supabase: ReturnType<typeof createServiceClient>, userId: string, titulo: string, qtd: number) {
