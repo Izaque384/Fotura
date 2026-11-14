@@ -16,7 +16,7 @@ const providerRoutes = [
   "/api/feedback/anexo",
 ];
 
-test.describe("R2 production cutover matrix (synthetic, no real storage)", () => {
+test.describe("R2 permanent provider matrix (synthetic, no real storage)", () => {
 test.skip(!cutoverMatrixEnabled, "Runs only with an explicit CI configuration scenario.");
 test("production cutover selects one provider for every new media class", async ({ request }) => {
   for (const url of providerRoutes) {
@@ -52,7 +52,7 @@ test("unauthenticated callers cannot obtain media presigned URLs", async ({ requ
   for (const url of providerRoutes) {
     const response = await request.post(url, { data: { acao: "preparar", bytes: 256 } });
     expect(response.status(), url).toBe(expected === "ready" ? 401 :
-      url === "/api/fotos/r2" ? 404 : 401);
+      url === "/api/fotos/r2" ? 503 : 401);
     expect(await response.text(), url).not.toContain("X-Amz-Signature");
   }
 });

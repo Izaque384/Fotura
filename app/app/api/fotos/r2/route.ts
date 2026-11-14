@@ -117,23 +117,20 @@ async function headObject(key: string) {
 }
 
 export async function GET() {
-  // Provider selection is atomic for an upload session. If R2 was requested
-  // but is not ready, fail closed instead of silently reverting to Supabase.
-  const requested = process.env.FOTURA_R2_UPLOAD_ENABLED === "true" ||
-    process.env.FOTURA_R2_FINAL_CUTOVER === "true";
-  if (requested && !available()) {
+  // R2 is the only new-upload provider. Bad configuration fails closed.
+  if (!available()) {
     return json({ error: "Armazenamento R2 indisponível. Nenhum arquivo foi enviado." }, 503);
   }
   return json({
-    enabled: requested,
-    provider: requested ? "r2" : "supabase",
+    enabled: true,
+    provider: "r2",
     maxSinglePutBytes: MAX_PILOT_ORIGINAL,
   });
 }
 
 export async function POST(req: NextRequest) {
   if (!requisicaoMesmoOrigin(req)) return json({ error: "Origem inválida." }, 403);
-  if (!available()) return json({ error: "Envio R2 ainda não habilitado." }, 404);
+  if (!available()) return json({ error: "Armazenamento R2 indisponível. Nenhum arquivo foi enviado." }, 503);
 
   const auth = await authenticate(req);
   if (!auth) return json({ error: "Não autorizado." }, 401);

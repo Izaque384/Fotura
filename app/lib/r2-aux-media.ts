@@ -4,20 +4,13 @@ import { isR2ReadEnabled, r2CredentialsPresent, r2PhysicalKey,
 
 export type UploadProvider = "supabase" | "r2" | "unavailable";
 
-/** All new media use one provider after cutover; invalid configuration
- * fails closed rather than redirecting an upload to the old Storage. */
+/** Permanent storage policy: ALL new media must go to Cloudflare R2.
+ * Environment flags cannot silently select Supabase writes again.
+ * Missing/malformed S3 credentials block uploads (fail closed) instead.
+ * Existing Supabase files remain readable ONLY via legacy read adapters.
+ */
 export function selectedMediaUploadProvider(): UploadProvider {
-  const finalCutover = process.env.FOTURA_R2_FINAL_CUTOVER === "true";
-  const uploadsEnabled = process.env.FOTURA_R2_UPLOAD_ENABLED === "true";
-  const requested = finalCutover || uploadsEnabled;
-  if (!requested) return "supabase";
-  const allowedEnvironment = process.env.VERCEL_ENV === "preview" ||
-    (process.env.VERCEL_ENV === "production" && finalCutover);
-  // The final production gate alone must not enable only auxiliary uploads;
-  // photos and videos also require UPLOAD_ENABLED. Fail closed everywhere.
-  if (!uploadsEnabled || !allowedEnvironment || !isR2ReadEnabled() || !r2CredentialsPresent()) {
-    return "unavailable";
-  }
+  if (!r2CredentialsPresent() || !isR2ReadEnabled()) return "unavailable";
   return "r2";
 }
 

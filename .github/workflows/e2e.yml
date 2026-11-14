@@ -43,15 +43,15 @@ jobs:
       - run: npm run test:e2e
       # No real R2 secret, browser or Supabase credentials are used. These
       # tests only inspect anonymous provider discovery and authorization.
-      - name: R2 cutover simulation - complete production configuration
+      - name: R2 official provider ignores legacy flags
         env:
           VERCEL_ENV: production
-          FOTURA_R2_FINAL_CUTOVER: "true"
-          FOTURA_R2_UPLOAD_ENABLED: "true"
-          FOTURA_R2_READ_ENABLED: "true"
+          FOTURA_R2_FINAL_CUTOVER: "false"
+          FOTURA_R2_UPLOAD_ENABLED: "false"
+          FOTURA_R2_READ_ENABLED: "false"
           R2_ACCOUNT_ID: "00000000000000000000000000000000"
-          R2_ACCESS_KEY_ID: synthetic-ci-credential
-          R2_SECRET_ACCESS_KEY: synthetic-ci-secret-never-usable
+          R2_ACCESS_KEY_ID: "11111111111111111111111111111111"
+          R2_SECRET_ACCESS_KEY: "2222222222222222222222222222222222222222222222222222222222222222"
           R2_MEDIA_BUCKET: fotura-media
           FOTURA_R2_CONFIG_EXPECTED: ready
         run: npx playwright test tests/e2e/r2-cutover-config.spec.ts --workers=1

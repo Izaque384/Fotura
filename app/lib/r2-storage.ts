@@ -11,7 +11,9 @@ function configuration() {
   const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim() ?? "";
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim() ?? "";
   const bucket = process.env.R2_MEDIA_BUCKET?.trim() ?? "";
-  if (!/^[a-f0-9]{32}$/i.test(accountId) || !accessKeyId || !secretAccessKey ||
+  if (!/^[a-f0-9]{32}$/i.test(accountId) ||
+      !/^[a-f0-9]{32}$/i.test(accessKeyId) ||
+      !/^[a-f0-9]{64}$/i.test(secretAccessKey) ||
       !/^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/.test(bucket)) {
     throw new Error("Credenciais R2 incompletas ou inválidas.");
   }
@@ -32,15 +34,17 @@ export function r2PhysicalKey(bucket: FoturaMediaBucket, key: string): string {
     : bucket + "/" + safe;
 }
 
+/** S3 credentials must have the real Cloudflare R2 shape. Refuse opaque or encrypted env blobs. */
 export function r2CredentialsPresent(): boolean {
-  return Boolean(
-    process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID &&
-    process.env.R2_SECRET_ACCESS_KEY && process.env.R2_MEDIA_BUCKET
-  );
+  return /^[a-f0-9]{32}$/i.test(process.env.R2_ACCOUNT_ID?.trim() ?? "") &&
+    /^[a-f0-9]{32}$/i.test(process.env.R2_ACCESS_KEY_ID?.trim() ?? "") &&
+    /^[a-f0-9]{64}$/i.test(process.env.R2_SECRET_ACCESS_KEY?.trim() ?? "") &&
+    /^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/.test(process.env.R2_MEDIA_BUCKET?.trim() ?? "");
 }
 
+/** Verified R2 objects must remain readable, even when a stale env toggle is false. */
 export function isR2ReadEnabled(): boolean {
-  return process.env.FOTURA_R2_READ_ENABLED === "true";
+  return true;
 }
 
 function encodeSegment(value: string): string {

@@ -34,11 +34,11 @@ export async function r2PilotAvailable(): Promise<boolean> {
   const res = await fetch("/api/fotos/r2", { cache: "no-store" });
   if (!res.ok) throw new Error("Não foi possível verificar o armazenamento. Nenhuma foto foi enviada.");
   const data = (await res.json()) as { enabled?: boolean; provider?: string };
-  if ((data.provider !== "r2" && data.provider !== "supabase") ||
-      data.enabled !== (data.provider === "r2")) {
-    throw new Error("Configuração de armazenamento inválida. Nenhuma foto foi enviada.");
+  if (data.provider !== "r2" || data.enabled !== true) {
+    // Never return false: callers must not enter their legacy Supabase upload branch.
+    throw new Error("O Fotura exige o Cloudflare R2 para novos uploads. Nenhuma foto foi enviada.");
   }
-  return data.provider === "r2";
+  return true;
 }
 
 async function callR2Api(token: string, body: Record<string, unknown>): Promise<Record<string, unknown>> {
