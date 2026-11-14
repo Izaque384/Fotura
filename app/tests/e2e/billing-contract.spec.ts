@@ -38,7 +38,7 @@ test.describe("contrato de planos e armazenamento", () => {
     );
     expect(landing).toContain('import { PLANOS_FOTURA');
     expect(landing).toContain('plano.limites.armazenamentoGb');
-    expect(landing).toContain("Crie projetos, pastas e cadastre clientes sem limite de quantidade");
+    expect(landing).toContain("Crie projetos, galerias e cadastre clientes sem limite de quantidade");
 
     for (const codigo of ["gratis", "essencial", "profissional", "studio"] as const) {
       expect(PLANOS_FOTURA[codigo].limites.galeriasAtivas).toBeNull();
