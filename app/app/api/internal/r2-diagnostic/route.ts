@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
           signal: AbortSignal.timeout(25_000),
         });
         const xml = res.ok ? "" : await res.text().catch(() => "");
-        const code = xml.match(/<Code>([^<]{1,80})<\\/Code>/)?.[1] ?? "no_code";
+        const code = xml.includes("<Code>") ? (xml.split("<Code>")[1]?.split("</Code>")[0]?.slice(0,80) ?? "no_code") : "no_code";
         phases.push({ stage, status: res.status, code });
         if (!res.ok) throw new Error("S3 part failed " + res.status + " " + code);
       }
