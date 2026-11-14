@@ -154,3 +154,48 @@ test("cabeçalho do workspace privilegia o nome e o botão de voltar, sem etique
   expect(rect!.x+rect!.width).toBeLessThanOrEqual(390);
   await expect(page.getByRole("heading",{name:"Batizado Benício"})).toBeVisible();
 });
+
+test("textos introdutórios das configurações respeitam recuo lateral em desktop e celular", async ({ page }) => {
+  expect(workspaceCss).toContain(".pw-page .pw-settings-drawer-intro{box-sizing:border-box");
+  for (const width of [390, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.setContent(`
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>html,body{margin:0}*{box-sizing:border-box}${drawerCss}${workspaceCss}</style>
+      <div class="pw-page">
+        <div class="ft-drawer-overlay ft-drawer-overlay--wide">
+          <aside class="ft-drawer-panel ft-drawer-panel--wide">
+            <div class="ft-drawer-header"><h2>Configurações do projeto</h2></div>
+            <div class="ft-drawer-content">
+              <section class="pw-section pw-settings-section pw-project-settings-drawer-content">
+                <div class="pw-settings-drawer-intro">
+                  <span>PERSONALIZAÇÃO</span>
+                  <p>Organize as preferências por assunto. Tudo pode ser salvo de uma vez.</p>
+                </div>
+                <div class="pw-settings-drawer-layout">
+                  <nav class="pw-config-nav"><button>Projeto e acesso</button></nav>
+                  <div class="pw-settings-drawer-main">Identidade</div>
+                </div>
+              </section>
+            </div>
+          </aside>
+        </div>
+      </div>
+    `);
+    const bounds=await page.evaluate(() => {
+      const intro=document.querySelector(".pw-settings-drawer-intro")!.getBoundingClientRect();
+      const title=document.querySelector(".pw-settings-drawer-intro>span")!.getBoundingClientRect();
+      const desc=document.querySelector(".pw-settings-drawer-intro>p")!.getBoundingClientRect();
+      const nav=document.querySelector(".pw-config-nav")!.getBoundingClientRect();
+      const panel=document.querySelector(".ft-drawer-panel--wide")!.getBoundingClientRect();
+      return {intro, title, desc, nav, panel, scrollWidth:document.documentElement.scrollWidth};
+    });
+    expect(bounds.title.left).toBeGreaterThanOrEqual(bounds.nav.left+11);
+    expect(bounds.desc.left).toBeGreaterThanOrEqual(bounds.nav.left+11);
+    expect(bounds.title.right).toBeLessThanOrEqual(bounds.intro.right);
+    expect(bounds.desc.right).toBeLessThanOrEqual(bounds.intro.right);
+    expect(bounds.intro.left).toBeGreaterThanOrEqual(bounds.panel.left);
+    expect(bounds.intro.right).toBeLessThanOrEqual(bounds.panel.right);
+    expect(bounds.scrollWidth).toBeLessThanOrEqual(width+1);
+  }
+});

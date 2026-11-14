@@ -173,7 +173,9 @@
 
 /* Configurações do projeto: painel contextual lateral, com página desfocada. */
 .pw-page .pw-project-settings-drawer-content{padding:0!important;min-height:0;max-width:none;border:0;border-radius:0;background:transparent;box-shadow:none}
-.pw-page .pw-settings-drawer-intro{margin:0 0 20px}
+.pw-page .pw-settings-drawer-intro{box-sizing:border-box;max-width:100%;margin:0 0 20px;padding:3px 16px 0;min-width:0}
+.pw-page .pw-settings-drawer-intro>p{overflow-wrap:break-word}
+@media(max-width:700px){.pw-page .pw-settings-drawer-intro{padding-inline:12px}}
 .pw-page .pw-settings-drawer-intro>span{display:block;font-size:9px;letter-spacing:1.5px;font-weight:800;color:#9382bc}
 .pw-page .pw-settings-drawer-intro>p{margin:8px 0 0;color:#81849b;font-size:11.5px;line-height:1.55}
 .pw-page .pw-settings-drawer-notice{margin:0 0 16px;padding:11px 13px;border:1px solid #dcd1ed;border-radius:11px;background:#f3effb;color:#5a4a8b;font-size:12px}
