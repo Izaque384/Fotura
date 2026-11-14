@@ -17,7 +17,8 @@ test("auxiliary R2 buckets are isolated by physical prefix", () => {
 test("new media cannot silently return to Supabase after cutover", () => {
   const util = read("app/lib/r2-aux-media.ts");
   const feedback = read("app/app/api/feedback/route.ts");
-  assert.match(util, /FOTURA_R2_FINAL_CUTOVER/);
+  assert.match(util, /r2CredentialsPresent/);
+  assert.doesNotMatch(util, /return "supabase"/);
   assert.match(util, /return "unavailable"/);
   assert.match(feedback, /uploadProvider === "unavailable"/);
   const prepare = read("app/app/api/feedback/anexo/route.ts");
@@ -149,12 +150,17 @@ test("auxiliary media uploads are create-only even while signed URLs remain vali
   }
 });
 
-test("final cutover flag cannot enable only auxiliary media if upload flag is missing", () => {
+test("R2 storage is immutable despite legacy feature flags", () => {
   const aux = read("app/lib/r2-aux-media.ts");
   const photo = read("app/app/api/fotos/r2/route.ts");
   const video = read("app/app/api/projeto/video/route.ts");
-  assert.ok(aux.includes('const uploadsEnabled = process.env.FOTURA_R2_UPLOAD_ENABLED === "true"'));
-  assert.ok(aux.includes('if (!uploadsEnabled || !allowedEnvironment'));
+  const client = read("app/lib/r2-photo-upload-client.ts");
+  assert.ok(aux.includes('if (!r2CredentialsPresent() || !isR2ReadEnabled())'));
+  assert.doesNotMatch(aux, /FOTURA_R2_FINAL_CUTOVER|FOTURA_R2_UPLOAD_ENABLED/);
+  assert.doesNotMatch(aux, /return "supabase"/);
   assert.ok(photo.includes('selectedMediaUploadProvider() === "r2"'));
   assert.ok(video.includes('selectedMediaUploadProvider() === "r2"'));
+  assert.ok(video.includes('const r2Requested = () => true'));
+  assert.match(client, /data\.provider !== "r2"/);
+  assert.match(client, /throw new Error/);
 });
