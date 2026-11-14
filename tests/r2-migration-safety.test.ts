@@ -4,21 +4,23 @@ import { readFileSync } from "node:fs";
 
 const read = (path: string) => readFileSync(path, "utf8");
 
-test("R2 provider is exclusive for new uploads and is preview-gated", () => {
+test("R2 is permanent for new uploads, failing closed rather than falling back", () => {
   const photo = read("app/app/api/fotos/r2/route.ts");
   const video = read("app/app/api/projeto/video/route.ts");
   const client = read("app/lib/r2-photo-upload-client.ts");
   const provider = read("app/lib/r2-aux-media.ts");
-  assert.match(provider, /VERCEL_ENV === "preview"/);
-  assert.match(provider, /FOTURA_R2_UPLOAD_ENABLED/);
-  assert.match(provider, /FOTURA_R2_FINAL_CUTOVER/);
+  const storage = read("app/lib/r2-storage.ts");
+  assert.match(provider, /r2CredentialsPresent/);
+  assert.doesNotMatch(provider, /return "supabase"/);
+  assert.doesNotMatch(provider, /process\.env\.FOTURA_R2/);
+  assert.match(provider, /return "unavailable"/);
   assert.match(photo, /selectedMediaUploadProvider\(\) === "r2"/);
-  assert.match(photo, /requested && !available\(\)/);
-  assert.match(video, /selectedMediaUploadProvider\(\) === "r2"/);
+  assert.match(photo, /if \(!available\(\)\)/);
+  assert.doesNotMatch(photo, /provider:.*"supabase"/);
+  assert.match(client, /data\.provider !== "r2"/);
+  assert.match(client, /return true/);
   assert.match(video, /r2Requested\(\) && !r2Ready\(\)/);
-  assert.match(video, /provider: "r2"/);
-  assert.match(client, /never|Never/);
-  assert.match(client, /multipart_iniciar/);
+  assert.match(storage, /return true;/);
 });
 
 test("photographs and MP4s reserve their R2 keys before issuing PUT permissions", () => {
