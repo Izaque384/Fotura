@@ -14,8 +14,8 @@ import { signPrivateMediaUrl } from "../../../../lib/media-storage";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const finalCutover = () => process.env.FOTURA_R2_FINAL_CUTOVER === "true";
-const r2Requested = () => process.env.FOTURA_R2_UPLOAD_ENABLED === "true" || finalCutover();
+// All new MP4 uploads are R2-only; missing configuration must fail closed.
+const r2Requested = () => true;
 const r2Ready = () => selectedMediaUploadProvider() === "r2";
 
 async function r2VideoHead(path: string) {
