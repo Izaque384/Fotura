@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { ChevronRightIcon } from "../../components/FoturaIcons";
 
 type Rect = { top: number; left: number; width: number; height: number };
@@ -16,6 +16,8 @@ export default function SelectionGuide({
   onClose: () => void;
 }) {
   const [rect, setRect] = useState<Rect | null>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
 
   useEffect(() => {
     if (!open) { setRect(null); return; }
@@ -42,7 +44,7 @@ export default function SelectionGuide({
     window.addEventListener("resize", measure);
     window.addEventListener("scroll", measure, true);
     const exit = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") closeRef.current();
     };
     window.addEventListener("keydown", exit);
     return () => {
@@ -52,7 +54,7 @@ export default function SelectionGuide({
       window.removeEventListener("scroll", measure, true);
       window.removeEventListener("keydown", exit);
     };
-  }, [open, step, selectRef, photoRef, onClose]);
+  }, [open, step, selectRef, photoRef]);
 
   if (!open) return null;
   return <div className="gc-tour" role="dialog" aria-modal="true" aria-label="Guia rápido de seleção de fotos" onPointerDown={e => e.stopPropagation()}>
