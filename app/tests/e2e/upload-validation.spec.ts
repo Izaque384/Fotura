@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import fs from "node:fs";
 import path from "node:path";
 import { MAX_TAMANHO_ARQUIVO, mesclarArquivosSelecionados, validarArquivo } from "../../lib/upload-validation";
+import { explicarFalhaUpload } from "../../lib/upload-failure";
 
 function arquivo(name: string, type: string, size: number) {
   return { name, type, size };
@@ -63,4 +64,21 @@ test("seletor de fotos aguarda confirmação nativa e mantém fallback", () => {
   expect(source).toContain("Selecionar fotos");
   expect(source).not.toContain("Você pode abrir o seletor quantas vezes precisar");
   expect(source).not.toContain("JPG, PNG ou WebP · até 50 MB por foto");
+});
+
+test("detalha falhas de upload sem revelar URLs assinadas ou segredos", () => {
+  expect(explicarFalhaUpload(new Error("Envio R2 falhou (HTTP 403)."))).toContain("HTTP 403");
+  expect(explicarFalhaUpload(new Error("Falha de rede durante o envio R2."))).toContain("conexão");
+  expect(explicarFalhaUpload(new Error("Limite de armazenamento atingido."))).toBe("Limite de armazenamento atingido.");
+  const mensagem = explicarFalhaUpload(new Error("SignatureDoesNotMatch https://private.example/?X-Amz-Signature=secret"));
+  expect(mensagem).not.toContain("https://");
+  expect(mensagem).not.toContain("secret");
+});
+
+test("upload não repete nome quando o projeto e a galeria têm o mesmo título", () => {
+  const source = fs.readFileSync(path.join(process.cwd(), "app", "upload", "page.tsx"), "utf8");
+  expect(source).toContain('projetoNome.trim().toLocaleLowerCase("pt-BR")!==tituloTravado.trim().toLocaleLowerCase("pt-BR")');
+  expect(source).toContain("<span>Projeto: {projetoNome}</span>");
+  expect(source).not.toContain("<span>{projetoNome}</span>");
+  expect(source).toContain("explicarFalhaUpload(e)");
 });
