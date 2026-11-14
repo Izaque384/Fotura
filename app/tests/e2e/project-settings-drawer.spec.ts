@@ -126,3 +126,31 @@ test("no celular o drawer ocupa a tela e as categorias rolam sem cortar o formul
   expect(metrics.formRight).toBeLessThanOrEqual(metrics.viewport);
   expect(metrics.formLeft).toBeGreaterThanOrEqual(0);
 });
+
+test("cabeçalho do workspace privilegia o nome e o botão de voltar, sem etiquetas", async ({ page }) => {
+  expect(workspace).toContain('className="pw-back"');
+  expect(workspace).toContain('Voltar aos projetos');
+  expect(workspace).not.toContain('<div className="pw-status">');
+  expect(workspace).toContain('<h1 title={p.nome}>{p.nome}</h1>');
+  expect(workspaceCss).toContain(".pw-page .pw-back:focus-visible");
+  expect(workspaceCss).toContain("border:1px solid #cbbbeb");
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setContent(`
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>html,body{margin:0}*{box-sizing:border-box}${workspaceCss}</style>
+    <div class="pw-page"><header class="pw-head"><div class="pw-head-copy">
+      <button class="pw-back" type="button"><svg width="18" height="18" aria-hidden="true"></svg>Voltar aos projetos</button>
+      <p>ESPAÇO DE TRABALHO</p><h1>Batizado Benício</h1>
+    </div></header></div>
+  `);
+  const button=page.getByRole("button",{name:"Voltar aos projetos"});
+  await expect(button).toBeVisible();
+  await expect(button).toHaveCSS("font-weight","800");
+  const rect=await button.boundingBox();
+  expect(rect).not.toBeNull();
+  expect(rect!.height).toBeGreaterThanOrEqual(40);
+  expect(rect!.x).toBeGreaterThanOrEqual(0);
+  expect(rect!.x+rect!.width).toBeLessThanOrEqual(390);
+  await expect(page.getByRole("heading",{name:"Batizado Benício"})).toBeVisible();
+});

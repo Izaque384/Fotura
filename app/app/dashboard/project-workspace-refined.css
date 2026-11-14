@@ -2,8 +2,12 @@
 .pw-page .pw-shell{max-width:1250px}
 .pw-page .pw-head{align-items:center;gap:22px;margin-bottom:23px}
 .pw-page .pw-head-copy{max-width:min(700px,100%)}
-.pw-page .pw-back{gap:7px;color:#787090;font-size:11px;letter-spacing:0}
-.pw-page .pw-back:hover{color:#594a91}
+.pw-page .pw-back{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:40px;padding:9px 16px 9px 12px;border:1px solid #cbbbeb;border-radius:12px;background:linear-gradient(120deg,#f5f0ff,#ece3ff);box-shadow:0 4px 13px rgba(85,65,145,.12);color:#563a9b;font-size:12px;font-weight:800;letter-spacing:0;line-height:1.25;transition:background .18s ease,box-shadow .18s ease,transform .18s ease,border-color .18s ease;white-space:nowrap}
+.pw-page .pw-back svg{flex:none;stroke-width:2.3}
+.pw-page .pw-back:hover{border-color:#ab96df;background:linear-gradient(120deg,#eee4ff,#e5d8ff);box-shadow:0 6px 18px rgba(85,65,145,.17);color:#462a8d;transform:translateY(-1px)}
+.pw-page .pw-back:focus-visible{outline:3px solid #9883dd;outline-offset:3px}
+.pw-page .pw-back:active{transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){.pw-page .pw-back{transition:none}}
 .pw-page .pw-head-copy>p{margin:12px 0 5px;font-size:10px;letter-spacing:1.5px;color:#9382bc}
 .pw-page .pw-head h1{font-size:clamp(24px,2.5vw,33px);font-weight:800;letter-spacing:-.8px;color:#262b40}
 .pw-page .pw-status{gap:7px;margin-top:11px}
