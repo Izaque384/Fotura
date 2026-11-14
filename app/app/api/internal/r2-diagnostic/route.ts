@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { signPrivateR2ObjectUrl } from "../../../../lib/r2-storage";
-import { beginR2Multipart, abortR2Multipart } from "../../../../lib/r2-multipart";
+import { beginR2Multipart, abortR2Multipart, signedR2PartUrl, listR2MultipartParts, finishR2Multipart } from "../../../../lib/r2-multipart";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -99,19 +99,55 @@ export async function POST(req: NextRequest) {
     stage = "multipart_init";
     const multipartKey = "_fotura_diagnostics/r2-multipart-" + randomUUID() + ".jpg";
     let multipartId: string | null = null;
+    let completedMultipart = false;
     try {
       multipartId = await beginR2Multipart(multipartKey, "image/jpeg");
       phases.push({ stage, ok: true });
+      const chunks = [Buffer.alloc(8 * 1024 * 1024, 31), Buffer.alloc(1024 * 1024, 47)];
+      for (let i = 0; i < chunks.length; i++) {
+        stage = "multipart_part_" + (i + 1);
+        const url = signedR2PartUrl(multipartKey, multipartId, i + 1);
+        const res = await fetch(url, {
+          method: "PUT",
+          headers: { "Content-Type": "application/octet-stream", Origin: "https://foturax.com.br" },
+          body: chunks[i],
+          cache: "no-store",
+          signal: AbortSignal.timeout(25_000),
+        });
+        const xml = res.ok ? "" : await res.text().catch(() => "");
+        const code = xml.match(/<Code>([^<]{1,80})<\\/Code>/)?.[1] ?? "no_code";
+        phases.push({ stage, status: res.status, code });
+        if (!res.ok) throw new Error("S3 part failed " + res.status + " " + code);
+      }
+      stage = "multipart_list";
+      const listed = await listR2MultipartParts(multipartKey, multipartId);
+      phases.push({ stage, parts: listed.length, firstPartBytes: listed[0]?.bytes ?? 0 });
+      stage = "multipart_finish";
+      await finishR2Multipart(multipartKey, multipartId, 9 * 1024 * 1024);
+      completedMultipart = true;
+      const checked = await fetch(signPrivateR2ObjectUrl("HEAD", multipartKey, 60), {
+        method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(15_000),
+      });
+      const matched = checked.ok && Number(checked.headers.get("content-length")) === 9 * 1024 * 1024;
+      phases.push({ stage, ok: matched, headStatus: checked.status });
+      if (!matched) throw new Error("Multipart integrity failed");
     } catch (err) {
       phases.push({ stage, ok: false, reason: err instanceof Error ? err.message.slice(0,180) : "unknown" });
-      return NextResponse.json({ ok: false, phases, issue: "multipart_init_failed" }, { status: 502 });
+      return NextResponse.json({ ok: false, phases, issue: "multipart_pipeline_failed" }, { status: 502 });
     } finally {
       if (multipartId) {
         try {
-          await abortR2Multipart(multipartKey, multipartId);
-          phases.push({ stage: "multipart_abort", ok: true });
+          if (completedMultipart) {
+            const deleted = await fetch(signPrivateR2ObjectUrl("DELETE", multipartKey, 60), {
+              method: "DELETE", cache: "no-store", signal: AbortSignal.timeout(15_000),
+            });
+            phases.push({ stage: "multipart_cleanup", ok: deleted.ok || deleted.status === 404 });
+          } else {
+            await abortR2Multipart(multipartKey, multipartId);
+            phases.push({ stage: "multipart_abort", ok: true });
+          }
         } catch {
-          phases.push({ stage: "multipart_abort", ok: false });
+          phases.push({ stage: "multipart_cleanup", ok: false });
         }
       }
     }
