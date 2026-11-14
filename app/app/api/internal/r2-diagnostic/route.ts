@@ -30,6 +30,17 @@ export async function POST(req: NextRequest) {
 
   try {
     const uploadUrl = signPrivateR2ObjectUrl("PUT", key, 120, type, [], true);
+    const parsed = new URL(uploadUrl);
+    phases.push({
+      stage: "signature_structure",
+      credentialParts: (parsed.searchParams.get("X-Amz-Credential") ?? "").split("/").length,
+      queryHasEncodedSlash: /%2F/i.test(parsed.search),
+      hasSignature: Boolean(parsed.searchParams.get("X-Amz-Signature")),
+    });
+    const missing = await fetch(signPrivateR2ObjectUrl("HEAD", key, 60), {
+      method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(12_000),
+    });
+    phases.push({ stage: "head_missing", status: missing.status });
     const preflight = await fetch(uploadUrl, {
       method: "OPTIONS",
       headers: {
