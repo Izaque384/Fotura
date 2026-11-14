@@ -313,9 +313,9 @@ export default function ClientesPage() {
       const signed = await response.json() as { fotos?: { path: string; url: string }[] };
       const images = signed.fotos ?? [];
       setImagensGaleria(images);
-      if (!images.length) setErroGaleria("Nenhuma miniatura disponível nesta pasta.");
+      if (!images.length) setErroGaleria("Nenhuma miniatura disponível nesta galeria.");
     } catch {
-      setErroGaleria("Não foi possível carregar as fotos. Tente outra pasta.");
+      setErroGaleria("Não foi possível carregar as fotos. Tente outra galeria.");
     } finally { setCarregandoGaleria(false); }
   }
   async function selecionarFotoDaGaleria(path: string) {
@@ -537,7 +537,7 @@ export default function ClientesPage() {
     const events: { at: string; label: string; detail: string }[] = [];
     projetosDoSelecionado.forEach((p) => { if (p.criado_em) events.push({ at: p.criado_em, label: "Projeto criado", detail: p.nome }); });
     galeriasDoSelecionado.forEach((g) => {
-      if (g.criado_em) events.push({ at: g.criado_em, label: "Pasta criada", detail: g.titulo });
+      if (g.criado_em) events.push({ at: g.criado_em, label: "Galeria criada", detail: g.titulo });
       if (g.entrega_publicada_em) events.push({ at: g.entrega_publicada_em, label: "Entrega publicada", detail: g.titulo });
       const s = selecoes[g.id];
       if (s?.finalizada && s.atualizado_em) events.push({ at: s.atualizado_em, label: "Seleção finalizada", detail: g.titulo });
@@ -596,7 +596,7 @@ export default function ClientesPage() {
                       </div>
                     </button>
                     <div className="ftc-card-meta">
-                      <span className="ftc-work">{qtdProjetos} {qtdProjetos === 1 ? "projeto" : "projetos"} · {qtdGalerias} {qtdGalerias === 1 ? "pasta" : "pastas"}</span>
+                      <span className="ftc-work">{qtdProjetos} {qtdProjetos === 1 ? "projeto" : "projetos"} · {qtdGalerias} {qtdGalerias === 1 ? "galeria" : "galerias"}</span>
                       <button type="button" className="ftc-close" onClick={() => abrirDetalhe(c.id)} aria-label={"Ver " + c.nome}>›</button>
                     </div>
                   </article>
@@ -651,7 +651,7 @@ export default function ClientesPage() {
                   </section>
                   <section className="ftc-block">
                     <h3>Trabalhos vinculados</h3>
-                    <div className="ftc-detail-field">{projetosDoSelecionado.length} projetos · {galeriasDoSelecionado.length} pastas de fotos</div>
+                    <div className="ftc-detail-field">{projetosDoSelecionado.length} projetos · {galeriasDoSelecionado.length} galerias de fotos</div>
                   </section>
                 </div>
               )}
@@ -667,8 +667,8 @@ export default function ClientesPage() {
                     ))}
                   </section>
                   <section className="ftc-block">
-                    <h3>Pastas de fotos ({galeriasDoSelecionado.length})</h3>
-                    {!galeriasDoSelecionado.length && <p className="ftc-muted">Nenhuma pasta vinculada.</p>}
+                    <h3>Galerias de fotos ({galeriasDoSelecionado.length})</h3>
+                    {!galeriasDoSelecionado.length && <p className="ftc-muted">Nenhuma galeria vinculada.</p>}
                     {galeriasDoSelecionado.map((g) => (
                       <button key={g.id} type="button" className="ftc-work-item" onClick={() => abrirGaleria(g)}>
                         <div><strong>{g.titulo}</strong><small>{resumoEtapa(g, selecoes)} · {dataCurta(g.criado_em)}</small></div><span>›</span>
@@ -725,9 +725,9 @@ export default function ClientesPage() {
               </div>
               {galeriaPicker && !!clienteEditando && (
                 <div className="ftc-gallery-picker">
-                  <p>Escolha uma pasta vinculada a este cliente e depois uma fotografia. A imagem será copiada para o cadastro privado.</p>
-                  <select aria-label="Escolher pasta do cliente" value={galeriaId} onChange={(e) => { setGaleriaId(e.target.value); void carregarFotosDaGaleria(e.target.value); }}>
-                    <option value="">Selecione uma pasta</option>
+                  <p>Escolha uma galeria vinculada a este cliente e depois uma fotografia. A imagem será copiada para o cadastro privado.</p>
+                  <select aria-label="Escolher galeria do cliente" value={galeriaId} onChange={(e) => { setGaleriaId(e.target.value); void carregarFotosDaGaleria(e.target.value); }}>
+                    <option value="">Selecione uma galeria</option>
                     {galeriasDe(clienteEditando.id).map((g) => <option key={g.id} value={g.id}>{g.titulo}</option>)}
                   </select>
                   {carregandoGaleria && <p>Carregando fotografias…</p>}

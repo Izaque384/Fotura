@@ -43,13 +43,13 @@ export default function FolderSettingsDrawer({ pasta, prova, saving, onClose, on
     } finally { setBusy(false); }
   }
   return (
-    <FoturaDrawer title="Configurações da pasta" description="Faça ajustes rápidos sem sair do projeto" onClose={() => { if (!busy && !saving) onClose(); }}
+    <FoturaDrawer title="Configurações da galeria" description="Faça ajustes rápidos sem sair do projeto" onClose={() => { if (!busy && !saving) onClose(); }}
       footer={<>
         <button type="button" className="ft-drawer-button" onClick={onManage} disabled={!pasta.qtd || busy || saving}>Gerenciar fotos</button>
         <button type="button" className="ft-drawer-button primary" onClick={onAction} disabled={busy || saving}>{actionLabel} <span aria-hidden="true">→</span></button>
       </>}>
       {pasta.capaUrl ? <img className="ft-drawer-cover" src={pasta.capaUrl} alt="" /> :
-        <div className="ft-drawer-cover-placeholder">Pasta do projeto</div>}
+        <div className="ft-drawer-cover-placeholder">Galeria do projeto</div>}
       <h3 className="ft-drawer-name">{pasta.titulo}</h3>
       <div className="ft-drawer-badges">
         <span className={"ft-drawer-badge" + (pasta.visivel ? " ok" : "")}>{pasta.visivel ? "Publicada" : "Oculta"}</span>
@@ -63,9 +63,9 @@ export default function FolderSettingsDrawer({ pasta, prova, saving, onClose, on
         <div className="ft-drawer-field"><strong>Seleção</strong>{pasta.selecao?.finalizada ? "Concluída" : pasta.selecao ? "Em andamento" : "Nenhuma seleção registrada"}</div>
       </section>
       <section className="ft-drawer-section">
-        <h3>Renomear pasta</h3>
+        <h3>Renomear galeria</h3>
         <form className="ft-drawer-form" onSubmit={save}>
-          <label htmlFor="ft-folder-name">Nome da pasta</label>
+          <label htmlFor="ft-folder-name">Nome da galeria</label>
           <input id="ft-folder-name" type="text" value={name} onChange={e => setName(e.target.value)} required maxLength={120} disabled={busy || saving} />
           {error && <p className="ft-drawer-error" role="alert">{error}</p>}
           <button className="ft-drawer-button" type="submit" disabled={busy || saving || !name.trim() || name.trim() === pasta.titulo}>{busy ? "Salvando…" : "Salvar nome"}</button>

@@ -294,7 +294,7 @@ export default function ProjectCinematicSettings({ projeto, nome, descricao, pas
 
       <div className="fcs-photo-head"><strong>{value.fundo === "video" ? "Fotografias de reserva" : "Fotografias da abertura"}</strong><small>{value.fotos.length}/3 selecionadas</small></div>
       {publicadas.length ? <>
-        <label className="pw-field">Pasta
+        <label className="pw-field">Galeria
           <select value={pasta} onChange={(e) => setPasta(e.target.value)}>
             {publicadas.map((p) => <option key={p.id} value={p.id}>{p.titulo}</option>)}
           </select>
@@ -310,9 +310,9 @@ export default function ProjectCinematicSettings({ projeto, nome, descricao, pas
                 {marcada && <span aria-hidden="true">✓</span>}
               </button>;
             })
-            : <p>Adicione fotografias a uma pasta publicada para escolher imagens.</p>}
+            : <p>Adicione fotografias a uma galeria publicada para escolher imagens.</p>}
         </div>
-      </> : <p className="pw-note">Publique uma pasta com fotografias antes de ativar a abertura.</p>}
+      </> : <p className="pw-note">Publique uma galeria com fotografias antes de ativar a abertura.</p>}
       {value.fotos.length > 0 && <div className="fcs-selected">
         {value.fotos.map((f, i) => <button key={`${f.pastaId}/${f.arquivo}`} type="button" onClick={() => alternarFoto(f)}>
           {i + 1}. {f.arquivo} <span aria-hidden="true">×</span>

@@ -14,7 +14,7 @@ import { PLANOS_FOTURA, type PlanoCodigo } from "../lib/billing-plans";
 
 const codigosPlanos=["gratis","essencial","profissional","studio"] as const satisfies readonly PlanoCodigo[];
 const extrasPlano:Record<(typeof codigosPlanos)[number],string[]>={
-  gratis:["Crie projetos, pastas e cadastre clientes sem limite de quantidade","Seleção de fotos, comentários e proteção por senha","Seu logo e suas cores na galeria e na prévia do link no WhatsApp"],
+  gratis:["Crie projetos, galerias e cadastre clientes sem limite de quantidade","Seleção de fotos, comentários e proteção por senha","Seu logo e suas cores na galeria e na prévia do link no WhatsApp"],
   essencial:["Tudo o que está no plano Grátis","Capa de abertura com nome, logo e cores do estúdio","Uma apresentação mais personalizada para seus clientes"],
   profissional:["Tudo do Essencial","Escolha entre três estilos de capa de abertura","Use uma foto do projeto como fundo da capa"],
   studio:["Tudo do Profissional","Mais espaço para guardar e entregar fotografias","Ideal para quem gerencia muitos trabalhos"],
@@ -47,20 +47,20 @@ const fotoFinal =
 
 const passos = [
   {
-    titulo: "Crie o projeto e organize as pastas",
-    descricao: "Cada trabalho reúne pastas de fotos em um projeto, com um único link para o cliente.",
+    titulo: "Crie o projeto e organize as galerias",
+    descricao: "Cada trabalho reúne galerias de fotos em um projeto, com um único link para o cliente.",
   },
   {
     titulo: "Envie, organize e compartilhe",
-    descricao: "Adicione fotos por pasta, escolha capas e compartilhe o projeto inteiro por um único link.",
+    descricao: "Adicione fotos por galeria, escolha capas e compartilhe o projeto inteiro por um único link.",
   },
   {
     titulo: "O cliente faz a seleção",
-    descricao: "No link público do projeto, o cliente escolhe fotos por pasta, comenta e conclui a seleção sem criar conta.",
+    descricao: "No link público do projeto, o cliente escolhe fotos por galeria, comenta e conclui a seleção sem criar conta.",
   },
   {
     titulo: "Siga até a entrega final",
-    descricao: "As escolhas de cada pasta acompanham a preparação e a publicação das fotos finais.",
+    descricao: "As escolhas de cada galeria acompanham a preparação e a publicação das fotos finais.",
   },
 ];
 
@@ -125,7 +125,7 @@ function DemoScreen({ etapa }: { etapa: number }) {
           <div>
             <small>PROJETOS</small>
             <strong>Seus trabalhos em um só lugar</strong>
-            <p>Cada projeto reúne suas pastas, seleção, entrega e um único link para o cliente.</p>
+            <p>Cada projeto reúne suas galerias, seleção, entrega e um único link para o cliente.</p>
           </div>
           <span className="lp2-real-primary compact">+ Novo projeto</span>
         </div>
@@ -133,11 +133,11 @@ function DemoScreen({ etapa }: { etapa: number }) {
         <div className="lp2-real-project-stats">
           <div><b>3</b><span>Projetos</span></div>
           <div><b>3</b><span>Projetos com fotos</span></div>
-          <div><b>7</b><span>Pastas de fotos</span></div>
+          <div><b>7</b><span>Galerias de fotos</span></div>
         </div>
 
         <div className="lp2-real-project-toolbar">
-          <div className="lp2-real-search">⌕ <span>Buscar projeto, cliente ou pasta</span></div>
+          <div className="lp2-real-search">⌕ <span>Buscar projeto, cliente ou galeria</span></div>
           <div className="lp2-real-project-filter">Todos os projetos <span>⌄</span></div>
         </div>
 
@@ -152,7 +152,7 @@ function DemoScreen({ etapa }: { etapa: number }) {
               <div className="lp2-real-project-info">
                 <strong>{projeto.nome}</strong>
                 <small>{projeto.cliente} · Atualizado {projeto.atualizado}</small>
-                <span>{projeto.pastas} pastas</span>
+                <span>{projeto.pastas} galerias</span>
               </div>
               <span className="lp2-real-project-action">Abrir projeto →</span>
             </div>
@@ -170,16 +170,16 @@ function DemoScreen({ etapa }: { etapa: number }) {
           <div>
             <small>PROJETO · MARINA ALVES</small>
             <strong>Casamento Marina & Pedro</strong>
-            <p>Organize as pastas do trabalho e compartilhe um único link.</p>
+            <p>Organize as galerias do trabalho e compartilhe um único link.</p>
           </div>
           <span className="lp2-real-secondary">↗ Compartilhar projeto</span>
         </div>
         <div className="lp2-real-project-tabs">
-          <span>Resumo</span><span className="on">Pastas</span><span>Seleção</span><span>Entrega</span><span>Atividade</span>
+          <span>Resumo</span><span className="on">Galerias</span><span>Seleção</span><span>Entrega</span><span>Atividade</span>
         </div>
         <div className="lp2-real-folders-head">
-          <div><strong>Pastas de fotos</strong><small>Organize o trabalho por momentos</small></div>
-          <span className="lp2-real-primary compact">+ Nova pasta</span>
+          <div><strong>Galerias de fotos</strong><small>Organize o trabalho por momentos</small></div>
+          <span className="lp2-real-primary compact">+ Nova galeria</span>
         </div>
         <div className="lp2-real-folder-list">
           {[
@@ -193,11 +193,11 @@ function DemoScreen({ etapa }: { etapa: number }) {
                 <strong>{pasta.nome}</strong>
                 <small>{pasta.fotos} fotos · {pasta.status}</small>
               </div>
-              <span>Ver pasta →</span>
+              <span>Ver galeria →</span>
             </div>
           ))}
         </div>
-        <div className="lp2-real-project-share"><b>Um único link para o projeto</b><span>O cliente navega pelas pastas, seleciona fotos e acompanha a entrega.</span></div>
+        <div className="lp2-real-project-share"><b>Um único link para o projeto</b><span>O cliente navega pelas galerias, seleciona fotos e acompanha a entrega.</span></div>
       </div>
     );
   }
@@ -215,7 +215,7 @@ function DemoScreen({ etapa }: { etapa: number }) {
         <div className="lp2-real-public-head">
           <strong>Cerimônia <span>24 fotos · Marina &amp; Pedro</span></strong>
         </div>
-        <div className="lp2-real-public-hint">Pasta Cerimônia · Selecione as fotos desejadas (até 25) e finalize quando terminar.</div>
+        <div className="lp2-real-public-hint">Galeria Cerimônia · Selecione as fotos desejadas (até 25) e finalize quando terminar.</div>
         <div className="lp2-real-public-grid">
           {[2, 0, 3, 1, 6, 4, 5, 7].map((foto, index) => (
             <div key={index} style={{ backgroundImage: 'url("' + fotosGaleria[foto].url + '")' }}>
@@ -236,15 +236,15 @@ function DemoScreen({ etapa }: { etapa: number }) {
         <div>
           <small>PROJETO · SELEÇÃO</small>
           <strong>Escolhas do cliente</strong>
-          <p>Acompanhe as escolhas e comentários de cada pasta do projeto.</p>
+          <p>Acompanhe as escolhas e comentários de cada galeria do projeto.</p>
         </div>
         <span className="lp2-real-secondary">↻ Atualizar</span>
       </div>
       <div className="lp2-real-project-tabs">
-        <span>Resumo</span><span>Pastas</span><span className="on">Seleção</span><span>Entrega</span><span>Atividade</span>
+        <span>Resumo</span><span>Galerias</span><span className="on">Seleção</span><span>Entrega</span><span>Atividade</span>
       </div>
       <div className="lp2-real-summary">
-        <div><b>3</b><span>Pastas</span></div>
+        <div><b>3</b><span>Galerias</span></div>
         <div><b>1</b><span>Em andamento</span></div>
         <div><b>2</b><span>Finalizadas</span></div>
         <div><b>24</b><span>Fotos escolhidas</span></div>
@@ -265,7 +265,7 @@ function DemoScreen({ etapa }: { etapa: number }) {
           </div>
         ))}
       </div>
-      <div className="lp2-real-project-share"><b>Próximo passo: entrega final</b><span>Prepare as fotos escolhidas e publique a entrega nas respectivas pastas.</span></div>
+      <div className="lp2-real-project-share"><b>Próximo passo: entrega final</b><span>Prepare as fotos escolhidas e publique a entrega nas respectivas galerias.</span></div>
     </div>
   );
 }
@@ -365,7 +365,7 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
                 <h2>{t("Do envio à escolha final.")}<br />{t("Tudo em um só lugar.")}</h2>
               </div>
               <p>
-                {t("Crie o projeto, organize as pastas e receba as escolhas do cliente por um único link, sem mensagens soltas ou listas de arquivos.")}
+                {t("Crie o projeto, organize as galerias e receba as escolhas do cliente por um único link, sem mensagens soltas ou listas de arquivos.")}
               </p>
             </div>
 
@@ -427,7 +427,7 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
                 <h2>{t("Comece grátis.")}<br />{t("Cresça no seu ritmo.")}</h2>
               </div>
               <p>
-                {t("Organize quantos projetos, pastas e clientes precisar. Escolha seu plano pelo espaço para guardar fotos e pelas opções de personalização.")}
+                {t("Organize quantos projetos, galerias e clientes precisar. Escolha seu plano pelo espaço para guardar fotos e pelas opções de personalização.")}
               </p>
             </div>
 

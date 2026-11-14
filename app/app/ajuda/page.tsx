@@ -21,11 +21,11 @@ const categorias: Array<{ value: Categoria; label: string }> = [
 
 const faq = [
   { pergunta: "Qual a diferença entre prova e entrega?", resposta: "A prova é usada quando o cliente ainda precisa selecionar fotos. A entrega é a galeria final, preparada para visualização e download das imagens entregues." },
-  { pergunta: "Como compartilho um projeto?", resposta: "Abra o projeto e use o menu de ações para copiar o link ou compartilhar por WhatsApp ou e-mail. O mesmo link dá acesso às pastas publicadas." },
-  { pergunta: "Como funciona a seleção do cliente?", resposta: "Em uma pasta configurada como prova, o cliente marca as fotos desejadas e finaliza a seleção. O resultado aparece na aba Seleção do próprio projeto para você continuar o fluxo." },
-  { pergunta: "Onde altero a capa e o visual do projeto?", resposta: "Abra o projeto e, em Pastas e fotos, use Configurar capa para cada pasta ou Trocar capa no menu do projeto. A identidade geral do estúdio fica no Perfil." },
+  { pergunta: "Como compartilho um projeto?", resposta: "Abra o projeto e use o menu de ações para copiar o link ou compartilhar por WhatsApp ou e-mail. O mesmo link dá acesso às galerias publicadas." },
+  { pergunta: "Como funciona a seleção do cliente?", resposta: "Em uma galeria configurada como prova, o cliente marca as fotos desejadas e finaliza a seleção. O resultado aparece na aba Seleção do próprio projeto para você continuar o fluxo." },
+  { pergunta: "Onde altero a capa e o visual do projeto?", resposta: "Abra o projeto e, em Galerias e fotos, use Configurar capa para cada galeria ou Trocar capa no menu do projeto. A identidade geral do estúdio fica no Perfil." },
   { pergunta: "Como funciona o armazenamento?", resposta: "O uso de armazenamento segue o limite do seu plano. Você pode acompanhar o consumo e os limites na área Planos." },
-  { pergunta: "O que acontece quando o link expira?", resposta: "O projeto deixa de ficar disponível para o cliente, mas o conteúdo não é apagado automaticamente. Você continua no controle das pastas e fotos dentro da sua conta." },
+  { pergunta: "O que acontece quando o link expira?", resposta: "O projeto deixa de ficar disponível para o cliente, mas o conteúdo não é apagado automaticamente. Você continua no controle das galerias e fotos dentro da sua conta." },
   { pergunta: "Como vendo fotos extras?", resposta: "Quando a venda de extras estiver habilitada no projeto e os recebimentos estiverem configurados, o cliente pode comprar fotos além da quantidade incluída. As vendas aparecem na área Vendas." },
 ];
 
@@ -309,7 +309,7 @@ export default function AjudaPage() {
             <form className="form" onSubmit={enviar}>
               <div className="row2">
                 <label className="field"><span className="field-label">Categoria</span><select className="select" value={categoria} onChange={e=>setCategoria(e.target.value as Categoria)}>{categorias.map(c=><option value={c.value} key={c.value}>{c.label}</option>)}</select></label>
-                <label className="field"><span className="field-label">Assunto</span><input className="input" maxLength={120} value={assunto} onChange={e=>setAssunto(e.target.value)} placeholder={tipo==="problema"?"Ex.: erro ao abrir galeria":tipo==="sugestao"?"Ex.: organizar por pastas":"Ex.: minha experiência"}/></label>
+                <label className="field"><span className="field-label">Assunto</span><input className="input" maxLength={120} value={assunto} onChange={e=>setAssunto(e.target.value)} placeholder={tipo==="problema"?"Ex.: erro ao abrir galeria":tipo==="sugestao"?"Ex.: organizar por galerias":"Ex.: minha experiência"}/></label>
               </div>
 
               {tipo==="feedback"&&<div className="field">

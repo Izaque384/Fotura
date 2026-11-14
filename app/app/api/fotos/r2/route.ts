@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
       return json({ error: "Foto inválida ou maior que o limite do piloto." }, 400);
     }
     const allowed = await galleryAllowed(auth.db, auth.user.id, body.galeria, body.variante);
-    if (!allowed) return json({ error: "Pasta indisponível para envio." }, 403);
+    if (!allowed) return json({ error: "Galeria indisponível para envio." }, 403);
 
     // Bound reserved-but-unconfirmed uploads to avoid exhausting R2 storage
     // and bypassing photo/storage quotas with many simultaneous PUT URLs.
@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
         auth.db, auth.user.id, body.galeria, body.variante
       );
       if (catalogError || !catalog || !podeAdicionarFotos(context.plano, catalog.length, 1)) {
-        return json({ error: "Não foi possível validar o limite de fotos da pasta." }, 403);
+        return json({ error: "Não foi possível validar o limite de fotos da galeria." }, 403);
       }
 
       const originalName = body.nome.trim();
@@ -332,7 +332,7 @@ export async function POST(req: NextRequest) {
       return json({ error: "Autorização de upload inválida." }, 403);
     }
     if (!await galleryAllowed(auth.db, auth.user.id, ticket.g, ticket.v)) {
-      return json({ error: "Pasta indisponível." }, 403);
+      return json({ error: "Galeria indisponível." }, 403);
     }
     const key = paths(ticket);
     const { data: reserved, error: reserveError } = await auth.db
@@ -371,7 +371,7 @@ export async function POST(req: NextRequest) {
 
     const key = paths(ticket);
     if (!await galleryAllowed(auth.db, auth.user.id, ticket.g, ticket.v)) {
-      return json({ error: "Pasta indisponível." }, 403);
+      return json({ error: "Galeria indisponível." }, 403);
     }
     try {
       const { data: existing, error } = await auth.db.from("fotura_media_objects")
@@ -431,7 +431,7 @@ export async function POST(req: NextRequest) {
       }
       const counted = await listarCatalogoGaleriaHibrido(auth.db, auth.user.id, ticket.g, ticket.v);
       if (counted.error || !counted.data || !podeAdicionarFotos(current.plano, counted.data.length, 1)) {
-        return json({ error: "Limite de fotos da pasta atingido." }, 403);
+        return json({ error: "Limite de fotos da galeria atingido." }, 403);
       }
 
       const width = Number.isInteger(body.largura) && Number(body.largura) > 0 && Number(body.largura) <= 50000 ? body.largura : null;

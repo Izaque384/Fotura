@@ -25,11 +25,11 @@ export default function ProjectPhotoManager({projetoId,pastas,pastaInicial,fecha
  async function acao(operacao:"capa"|"mover"){
   setErro(false);setAviso("");setBusy(true);
   try{
-   if(operacao==="mover"&&(galeriaUnica||!destino||selecionadas.length>25))throw Error("Escolha a pasta de destino e até 25 fotos por operação.");
+   if(operacao==="mover"&&(galeriaUnica||!destino||selecionadas.length>25))throw Error("Escolha a galeria de destino e até 25 fotos por operação.");
    const access=await token();
    const r=await fetch("/api/projeto/fotos",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${access}`},body:JSON.stringify(operacao==="capa"?{acao:"capa",projeto:projetoId,pasta,foto:selecionadas[0]}:{acao:"mover",projeto:projetoId,pasta,destino,fotos:selecionadas})});
    const data=await r.json();if(!r.ok){if((data.movidas??[]).length){setAviso(`${data.movidas.length} fotos foram movidas, mas houve uma falha. Atualize o painel.`);await listar(pasta);setAlterou(true)}throw Error(data.error||"Não foi possível concluir.")}
-   setAviso(operacao==="capa"?"Capa da pasta atualizada.":`${data.movidas.length} foto(s) movida(s) com sucesso.`);setSelecionadas([]);await listar(pasta);setAlterou(true);
+   setAviso(operacao==="capa"?"Capa da galeria atualizada.":`${data.movidas.length} foto(s) movida(s) com sucesso.`);setSelecionadas([]);await listar(pasta);setAlterou(true);
   }catch(e){setErro(true);setAviso(e instanceof Error?e.message:"Erro.")}finally{setBusy(false)}
  }
  return <div className="ft-photo-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)encerrar()}}>
@@ -37,11 +37,11 @@ export default function ProjectPhotoManager({projetoId,pastas,pastaInicial,fecha
    <header><div><small>ORGANIZAÇÃO DE FOTOS</small><h2>Gerenciar fotos</h2><p>{galeriaUnica?"Selecione uma fotografia para definir a capa da sua galeria.":"Selecione fotos para definir a capa ou movê-las entre galerias antes da seleção do cliente."}</p></div><button type="button" onClick={encerrar} disabled={busy} aria-label="Fechar">✕</button></header>
    {!galeriaUnica&&<div className="ft-photo-controls"><label>Galeria de origem<select value={pasta} disabled={busy} onChange={e=>{setPasta(e.target.value);setDestino("");setAviso("");setErro(false)}}>{pastas.map(x=><option key={x.id} value={x.id}>{x.titulo} · {x.qtd} fotos</option>)}</select></label><label>Destino (para mover)<select value={destino} disabled={busy||origem?.etapa!=="prova"} onChange={e=>setDestino(e.target.value)}><option value="">Escolher outra galeria</option>{destinos.map(x=><option key={x.id} value={x.id}>{x.titulo}</option>)}</select></label></div>}
    <div className="ft-photo-toolbar"><span>{selecionadas.length} selecionada(s) · {fotos.length} carregada(s)</span><button type="button" onClick={()=>setSelecionadas(fotos.slice(0,25).map(f=>f.nome))} disabled={busy||!fotos.length}>Selecionar até 25</button><button type="button" onClick={()=>setSelecionadas([])} disabled={busy||!selecionadas.length}>Limpar seleção</button></div>
-   {origem?.etapa!=="prova"&&<p className="ft-photo-warning">Esta pasta já está em preparação ou entrega. A movimentação está bloqueada para preservar os arquivos do cliente.</p>}
+   {origem?.etapa!=="prova"&&<p className="ft-photo-warning">Esta galeria já está em preparação ou entrega. A movimentação está bloqueada para preservar os arquivos do cliente.</p>}
    {aviso&&<p className={"ft-photo-message"+(erro?" err":"")} role="status">{aviso}</p>}
    <div className="ft-photo-grid">
     {fotos.map(f=><button className={"ft-photo-tile"+(selecionadas.includes(f.nome)?" selected":"")} type="button" key={f.nome} onClick={()=>alternar(f.nome)} aria-pressed={selecionadas.includes(f.nome)} disabled={busy}><div className="ft-photo-preview">{f.thumb?<img src={f.thumb} alt="" loading="lazy"/>:<span>Foto</span>}{capa===f.nome&&<span className="ft-photo-coverflag">Capa</span>}</div><div className="ft-photo-name"><span className="ft-photo-check" aria-hidden="true">{selecionadas.includes(f.nome)?"☑":"☐"}</span><span title={f.nome}>{f.nome}</span></div></button>)}
-    {!carregando&&!fotos.length&&<p>Nenhuma foto nesta pasta.</p>}
+    {!carregando&&!fotos.length&&<p>Nenhuma foto nesta galeria.</p>}
    </div>
    {proximo!==null&&<button className="ft-photo-more" type="button" disabled={carregando||busy} onClick={()=>void listar(pasta,proximo)}>{carregando?"Carregando…":"Carregar mais fotos"}</button>}
    <footer><small>{galeriaUnica?"A imagem selecionada pode ser usada como capa da galeria.":"Movimentações: até 25 fotos por vez, apenas antes de seleções, vendas e entregas."}</small><div><button type="button" onClick={()=>void acao("capa")} disabled={busy||selecionadas.length!==1}>Definir como capa</button>{!galeriaUnica&&<button type="button" className="primary" onClick={()=>void acao("mover")} disabled={busy||!destino||!selecionadas.length||selecionadas.length>25||origem?.etapa!=="prova"}>{busy?"Processando…":"Mover fotos"}</button>}</div></footer>

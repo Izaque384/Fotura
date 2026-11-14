@@ -21,7 +21,7 @@ async function pastaDoProjeto(db:ReturnType<typeof createServiceClient>,uid:stri
 }
 async function nomesNaPasta(db:ReturnType<typeof createServiceClient>,uid:string,id:string){
  const {data,error}=await listarCatalogoGaleriaHibrido(db,uid,id,"principal");
- if(error||!data)throw error||new Error("Não foi possível listar os arquivos da pasta.");
+ if(error||!data)throw error||new Error("Não foi possível listar os arquivos da galeria.");
  return new Set(data.map(x=>x.nome).filter(nomeValido));
 }
 export async function GET(req:NextRequest){
@@ -30,7 +30,7 @@ export async function GET(req:NextRequest){
  const offset=Math.max(0,Math.min(3000,Number(req.nextUrl.searchParams.get("offset")??"0")||0));
  if(!uuidValido(projeto)||!uuidValido(pasta))return json({error:"Parâmetros inválidos."},400);
  const db=createServiceClient();const source=await pastaDoProjeto(db,user.id,projeto,pasta);
- if(!source)return json({error:"Pasta não encontrada."},404);
+ if(!source)return json({error:"Galeria não encontrada."},404);
  const {data:catalogo,error}=await listarCatalogoGaleriaHibrido(db,user.id,pasta,"principal");
  if(error||!catalogo)return json({error:"Não foi possível listar as fotos."},500);
  const todos=catalogo.map(x=>x.nome).filter(nomeValido).sort((a,b)=>a.localeCompare(b));
@@ -44,29 +44,29 @@ export async function POST(req:NextRequest){
  const user=await session(req);if(!user)return json({error:"Não autorizado."},401);
  if(!await consumirRateLimit(req,"project_write",user.id,10*60,120))return json({error:"Muitas operações. Aguarde alguns minutos."},429);
  const b=await req.json().catch(()=>({})) as {acao?:string;projeto?:string;pasta?:string;destino?:string;fotos?:string[];foto?:string};
- if(!uuidValido(b.projeto)||!uuidValido(b.pasta))return json({error:"Projeto ou pasta inválidos."},400);
+ if(!uuidValido(b.projeto)||!uuidValido(b.pasta))return json({error:"Projeto ou galeria inválidos."},400);
  const db=createServiceClient();const origem=await pastaDoProjeto(db,user.id,b.projeto,b.pasta);
- if(!origem)return json({error:"Pasta não encontrada."},404);
+ if(!origem)return json({error:"Galeria não encontrada."},404);
  if(b.acao==="capa"){
   if(!nomeValido(b.foto))return json({error:"Foto inválida."},400);
   const existentes=await nomesNaPasta(db,user.id,b.pasta);
-  if(!existentes.has(b.foto))return json({error:"A foto não pertence a esta pasta."},404);
+  if(!existentes.has(b.foto))return json({error:"A foto não pertence a esta galeria."},404);
   const {error}=await db.from("galerias").update({capa:b.foto}).eq("id",b.pasta).eq("projeto_id",b.projeto).eq("user_id",user.id);
   return error?json({error:"Não foi possível definir a capa."},500):json({ok:true});
  }
  if(b.acao!=="mover")return json({error:"Operação não reconhecida."},400);
- if(!uuidValido(b.destino)||b.destino===b.pasta)return json({error:"Escolha outra pasta do mesmo projeto."},400);
+ if(!uuidValido(b.destino)||b.destino===b.pasta)return json({error:"Escolha outra galeria do mesmo projeto."},400);
  if(!Array.isArray(b.fotos)||!b.fotos.length||b.fotos.length>25||b.fotos.some(x=>!nomeValido(x))||new Set(b.fotos).size!==b.fotos.length)return json({error:"Selecione até 25 fotos válidas por operação."},400);
  const dest=await pastaDoProjeto(db,user.id,b.projeto,b.destino);
- if(!dest)return json({error:"Pasta de destino não encontrada neste projeto."},404);
+ if(!dest)return json({error:"Galeria de destino não encontrada neste projeto."},404);
  // Nunca movimentar arquivos cuja seleção, venda ou entrega já possa depender do nome e da pasta.
- if(origem.etapa!=="prova"||dest.etapa!=="prova")return json({error:"Só é possível mover fotos entre pastas ainda em prova, antes da entrega."},409);
+ if(origem.etapa!=="prova"||dest.etapa!=="prova")return json({error:"Só é possível mover fotos entre galerias ainda em prova, antes da entrega."},409);
  const [{data:selecoes,error:erroSelecoes},{data:vendas,error:erroVendas}]=await Promise.all([
    db.from("selecoes").select("galeria").in("galeria",[origem.id,dest.id]).limit(1),
    db.from("vendas_fotos").select("id").in("galeria",[origem.id,dest.id]).limit(1),
  ]);
- if(erroSelecoes||erroVendas)return json({error:"Não foi possível validar o histórico das pastas. Tente novamente."},503);
- if((selecoes??[]).length||(vendas??[]).length)return json({error:"Essas pastas já possuem seleções ou vendas. Mantenha a organização atual para proteger o histórico do cliente."},409);
+ if(erroSelecoes||erroVendas)return json({error:"Não foi possível validar o histórico das galerias. Tente novamente."},503);
+ if((selecoes??[]).length||(vendas??[]).length)return json({error:"Essas galerias já possuem seleções ou vendas. Mantenha a organização atual para proteger o histórico do cliente."},409);
  const [srcNames,dstNames]=await Promise.all([nomesNaPasta(db,user.id,origem.id),nomesNaPasta(db,user.id,dest.id)]);
  if(b.fotos.some(n=>!srcNames.has(n)||dstNames.has(n)))return json({error:"Alguma foto não existe na origem ou já tem o mesmo nome no destino."},409);
  if(isR2ReadEnabled()){

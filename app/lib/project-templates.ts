@@ -6,8 +6,8 @@ export type ConfigProjeto = {
 };
 export const MODELOS_PROJETO:Record<ModeloProjeto,{nome:string;descricao:string;config:ConfigProjeto}>={
  ensaio:{nome:"Seleção de fotos",descricao:"Uma galeria única para o cliente escolher as favoritas e comentar antes da entrega.",config:{prova:true,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"original",watermark_ativo:false,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
- casamento:{nome:"Projeto com pastas",descricao:"Crie várias galerias em um projeto, organizadas e compartilhadas pelo mesmo link.",config:{prova:false,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"original",watermark_ativo:false,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
- entrega:{nome:"Entrega direta",descricao:"Uma galeria única para compartilhar fotos prontas, sem pastas ou seleção.",config:{prova:false,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"original",watermark_ativo:false,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
+ casamento:{nome:"Projeto com galerias",descricao:"Crie várias galerias em um projeto, organizadas e compartilhadas pelo mesmo link.",config:{prova:false,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"original",watermark_ativo:false,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
+ entrega:{nome:"Entrega direta",descricao:"Uma galeria única para compartilhar fotos prontas, sem divisões adicionais nem seleção.",config:{prova:false,limite:0,download_ativo:true,download_individual:true,download_completo:true,download_tamanho:"original",watermark_ativo:false,watermark_texto:null,watermark_opacidade:22,assistente_ativo:true}},
 };
 export function modeloValido(x:unknown):x is ModeloProjeto{return x==="ensaio"||x==="casamento"||x==="entrega"}
 /** Validação explícita: nenhum modelo pode alterar IDs, cobrança, senha ou propriedade do projeto. */

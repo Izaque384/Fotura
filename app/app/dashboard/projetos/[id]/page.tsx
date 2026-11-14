@@ -114,7 +114,7 @@ export default function ProjetoWorkspacePage(){
    const d=await post({acao:"criar_pasta",projetoId:id,nome:nomePasta.trim()}) as {pasta:{id:string}};
    registrarEventoProduto("gallery_created",{token:await token(),entidade:"galeria",entidadeId:d.pasta.id,detalhes:{modo:"nova"}});
    setModalPasta(false);setNomePasta("");router.push(`/upload?galeria=${d.pasta.id}&projeto=${id}`);
-  }catch(e){setAviso(e instanceof Error?e.message:"Não foi possível criar a pasta.")}finally{setCriandoPasta(false)}
+  }catch(e){setAviso(e instanceof Error?e.message:"Não foi possível criar a galeria.")}finally{setCriandoPasta(false)}
  }
 
  function abrirDetalhesPasta(pasta:Pasta){setMenuPastaAberta(null);setPastaDetalhes(pasta.id)}
@@ -128,8 +128,8 @@ export default function ProjetoWorkspacePage(){
   try{
    await post({acao:"atualizar_pasta",projetoId:id,pastaId:pasta.id,nome:novoNome});
    setDados(atual=>atual?{...atual,pastas:atual.pastas.map(x=>x.id===pasta.id?{...x,titulo:novoNome}:x)}:atual);
-   setEditandoPasta(null);setNomePastaEdicao("");setAviso("Nome da pasta atualizado.");
-  }catch(e){setAviso(e instanceof Error?e.message:"Não foi possível renomear a pasta.")}
+   setEditandoPasta(null);setNomePastaEdicao("");setAviso("Nome da galeria atualizado.");
+  }catch(e){setAviso(e instanceof Error?e.message:"Não foi possível renomear a galeria.")}
   finally{setSalvandoPasta(null)}
  }
  function rotuloAcaoPasta(pasta:Pasta){
@@ -148,7 +148,7 @@ export default function ProjetoWorkspacePage(){
   try{
    await post({acao:"atualizar_pasta",projetoId:id,pastaId:pasta.id,visivel:proximo});
    setDados(atual=>atual?{...atual,pastas:atual.pastas.map(x=>x.id===pasta.id?{...x,visivel:proximo}:x)}:atual);
-   setAviso(proximo?"Pasta publicada no projeto do cliente.":"Pasta ocultada do projeto do cliente.");
+   setAviso(proximo?"Galeria publicada no projeto do cliente.":"Galeria ocultada do projeto do cliente.");
   }catch(e){setAviso(e instanceof Error?e.message:"Não foi possível alterar a visibilidade.")}
   finally{setSalvandoPasta(null)}
  }
@@ -159,10 +159,10 @@ export default function ProjetoWorkspacePage(){
   setDados({...dados,pastas:ordenadas});setReordenandoPastas(true);setAviso("");
   try{
    await post({acao:"reordenar_pastas",projetoId:id,pastas:ordenadas.map(x=>x.id)});
-   setAviso("Ordem das pastas atualizada.");
+   setAviso("Ordem das galerias atualizada.");
   }catch(e){
    setDados(atual=>atual?{...atual,pastas:anterior}:atual);
-   setAviso(e instanceof Error?e.message:"Não foi possível reordenar as pastas.");
+   setAviso(e instanceof Error?e.message:"Não foi possível reordenar as galerias.");
   }finally{setReordenandoPastas(false);setArrastandoPasta(null)}
  }
  function moverPasta(indice:number,direcao:-1|1){
@@ -180,11 +180,11 @@ export default function ProjetoWorkspacePage(){
   try{
    const access=await token();if(!access)throw new Error("Sua sessão expirou.");
    const r=await fetch("/api/galeria/excluir",{method:"DELETE",headers:{"Content-Type":"application/json",Authorization:`Bearer ${access}`},body:JSON.stringify({galeria:excluirPasta.id})});
-   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Não foi possível excluir a pasta.");
+   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Não foi possível excluir a galeria.");
    setExcluirPasta(null);setEditandoPasta(null);
-   setAviso(d.aviso||"Pasta e suas fotos foram excluídas.");
+   setAviso(d.aviso||"Galeria e suas fotos foram excluídas.");
    await carregar();
-  }catch(e){setAviso(e instanceof Error?e.message:"Não foi possível excluir a pasta.")}
+  }catch(e){setAviso(e instanceof Error?e.message:"Não foi possível excluir a galeria.")}
   finally{setExcluindoPasta(false)}
  }
 
@@ -234,7 +234,7 @@ export default function ProjetoWorkspacePage(){
 
  async function abrirCapa(pastaId?:string,individual=false){
   setCapaIndividual(individual);
-  if(!dados?.pastas.length){setAviso("Adicione uma pasta com fotos antes de escolher a capa.");return}
+  if(!dados?.pastas.length){setAviso("Adicione uma galeria com fotos antes de escolher a capa.");return}
   const pid=pastaId||dados.projeto.capa_galeria_id||dados.pastas[0].id;setPastaCapa(pid);setModalCapa(true);await carregarFotosCapa(pid);
  }
  async function carregarFotosCapa(pid:string){
@@ -243,17 +243,17 @@ export default function ProjetoWorkspacePage(){
  }
  async function definirCapa(foto:CapaFoto){
   if(salvandoCapa)return;setSalvandoCapa(true);
-  try{const access=await token();const r=await fetch("/api/projeto/workspace",{method:capaIndividual?"POST":"PATCH",headers:{"Content-Type":"application/json",Authorization:`Bearer ${access}`},body:JSON.stringify(capaIndividual?{acao:"atualizar_pasta",projetoId:id,pastaId:pastaCapa,capaArquivo:foto.nome}:{projeto:id,capaPastaId:pastaCapa,capaArquivo:foto.nome})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Não foi possível salvar a capa.");setModalCapa(false);setAviso(capaIndividual?"Capa da pasta atualizada.":"Capa do projeto atualizada.");await carregar()}catch(e){setAviso(e instanceof Error?e.message:"Não foi possível salvar a capa.")}finally{setSalvandoCapa(false)}
+  try{const access=await token();const r=await fetch("/api/projeto/workspace",{method:capaIndividual?"POST":"PATCH",headers:{"Content-Type":"application/json",Authorization:`Bearer ${access}`},body:JSON.stringify(capaIndividual?{acao:"atualizar_pasta",projetoId:id,pastaId:pastaCapa,capaArquivo:foto.nome}:{projeto:id,capaPastaId:pastaCapa,capaArquivo:foto.nome})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Não foi possível salvar a capa.");setModalCapa(false);setAviso(capaIndividual?"Capa da galeria atualizada.":"Capa do projeto atualizada.");await carregar()}catch(e){setAviso(e instanceof Error?e.message:"Não foi possível salvar a capa.")}finally{setSalvandoCapa(false)}
  }
 
  async function removerCapaPasta(){
   if(salvandoCapa)return;setSalvandoCapa(true);
-  try{const access=await token();const r=await fetch("/api/projeto/workspace",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${access}`},body:JSON.stringify({acao:"atualizar_pasta",projetoId:id,pastaId:pastaCapa,capaArquivo:null})});const d=await r.json();if(!r.ok)throw new Error(d.error);setModalCapa(false);setAviso("A pasta voltou a usar a capa do projeto.");await carregar()}catch(e){setAviso(e instanceof Error?e.message:"Não foi possível remover a capa.")}finally{setSalvandoCapa(false)}
+  try{const access=await token();const r=await fetch("/api/projeto/workspace",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${access}`},body:JSON.stringify({acao:"atualizar_pasta",projetoId:id,pastaId:pastaCapa,capaArquivo:null})});const d=await r.json();if(!r.ok)throw new Error(d.error);setModalCapa(false);setAviso("A galeria voltou a usar a capa do projeto.");await carregar()}catch(e){setAviso(e instanceof Error?e.message:"Não foi possível remover a capa.")}finally{setSalvandoCapa(false)}
  }
 
  function exportarSelecao(){
   if(!dados)return;
-  const linhas=["pasta,arquivo,comentario"];
+  const linhas=["galeria,arquivo,comentario"];
   for(const p of dados.pastas)for(const nome of p.selecao?.fotos??[])linhas.push(`"${p.titulo.replace(/"/g,'""')}","${nome.replace(/"/g,'""')}","${(p.selecao?.comentarios?.[nome]||"").replace(/"/g,'""')}"`);
   baixarArquivo(`${dados.projeto.slug||"projeto"}-selecao.csv`,linhas.join("\n"),"text/csv;charset=utf-8");
  }
@@ -382,7 +382,7 @@ export default function ProjetoWorkspacePage(){
   <button role="menuitem" className="danger" onClick={()=>{setMenuPastaAberta(null);setExcluirPasta(x)}} disabled={salvandoPasta===x.id}><TrashIcon size={15}/> Excluir galeria</button>
  </div>}</div></div></article>)}</div>:<div className="pw-empty pw-empty-guided"><FolderIcon size={27}/><strong>Comece pela primeira galeria</strong><p>Você pode separar as fotos por tema, local ou momento.</p><button className="primary" onClick={()=>setModalPasta(true)}><PlusIcon size={15}/> Criar galeria</button></div>}</section>}
 
-  {aba==="selecao"&&<section className="pw-section"><div className="pw-section-head"><div><span>SELEÇÃO</span><h2>Todas as escolhas em um só lugar</h2><p>Veja as fotos escolhidas e os comentários de cada galeria. O cliente pode selecionar diretamente no link compartilhado.</p></div><div className="pw-head-buttons"><button onClick={()=>void copiarSelecao()} disabled={!totalSelecionadas}>Copiar nomes</button><button onClick={exportarSelecao} disabled={!totalSelecionadas}>Exportar CSV</button></div></div>{dados.pastas.map(x=><article className="pw-selection" key={x.id}><div><strong>{x.titulo}</strong><p>{x.selecao?.fotos.length??0} escolhida{x.selecao?.fotos.length===1?"":"s"} · {Object.values(x.selecao?.comentarios??{}).filter(v=>v?.trim()).length} comentário(s)</p></div><div className="pw-selection-actions"><span className={"pw-pill "+(x.selecao?.finalizada?"done":"active")}>{x.selecao?.finalizada?"Finalizada":"Em andamento"}</span><button onClick={()=>setSelecaoModal(x.id)} disabled={!x.selecao}>Ver seleção</button></div></article>)}{!dados.pastas.length&&<div className="pw-empty">Nenhuma pasta neste projeto.</div>}</section>}
+  {aba==="selecao"&&<section className="pw-section"><div className="pw-section-head"><div><span>SELEÇÃO</span><h2>Todas as escolhas em um só lugar</h2><p>Veja as fotos escolhidas e os comentários de cada galeria. O cliente pode selecionar diretamente no link compartilhado.</p></div><div className="pw-head-buttons"><button onClick={()=>void copiarSelecao()} disabled={!totalSelecionadas}>Copiar nomes</button><button onClick={exportarSelecao} disabled={!totalSelecionadas}>Exportar CSV</button></div></div>{dados.pastas.map(x=><article className="pw-selection" key={x.id}><div><strong>{x.titulo}</strong><p>{x.selecao?.fotos.length??0} escolhida{x.selecao?.fotos.length===1?"":"s"} · {Object.values(x.selecao?.comentarios??{}).filter(v=>v?.trim()).length} comentário(s)</p></div><div className="pw-selection-actions"><span className={"pw-pill "+(x.selecao?.finalizada?"done":"active")}>{x.selecao?.finalizada?"Finalizada":"Em andamento"}</span><button onClick={()=>setSelecaoModal(x.id)} disabled={!x.selecao}>Ver seleção</button></div></article>)}{!dados.pastas.length&&<div className="pw-empty">Nenhuma galeria neste projeto.</div>}</section>}
 
   {aba==="entrega"&&<section className="pw-section"><div className="pw-section-head"><div><span>ENTREGA</span><h2>{galeriaUnica?"Acompanhe a entrega das fotos":"Acompanhe cada galeria até a publicação"}</h2><p>{galeriaUnica?"As fotos ficam em uma única galeria, no mesmo link do projeto.":"O cliente recebe todas as galerias pelo mesmo link."}</p></div></div><div className="pw-delivery-list">{dados.pastas.map(x=><article key={x.id}><div><strong>{x.titulo}</strong><p>{x.etapa==="entrega"?"Fotos finais publicadas":x.etapa==="preparando_entrega"?"Finais em preparação":x.selecao?.finalizada?"Seleção pronta para edição":p.prova?"Aguardando seleção do cliente":"Entrega direta"}</p></div><button className={x.etapa==="entrega"?"":"primary"} onClick={()=>router.push(`/dashboard/entrega/${x.id}`)} disabled={p.prova&&!x.selecao?.finalizada&&x.etapa!=="preparando_entrega"&&x.etapa!=="entrega"}>{x.etapa==="entrega"?"Revisar":x.etapa==="preparando_entrega"?"Continuar":"Preparar entrega"}</button></article>)}</div></section>}
 
@@ -448,10 +448,10 @@ export default function ProjetoWorkspacePage(){
 
  {modalExcluirProjeto&&<div className="pw-modal pw-project-modal-above-drawer" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!excluindoProjeto){setModalExcluirProjeto(false);setConfirmacaoProjeto("")}}}><div className="pw-modal-card pw-danger-modal" role="dialog" aria-modal="true" aria-labelledby="pw-delete-project-title" onKeyDown={e=>{if(e.key==="Escape"&&!excluindoProjeto){setModalExcluirProjeto(false);setConfirmacaoProjeto("")}}}><div className="pw-modal-head"><div><span>ZONA DE PERIGO</span><h2 id="pw-delete-project-title">Excluir “{p.nome}”?</h2><p>Esta ação não pode ser desfeita. Todas as galerias, fotos, thumbnails, seleções, comentários, entregas e vendas relacionadas a este Projeto serão removidas.</p></div><button type="button" onClick={()=>{setModalExcluirProjeto(false);setConfirmacaoProjeto("")}} disabled={excluindoProjeto}><CloseIcon size={18}/></button></div><div className="pw-danger-summary"><strong>{dados.pastas.length} galeria{dados.pastas.length===1?"":"s"} · {totalFotos} foto{totalFotos===1?"":"s"}</strong><span>O link público do Projeto também deixará de funcionar imediatamente.</span></div><label className="pw-field pw-confirm-field">Para confirmar, digite exatamente <b>{p.nome}</b><input autoFocus autoComplete="off" value={confirmacaoProjeto} onChange={e=>setConfirmacaoProjeto(e.target.value)} placeholder={p.nome}/></label><div className="pw-modal-actions"><button type="button" onClick={()=>{setModalExcluirProjeto(false);setConfirmacaoProjeto("")}} disabled={excluindoProjeto}>Cancelar</button><button type="button" className="pw-delete-project" onClick={()=>void confirmarExclusaoProjeto()} disabled={excluindoProjeto||confirmacaoProjeto.trim()!==p.nome}>{excluindoProjeto?"Excluindo…":"Excluir projeto permanentemente"}</button></div></div></div>}
 
- <ConfirmDialog open={Boolean(excluirPasta)} title={excluirPasta?`Excluir “${excluirPasta.titulo}”?`:"Excluir pasta?"} description={excluirPasta?`Esta ação é permanente: ${excluirPasta.qtd} foto${excluirPasta.qtd===1?"":"s"}, seleção, comentários e dados de entrega desta pasta serão excluídos. Se ela estiver sendo usada como origem da capa do Projeto, a capa também será removida.`:""} confirmLabel="Excluir pasta" cancelLabel="Cancelar" danger loading={excluindoPasta} onConfirm={()=>void confirmarExclusaoPasta()} onCancel={()=>{if(!excluindoPasta)setExcluirPasta(null)}}/>
+ <ConfirmDialog open={Boolean(excluirPasta)} title={excluirPasta?`Excluir “${excluirPasta.titulo}”?`:"Excluir pasta?"} description={excluirPasta?`Esta ação é permanente: ${excluirPasta.qtd} foto${excluirPasta.qtd===1?"":"s"}, seleção, comentários e dados de entrega desta galeria serão excluídos. Se ela estiver sendo usada como origem da capa do Projeto, a capa também será removida.`:""} confirmLabel="Excluir pasta" cancelLabel="Cancelar" danger loading={excluindoPasta} onConfirm={()=>void confirmarExclusaoPasta()} onCancel={()=>{if(!excluindoPasta)setExcluirPasta(null)}}/>
 
  {selecaoModal&&dados.pastas.find(x=>x.id===selecaoModal)?.selecao&&<ModalSelecao uid={p.user_id} galeriaId={selecaoModal} titulo={dados.pastas.find(x=>x.id===selecaoModal)?.titulo||"Pasta"} selecao={dados.pastas.find(x=>x.id===selecaoModal)!.selecao!} onFechar={()=>setSelecaoModal(null)}/>}
- {modalCapa&&<div className="pw-modal pw-project-modal-above-drawer" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!salvandoCapa)setModalCapa(false)}}><div className="pw-modal-card pw-cover-modal" role="dialog" aria-modal="true" aria-label={capaIndividual?"Escolher capa da galeria":"Escolher capa do projeto"} onKeyDown={e=>{if(e.key==="Escape"&&!salvandoCapa){e.stopPropagation();setModalCapa(false)}}}><div className="pw-modal-head"><div><span>{capaIndividual?"CAPA DA PASTA":"CAPA DO PROJETO"}</span><h2>{capaIndividual?dados.pastas.find(x=>x.id===pastaCapa)?.titulo:"Escolha uma foto de qualquer pasta"}</h2><p>{capaIndividual?"Escolha a foto que representa esta pasta.":"Usada nas pastas que ainda não têm uma capa própria."}</p></div><button type="button" onClick={()=>setModalCapa(false)} disabled={salvandoCapa}><CloseIcon size={18}/></button></div>{capaIndividual&&dados.pastas.find(x=>x.id===pastaCapa)?.capa&&<button className="pw-cover-reset" type="button" disabled={salvandoCapa} onClick={()=>void removerCapaPasta()}>Usar capa do projeto</button>}{!capaIndividual&&<label className="pw-field">Pasta<select value={pastaCapa} onChange={e=>void carregarFotosCapa(e.target.value)}>{dados.pastas.map(x=><option key={x.id} value={x.id}>{x.titulo}</option>)}</select></label>}{carregandoCapa?<div className="pw-empty">Carregando fotos…</div>:fotosCapa.length?<div className="pw-cover-grid">{fotosCapa.map(f=><button type="button" key={f.nome} aria-label={`Usar ${f.nome} como capa`} aria-pressed={capaIndividual?dados.pastas.find(x=>x.id===pastaCapa)?.capa===f.nome:p.capa_arquivo===f.nome&&p.capa_galeria_id===pastaCapa} onClick={()=>void definirCapa(f)} disabled={salvandoCapa}><img src={f.url} alt="" loading="lazy"/><span>{f.nome}</span></button>)}</div>:<div className="pw-empty">Esta pasta ainda não tem fotos.</div>}</div></div>}
+ {modalCapa&&<div className="pw-modal pw-project-modal-above-drawer" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget&&!salvandoCapa)setModalCapa(false)}}><div className="pw-modal-card pw-cover-modal" role="dialog" aria-modal="true" aria-label={capaIndividual?"Escolher capa da galeria":"Escolher capa do projeto"} onKeyDown={e=>{if(e.key==="Escape"&&!salvandoCapa){e.stopPropagation();setModalCapa(false)}}}><div className="pw-modal-head"><div><span>{capaIndividual?"CAPA DA PASTA":"CAPA DO PROJETO"}</span><h2>{capaIndividual?dados.pastas.find(x=>x.id===pastaCapa)?.titulo:"Escolha uma foto de qualquer pasta"}</h2><p>{capaIndividual?"Escolha a foto que representa esta pasta.":"Usada nas pastas que ainda não têm uma capa própria."}</p></div><button type="button" onClick={()=>setModalCapa(false)} disabled={salvandoCapa}><CloseIcon size={18}/></button></div>{capaIndividual&&dados.pastas.find(x=>x.id===pastaCapa)?.capa&&<button className="pw-cover-reset" type="button" disabled={salvandoCapa} onClick={()=>void removerCapaPasta()}>Usar capa do projeto</button>}{!capaIndividual&&<label className="pw-field">Galeria<select value={pastaCapa} onChange={e=>void carregarFotosCapa(e.target.value)}>{dados.pastas.map(x=><option key={x.id} value={x.id}>{x.titulo}</option>)}</select></label>}{carregandoCapa?<div className="pw-empty">Carregando fotos…</div>:fotosCapa.length?<div className="pw-cover-grid">{fotosCapa.map(f=><button type="button" key={f.nome} aria-label={`Usar ${f.nome} como capa`} aria-pressed={capaIndividual?dados.pastas.find(x=>x.id===pastaCapa)?.capa===f.nome:p.capa_arquivo===f.nome&&p.capa_galeria_id===pastaCapa} onClick={()=>void definirCapa(f)} disabled={salvandoCapa}><img src={f.url} alt="" loading="lazy"/><span>{f.nome}</span></button>)}</div>:<div className="pw-empty">Esta galeria ainda não tem fotos.</div>}</div></div>}
  </div>
 }
 
