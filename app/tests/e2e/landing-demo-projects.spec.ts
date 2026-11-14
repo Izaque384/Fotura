@@ -3,11 +3,11 @@ import fs from "node:fs";
 import path from "node:path";
 
 test.describe("landing: demonstração da arquitetura atual", () => {
-  test("não apresenta a antiga navegação de galerias nem formulário de nova galeria", () => {
+  test("não apresenta a antiga navegação e mostra galerias no contexto do projeto", () => {
     const home = fs.readFileSync(path.join(process.cwd(), "app", "HomeClient.tsx"), "utf8");
     expect(home).toContain('["Painel","Projetos","Clientes","Vendas","Planos","Configurações","Ajuda e feedback"]');
     expect(home).not.toContain('["Painel","Galerias"');
-    expect(home).not.toContain("Nova galeria");
+    expect(home).toContain("+ Nova galeria");
     expect(home).not.toContain("<small>GALERIAS</small>");
     expect(home).toContain("lp2-real-projects");
     expect(home).toContain("lp2-real-project-folders");
@@ -24,7 +24,7 @@ test.describe("landing: demonstração da arquitetura atual", () => {
     await expect(demo.locator(".lp2-demo-side")).toContainText("Projetos");
 
     await demo.getByRole("button", { name: /Envie, organize e compartilhe/ }).click();
-    await expect(demo.locator(".lp2-real-folders-head").getByText("Pastas de fotos")).toBeVisible();
+    await expect(demo.locator(".lp2-real-folders-head").getByText("Galerias de fotos")).toBeVisible();
     await expect(demo.getByText("Making of")).toBeVisible();
 
     await demo.getByRole("button", { name: /O cliente faz a seleção/ }).click();

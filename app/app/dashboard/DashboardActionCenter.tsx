@@ -121,7 +121,7 @@ export default function DashboardActionCenter() {
           proximas.push({
             id: "primeiro-projeto",
             titulo: "Crie seu primeiro projeto",
-            descricao: "Crie o trabalho, adicione suas pastas de fotos e compartilhe um único link com o cliente.",
+            descricao: "Crie o trabalho, adicione suas galerias de fotos e compartilhe um único link com o cliente.",
             botao: "Criar projeto",
             rota: "/dashboard/projetos?novo=1",
             tom: "blue",
@@ -150,7 +150,7 @@ export default function DashboardActionCenter() {
         if (expirando.length) {
           proximas.push({
             id: "expirando",
-            titulo: `Revisar validade de ${expirando.length} pasta${expirando.length === 1 ? "" : "s"}`,
+            titulo: `Revisar validade de ${expirando.length} galeria${expirando.length === 1 ? "" : "s"}`,
             descricao: `${expirando.length} link${expirando.length === 1 ? "" : "s"} vence${expirando.length === 1 ? "" : "m"} em até 7 dias.`,
             botao: "Revisar projetos",
             rota: "/dashboard/projetos",
@@ -265,7 +265,7 @@ export default function DashboardActionCenter() {
               <div>
                 <span>PLANO GRÁTIS</span>
                 <strong>Seu armazenamento está em {storagePercent}%.</strong>
-                <p>O Essencial amplia de 1 GB para 10 GB sem limitar projetos, clientes ou fotos por pasta.</p>
+                <p>O Essencial amplia de 1 GB para 10 GB sem limitar projetos, clientes ou fotos por galeria.</p>
               </div>
               <button type="button" onClick={() => void upgrade()}>Ver planos</button>
             </div>

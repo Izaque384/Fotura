@@ -16,7 +16,7 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(blocoItens).not.toContain('rota: "/dashboard/galerias"');
     expect(blocoItens).not.toContain('rota: "/dashboard/selecoes"');
 
-    expect(projetos).toContain("Cada projeto reúne suas pastas, seleção, entrega e um único link para o cliente.");
+    expect(projetos).toContain("Cada projeto reúne suas galerias, seleção, entrega e um único link para o cliente.");
     expect(workspace).toContain('(["resumo",...(p.prova?["selecao","entrega"]:[])] as Aba[])');
     expect(workspace).toContain('className="pw-share"');
     expect(workspace).toContain("Copiar link do projeto");
@@ -125,7 +125,7 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(workspace).toContain("onDrop");
     expect(workspace).toContain("Renomear");
     expect(workspace).toContain('x.visivel?"Ocultar do cliente":"Publicar para o cliente"');
-    expect(workspace).toContain("Excluir pasta");
+    expect(workspace).toContain("Excluir galeria");
     expect(workspace).toContain("ConfirmDialog");
 
     expect(api).toContain('acao: "atualizar_pasta"');

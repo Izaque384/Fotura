@@ -48,7 +48,7 @@ export default function FirstAccessTour({
     <div className={"gc-tour-card gc-tour-step-"+step}>
       <div className="gc-tour-progress"><span>PASSO {step} DE 2</span><div><i className="on"/><i className={step>=2?"on":""}/></div></div>
       <h2>{step===1?"Troque de galeria aqui":"Baixe a galeria inteira"}</h2>
-      <p>{step===1?"Use este seletor para navegar entre as pastas do projeto sem voltar para a visão geral.":"Use “Baixar todas” para salvar todas as fotos desta galeria de uma só vez."}</p>
+      <p>{step===1?"Use este seletor para navegar entre as galerias do projeto sem voltar para a visão geral.":"Use “Baixar todas” para salvar todas as fotos desta galeria de uma só vez."}</p>
       <div className="gc-tour-actions">
         <button type="button" className="gc-tour-skip" onClick={onClose}>Pular</button>
         <button type="button" className="gc-tour-next" onClick={onNext}>{step===1?"Próximo":"Concluir"} <span><ChevronRightIcon size={16}/></span></button>

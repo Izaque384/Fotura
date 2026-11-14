@@ -94,10 +94,10 @@ export async function GET(req: NextRequest) {
 
   const capaPasta = req.nextUrl.searchParams.get("capaPasta")?.trim();
   if (capaPasta) {
-    if (!uuidValido(capaPasta)) return json({ error: "Pasta inválida." }, 400);
+    if (!uuidValido(capaPasta)) return json({ error: "Galeria inválida." }, 400);
     const { data: pasta } = await supabase.from("galerias").select("id").eq("id", capaPasta)
       .eq("projeto_id", projeto).eq("user_id", user.id).maybeSingle();
-    if (!pasta) return json({ error: "Pasta não encontrada." }, 404);
+    if (!pasta) return json({ error: "Galeria não encontrada." }, 404);
 
     const { data: catalogo, error: catalogError } = await listarCatalogoGaleriaHibrido(supabase, user.id, capaPasta, "principal");
     if (catalogError || !catalogo) return json({ error: "Não foi possível carregar as fotos." }, 500);
@@ -126,7 +126,7 @@ export async function GET(req: NextRequest) {
     .select("id,slug,titulo,capa,ordem,ordem_fotos,visivel,etapa,prova,criado_em,entrega_publicada_em")
     .eq("projeto_id", projeto).eq("user_id", user.id)
     .order("ordem", { ascending: true }).order("criado_em", { ascending: true });
-  if (pastasError) return json({ error: "Não foi possível carregar as pastas." }, 500);
+  if (pastasError) return json({ error: "Não foi possível carregar as galerias." }, 500);
 
   const ids = (pastas ?? []).map((g) => String(g.id));
   const refs = (pastas ?? []).map((g) => publicGalleryRef(String(g.slug || "pasta"), String(g.id)));
@@ -318,7 +318,7 @@ export async function PATCH(req: NextRequest) {
       const { data: permitidas, error: pastasErro } = await supabase.from("galerias").select("id")
         .eq("projeto_id", body.projeto).eq("user_id", user.id).eq("visivel", true).in("id", ids);
       if (pastasErro || (permitidas ?? []).length !== ids.length) {
-        return json({ error: "As fotos da abertura devem pertencer a pastas publicadas deste projeto." }, 400);
+        return json({ error: "As fotos da abertura devem pertencer a galerias publicadas deste projeto." }, 400);
       }
       const verificacoes = await Promise.all(abertura.fotos.map(async (foto) => {
         const { data, error } = await listarCatalogoGaleriaHibrido(supabase, user.id, foto.pastaId, "principal");
@@ -344,7 +344,7 @@ export async function PATCH(req: NextRequest) {
     }
     const { data: pasta } = await supabase.from("galerias").select("id").eq("id", body.capaPastaId)
       .eq("projeto_id", body.projeto).eq("user_id", user.id).maybeSingle();
-    if (!pasta) return json({ error: "A pasta da capa não pertence ao projeto." }, 400);
+    if (!pasta) return json({ error: "A galeria da capa não pertence ao projeto." }, 400);
     const { data: encontrados, error: coverError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.capaPastaId, "principal");
     if (coverError) return json({ error: "Não foi possível verificar a foto de capa." }, 503);
     if (!(encontrados ?? []).some((item) => item.nome === body.capaArquivo)) {
@@ -383,7 +383,7 @@ export async function PATCH(req: NextRequest) {
   const atualizarPastas = Object.fromEntries(Object.entries(update).filter(([campo])=>camposPasta.includes(campo)));
   if(Object.keys(atualizarPastas).length){
     const sincronizacao=await supabase.from("galerias").update(atualizarPastas).eq("projeto_id",body.projeto).eq("user_id",user.id);
-    if(sincronizacao.error)return json({error:"O projeto foi salvo, mas não foi possível atualizar todas as pastas. Salve novamente antes de compartilhar."},500);
+    if(sincronizacao.error)return json({error:"O projeto foi salvo, mas não foi possível atualizar todas as galerias. Salve novamente antes de compartilhar."},500);
   }
 
   const { data: pastas } = await supabase.from("galerias").select("id").eq("projeto_id", body.projeto).eq("user_id", user.id);
@@ -496,13 +496,13 @@ export async function POST(req: NextRequest) {
   if (body.acao === "criar_pasta") {
     if (!uuidValido(body.projetoId)) return json({ error: "Projeto inválido." }, 400);
     const nome = body.nome?.trim().slice(0, 120) ?? "";
-    if (!nome) return json({ error: "Informe o nome da pasta." }, 400);
+    if (!nome) return json({ error: "Informe o nome da galeria." }, 400);
     const p = await projetoDoUsuario(body.projetoId!, user.id);
     if (!p) return json({ error: "Projeto não encontrado." }, 404);
     if (p.modelo === "ensaio" || p.modelo === "entrega") {
       const { count, error: countError } = await supabase.from("galerias").select("id", { count: "exact", head: true }).eq("projeto_id", body.projetoId).eq("user_id", user.id);
       if (countError) return json({ error: "Não foi possível verificar a galeria do projeto." }, 500);
-      if ((count ?? 0) > 0) return json({ error: "Este modelo utiliza uma galeria única. Para várias galerias, escolha Projeto com pastas ao criar um novo projeto." }, 409);
+      if ((count ?? 0) > 0) return json({ error: "Este modelo utiliza uma galeria única. Para várias galerias, escolha Projeto com galerias ao criar um novo projeto." }, 409);
     }
     const { data: ordemData } = await supabase.from("galerias").select("ordem").eq("projeto_id", body.projetoId).eq("user_id", user.id).order("ordem", { ascending: false }).limit(1);
     const ordem = Number(ordemData?.[0]?.ordem ?? -1) + 1;
@@ -528,7 +528,7 @@ export async function POST(req: NextRequest) {
       ordem,
       visivel: true,
     }).select("id,slug,titulo,ordem,visivel").single();
-    if (error || !data) return json({ error: "Não foi possível criar a pasta." }, 500);
+    if (error || !data) return json({ error: "Não foi possível criar a galeria." }, 500);
     await supabase.from("galeria_projetos").update({ atualizado_em: new Date().toISOString() }).eq("id", body.projetoId).eq("user_id", user.id);
     return json({ pasta: data }, 201);
   }
@@ -539,10 +539,10 @@ export async function POST(req: NextRequest) {
     }
     const { data: existentes } = await supabase.from("galerias").select("id").eq("projeto_id", body.projetoId).eq("user_id", user.id);
     const ids = (existentes ?? []).map((g) => String(g.id));
-    if (ids.length !== body.pastas.length || ids.some((id) => !body.pastas!.includes(id))) return json({ error: "A lista de pastas está incompleta." }, 400);
+    if (ids.length !== body.pastas.length || ids.some((id) => !body.pastas!.includes(id))) return json({ error: "A lista de galerias está incompleta." }, 400);
     for (let i = 0; i < body.pastas.length; i++) {
       const { error } = await supabase.from("galerias").update({ ordem: i }).eq("id", body.pastas[i]).eq("projeto_id", body.projetoId).eq("user_id", user.id);
-      if (error) return json({ error: "Não foi possível reordenar as pastas." }, 500);
+      if (error) return json({ error: "Não foi possível reordenar as galerias." }, 500);
     }
     await supabase.from("galeria_projetos").update({ atualizado_em: new Date().toISOString() }).eq("id", body.projetoId).eq("user_id", user.id);
     return json({ ok: true });
@@ -550,14 +550,14 @@ export async function POST(req: NextRequest) {
 
   if (body.acao === "atualizar_pasta") {
     if (!uuidValido(body.projetoId) || !uuidValido(body.pastaId)) {
-      return json({ error: "Pasta inválida." }, 400);
+      return json({ error: "Galeria inválida." }, 400);
     }
     const projeto = await projetoDoUsuario(body.projetoId!, user.id);
     if (!projeto) return json({ error: "Projeto não encontrado." }, 404);
 
     const { data: pastaAtual } = await supabase.from("galerias").select("id")
       .eq("id", body.pastaId).eq("projeto_id", body.projetoId).eq("user_id", user.id).maybeSingle();
-    if (!pastaAtual) return json({ error: "Pasta não encontrada." }, 404);
+    if (!pastaAtual) return json({ error: "Galeria não encontrada." }, 404);
     const update: Record<string, unknown> = {};
     if (body.capaArquivo !== undefined) {
       if (body.capaArquivo === null) update.capa = null;
@@ -569,14 +569,14 @@ export async function POST(req: NextRequest) {
         const { data: encontrados, error: storageError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.pastaId, "principal");
         if (storageError) return json({ error: "Não foi possível verificar a foto." }, 503);
         if (!(encontrados ?? []).some((item) => item.nome === arquivo)) {
-          return json({ error: "A foto escolhida não pertence a esta pasta." }, 404);
+          return json({ error: "A foto escolhida não pertence a esta galeria." }, 404);
         }
         update.capa = arquivo;
       }
     }
     if (body.nome !== undefined) {
       const nome = body.nome.trim().slice(0, 120);
-      if (!nome) return json({ error: "Informe o nome da pasta." }, 400);
+      if (!nome) return json({ error: "Informe o nome da galeria." }, 400);
       update.titulo = nome;
     }
     if (typeof body.visivel === "boolean") update.visivel = body.visivel;
@@ -593,8 +593,8 @@ export async function POST(req: NextRequest) {
       .eq("user_id", user.id)
       .select("id,titulo,visivel,capa,ordem_fotos")
       .maybeSingle();
-    if (error) return json({ error: "Não foi possível atualizar a pasta." }, 500);
-    if (!pasta) return json({ error: "Pasta não encontrada." }, 404);
+    if (error) return json({ error: "Não foi possível atualizar a galeria." }, 500);
+    if (!pasta) return json({ error: "Galeria não encontrada." }, 404);
 
     await supabase.from("galeria_projetos")
       .update({ atualizado_em: new Date().toISOString() })
@@ -612,7 +612,7 @@ export async function POST(req: NextRequest) {
     if (!p) return json({ error: "Projeto não encontrado." }, 404);
     if (p.capa_arquivo) return json({ ok: true, alterada: false });
     const { data: pasta } = await supabase.from("galerias").select("id").eq("id", body.pastaId).eq("projeto_id", body.projetoId).eq("user_id", user.id).maybeSingle();
-    if (!pasta) return json({ error: "Pasta inválida." }, 400);
+    if (!pasta) return json({ error: "Galeria inválida." }, 400);
     const { data: encontrados, error: storageError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.pastaId, "principal");
     if (storageError) return json({ error: "Não foi possível verificar a fotografia." }, 503);
     if (!(encontrados ?? []).some((item) => item.nome === body.arquivo)) {
