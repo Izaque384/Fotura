@@ -6,6 +6,17 @@ const root = process.cwd();
 const read = (p: string) => fs.readFileSync(path.join(root, p), "utf8");
 
 test.describe("arquitetura centrada em projetos", () => {
+  test("finalização de seleção valida fotos do R2 sem depender da listagem do Supabase Storage", () => {
+    const route = read("app/api/galeria/selecao/route.ts");
+    const catalog = read("lib/gallery-media-catalog.ts");
+    expect(route).toContain("listarCatalogoGaleriaHibrido");
+    expect(route).toContain('supabase, userId, galeria, "principal"');
+    expect(route).not.toContain('supabase.storage');
+    expect(route).toContain('if (finalizada)');
+    expect(route).toContain('if ([...referencias].some((nome) => !nomes.has(nome)))');
+    expect(catalog).toContain('fotura_media_objects');
+  });
+
   test("projeto é a unidade operacional principal", () => {
     const menu = read("app/MenuFotografo.tsx");
     const projetos = read("app/dashboard/projetos/page.tsx");
