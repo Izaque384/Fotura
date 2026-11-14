@@ -34,6 +34,8 @@ export async function POST(req: NextRequest) {
     phases.push({
       stage: "signature_structure",
       credentialParts: (parsed.searchParams.get("X-Amz-Credential") ?? "").split("/").length,
+      credentialKeyLength: (parsed.searchParams.get("X-Amz-Credential") ?? "").split("/")[0].length,
+      credentialKeyAscii: /^[A-Za-z0-9]+$/.test((parsed.searchParams.get("X-Amz-Credential") ?? "").split("/")[0]),
       queryHasEncodedSlash: /%2F/i.test(parsed.search),
       hasSignature: Boolean(parsed.searchParams.get("X-Amz-Signature")),
     });
