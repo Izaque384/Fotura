@@ -2,6 +2,7 @@ import "server-only";
 import { createServiceClient } from "./supabase-server";
 import { resolvePublicProjectRef } from "./project-public-ref.server";
 import { dataCalendarioExpirada } from "./date-only";
+import { caminhoCapaAtual } from "./project-cover-path.server";
 
 export type ProjectSocialPreview = {
   publicRef: string;
@@ -47,7 +48,9 @@ export async function loadProjectSocialPreview(ref: string): Promise<ProjectSoci
           .eq("visivel", true)
           .maybeSingle();
         if (galeria) {
-          capaPath = `${project.user_id}/${project.capa_galeria_id}/thumbs/${arquivo}`;
+          capaPath = await caminhoCapaAtual(
+            supabase, String(project.user_id), String(project.capa_galeria_id), arquivo
+          );
         }
       }
     }
