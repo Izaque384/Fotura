@@ -156,7 +156,7 @@ test("lightbox preserva dimensões na espera, no erro e após carregar a fotogra
   await page.locator(".gc-grid-img").first().click();
   const foto=page.locator(".gc-lightbox .gc-photo");
   await expect(foto).toBeVisible();
-  const tamanho=()=>foto.evaluate(el=>({width:el.offsetWidth,height:el.offsetHeight}));
+  const tamanho=()=>foto.evaluate(el=>({width:(el as HTMLElement).offsetWidth,height:(el as HTMLElement).offsetHeight}));
   const pronto=await tamanho();
   expect(pronto.width).toBeGreaterThan(200);
   expect(pronto.height).toBeGreaterThan(100);
@@ -167,7 +167,7 @@ test("lightbox preserva dimensões na espera, no erro e após carregar a fotogra
   await foto.evaluate(el=>el.classList.remove("failed"));
   expect(await tamanho()).toEqual(pronto);
   await page.setViewportSize({width:390,height:844});
-  await expect.poll(async()=>foto.evaluate(el=>el.offsetWidth)).toBeLessThanOrEqual(390);
+  await expect.poll(async()=>foto.evaluate(el=>(el as HTMLElement).offsetWidth)).toBeLessThanOrEqual(390);
   const mobile=await tamanho();
   expect(mobile.width).toBeLessThanOrEqual(370);
   expect(mobile.height).toBeLessThanOrEqual(670);
