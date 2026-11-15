@@ -28,7 +28,7 @@ test.describe("Fotura: UX dos projetos",()=>{
  });
  test("novas pastas herdam o modelo e alterações do projeto são sincronizadas",()=>{
   const api=read("app/api/projeto/workspace/route.ts");
-  for(const key of ["prova: p.prova","download_tamanho: p.download_tamanho","watermark_ativo: p.watermark_ativo","const atualizarPastas = Object.fromEntries","if(sincronizacao.error)"])expect(api).toContain(key);
+  for(const key of ["prova: p.prova","download_tamanho: p.download_tamanho","watermark_ativo: p.watermark_ativo","const atualizarPastas = Object.fromEntries","if (compartilhados.error)","if (provasAbertas.error)"])expect(api).toContain(key);
  });
  test("compartilhamento revisa o acesso antes de enviar o link",()=>{
   const codigo=read("app/dashboard/ProjectShareCenter.tsx");
