@@ -11,6 +11,7 @@ import { lerAbertura, caminhoVideoValido, VIDEO_ABERTURA_BUCKET, type FotoAbertu
 import { signPrivateMediaUrl, signPrivateMediaUrls } from "../../../../lib/media-storage";
 import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
 import { variantePublicaDaGaleria } from "../../../../lib/public-gallery-media-variant";
+import { caminhoCapaAtual } from "../../../../lib/project-cover-path.server";
 
 export const dynamic = "force-dynamic";
 
@@ -57,9 +58,10 @@ export async function GET(req: NextRequest) {
   let capaUrl: string | null = null;
   if (desbloqueada && !linkExpirado) {
     if (usarFotoCapaPublica && p.capa_galeria_id && p.capa_arquivo) {
-      const baseCapa = `${p.user_id}/${p.capa_galeria_id}`;
-      const caminhoCapa = `${baseCapa}/thumbs/${p.capa_arquivo}`;
-      capaUrl = await signPrivateMediaUrl(supabase, "fotos", caminhoCapa, 60 * 60);
+      const caminhoCapa = await caminhoCapaAtual(
+        supabase, String(p.user_id), String(p.capa_galeria_id), String(p.capa_arquivo)
+      );
+      if (caminhoCapa) capaUrl = await signPrivateMediaUrl(supabase, "fotos", caminhoCapa, 60 * 60);
     } else if (usarHeroEstudio) {
       capaUrl = heroPresetDataUrl(heroCor, heroEstilo);
     }
