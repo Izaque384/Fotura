@@ -11,6 +11,7 @@ import { heroPresetDataUrl, estiloHeroEfetivo } from "../../../../lib/gallery-he
 import { ordenarFotos } from "../../../../lib/gallery-photo-order";
 import { signPrivateMediaUrl, signPrivateMediaUrls } from "../../../../lib/media-storage";
 import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
+import { variantePublicaDaGaleria } from "../../../../lib/public-gallery-media-variant";
 
 export const dynamic = "force-dynamic";
 const EXPIRA_SEG = 3600;
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data: g, error: galleryError } = await supabase
     .from("galerias")
-    .select("user_id,capa,visivel,link_ate,tem_senha,etapa,prova,ordem_fotos,download_ativo,download_tamanho,download_pin_hash")
+    .select("id,user_id,capa,visivel,link_ate,tem_senha,etapa,prova,entrega_publicada_em,ordem_fotos,download_ativo,download_tamanho,download_pin_hash")
     .eq("id", galeria)
     .maybeSingle();
 
@@ -54,8 +55,13 @@ export async function GET(req: NextRequest) {
 
   const dono = g.user_id as string;
   const etapa = (g.etapa as string | null) || (g.prova ? "prova" : "entrega");
-  const entregaFinalDeProva = etapa === "entrega" && Boolean(g.prova);
-  const base = entregaFinalDeProva ? `${dono}/${galeria}/entrega` : `${dono}/${galeria}`;
+  let variante: "principal" | "entrega";
+  try { variante = await variantePublicaDaGaleria(supabase, { ...g, id: galeria }); }
+  catch (error) {
+    registrarErro("gallery.signed.variant", req, error, { galeria });
+    return json({ error: "Não foi possível verificar a entrega publicada." }, 503);
+  }
+  const base = variante === "entrega" ? `${dono}/${galeria}/entrega` : `${dono}/${galeria}`;
   const originalHabilitado = (etapa === "entrega" || !g.prova) && Boolean(g.download_ativo);
 
   // Uma URL assinada da imagem original também permite salvá-la: manter PIN e
@@ -108,7 +114,6 @@ export async function GET(req: NextRequest) {
 
   type FotoListada={name:string;largura?:number;altura?:number;bytes?:number;mimeType?:string|null;criadoEm?:string|null};
   let lista:FotoListada[]=[];
-  const variante=entregaFinalDeProva?"entrega":"principal";
   const { data: catalogo, error: catalogoError } = await listarCatalogoGaleriaHibrido(supabase, dono, galeria, variante);
   if (!catalogoError && Array.isArray(catalogo)) {
     lista = catalogo.map((item: {nome?:unknown;largura?:unknown;altura?:unknown;bytes?:unknown;mime_type?:unknown;criado_em?:unknown}) => ({
