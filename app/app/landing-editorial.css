@@ -1100,3 +1100,110 @@
 @media(prefers-reduced-motion:reduce){
   .lp2 .lp2-hero-video{display:none}
 }
+
+
+/* Demonstração da landing — espelha a arquitetura atual do workspace Fotura.
+   Escopo exclusivo da prévia editorial; não altera o dashboard de verdade. */
+.lp2-demo-frame{background:#ebe8f1;border:1px solid rgba(207,199,224,.7);box-shadow:0 28px 82px rgba(0,0,0,.28)}
+.lp2-demo-browser{background:#f8f7fb;color:#25283c}
+.lp2-browserbar{background:#f6f5f9;border-bottom-color:#e4dfed}
+.lp2-browserbar i{background:#d0c9da}
+.lp2-demo-side{background:linear-gradient(155deg,#f7f6fc 0%,#eeebf6 100%);border-right-color:#e5dff0}
+.lp2-demo-logo{color:#262940}
+.lp2-demo-navitem{border-radius:8px;color:#686f86}
+.lp2-demo-navitem.on{background:#fff;color:#563eac;box-shadow:0 3px 14px rgba(68,52,121,.08)}
+.lp2-real-project-stats>div,.lp2-real-project-row,.lp2-real-folder-row{border-color:#e5dfef;background:#fff}
+.lp2-real-workspace{color:#292d41}
+.lp2-real-workspace-back{display:inline-flex;margin-bottom:10px;padding:5px 9px;border:1px solid #ded4ee;border-radius:8px;background:#f8f4ff;color:#6d56a0;font-size:7px;font-weight:800}
+.lp2-real-workspace-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:11px}
+.lp2-real-workspace-head>div:first-child{min-width:0}
+.lp2-real-workspace-head small{display:block;color:#927cb2;font-size:6px;font-weight:800;letter-spacing:1px}
+.lp2-real-workspace-head strong{display:block;margin-top:5px;color:#262b40;font-size:16px;font-weight:850;line-height:1.2}
+.lp2-real-workspace-actions{display:flex;align-items:center;justify-content:flex-end;gap:5px;flex:none}
+.lp2-real-workspace-actions .lp2-real-primary{background:linear-gradient(105deg,#267df2,#7548e2);border-radius:8px;padding:8px 9px;font-size:6.5px}
+.lp2-real-workspace-actions .lp2-real-secondary{border-radius:8px;padding:8px 9px;background:#fff;border:1px solid #ded9eb;color:#66607b;font-size:6.5px;font-weight:800;white-space:nowrap}
+.lp2-real-workspace-tabs{display:flex;align-items:center;gap:5px;margin:0 0 11px;padding:5px;border:1px solid #e5dfef;border-radius:10px;background:#fff}
+.lp2-real-workspace-tabs span{display:inline-flex;align-items:center;justify-content:center;min-height:27px;padding:0 9px;border-radius:7px;color:#7f7d95;font-size:7px;font-weight:800;white-space:nowrap}
+.lp2-real-workspace-tabs span.on{background:#f0eafa;color:#644ba8;border:1px solid #e6def6}
+.lp2-real-workspace-overview{display:grid;grid-template-columns:1.16fr 1fr;gap:7px;margin-bottom:8px}
+.lp2-real-workspace-overview-card{min-height:65px;display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #e6e1eb;border-radius:11px;background:#fff;overflow:hidden}
+.lp2-real-workspace-overview-photo{width:48px;height:49px;flex:none;border-radius:7px;background-size:cover;background-position:center}
+.lp2-real-workspace-overview-card>div:not(.lp2-real-workspace-overview-photo){min-width:0}
+.lp2-real-workspace-overview-card small{display:block;color:#9484b0;font-size:5.5px;font-weight:800;letter-spacing:.65px}
+.lp2-real-workspace-overview-card strong{display:block;margin-top:3px;font-size:8.5px;line-height:1.25;color:#30324a}
+.lp2-real-workspace-overview-card.next span{display:block;margin-top:5px;font-size:6.4px;color:#674cc0;font-weight:800}
+.lp2-real-workspace-overview-card.link{display:block}
+.lp2-real-workspace-overview-card.link p{margin:3px 0 6px;color:#88849c;font-size:5.9px;line-height:1.4}
+.lp2-real-workspace-copy{display:flex;justify-content:space-between;align-items:center;gap:5px;overflow:hidden;white-space:nowrap;padding:4px 5px;border:1px solid #e9e4f1;border-radius:5px;color:#6f7184;font-size:5.5px}
+.lp2-real-workspace-copy b{padding:3px 4px;border-radius:4px;background:#f3eefb;color:#634db0}
+.lp2-real-workspace-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:12px}
+.lp2-real-workspace-metrics span{display:flex;align-items:center;gap:6px;min-width:0;padding:9px;border:1px solid #e7e2ed;border-radius:9px;background:#fff;color:#777c92;font-size:6.5px;font-weight:700}
+.lp2-real-workspace-metrics b{font-size:14px;color:#33394e}
+.lp2-real-workspace .lp2-real-folders-head{margin:1px 0 9px}
+.lp2-real-workspace .lp2-real-folders-head small:first-child{color:#927bb6;letter-spacing:.6px;font-size:6px;font-weight:800}
+.lp2-real-workspace .lp2-real-folders-head strong{margin:3px 0;font-size:11px}
+.lp2-real-workspace-published{color:#698d79!important;font-size:7px!important;font-weight:800}
+.lp2-real-workspace .lp2-real-folder-list{gap:6px}
+.lp2-real-workspace-folder{display:grid;grid-template-columns:44px minmax(65px,1fr) auto auto 14px;gap:9px;min-height:56px;padding:6px 8px;align-items:center}
+.lp2-real-workspace-folder .lp2-real-folder-cover,.lp2-real-delivery-row .lp2-real-folder-cover{width:44px;height:42px;border-radius:8px}
+.lp2-real-workspace-folder .lp2-real-folder-info strong,.lp2-real-delivery-row .lp2-real-folder-info strong{font-size:8px}
+.lp2-real-workspace-folder .lp2-real-folder-info small,.lp2-real-delivery-row .lp2-real-folder-info small{font-size:6px}
+.lp2-real-workspace-pill{display:inline-flex;align-items:center;justify-content:center;width:max-content;max-width:100%;white-space:nowrap;padding:4px 6px;border-radius:6px;border:1px solid #e3dcf3;background:#f6f1fb;color:#765e9e!important;font-size:6px!important;font-weight:800}
+.lp2-real-workspace-pill.open{background:#fff4e6;color:#986a37!important;border-color:#f0e2c8}
+.lp2-real-workspace-pill.prep{background:#edf3ff;color:#4c6bc1!important;border-color:#dce6fb}
+.lp2-real-workspace-pill.done{background:#ecf9f2;color:#4e936f!important;border-color:#d9eee3}
+.lp2-real-workspace-row-action{color:#6553a9!important;font-size:6.5px!important;font-weight:800;white-space:nowrap}
+.lp2-real-workspace-menu-dots{font-size:12px!important;color:#888197!important;letter-spacing:0}
+.lp2-real-public-current{background:#f6f3fa;padding-bottom:58px}
+.lp2-real-public-current .lp2-real-public-hero{min-height:138px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:18px}
+.lp2-real-public-current .lp2-real-public-hero:before{background:rgba(9,10,21,.52)}
+.lp2-real-public-current .lp2-real-public-brand{font-size:9px;text-align:center;letter-spacing:1.25px}
+.lp2-real-public-current .lp2-real-public-hero strong{font-size:22px}
+.lp2-real-public-current .lp2-real-public-head{display:flex;justify-content:flex-start;gap:8px;min-height:56px;padding:9px 14px;border:0;border-bottom:1px solid #e2d9ee;background:#fff}
+.lp2-real-public-avatar{width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:9px;background:#253349;color:#fff;font-size:13px;font-weight:850}
+.lp2-real-public-title{flex:1;min-width:0}
+.lp2-real-public-title strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#292e40;font-size:9px}
+.lp2-real-public-title span{display:block;margin-top:3px;color:#8a859a;font-size:6px;font-weight:800;letter-spacing:.4px}
+.lp2-real-public-count{flex:none;border:1px solid #e1daeb;background:#f8f6fb;border-radius:99px;padding:7px;color:#686b82!important;font-size:7px;font-weight:800}
+.lp2-real-public-more{display:grid;place-items:center;flex:none;width:27px;height:27px;border-radius:50%;border:1px solid #e1daeb;background:#fff;color:#494a65!important;font-size:11px;letter-spacing:1px}
+.lp2-real-public-gallery-name{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:12px 14px;color:#343a51;font-size:9px;font-weight:800}
+.lp2-real-public-gallery-name span{color:#9290a3;font-size:6px;font-weight:700}
+.lp2-real-public-current .lp2-real-public-grid{grid-template-columns:repeat(3,1fr);gap:2px;background:#e2dbea}
+.lp2-real-public-current .lp2-real-public-grid>div{min-height:103px}
+.lp2-real-public-current .lp2-real-check{width:22px;height:22px;min-width:22px;min-height:22px;aspect-ratio:1/1;border:2px solid rgba(255,255,255,.8);box-sizing:border-box;box-shadow:0 2px 7px rgba(15,12,34,.26);font-size:10px}
+.lp2-real-public-current .lp2-real-check.on{background:linear-gradient(135deg,#258ffb,#5e38ef);box-shadow:0 0 0 2px rgba(89,93,239,.22)}
+.lp2-real-public-current .lp2-real-selection-bar{bottom:8px;width:min(280px,calc(100% - 32px));justify-content:space-between;padding:7px 8px 7px 12px;border:1px solid #e3d9ef;border-radius:15px;background:rgba(250,248,253,.98);box-shadow:0 7px 24px rgba(45,31,65,.14);color:#3b3d55;font-size:8px;font-weight:800}
+.lp2-real-public-current .lp2-real-selection-bar b{padding:9px 11px;font-size:8px}
+.lp2-real-delivery-section{padding:13px;border:1px solid #e4dfeb;border-radius:12px;background:#fff}
+.lp2-real-delivery-heading{margin-bottom:14px}
+.lp2-real-delivery-heading small{display:block;margin-bottom:4px;color:#9585b1;font-size:7px;font-weight:850;letter-spacing:.7px}
+.lp2-real-delivery-heading strong{display:block;color:#2f3449;font-size:13px}
+.lp2-real-delivery-heading p{margin:5px 0 0;color:#828398;font-size:7px}
+.lp2-real-delivery-list{display:grid;gap:8px}
+.lp2-real-delivery-row{display:grid;grid-template-columns:44px minmax(68px,1fr) auto auto;gap:8px;align-items:center;min-height:61px;padding:7px 8px;border:1px solid #e7e2ed;border-radius:10px;background:#fff}
+.lp2-real-delivery-section .lp2-real-project-share{margin-top:13px}
+@media(max-width:720px){
+  .lp2-real-workspace-head{align-items:flex-start;flex-direction:column;gap:8px}
+  .lp2-real-workspace-head strong{font-size:14px}
+  .lp2-real-workspace-actions{flex-wrap:wrap;justify-content:flex-start}
+  .lp2-real-workspace-actions .more{display:none}
+  .lp2-real-workspace-tabs{overflow-x:auto;scrollbar-width:none}
+  .lp2-real-workspace-tabs span{font-size:6.5px;padding:0 7px}
+  .lp2-real-workspace-overview{grid-template-columns:1fr}
+  .lp2-real-workspace-overview-card.link{display:none}
+  .lp2-real-workspace-metrics span{padding:7px;font-size:5.5px;flex-direction:column;align-items:flex-start;gap:3px}
+  .lp2-real-workspace-metrics b{font-size:13px}
+  .lp2-real-workspace-folder,.lp2-real-delivery-row{grid-template-columns:42px minmax(0,1fr) auto;gap:7px}
+  .lp2-real-workspace-folder .lp2-real-folder-cover,.lp2-real-delivery-row .lp2-real-folder-cover{width:42px;height:40px}
+  .lp2-real-workspace-row-action,.lp2-real-workspace-menu-dots{display:none}
+  .lp2-real-workspace-pill{font-size:5.5px!important;padding:4px 5px}
+  .lp2-real-delivery-section{padding:10px}
+  .lp2-real-public-current .lp2-real-public-grid{grid-template-columns:repeat(2,1fr)}
+  .lp2-real-public-current .lp2-real-public-grid>div{min-height:112px}
+}
+@media(max-width:380px){
+  .lp2-real-workspace-folder,.lp2-real-delivery-row{grid-template-columns:38px minmax(0,1fr)}
+  .lp2-real-workspace-pill{grid-column:2;grid-row:2;justify-self:start}
+  .lp2-real-workspace-folder .lp2-real-folder-cover,.lp2-real-delivery-row .lp2-real-folder-cover{width:38px;height:38px}
+  .lp2-real-public-gallery-name span{display:none}
+}
