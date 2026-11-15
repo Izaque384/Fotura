@@ -91,3 +91,28 @@ test("lightbox mobile evita controles sobrepostos e respeita largura da tela", a
   await lightbox.getByRole("button", { name: "Próxima foto" }).click();
   await expect(page.getByRole("dialog", { name: "Foto 2 de 2" })).toBeVisible();
 });
+
+
+test("transições do lightbox preservam navegação e descarga de originais", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await abrirGaleria(page);
+  await page.locator(".gc-grid-img").first().click();
+  const lightbox = page.locator(".gc-lightbox");
+  await expect(lightbox).toHaveCSS("animation-name", "ft-lightbox-reveal");
+  await expect(lightbox.locator(".gc-photo")).toHaveCSS("animation-name", "ft-photo-reveal");
+  await expect(lightbox.getByRole("button", { name: "Baixar foto original" })).toBeVisible();
+  await lightbox.getByRole("button", { name: "Próxima foto" }).click();
+  await expect(page.getByRole("dialog", { name: "Foto 2 de 2" })).toBeVisible();
+  await expect(lightbox.locator(".gc-photo")).toHaveCount(1);
+});
+
+test("modo de movimento reduzido desativa as animações fotográficas", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await abrirGaleria(page);
+  await page.locator(".gc-grid-img").first().click();
+  const lightbox = page.locator(".gc-lightbox");
+  await expect(lightbox).toHaveCSS("animation-name", "none");
+  await expect(lightbox.locator(".gc-photo")).toHaveCSS("animation-name", "none");
+  await lightbox.getByRole("button", { name: "Fechar foto" }).click();
+  await expect(lightbox).toHaveCount(0);
+});
