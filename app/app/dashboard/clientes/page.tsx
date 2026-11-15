@@ -209,18 +209,28 @@ export default function ClientesPage() {
     return () => URL.revokeObjectURL(url);
   }, [imagem]);
 
+  // A ficha do cliente bloqueia o fundo; o FoturaDrawer gerencia o bloqueio
+  // do editor separadamente. Empilhar os dois locks deixava overflow:hidden
+  // após cadastrar um cliente e navegar para outra tela via SPA.
   useEffect(() => {
-    if (!selecionado && !editor) return;
+    if (!selecionado || editor) return;
     const old = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = old; };
+  }, [selecionado, editor]);
+
+  // Reinstalar o atalho ao mudar flags de salvamento/exclusão não deve
+  // reinstalar o scroll lock nem capturar um overflow já bloqueado.
+  useEffect(() => {
+    if (!selecionado || editor) return;
     const keydown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !salvando && !excluindo) {
-        if (editor) setEditor(null);
-        else { setSelecionado(null); setConfirmarExclusao(false); }
+        setSelecionado(null);
+        setConfirmarExclusao(false);
       }
     };
     document.addEventListener("keydown", keydown);
-    return () => { document.body.style.overflow = old; document.removeEventListener("keydown", keydown); };
+    return () => { document.removeEventListener("keydown", keydown); };
   }, [selecionado, editor, salvando, excluindo]);
 
   const projetoPorId = useMemo(() => {
