@@ -44,12 +44,15 @@ async function projetoDoUsuario(projeto: string, userId: string) {
   return data ?? null;
 }
 
-async function contarFotos(userId: string, pasta: string) {
+async function contarFotos(userId: string, pasta: {
+  id: string; etapa: string | null; prova: boolean | null; entrega_publicada_em: string | null;
+}) {
   const supabase = createServiceClient();
+  const variante = await variantePublicaDaGaleria(supabase, pasta);
   const { data, error } = await supabase.rpc("listar_fotos_galeria_storage", {
-    p_galeria: pasta,
+    p_galeria: pasta.id,
     p_user: userId,
-    p_variante: "principal",
+    p_variante: variante,
   });
   return error || !Array.isArray(data) ? 0 : data.length;
 }
@@ -154,7 +157,9 @@ export async function GET(req: NextRequest) {
     urlsCapasPastas(user.id, pastas ?? []),
   ]);
 
-  const contagens = await Promise.all((pastas ?? []).map((g) => contarFotos(user.id, String(g.id))));
+  const contagens = await Promise.all((pastas ?? []).map((g) => contarFotos(user.id, {
+    ...g, id: String(g.id),
+  })));
   const selecaoPorPasta = new Map((selecoesR.data ?? []).map((s) => [String(s.galeria), s]));
   const planoCodigo=String(assinaturaR.data?.plano_codigo??"sem_plano");
   const assinaturaAtiva=["active","trialing","past_due"].includes(String(assinaturaR.data?.status??""));
