@@ -37,6 +37,9 @@ export async function GET(req: NextRequest) {
   }
   if (!g || g.visivel === false) return json({ error: "Galeria não encontrada." }, 404);
 
+  // Publicada a entrega, a etapa final prevalece mesmo se configurações
+  // do projeto tiverem regravado a flag legada de prova.
+  const emProva = Boolean(g.prova) && g.etapa !== "entrega" && !g.entrega_publicada_em;
   const linkAte = (g.link_ate as string | null) ?? null;
   const linkExpirado = dataCalendarioExpirada(linkAte);
   const protegida = Boolean(g.tem_senha);
@@ -48,7 +51,7 @@ export async function GET(req: NextRequest) {
       .eq("id", g.user_id).maybeSingle(),
     supabase.from("assinaturas").select("plano_codigo,status")
       .eq("user_id", g.user_id).maybeSingle(),
-    desbloqueada && !linkExpirado
+    emProva && desbloqueada && !linkExpirado
       ? supabase.from("selecoes").select("fotos,finalizada,comentarios").eq("galeria", galeria).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
@@ -75,7 +78,7 @@ export async function GET(req: NextRequest) {
   );
 
   let selecao: { fotos: string[]; finalizada: boolean; comentarios: Record<string, string> } | null = null;
-  if (desbloqueada && !linkExpirado) {
+  if (emProva && desbloqueada && !linkExpirado) {
     const { data: s, error: selecaoError } = selecaoRes;
 
     if (selecaoError) {
@@ -97,7 +100,7 @@ export async function GET(req: NextRequest) {
     galeria: {
       titulo: (g.titulo as string) || "Galeria",
       capa: (g.capa as string | null) ?? null,
-      prova: Boolean(g.prova),
+      prova: emProva,
       limite: (g.limite as number) ?? 0,
       prazo: (g.prazo as string | null) ?? null,
       linkAte,
