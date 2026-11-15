@@ -10,6 +10,7 @@ import { estiloHeroEfetivo, heroPresetDataUrl } from "../../../../lib/gallery-he
 import { lerAbertura, caminhoVideoValido, VIDEO_ABERTURA_BUCKET, type FotoAberturaPublica } from "../../../../lib/cinematic-intro";
 import { signPrivateMediaUrl, signPrivateMediaUrls } from "../../../../lib/media-storage";
 import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
+import { variantePublicaDaGaleria } from "../../../../lib/public-gallery-media-variant";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
   const [{ data: perfil }, { data: assinatura }, { data: pastas }] = await Promise.all([
     supabase.from("perfis").select("nome_estudio,logo_url,cor_hero,hero_galeria_ativo,hero_galeria_estilo,hero_foto_capa_ativo,stripe_recebimentos_ativo").eq("id", p.user_id).maybeSingle(),
     supabase.from("assinaturas").select("plano_codigo,status").eq("user_id", p.user_id).maybeSingle(),
-    supabase.from("galerias").select("id,slug,titulo,capa,ordem,visivel,etapa,prova").eq("projeto_id", resolvido.id).eq("visivel", true).order("ordem", { ascending: true }).order("criado_em", { ascending: true }),
+    supabase.from("galerias").select("id,slug,titulo,capa,ordem,visivel,etapa,prova,entrega_publicada_em").eq("projeto_id", resolvido.id).eq("visivel", true).order("ordem", { ascending: true }).order("criado_em", { ascending: true }),
   ]);
 
   const statusAssinatura = String(assinatura?.status || "active");
@@ -66,26 +67,38 @@ export async function GET(req: NextRequest) {
 
   const miniaturas = new Map<string, string | null>();
   if (desbloqueada && !linkExpirado && (pastas?.length ?? 0) > 0) {
-    const arquivosPorGaleria = new Map<string,string>();
-    await Promise.all((pastas ?? []).map(async (galeria) => {
-      const galeriaId=String(galeria.id);
-      const capa=typeof galeria.capa==="string"&&galeria.capa?galeria.capa:null;
-      if(capa){arquivosPorGaleria.set(galeriaId,capa);return}
-      const {data}=await listarCatalogoGaleriaHibrido(supabase, String(p.user_id), galeriaId, "principal");
-      const primeira=Array.isArray(data)&&data.length?String((data[0] as {nome?:unknown}).nome||""):"";
-      if(primeira)arquivosPorGaleria.set(galeriaId,primeira);
-    }));
+    const arquivosPorGaleria = new Map<string, { nome: string; variante: "principal" | "entrega" }>();
+    try {
+      await Promise.all((pastas ?? []).map(async (galeria) => {
+        const galeriaId = String(galeria.id);
+        const variante = await variantePublicaDaGaleria(supabase, {
+          ...galeria, id: galeriaId,
+        });
+        // Use the published catalog for selection deliveries. The proof cover
+        // may no longer be among the 28 final images, so prefer a final image.
+        const { data: catalogo, error: erroCatalogo } = await listarCatalogoGaleriaHibrido(
+          supabase, String(p.user_id), galeriaId, variante
+        );
+        if (erroCatalogo) throw erroCatalogo;
+        const nomes = (catalogo ?? []).map(foto => String(foto.nome || "")).filter(Boolean);
+        const capaAntiga = typeof galeria.capa === "string" ? galeria.capa : "";
+        const nome = capaAntiga && nomes.includes(capaAntiga) ? capaAntiga : nomes[0];
+        if (nome) arquivosPorGaleria.set(galeriaId, { nome, variante });
+      }));
+    } catch {
+      return baseJson({ error: "Não foi possível verificar as miniaturas publicadas." }, 503);
+    }
 
-    const caminhos:string[]=[];
-    for(const [galeriaId,nome] of arquivosPorGaleria){
-      const base=`${p.user_id}/${galeriaId}`;
+    const caminhos: string[] = [];
+    for (const [galeriaId, { nome, variante }] of arquivosPorGaleria) {
+      const base = `${p.user_id}/${galeriaId}${variante === "entrega" ? "/entrega" : ""}`;
       caminhos.push(`${base}/thumbs/${nome}`);
     }
     const signed = await signPrivateMediaUrls(supabase, "fotos", caminhos, 60 * 60);
     const mapa = new Map(Object.entries(signed));
-    for(const [galeriaId,nome] of arquivosPorGaleria){
-      const base=`${p.user_id}/${galeriaId}`;
-      miniaturas.set(galeriaId,mapa.get(`${base}/thumbs/${nome}`)??null);
+    for (const [galeriaId, { nome, variante }] of arquivosPorGaleria) {
+      const base = `${p.user_id}/${galeriaId}${variante === "entrega" ? "/entrega" : ""}`;
+      miniaturas.set(galeriaId, mapa.get(`${base}/thumbs/${nome}`) ?? null);
     }
   }
 
