@@ -41,4 +41,18 @@ test.describe("Fotura: UX dos projetos",()=>{
   for(const t of ['.eq("projeto_id",projeto)',"origem.etapa!==\"prova\"","dest.etapa!==\"prova\"",'from("selecoes")','from("vendas_fotos")','from("galeria_foto_metadata")','b.fotos.length>25'])expect(rota).toContain(t);
   for(const t of ["Selecionar até 25","Definir como capa","Mover fotos","Carregar mais fotos"])expect(gerenciador).toContain(t);
  });
+ test("contagem do workspace inclui mídia final do R2 e não anuncia galeria entregue como vazia",()=>{
+  const api=read("app/api/projeto/workspace/route.ts");
+  const pagina=read("app/dashboard/projetos/[id]/page.tsx");
+  const contador=api.split("async function contarFotos(")[1]?.split("async function urlCapa(")[0]??"";
+  expect(contador).toContain("listarCatalogoGaleriaHibrido");
+  expect(contador).not.toContain('supabase.rpc("listar_fotos_galeria_storage"');
+  expect(contador).toContain("if (error || !data) throw");
+  expect(api).toContain("project.workspace.photo_count");
+  const proximoPasso=pagina.split("const proximoPasso =")[1]?.split("function irParaGalerias()")[0]??"";
+  expect(proximoPasso.indexOf("entregues===dados.pastas.length")).toBeGreaterThanOrEqual(0);
+  expect(proximoPasso.indexOf("entregues===dados.pastas.length")).toBeLessThan(proximoPasso.indexOf("totalFotos===0"));
+  expect(pagina).toContain('galeriaPrincipal?.etapa==="entrega"?"Sua galeria foi entregue"');
+  expect(pagina).toContain('galeriaPrincipal.etapa==="entrega"?"· Entrega publicada"');
+ });
 });

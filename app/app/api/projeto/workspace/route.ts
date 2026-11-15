@@ -49,12 +49,10 @@ async function contarFotos(userId: string, pasta: {
 }) {
   const supabase = createServiceClient();
   const variante = await variantePublicaDaGaleria(supabase, pasta);
-  const { data, error } = await supabase.rpc("listar_fotos_galeria_storage", {
-    p_galeria: pasta.id,
-    p_user: userId,
-    p_variante: variante,
-  });
-  return error || !Array.isArray(data) ? 0 : data.length;
+  // A entrega pode ter apenas arquivos finais no R2; o RPC legado sozinho retorna zero.
+  const { data, error } = await listarCatalogoGaleriaHibrido(supabase, userId, pasta.id, variante);
+  if (error || !data) throw error || new Error("Não foi possível contar as fotos da galeria.");
+  return data.length;
 }
 
 async function urlCapa(projeto: {
@@ -157,9 +155,15 @@ export async function GET(req: NextRequest) {
     urlsCapasPastas(user.id, pastas ?? []),
   ]);
 
-  const contagens = await Promise.all((pastas ?? []).map((g) => contarFotos(user.id, {
-    ...g, id: String(g.id),
-  })));
+  let contagens: number[];
+  try {
+    contagens = await Promise.all((pastas ?? []).map((g) => contarFotos(user.id, {
+      ...g, id: String(g.id),
+    })));
+  } catch (error) {
+    registrarErro("project.workspace.photo_count", req, error, { projeto });
+    return json({ error: "Não foi possível conferir a quantidade de fotos. Atualize a página e tente novamente." }, 503);
+  }
   const selecaoPorPasta = new Map((selecoesR.data ?? []).map((s) => [String(s.galeria), s]));
   const planoCodigo=String(assinaturaR.data?.plano_codigo??"sem_plano");
   const assinaturaAtiva=["active","trialing","past_due"].includes(String(assinaturaR.data?.status??""));
