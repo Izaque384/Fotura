@@ -81,6 +81,6 @@ test("todos os links públicos e downloads usam a mesma decisão de mídia", () 
   }
   expect(signed).not.toContain('etapa === "entrega" && Boolean(g.prova)');
   expect(download).not.toContain('g.prova && etapa === "entrega" ?');
-  expect(gallery).toContain('finalizada&&meta.etapa!=="entrega"');
-  expect(gallery).toContain('meta.prova&&meta.etapa!=="entrega"&&meta.prazo');
+  expect(gallery).toContain('emProva&&finalizada');
+  expect(gallery).toContain('emProva&&meta.prazo');
 });
