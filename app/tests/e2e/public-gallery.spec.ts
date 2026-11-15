@@ -86,6 +86,71 @@ test("cliente seleciona, comenta e finaliza uma prova", async ({ page }) => {
   expect(salvamentos.at(-1)?.comentarios["foto-1.jpg"]).toBe("Minha favorita");
 });
 
+test("galeria com entrega publicada não mostra seleção nem comentários, mesmo com flag prova antiga", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("**/api/galeria/publica**", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({
+      galeria: {
+        titulo: "Ensaio entregue", capa: null, prova: true, etapa: "entrega",
+        entregaPublicadaEm: "2026-11-15T13:56:18Z",
+        limite: 28, prazo: null, linkAte: null, temSenha: false,
+        desbloqueada: true, linkExpirado: false, vendaExtrasAtiva: false,
+        downloadAtivo: true, downloadIndividual: true, downloadCompleto: true,
+        downloadTamanho: "original", downloadPinNecessario: false,
+        watermarkAtivo: false, watermarkTexto: null, watermarkOpacidade: 22,
+        assistenteAtivo: true,
+      },
+      perfil: { nome: "Estúdio Fotura", logo: null, cor: "#17162a" },
+      selecao: { fotos: ["prova-1.jpg", "prova-2.jpg"], finalizada: true,
+        comentarios: { "final-1.jpg": "Comentário anterior" } },
+    }),
+  }));
+  await page.route("**/api/fotos/signed**", route => route.fulfill({
+    status: 200, contentType: "application/json",
+    body: JSON.stringify({ fotos: [
+      { nome: "final-1.jpg", url: foto("Final 1"), thumb: foto("Final 1") },
+      { nome: "final-2.jpg", url: foto("Final 2"), thumb: foto("Final 2") },
+    ], capaUrl: null }),
+  }));
+  const selectionRequests: string[] = [];
+  await page.route("**/api/galeria/selecao", route => {
+    selectionRequests.push(route.request().method());
+    return route.fulfill({ status: 403, body: "{}" });
+  });
+  await page.route("**/api/analytics/event", route => route.fulfill({ status: 200, body: "{}" }));
+  await page.goto("/g/00000000-0000-4000-8000-000000000001");
+
+  await expect(page.getByText("2 fotos")).toBeVisible();
+  await expect(page.locator(".gc-grid-img")).toHaveCount(2);
+  await expect(page.locator(".gc-select")).toHaveCount(0);
+  await expect(page.locator(".gc-card.sel")).toHaveCount(0);
+  await expect(page.locator(".gc-comment")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Finalizar seleção" })).toHaveCount(0);
+  await expect(page.getByText(/Seleção enviada/)).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "Guia rápido de seleção de fotos" })).toHaveCount(0);
+
+  await page.locator(".gc-grid-img").first().click();
+  await expect(page.locator(".gc-lightbox")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Baixar foto original" })).toBeVisible();
+  await expect(page.locator(".gc-com")).toHaveCount(0);
+  await expect(page.getByPlaceholder("Comente nesta foto…")).toHaveCount(0);
+  await expect.poll(() => selectionRequests.length).toBe(0);
+});
+
+test("API de entrega nunca reabre prova nem expõe seleção anterior", () => {
+  const fs = require("node:fs") as typeof import("node:fs");
+  const api = fs.readFileSync("app/api/galeria/publica/route.ts", "utf8");
+  const writes = fs.readFileSync("app/api/galeria/selecao/route.ts", "utf8");
+  const workspace = fs.readFileSync("app/api/projeto/workspace/route.ts", "utf8");
+  expect(api).toContain('g.etapa !== "entrega" && !g.entrega_publicada_em');
+  expect(api).toContain("prova: emProva");
+  expect(api).toContain("emProva && desbloqueada && !linkExpirado");
+  expect(writes).toContain('g.etapa === "entrega" || g.entrega_publicada_em');
+  expect(workspace).toContain('.neq("etapa","entrega").is("entrega_publicada_em",null)');
+  expect(workspace).toContain('const { prova: provaAtualizada, ...camposCompartilhados } = atualizarPastas');
+});
+
 test("guia de seleção tem dois passos e bolinha perfeitamente circular no celular", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.route("**/api/galeria/publica**", route => route.fulfill({
