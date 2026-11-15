@@ -6,6 +6,7 @@ import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { uuidValido } from "../../../../lib/validation";
 import { dataCalendarioExpirada } from "../../../../lib/date-only";
 import { signPrivateMediaUrl } from "../../../../lib/media-storage";
+import { variantePublicaDaGaleria } from "../../../../lib/public-gallery-media-variant";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   const supabase = createServiceClient();
   const { data: g } = await supabase.from("galerias")
-    .select("id,user_id,tem_senha,link_ate,prova,etapa,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash")
+    .select("id,user_id,tem_senha,link_ate,prova,etapa,entrega_publicada_em,download_ativo,download_individual,download_completo,download_tamanho,download_pin_hash")
     .eq("id", galeria).maybeSingle();
   if (!g) return NextResponse.json({ error: "Galeria não encontrada." }, { status: 404 });
   if (dataCalendarioExpirada((g.link_ate as string | null) ?? null)) return NextResponse.json({ error: "Link expirado." }, { status: 403 });
@@ -33,7 +34,10 @@ export async function GET(req: NextRequest) {
   if (!g.download_ativo || (tipo === "todos" ? !g.download_completo : !g.download_individual)) return NextResponse.json({ error: "Este download não está habilitado." }, { status: 403 });
   if (g.download_pin_hash && !temAcessoDownload(req, galeria)) return NextResponse.json({ error: "PIN necessário.", pinNecessario: true }, { status: 401 });
 
-  const base = g.prova && etapa === "entrega" ? `${g.user_id}/${galeria}/entrega` : `${g.user_id}/${galeria}`;
+  let variante: "principal" | "entrega";
+  try { variante = await variantePublicaDaGaleria(supabase, g); }
+  catch { return NextResponse.json({ error: "Não foi possível verificar os arquivos publicados." }, { status: 503 }); }
+  const base = variante === "entrega" ? `${g.user_id}/${galeria}/entrega` : `${g.user_id}/${galeria}`;
   const tamanho = "original";
   const caminho = `${base}/${arquivo}`;
   let signedUrl: string | null;
