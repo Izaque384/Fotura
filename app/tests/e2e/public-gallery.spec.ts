@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import fs from "node:fs";
 
 const foto = (label: string) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480"><rect width="100%" height="100%" fill="#15152b"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="42">${label}</text></svg>`)}`;
 
@@ -139,7 +140,6 @@ test("galeria com entrega publicada não mostra seleção nem comentários, mesm
 });
 
 test("API de entrega nunca reabre prova nem expõe seleção anterior", () => {
-  const fs = require("node:fs") as typeof import("node:fs");
   const api = fs.readFileSync("app/api/galeria/publica/route.ts", "utf8");
   const writes = fs.readFileSync("app/api/galeria/selecao/route.ts", "utf8");
   const workspace = fs.readFileSync("app/api/projeto/workspace/route.ts", "utf8");
