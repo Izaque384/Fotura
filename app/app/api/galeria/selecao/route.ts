@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
   if (!comentarios) return NextResponse.json({ error: "Comentários inválidos." }, { status: 400 });
 
   const supabase = createServiceClient();
-  const { data: g } = await supabase.from("galerias").select("user_id,titulo,prova,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos").eq("id", galeria).maybeSingle();
+  const { data: g } = await supabase.from("galerias").select("user_id,titulo,prova,etapa,entrega_publicada_em,limite,prazo,link_ate,tem_senha,venda_extras_ativa,preco_foto_extra_centavos").eq("id", galeria).maybeSingle();
   if (!g) return NextResponse.json({ error: "Galeria não encontrada." }, { status: 404 });
 
   const permitido = await consumirRateLimit(req, "gallery_selection_write", galeria, 10 * 60, 180);
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
   const linkAte = (g.link_ate as string | null) ?? null;
   if (dataCalendarioExpirada(linkAte)) return NextResponse.json({ error: "Link expirado." }, { status: 403 });
   if (g.tem_senha && !temAcessoGaleria(req, galeria)) return NextResponse.json({ error: "Acesso à galeria necessário." }, { status: 401 });
-  if (!g.prova) return NextResponse.json({ error: "Esta galeria não está em modo prova." }, { status: 403 });
+  if (!g.prova || g.etapa === "entrega" || g.entrega_publicada_em) return NextResponse.json({ error: "Esta galeria não está em modo prova." }, { status: 403 });
   const prazo = (g.prazo as string | null) ?? null;
   if (dataCalendarioExpirada(prazo)) return NextResponse.json({ error: "Prazo da seleção encerrado." }, { status: 403 });
   const limite = (g.limite as number) ?? 0;
