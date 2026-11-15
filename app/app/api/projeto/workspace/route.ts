@@ -401,8 +401,19 @@ export async function PATCH(req: NextRequest) {
   const camposPasta = ["prova","limite","prazo","link_ate","download_ativo","download_individual","download_completo","download_tamanho","download_pin_hash","watermark_ativo","watermark_texto","watermark_opacidade","assistente_ativo"];
   const atualizarPastas = Object.fromEntries(Object.entries(update).filter(([campo])=>camposPasta.includes(campo)));
   if(Object.keys(atualizarPastas).length){
-    const sincronizacao=await supabase.from("galerias").update(atualizarPastas).eq("projeto_id",body.projeto).eq("user_id",user.id);
-    if(sincronizacao.error)return json({error:"O projeto foi salvo, mas não foi possível atualizar todas as galerias. Salve novamente antes de compartilhar."},500);
+    // O tipo de prova é configurado no projeto, mas uma galeria já entregue
+    // nunca pode voltar ao modo de seleção por sincronização das preferências.
+    const { prova: provaAtualizada, ...camposCompartilhados } = atualizarPastas;
+    if (Object.keys(camposCompartilhados).length) {
+      const compartilhados = await supabase.from("galerias").update(camposCompartilhados)
+        .eq("projeto_id",body.projeto).eq("user_id",user.id);
+      if (compartilhados.error) return json({error:"O projeto foi salvo, mas não foi possível atualizar todas as galerias. Salve novamente antes de compartilhar."},500);
+    }
+    if (typeof provaAtualizada === "boolean") {
+      const provasAbertas = await supabase.from("galerias").update({ prova: provaAtualizada })
+        .eq("projeto_id",body.projeto).eq("user_id",user.id).neq("etapa","entrega").is("entrega_publicada_em",null);
+      if (provasAbertas.error) return json({error:"O projeto foi salvo, mas não foi possível atualizar as provas em andamento."},500);
+    }
   }
 
   const { data: pastas } = await supabase.from("galerias").select("id").eq("projeto_id", body.projeto).eq("user_id", user.id);
