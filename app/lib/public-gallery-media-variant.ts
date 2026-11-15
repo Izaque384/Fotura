@@ -1,4 +1,4 @@
-import { createServiceClient } from "./supabase-server";
+import type { createServiceClient } from "./supabase-server";
 
 export type VariantePublica = "principal" | "entrega";
 
