@@ -1,0 +1,79 @@
+/* Fotura Motion — princípios de Transitions.dev, implementados sem dependências de terceiros.
+   Somente opacity/transform/width pontuais; nenhuma animação modifica arquivos de fotos. */
+:root{
+  --ft-motion-fast:150ms;
+  --ft-motion-normal:260ms;
+  --ft-motion-slow:360ms;
+  --ft-motion-out:cubic-bezier(.2,.75,.25,1);
+  --ft-motion-in:cubic-bezier(.35,0,.8,.25);
+}
+
+/* Indicador único que desliza entre abas, sem remontar o conteúdo nem roubar cliques. */
+html body .pw-page .pw-tabs{position:relative;isolation:isolate}
+html body .pw-page .pw-tabs .pw-motion-pill{
+  position:absolute;top:6px;left:0;height:calc(100% - 12px);z-index:0;
+  pointer-events:none;border:1px solid #e8dff5;border-radius:9px;
+  background:#f0ebf9;box-sizing:border-box;
+  transition:transform var(--ft-motion-normal) var(--ft-motion-out),width var(--ft-motion-normal) var(--ft-motion-out);
+}
+html body .pw-page .pw-tabs>button{position:relative;z-index:1;transition:color var(--ft-motion-fast) ease,transform var(--ft-motion-fast) ease}
+html body .pw-page .pw-tabs>button.on{background:transparent;border-color:transparent}
+html body .pw-page .pw-tabs>button:active{transform:scale(.985)}
+html body .pw-page .pw-tabs>.pw-secondary-current{position:relative;z-index:1}
+
+/* Miniaturas já têm placeholder e só entram depois do evento onLoad; prolonga a revelação sem atrasar o download. */
+html body .gc-grid-img{transition:opacity var(--ft-motion-normal) var(--ft-motion-out)}
+html body .gc-card.loaded .gc-grid-img.ready{opacity:1}
+html body .gc-lightbox .gc-photo{will-change:auto}
+html body .gc-lightbox .gc-nav,
+html body .gc-lightbox .gc-close,
+html body .gc-lightbox .gc-lightbox-download{
+  transition:background var(--ft-motion-fast) ease,border-color var(--ft-motion-fast) ease,transform var(--ft-motion-fast) var(--ft-motion-out);
+}
+html body .gc-lightbox .gc-nav:active,
+html body .gc-lightbox .gc-close:active,
+html body .gc-lightbox .gc-lightbox-download:active{transform:scale(.94)}
+
+@media(prefers-reduced-motion:no-preference){
+  html body .gc-lightbox{animation:ft-lightbox-reveal 230ms ease-out both}
+  html body .gc-lightbox .gc-photo{animation:ft-photo-reveal var(--ft-motion-normal) var(--ft-motion-out) both}
+  html body .gc-lightbox .gc-lightbox-meta,
+  html body .gc-lightbox .gc-close,
+  html body .gc-lightbox .gc-lightbox-download{
+    animation:ft-photo-controls 280ms var(--ft-motion-out) both;
+  }
+  html body .gc-toast,
+  html body .pw-page .pw-notice,
+  html body .pw-page .pw-settings-drawer-notice{
+    animation:ft-feedback-rise var(--ft-motion-normal) var(--ft-motion-out) both;
+  }
+  html body .pw-page .pw-overview-grid,
+  html body .pw-page .pw-section{
+    animation:ft-content-reveal var(--ft-motion-normal) var(--ft-motion-out) both;
+  }
+  html body .lp2-hero-copy>.lp2-kicker{animation:ft-content-reveal 420ms var(--ft-motion-out) both}
+  html body .lp2-hero-copy>h1{animation:ft-content-reveal 480ms 65ms var(--ft-motion-out) both}
+  html body .lp2-hero-copy>p{animation:ft-content-reveal 500ms 110ms var(--ft-motion-out) both}
+  @keyframes ft-lightbox-reveal{from{opacity:0}to{opacity:1}}
+  @keyframes ft-photo-reveal{from{opacity:.6;transform:translateY(11px) scale(.975)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes ft-photo-controls{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes ft-feedback-rise{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
+  @keyframes ft-content-reveal{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+}
+
+@media(prefers-reduced-motion:reduce){
+  html body .pw-page .pw-tabs .pw-motion-pill,
+  html body .pw-page .pw-tabs>button,
+  html body .gc-grid-img,
+  html body .gc-lightbox .gc-nav,
+  html body .gc-lightbox .gc-close,
+  html body .gc-lightbox .gc-lightbox-download{transition:none!important}
+  html body .gc-lightbox,
+  html body .gc-lightbox .gc-photo,
+  html body .gc-lightbox .gc-lightbox-meta,
+  html body .gc-toast,
+  html body .pw-page .pw-notice,
+  html body .pw-page .pw-overview-grid,
+  html body .pw-page .pw-section{animation:none!important}
+  html body .gc-card:not(.loaded){animation:none!important}
+}
