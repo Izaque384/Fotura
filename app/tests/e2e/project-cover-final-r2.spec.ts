@@ -58,5 +58,6 @@ test("mesma foto escolhida aparece no workspace, página pública, painel e prev
 test("contagem da galeria segue a entrega final após publicação", () => {
   const api = read("app/api/projeto/workspace/route.ts");
   expect(api).toContain("const variante = await variantePublicaDaGaleria(supabase, pasta)");
-  expect(api).toContain("p_variante: variante");
+  expect(api).toContain("listarCatalogoGaleriaHibrido(supabase, userId, pasta.id, variante)");
+  expect(api).toContain("if (error || !data) throw");
 });
