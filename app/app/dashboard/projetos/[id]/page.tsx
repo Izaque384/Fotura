@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import MenuFotografo from "../../../MenuFotografo";
 import FolderSettingsDrawer from "../../../components/FolderSettingsDrawer";
@@ -72,6 +72,8 @@ export default function ProjetoWorkspacePage(){
  const[assistenteAtivo,setAssistenteAtivo]=useState(true);
  const[abertura,setAbertura]=useState<ConfigAbertura>(()=>lerAbertura(null));
  const[ogCapaAutorizada,setOgCapaAutorizada]=useState(false);
+ const tabNavRef=useRef<HTMLElement|null>(null);
+ const[tabPill,setTabPill]=useState<{x:number;width:number}|null>(null);
 
  async function token(){const{data}=await supabase.auth.getSession();return data.session?.access_token||""}
  function aplicarForm(p:Projeto){
@@ -101,6 +103,23 @@ export default function ProjetoWorkspacePage(){
   document.addEventListener("pointerdown",fecharMenus);window.addEventListener("keydown",teclado);
   return()=>{document.removeEventListener("pointerdown",fecharMenus);window.removeEventListener("keydown",teclado)}
  },[]);
+
+ useEffect(()=>{
+  const nav=tabNavRef.current;
+  if(!nav)return;
+  const atualizar=()=>{
+   const ativa=nav.querySelector<HTMLButtonElement>("button.on");
+   if(!ativa){setTabPill(null);return}
+   const x=ativa.offsetLeft,width=ativa.offsetWidth;
+   setTabPill(atual=>atual?.x===x&&atual.width===width?atual:{x,width});
+  };
+  atualizar();
+  const observador=typeof ResizeObserver==="undefined"?null:new ResizeObserver(atualizar);
+  observador?.observe(nav);
+  nav.querySelectorAll("button").forEach(botao=>observador?.observe(botao));
+  window.addEventListener("resize",atualizar);
+  return()=>{observador?.disconnect();window.removeEventListener("resize",atualizar)};
+ },[aba,dados?.projeto.prova]);
 
  async function post(body:Record<string,unknown>){
   const access=await token();if(!access)throw new Error("Sua sessão expirou.");
@@ -325,7 +344,8 @@ export default function ProjetoWorkspacePage(){
     </div>
   </header>
   {aviso&&<div className="pw-notice">{aviso}</div>}
-  <nav className="pw-tabs" aria-label="Navegação do projeto">
+  <nav ref={tabNavRef} className="pw-tabs" aria-label="Navegação do projeto">
+     {tabPill&&<span className="pw-motion-pill" aria-hidden="true" style={{transform:"translate3d("+tabPill.x+"px,0,0)",width:tabPill.width}}/>}
      {(["resumo",...(p.prova?["selecao","entrega"]:[])] as Aba[]).map(a=>
        <button key={a} className={aba===a?"on":""} aria-current={aba===a?"page":undefined} onClick={()=>{setAba(a);setMenuProjetoAberto(false)}}>
          {a==="resumo"?<FolderIcon size={17}/>:a==="selecao"?<CheckIcon size={17}/>:<DownloadIcon size={17}/>}

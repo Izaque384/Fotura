@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useId, useRef } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 
 type Props = {
   title: string;
@@ -21,6 +21,19 @@ export default function FoturaDrawer({ title, description, onClose, children, fo
   closeLatest.current = onClose;
   const suspendedLatest = useRef(suspended);
   suspendedLatest.current = suspended;
+  const [closing, setClosing] = useState(false);
+  const closingRef = useRef(false);
+  const closeTimerRef = useRef<number | null>(null);
+  function requestClose() {
+    if (suspendedLatest.current || closingRef.current) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      closeLatest.current();
+      return;
+    }
+    closingRef.current = true;
+    setClosing(true);
+    closeTimerRef.current = window.setTimeout(() => closeLatest.current(), 220);
+  }
 
   useEffect(() => {
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -34,7 +47,7 @@ export default function FoturaDrawer({ title, description, onClose, children, fo
       if (suspendedLatest.current || panelRef.current?.querySelector('[role="dialog"][aria-modal="true"]')) return;
       if (event.key === "Escape") {
         event.preventDefault();
-        closeLatest.current();
+        requestClose();
         return;
       }
       if (event.key !== "Tab" || !panelRef.current) return;
@@ -53,6 +66,7 @@ export default function FoturaDrawer({ title, description, onClose, children, fo
     return () => {
       document.body.style.overflow = priorOverflow;
       document.removeEventListener("keydown", onKeyDown);
+      if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
       previousFocus?.focus({ preventScroll: true });
     };
   }, []);
@@ -62,8 +76,8 @@ export default function FoturaDrawer({ title, description, onClose, children, fo
   }, [suspended]);
 
   return (
-    <div className={"ft-drawer-overlay" + (size === "wide" ? " ft-drawer-overlay--wide" : "")} onMouseDown={(event) => {
-      if (!suspended && event.currentTarget === event.target) onClose();
+    <div className={"ft-drawer-overlay" + (size === "wide" ? " ft-drawer-overlay--wide" : "") + (closing ? " ft-drawer-closing" : "")} onMouseDown={(event) => {
+      if (!suspended && event.currentTarget === event.target) requestClose();
     }}>
       <aside
         ref={panelRef}
@@ -78,7 +92,7 @@ export default function FoturaDrawer({ title, description, onClose, children, fo
             <h2 id={titleId}>{title}</h2>
             {description && <p id={descriptionId}>{description}</p>}
           </div>
-          <button ref={closeRef} className="ft-drawer-close" type="button" onClick={onClose} aria-label="Fechar painel">×</button>
+          <button ref={closeRef} className="ft-drawer-close" type="button" onClick={requestClose} aria-label="Fechar painel">×</button>
         </header>
         <div className="ft-drawer-content">{children}</div>
         {footer && <div className="ft-drawer-footer">{footer}</div>}

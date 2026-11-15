@@ -88,8 +88,24 @@ button.ft-drawer-item:hover{border-color:#bdb3e2;background:#faf8ff}
   .ft-drawer-cover{height:160px}
 }
 @media(prefers-reduced-motion:no-preference){
-  .ft-drawer-panel{animation:ft-drawer-in .20s ease-out both}
-  @keyframes ft-drawer-in{from{transform:translateX(14px);opacity:.95}to{transform:translateX(0);opacity:1}}
+  .ft-drawer-overlay{animation:ft-drawer-scrim-in 240ms ease-out both}
+  .ft-drawer-panel{animation:ft-drawer-in 280ms var(--ft-motion-out,cubic-bezier(.2,.75,.25,1)) both}
+  .ft-drawer-overlay.ft-drawer-closing{pointer-events:none;animation:ft-drawer-scrim-out 210ms ease-in both}
+  .ft-drawer-closing .ft-drawer-panel{animation:ft-drawer-out 210ms var(--ft-motion-in,ease-in) both}
+  @keyframes ft-drawer-scrim-in{from{opacity:0}to{opacity:1}}
+  @keyframes ft-drawer-scrim-out{from{opacity:1}to{opacity:0}}
+  @keyframes ft-drawer-in{from{transform:translateX(34px);opacity:.92}to{transform:translateX(0);opacity:1}}
+  @keyframes ft-drawer-out{from{transform:translateX(0);opacity:1}to{transform:translateX(28px);opacity:.91}}
+}
+/* Em telas pequenas, o painel ocupa 100% da largura durante TODA a transição. */
+@media(prefers-reduced-motion:no-preference) and (max-width:640px){
+  .ft-drawer-panel{animation:ft-drawer-in-mobile 240ms var(--ft-motion-out,cubic-bezier(.2,.75,.25,1)) both}
+  .ft-drawer-closing .ft-drawer-panel{animation:ft-drawer-out-mobile 200ms var(--ft-motion-in,ease-in) both}
+  @keyframes ft-drawer-in-mobile{from{transform:translateY(10px);opacity:.95}to{transform:translateY(0);opacity:1}}
+  @keyframes ft-drawer-out-mobile{from{transform:translateY(0);opacity:1}to{transform:translateY(8px);opacity:.93}}
+}
+@media(prefers-reduced-motion:reduce){
+  .ft-drawer-overlay,.ft-drawer-panel{animation:none!important;transition:none!important}
 }
 
 /* Título da pasta abre o painel; mantém aparência de texto da listagem. */
