@@ -77,7 +77,7 @@ test("todos os links públicos e downloads usam a mesma decisão de mídia", () 
   const gallery = fs.readFileSync("app/g/[slug]/page.tsx", "utf8");
   for (const route of [signed, download, project]) {
     expect(route).toContain('variantePublicaDaGaleria');
-    expect(route).toContain('"/entrega"');
+    expect(route).toContain("/entrega");
   }
   expect(signed).not.toContain('etapa === "entrega" && Boolean(g.prova)');
   expect(download).not.toContain('g.prova && etapa === "entrega" ?');
