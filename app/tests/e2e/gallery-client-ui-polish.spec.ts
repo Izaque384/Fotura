@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import fs from "node:fs";
 
 const imagem = (nome: string) =>
   `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="1200" height="800" fill="#4a4165"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="48">${nome}</text></svg>`)}`;
@@ -115,4 +116,65 @@ test("modo de movimento reduzido desativa as animações fotográficas", async (
   await expect(lightbox.locator(".gc-photo")).toHaveCSS("animation-name", "none");
   await lightbox.getByRole("button", { name: "Fechar foto" }).click();
   await expect(lightbox).toHaveCount(0);
+});
+
+
+test("seletor de várias galerias acompanha o espaçamento compacto do título único no celular", async ({ page }) => {
+  const fonte=fs.readFileSync("app/g/[slug]/page.tsx","utf8");
+  const css=fonte.match(/const css=`([\s\S]*?)`;\s*$/)?.[1];
+  expect(css).toBeTruthy();
+  expect(fonte).toContain('className="gc-gallery-selected"');
+  await page.setViewportSize({width:390,height:844});
+  const logo='<div class="gc-album-logo" aria-hidden="true"></div>';
+  const multi=`<div class="gc-album-strip" id="multi"><div class="gc-album-strip-inner"><div class="gc-album-identity">${logo}<div class="gc-album-meta"><div class="gc-album-title-row"><label class="gc-gallery-switch"><span class="sr-only">Trocar galeria</span><span class="gc-gallery-selected" aria-hidden="true">Cerimônia</span><select aria-label="Trocar galeria"><option value="a">Cerimônia</option><option value="b">Recepção</option></select><span class="gc-gallery-chevron" aria-hidden="true">⌄</span></label></div><span>ALVOR FOTOGRAFIA</span></div></div></div></div>`;
+  const unica=`<div class="gc-album-strip" id="unica"><div class="gc-album-strip-inner"><div class="gc-album-identity">${logo}<div class="gc-album-meta"><div class="gc-album-title-row"><strong>Cerimônia</strong></div><span>ALVOR FOTOGRAFIA</span></div></div></div></div>`;
+  await page.setContent(`<meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{margin:0}${css}</style><main class="gc-page">${multi}${unica}</main>`);
+  const medidas=await page.evaluate(()=>{
+    const medir=(id:string)=>{
+      const raiz=document.querySelector(id)!;
+      const titulo=raiz.querySelector(".gc-album-title-row")!.getBoundingClientRect();
+      const subtitulo=raiz.querySelector(".gc-album-meta>span")!.getBoundingClientRect();
+      const logo=raiz.querySelector(".gc-album-logo")!.getBoundingClientRect();
+      return {alturaTitulo:titulo.height,gap:subtitulo.top-titulo.bottom,logoY:logo.y,subY:subtitulo.y};
+    };
+    const selecionado=document.querySelector("#multi .gc-gallery-selected")!.getBoundingClientRect();
+    const seta=document.querySelector("#multi .gc-gallery-chevron")!.getBoundingClientRect();
+    return {multi:medir("#multi"),unica:medir("#unica"),distanciaSeta:seta.left-selecionado.right,larguraDocumento:document.documentElement.scrollWidth};
+  });
+  expect(Math.abs(medidas.multi.alturaTitulo-medidas.unica.alturaTitulo)).toBeLessThanOrEqual(2);
+  expect(Math.abs(medidas.multi.gap-medidas.unica.gap)).toBeLessThanOrEqual(2);
+  expect(medidas.distanciaSeta).toBeLessThan(18);
+  expect(medidas.larguraDocumento).toBeLessThanOrEqual(390);
+  const seletor=page.getByRole("combobox",{name:"Trocar galeria"});
+  await seletor.selectOption("b");
+  await expect(seletor).toHaveValue("b");
+});
+
+test("lightbox preserva dimensões na espera, no erro e após carregar a fotografia", async ({ page }) => {
+  await page.setViewportSize({width:1280,height:800});
+  await abrirGaleria(page);
+  await page.locator(".gc-grid-img").first().click();
+  const foto=page.locator(".gc-lightbox .gc-photo");
+  await expect(foto).toBeVisible();
+  const tamanho=()=>foto.evaluate(el=>({width:el.offsetWidth,height:el.offsetHeight}));
+  const pronto=await tamanho();
+  expect(pronto.width).toBeGreaterThan(200);
+  expect(pronto.height).toBeGreaterThan(100);
+  await foto.evaluate(el=>el.classList.add("pending"));
+  expect(await tamanho()).toEqual(pronto);
+  await foto.evaluate(el=>{el.classList.remove("pending");el.classList.add("failed")});
+  expect(await tamanho()).toEqual(pronto);
+  await foto.evaluate(el=>el.classList.remove("failed"));
+  expect(await tamanho()).toEqual(pronto);
+  await page.setViewportSize({width:390,height:844});
+  await expect.poll(async()=>foto.evaluate(el=>el.offsetWidth)).toBeLessThanOrEqual(390);
+  const mobile=await tamanho();
+  expect(mobile.width).toBeLessThanOrEqual(370);
+  expect(mobile.height).toBeLessThanOrEqual(670);
+  await foto.evaluate(el=>el.classList.add("pending"));
+  expect(await tamanho()).toEqual(mobile);
+  await foto.evaluate(el=>el.classList.remove("pending"));
+  await page.getByRole("button",{name:"Próxima foto"}).click();
+  await expect(page.getByRole("dialog",{name:"Foto 2 de 2"})).toBeVisible();
+  expect((await tamanho()).width).toBeGreaterThan(0);
 });
