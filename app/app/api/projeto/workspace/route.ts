@@ -12,6 +12,8 @@ import { lerAbertura, validarAbertura, caminhoVideoValido, VIDEO_ABERTURA_BUCKET
 import { MODELOS_PROJETO,modeloValido,configProjeto } from "../../../../lib/project-templates";
 import { signPrivateMediaUrl, signPrivateMediaUrls } from "../../../../lib/media-storage";
 import { listarCatalogoGaleriaHibrido } from "../../../../lib/gallery-media-catalog";
+import { variantePublicaDaGaleria } from "../../../../lib/public-gallery-media-variant";
+import { caminhoCapaAtual } from "../../../../lib/project-cover-path.server";
 import { isR2ReadEnabled, signPrivateR2ObjectUrl } from "../../../../lib/r2-storage";
 
 export const dynamic = "force-dynamic";
@@ -42,12 +44,15 @@ async function projetoDoUsuario(projeto: string, userId: string) {
   return data ?? null;
 }
 
-async function contarFotos(userId: string, pasta: string) {
+async function contarFotos(userId: string, pasta: {
+  id: string; etapa: string | null; prova: boolean | null; entrega_publicada_em: string | null;
+}) {
   const supabase = createServiceClient();
+  const variante = await variantePublicaDaGaleria(supabase, pasta);
   const { data, error } = await supabase.rpc("listar_fotos_galeria_storage", {
-    p_galeria: pasta,
+    p_galeria: pasta.id,
     p_user: userId,
-    p_variante: "principal",
+    p_variante: variante,
   });
   return error || !Array.isArray(data) ? 0 : data.length;
 }
@@ -59,8 +64,8 @@ async function urlCapa(projeto: {
 }) {
   if (!projeto.capa_galeria_id || !projeto.capa_arquivo) return null;
   const supabase = createServiceClient();
-  const caminho=`${projeto.user_id}/${projeto.capa_galeria_id}/thumbs/${projeto.capa_arquivo}`;
-  return signPrivateMediaUrl(supabase, "fotos", caminho, 60 * 60);
+  const caminho = await caminhoCapaAtual(supabase, projeto.user_id, projeto.capa_galeria_id, projeto.capa_arquivo);
+  return caminho ? signPrivateMediaUrl(supabase, "fotos", caminho, 60 * 60) : null;
 }
 
 async function urlsCapasPastas(userId: string, pastas: Array<{ id: unknown; capa: unknown }>) {
@@ -71,8 +76,13 @@ async function urlsCapasPastas(userId: string, pastas: Array<{ id: unknown; capa
   if (!comCapa.length) return mapa;
 
   const supabase = createServiceClient();
-  const thumbs = comCapa.map((g) => `${userId}/${g.id}/thumbs/${g.capa}`);
-  const thumbPorPasta = new Map(comCapa.map((g) => [`${userId}/${g.id}/thumbs/${g.capa}`, g.id]));
+  const entradas = await Promise.all(comCapa.map(async (g) => ({
+    id: g.id,
+    path: await caminhoCapaAtual(supabase, userId, g.id, g.capa),
+  })));
+  const thumbs = entradas.map(e => e.path).filter((path): path is string => Boolean(path));
+  if (!thumbs.length) return mapa;
+  const thumbPorPasta = new Map(entradas.filter(e => e.path).map(e => [e.path!, e.id]));
   const assinadas = await signPrivateMediaUrls(supabase, "fotos", thumbs, 60 * 60);
   for (const [path, signedUrl] of Object.entries(assinadas)) {
     const pastaId = thumbPorPasta.get(path);
@@ -95,16 +105,20 @@ export async function GET(req: NextRequest) {
   const capaPasta = req.nextUrl.searchParams.get("capaPasta")?.trim();
   if (capaPasta) {
     if (!uuidValido(capaPasta)) return json({ error: "Galeria inválida." }, 400);
-    const { data: pasta } = await supabase.from("galerias").select("id").eq("id", capaPasta)
+    const { data: pasta } = await supabase.from("galerias").select("id,etapa,prova,entrega_publicada_em").eq("id", capaPasta)
       .eq("projeto_id", projeto).eq("user_id", user.id).maybeSingle();
     if (!pasta) return json({ error: "Galeria não encontrada." }, 404);
 
-    const { data: catalogo, error: catalogError } = await listarCatalogoGaleriaHibrido(supabase, user.id, capaPasta, "principal");
+    let variante: "principal" | "entrega";
+    try { variante = await variantePublicaDaGaleria(supabase, pasta); }
+    catch { return json({ error: "Não foi possível verificar a entrega publicada." }, 503); }
+    const { data: catalogo, error: catalogError } = await listarCatalogoGaleriaHibrido(supabase, user.id, capaPasta, variante);
     if (catalogError || !catalogo) return json({ error: "Não foi possível carregar as fotos." }, 500);
     const nomes = catalogo.map((foto) => foto.nome);
     if (!nomes.length) return json({ fotos: [] });
 
-    const caminhos = nomes.map((nome) => `${user.id}/${capaPasta}/thumbs/${nome}`);
+    const base = `${user.id}/${capaPasta}${variante === "entrega" ? "/entrega" : ""}`;
+    const caminhos = nomes.map((nome) => `${base}/thumbs/${nome}`);
     const mapa = new Map<string, string>();
     for (let i = 0; i < caminhos.length; i += 200) {
       try {
@@ -117,7 +131,7 @@ export async function GET(req: NextRequest) {
     return json({
       fotos: nomes.map((nome) => ({
         nome,
-        url: mapa.get(`${user.id}/${capaPasta}/thumbs/${nome}`) || "",
+        url: mapa.get(`${base}/thumbs/${nome}`) || "",
       })).filter((item) => item.url),
     });
   }
@@ -143,7 +157,9 @@ export async function GET(req: NextRequest) {
     urlsCapasPastas(user.id, pastas ?? []),
   ]);
 
-  const contagens = await Promise.all((pastas ?? []).map((g) => contarFotos(user.id, String(g.id))));
+  const contagens = await Promise.all((pastas ?? []).map((g) => contarFotos(user.id, {
+    ...g, id: String(g.id),
+  })));
   const selecaoPorPasta = new Map((selecoesR.data ?? []).map((s) => [String(s.galeria), s]));
   const planoCodigo=String(assinaturaR.data?.plano_codigo??"sem_plano");
   const assinaturaAtiva=["active","trialing","past_due"].includes(String(assinaturaR.data?.status??""));
@@ -342,10 +358,13 @@ export async function PATCH(req: NextRequest) {
     if (!uuidValido(body.capaPastaId) || !body.capaArquivo || body.capaArquivo.includes("/") || body.capaArquivo.includes("\\")) {
       return json({ error: "Capa inválida." }, 400);
     }
-    const { data: pasta } = await supabase.from("galerias").select("id").eq("id", body.capaPastaId)
+    const { data: pasta } = await supabase.from("galerias").select("id,etapa,prova,entrega_publicada_em").eq("id", body.capaPastaId)
       .eq("projeto_id", body.projeto).eq("user_id", user.id).maybeSingle();
     if (!pasta) return json({ error: "A galeria da capa não pertence ao projeto." }, 400);
-    const { data: encontrados, error: coverError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.capaPastaId, "principal");
+    let variante: "principal" | "entrega";
+    try { variante = await variantePublicaDaGaleria(supabase, pasta); }
+    catch { return json({ error: "Não foi possível verificar a entrega publicada." }, 503); }
+    const { data: encontrados, error: coverError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.capaPastaId, variante);
     if (coverError) return json({ error: "Não foi possível verificar a foto de capa." }, 503);
     if (!(encontrados ?? []).some((item) => item.nome === body.capaArquivo)) {
       return json({ error: "A foto escolhida para capa não foi encontrada." }, 404);
@@ -555,7 +574,7 @@ export async function POST(req: NextRequest) {
     const projeto = await projetoDoUsuario(body.projetoId!, user.id);
     if (!projeto) return json({ error: "Projeto não encontrado." }, 404);
 
-    const { data: pastaAtual } = await supabase.from("galerias").select("id")
+    const { data: pastaAtual } = await supabase.from("galerias").select("id,etapa,prova,entrega_publicada_em")
       .eq("id", body.pastaId).eq("projeto_id", body.projetoId).eq("user_id", user.id).maybeSingle();
     if (!pastaAtual) return json({ error: "Galeria não encontrada." }, 404);
     const update: Record<string, unknown> = {};
@@ -566,7 +585,10 @@ export async function POST(req: NextRequest) {
         if (typeof arquivo !== "string" || !arquivo || arquivo.length > 300 || arquivo.includes("/") || arquivo.includes("\\") || /[\u0000-\u001f\u007f]/.test(arquivo)) {
           return json({ error: "Capa inválida." }, 400);
         }
-        const { data: encontrados, error: storageError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.pastaId, "principal");
+        let variante: "principal" | "entrega";
+        try { variante = await variantePublicaDaGaleria(supabase, pastaAtual); }
+        catch { return json({ error: "Não foi possível verificar a entrega publicada." }, 503); }
+        const { data: encontrados, error: storageError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.pastaId, variante);
         if (storageError) return json({ error: "Não foi possível verificar a foto." }, 503);
         if (!(encontrados ?? []).some((item) => item.nome === arquivo)) {
           return json({ error: "A foto escolhida não pertence a esta galeria." }, 404);
@@ -611,9 +633,12 @@ export async function POST(req: NextRequest) {
     const p = await projetoDoUsuario(body.projetoId!, user.id);
     if (!p) return json({ error: "Projeto não encontrado." }, 404);
     if (p.capa_arquivo) return json({ ok: true, alterada: false });
-    const { data: pasta } = await supabase.from("galerias").select("id").eq("id", body.pastaId).eq("projeto_id", body.projetoId).eq("user_id", user.id).maybeSingle();
+    const { data: pasta } = await supabase.from("galerias").select("id,etapa,prova,entrega_publicada_em").eq("id", body.pastaId).eq("projeto_id", body.projetoId).eq("user_id", user.id).maybeSingle();
     if (!pasta) return json({ error: "Galeria inválida." }, 400);
-    const { data: encontrados, error: storageError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.pastaId, "principal");
+    let variante: "principal" | "entrega";
+    try { variante = await variantePublicaDaGaleria(supabase, pasta); }
+    catch { return json({ error: "Não foi possível verificar a entrega publicada." }, 503); }
+    const { data: encontrados, error: storageError } = await listarCatalogoGaleriaHibrido(supabase, user.id, body.pastaId, variante);
     if (storageError) return json({ error: "Não foi possível verificar a fotografia." }, 503);
     if (!(encontrados ?? []).some((item) => item.nome === body.arquivo)) {
       return json({ error: "Foto não encontrada." }, 404);
