@@ -72,7 +72,7 @@ html body .ft-drawer-button:active:not(:disabled){transform:scale(.985)}
   html body .lp2-hero-copy>h1{animation:ft-content-reveal 480ms 65ms var(--ft-motion-out) both}
   html body .lp2-hero-copy>p{animation:ft-content-reveal 500ms 110ms var(--ft-motion-out) both}
   @keyframes ft-lightbox-reveal{from{opacity:0}to{opacity:1}}
-  @keyframes ft-photo-reveal{from{opacity:.6;transform:translateY(11px) scale(.975)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes ft-photo-reveal{from{opacity:.6;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
   @keyframes ft-photo-controls{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
   @keyframes ft-feedback-rise{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
   @keyframes ft-content-reveal{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
