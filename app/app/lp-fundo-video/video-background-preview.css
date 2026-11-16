@@ -1,0 +1,183 @@
+/*
+ * Fotura — estudo isolado: vídeo de fundo persistente.
+ * A landing original segue intacta. Só a rota /lp-fundo-video monta este escopo.
+ */
+.lp-video-preview{
+  position:relative;
+  isolation:isolate;
+  min-height:100vh;
+  overflow-x:clip;
+  background:#0d1119;
+}
+.lp-video-preview-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  overflow:hidden;
+  pointer-events:none;
+  background:#0d1119 url("/media/fotura-abertura-poster.jpg") center/cover no-repeat;
+}
+.lp-video-preview-backdrop .lp2-hero-media{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  pointer-events:none;
+}
+.lp-video-preview-backdrop .lp2-hero-poster,
+.lp-video-preview-backdrop .lp2-hero-video{
+  position:absolute;
+  inset:0;
+  display:block;
+  height:100%;
+  width:100%;
+  object-fit:cover;
+  object-position:center center;
+}
+.lp-video-preview-backdrop .lp2-hero-video{
+  opacity:0;
+  transition:opacity .55s ease;
+}
+.lp-video-preview-backdrop .lp2-hero-video.is-playing{opacity:1}
+.lp-video-preview-backdrop .lp2-hero-scrim{
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(90deg,rgba(9,11,20,.82),rgba(9,11,20,.54) 60%,rgba(9,11,20,.58)),
+    linear-gradient(180deg,rgba(8,9,17,.28),transparent 38%,rgba(8,9,17,.44));
+}
+/* O banner fica acima do vídeo, mas não cria uma nova barra fixa. */
+.lp-video-preview-banner{
+  position:relative;
+  z-index:3;
+  min-height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:8px max(22px,calc((100vw - 1260px)/2));
+  background:rgba(10,11,17,.94);
+  border-bottom:1px solid rgba(255,255,255,.15);
+  color:#f3f1f9;
+  font-size:9px;
+  font-weight:750;
+  letter-spacing:.075em;
+}
+.lp-video-preview-banner>span{display:flex;align-items:center;gap:9px}
+.lp-video-preview-banner i{
+  display:inline-block;
+  width:7px;
+  height:7px;
+  flex:none;
+  border-radius:50%;
+  background:#bc9aff;
+  box-shadow:0 0 0 4px rgba(188,154,255,.15);
+}
+.lp-video-preview-banner a{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+  color:#e7e1f7;
+  font-size:9px;
+  font-weight:650;
+  letter-spacing:0;
+}
+.lp-video-preview-banner a:hover{color:white;text-decoration:underline;text-underline-offset:3px}
+
+/* A landing de produção continua a renderizar todos os componentes originais. */
+.lp-video-preview>.lp2{
+  z-index:1;
+  position:relative;
+  min-height:100vh;
+  background:transparent;
+}
+.lp-video-preview .lp2 .lp2-hero.lp2-hero-cinematic{
+  background:transparent;
+  /* Mantém hero amplo; apenas a mídia já não está confinada ao hero. */
+}
+.lp-video-preview .lp2 .lp2-hero-cinematic .lp2-hero-copy{
+  text-shadow:0 2px 18px rgba(1,2,8,.09);
+}
+
+/* Os fundos de seção rolam COM os conteúdos. A mídia permanece atrás de tudo. */
+.lp-video-preview .lp2 .lp2-opening-section{
+  background:rgba(246,242,239,.84);
+  -webkit-backdrop-filter:blur(15px);
+  backdrop-filter:blur(15px);
+  border-top:1px solid rgba(255,255,255,.58);
+  border-bottom:1px solid rgba(255,255,255,.38);
+}
+.lp-video-preview .lp2 .lp2-demo{
+  background:rgba(12,14,23,.77);
+  -webkit-backdrop-filter:blur(5px);
+  backdrop-filter:blur(5px);
+  border-block:1px solid rgba(255,255,255,.10);
+}
+.lp-video-preview .lp2 .lp2-pricing{
+  background:rgba(240,237,244,.85);
+  -webkit-backdrop-filter:blur(15px);
+  backdrop-filter:blur(15px);
+  border-top:1px solid rgba(255,255,255,.52);
+}
+.lp-video-preview .lp2 .lp2-pricing .lp2-plan:not(.hot){
+  background:rgba(255,255,255,.82);
+  border-color:rgba(255,255,255,.65);
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+  box-shadow:0 10px 30px rgba(22,17,44,.08);
+}
+.lp-video-preview .lp2 .lp2-faq{
+  background:rgba(244,241,247,.87);
+  -webkit-backdrop-filter:blur(15px);
+  backdrop-filter:blur(15px);
+  border-top:1px solid rgba(255,255,255,.58);
+}
+.lp-video-preview .lp2 .lp2-final{
+  /* O background-image inline do CTA final é ignorado só na prévia:
+     a única fotografia de fundo global vem do vídeo original do Fotura. */
+  background-image:none!important;
+  background-color:rgba(11,13,21,.27);
+}
+.lp-video-preview .lp2 .lp2-final:before{
+  background:linear-gradient(180deg,rgba(8,9,15,.40),rgba(7,8,16,.59));
+}
+.lp-video-preview .lp2 .lp2-footer{
+  background:rgba(12,12,19,.9);
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+  border-top:1px solid rgba(255,255,255,.12);
+}
+/* Transparência intencional nas áreas intermediárias; textos mantêm sua paleta original. */
+.lp-video-preview .lp2 .lp2-opening-preview,
+.lp-video-preview .lp2 .lp2-demo-frame{
+  box-shadow:0 25px 65px rgba(13,12,26,.22);
+}
+.lp-video-preview .lp2 .lp2-nav{
+  border-bottom-color:rgba(255,255,255,.28);
+}
+
+/* Em telas pequenas a imagem mantém a mesma cobertura sem background-attachment:fixed,
+   que sofre com inconsistências em alguns navegadores mobile. */
+@media(max-width:720px){
+  .lp-video-preview-backdrop .lp2-hero-poster,
+  .lp-video-preview-backdrop .lp2-hero-video{object-position:58% center}
+  .lp-video-preview-backdrop .lp2-hero-scrim{
+    background:linear-gradient(90deg,rgba(8,10,19,.82),rgba(8,10,19,.67)),
+      linear-gradient(180deg,rgba(8,9,16,.14),rgba(8,9,16,.28));
+  }
+  .lp-video-preview-banner{
+    min-height:41px;
+    padding:8px 12px;
+    font-size:8px;
+    gap:7px;
+    letter-spacing:.03em;
+  }
+  .lp-video-preview-banner a{font-size:8px}
+  .lp-video-preview .lp2 .lp2-opening-section{background:rgba(247,244,242,.92);backdrop-filter:blur(6px)}
+  .lp-video-preview .lp2 .lp2-demo{background:rgba(12,14,23,.86);backdrop-filter:blur(3px)}
+  .lp-video-preview .lp2 .lp2-pricing{background:rgba(242,239,247,.93);backdrop-filter:blur(6px)}
+  .lp-video-preview .lp2 .lp2-faq{background:rgba(246,243,249,.94);backdrop-filter:blur(6px)}
+  .lp-video-preview .lp2 .lp2-footer{background:rgba(12,12,19,.94);backdrop-filter:blur(6px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .lp-video-preview-backdrop .lp2-hero-video{display:none!important;transition:none!important}
+}
