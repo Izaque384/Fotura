@@ -277,7 +277,7 @@ function DemoScreen({ etapa }: { etapa: number }) {
   );
 }
 
-export default function Home({ initialCurrency }: { initialCurrency: PricingCurrency }) {
+export default function Home({ initialCurrency, videoAsPageBackground = false }: { initialCurrency: PricingCurrency; videoAsPageBackground?: boolean }) {
   const { locale, t } = useI18n();
   const supabase = useMemo(() => createClient(), []);
   const [logado, setLogado] = useState(false);
@@ -343,7 +343,7 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
 
       <main>
         <section className="lp2-hero lp2-hero-cinematic" id="experiencia">
-          <LandingHeroVideo />
+          {!videoAsPageBackground && <LandingHeroVideo />}
           <div className="lp2-hero-copy">
             <div className="lp2-kicker">{t("Galerias para selecionar e entregar fotografias")}</div>
             <h1>{t("Sua fotografia merece uma")} <span className="lp2-serif lp2-gradient-word">{t("entrega")}</span> {t("à altura.")}</h1>
