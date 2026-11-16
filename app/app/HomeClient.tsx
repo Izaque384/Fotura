@@ -292,11 +292,13 @@ export default function Home({ initialCurrency, videoAsPageBackground = false }:
   }, [supabase]);
 
   useEffect(() => {
+    // Prévia visual não deve contaminar métricas reais de aquisição.
+    if (videoAsPageBackground) return;
     registrarEventoProduto("landing_view", {
       rota: "/",
       detalhes: utmAtual(),
     });
-  }, []);
+  }, [videoAsPageBackground]);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -307,7 +309,7 @@ export default function Home({ initialCurrency, videoAsPageBackground = false }:
   }, []);
 
   function rastrearCriacao(origem: string, plano?: string) {
-    if (logado) return;
+    if (logado || videoAsPageBackground) return;
     registrarEventoProduto("landing_signup_clicked", {
       rota: "/",
       detalhes: {
