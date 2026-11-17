@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import HomeClient from "./HomeClient";
+import VideoBackgroundPreview from "./lp-fundo-video/VideoBackgroundPreview";
 import { type Locale, normalizeLocale, ogLocale } from "../lib/i18n";
 import { APPROVED_MONTHLY_PRICES, defaultPricingCurrencyForCountry, type PricingCurrency } from "../lib/pricing-markets";
 
@@ -130,7 +130,7 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
       />
-      <HomeClient initialCurrency={currency} />
+      <VideoBackgroundPreview initialCurrency={currency} production />
     </>
   );
 }
