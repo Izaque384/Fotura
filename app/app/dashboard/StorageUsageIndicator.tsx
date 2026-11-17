@@ -55,13 +55,11 @@ export default function StorageUsageIndicator() {
   return (
     <button type="button" className={`storage-usage${alerta ? " storage-usage--alert" : ""}`} aria-label="Ver plano e armazenamento" onClick={() => router.push("/dashboard/assinatura")}>
       <div className="storage-usage__head">
-        <span>Armazenamento</span>
-        <strong>{ilimitado ? "Ilimitado" : `${percentual}%`}</strong>
+        <span>ARMAZENAMENTO</span>
       </div>
-      {!ilimitado && <div className="storage-usage__track" aria-hidden="true"><span style={{ width: `${percentual}%` }} /></div>}
       <div className="storage-usage__meta">
-        <span>{formatarUso(usadoBytes)}</span>
-        <span>{ilimitado ? dados.plano?.nome ?? "Legacy" : `/ ${limiteGb} GB`}</span>
+        <strong>{formatarUso(usadoBytes)}</strong>
+        <span>{ilimitado ? dados.plano?.nome ?? "Plano legado" : `${percentual}% de ${limiteGb} GB`}</span>
       </div>
       <style>{`
         .storage-usage{width:184px;box-sizing:border-box;padding:7px 10px;border:1px solid #D7D0E7;border-radius:11px;background:linear-gradient(180deg,#FAF8FD,#F3EFF9);font-family:var(--font-sora),Sora,sans-serif;color:#21253A;flex:none;cursor:pointer;text-align:left}
