@@ -82,13 +82,14 @@ test.describe("Painel real com elementos aprovados da prévia", () => {
         <div class="overview-section"><div class="overview-eyebrow">PANORAMA DO ESTÚDIO</div>
           <section class="charts"><article class="card"><span class="card-eyebrow">01 / EVOLUÇÃO</span><div class="card-t">Total de projetos</div></article></section>
         </div>
-        <section class="daily-section"><span class="overview-eyebrow">NO DIA A DIA</span><div class="lists"><article class="card"><img class="list-cover" alt="Capa"></article></div></section>
+        <section class="daily-section"><span class="overview-eyebrow">NO DIA A DIA</span><div class="lists"><article class="card"><div class="list-row"><img class="list-cover" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Capa"></div></article></div></section>
       </main>
     </div></body></html>`);
     await expect(page.locator(".mf-side")).toHaveCSS("background-color", "rgb(23, 23, 29)");
     await expect(page.locator(".mf-top-user")).toHaveCSS("border-top-left-radius", "18px");
     await expect(page.locator(".charts .card")).toHaveCSS("border-top-left-radius", "23px");
-    await expect(page.locator(".list-cover")).toHaveCSS("width", "62px");
+    await expect(page.locator(".list-cover")).toHaveCSS("object-fit", "cover");
+    await expect(page.locator(".list-cover")).toHaveCSS("border-top-left-radius", "10px");
     await expect(page.locator(".bell")).toHaveCSS("width", "47px");
     await expect(page.locator(".storage-usage")).toHaveCSS("border-top-left-radius", "13px");
     await expect(page.getByText("PANORAMA DO ESTÚDIO")).toBeVisible();
