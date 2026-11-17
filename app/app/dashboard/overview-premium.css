@@ -1,0 +1,293 @@
+/* Panorama e dia a dia: estilo selecionado do conceito, mantendo dados e ações reais.
+   O cabeçalho mantém sua disposição original; a tipografia fica menos pesada. */
+html body .dash.ft-overview-premium{
+  background:radial-gradient(ellipse at 86% 0%,rgba(221,217,240,.45),transparent 38%),linear-gradient(180deg,#fbfaf9,#f7f6f5 50%,#f6f5f5);
+  color:#232331;
+}
+html body .dash.ft-overview-premium .dash-body{
+  max-width:1410px;
+  padding:57px clamp(24px,3.5vw,60px) 68px;
+}
+html body .dash.ft-overview-premium .dash-top{
+  margin-bottom:26px!important;
+  align-items:flex-end;
+  gap:22px;
+}
+html body .dash.ft-overview-premium .dash-eyebrow{
+  color:#8570b2!important;
+  font-size:10px!important;
+  font-weight:750!important;
+  letter-spacing:.15em!important;
+}
+html body .dash.ft-overview-premium .dash-h1{
+  color:#252332!important;
+  font-size:clamp(32px,3.1vw,44px)!important;
+  font-weight:640!important;
+  line-height:1.1!important;
+  letter-spacing:-.065em!important;
+}
+html body .dash.ft-overview-premium .dash-sub{
+  font-size:12px!important;
+  font-weight:450!important;
+  color:#84808e!important;
+  line-height:1.7!important;
+}
+html body .dash.ft-overview-premium .dash-actions{gap:9px}
+html body .dash.ft-overview-premium .storage-usage{
+  min-width:165px;width:auto;
+  min-height:47px;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:7px 13px;
+  border:1px solid #e6e2eb!important;
+  border-radius:13px!important;
+  background:rgba(255,255,255,.83)!important;
+  box-shadow:0 5px 18px #1e18260a;
+  text-align:left;
+}
+html body .dash.ft-overview-premium .storage-usage:hover{background:#fff!important;border-color:#dcd3ed!important}
+html body .dash.ft-overview-premium .storage-usage__head{
+  font-size:8px;line-height:1.1;
+  font-weight:780;letter-spacing:.11em;
+  color:#988fa3;
+}
+html body .dash.ft-overview-premium .storage-usage__head span{color:#988fa3}
+html body .dash.ft-overview-premium .storage-usage__meta{
+  margin-top:6px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+html body .dash.ft-overview-premium .storage-usage__meta strong{
+  font-size:12px;line-height:1.1;color:#3d3555;font-weight:750;white-space:nowrap;
+}
+html body .dash.ft-overview-premium .storage-usage__meta span{
+  font-size:8px;line-height:1.3;color:#897f9e;white-space:nowrap;
+}
+html body .dash.ft-overview-premium .storage-usage--alert{
+  border-color:#f2c77b!important;
+}
+html body .dash.ft-overview-premium .storage-usage--alert .storage-usage__meta strong{color:#aa6a2a}
+html body .dash.ft-overview-premium .bell{
+  width:47px;height:47px;
+  flex:none;display:grid;place-items:center;
+  border-radius:13px!important;
+  border:1px solid #e6e1ec!important;
+  background:rgba(255,255,255,.83)!important;
+  color:#5b4a81!important;
+  box-shadow:0 5px 18px #1e18260a;
+}
+html body .dash.ft-overview-premium .bell svg{display:block;width:19px;height:19px}
+html body .dash.ft-overview-premium .bell:hover{background:#f1edf8!important}
+html body .dash.ft-overview-premium .bell-dot{
+  top:7px;right:7px;
+  background:#8164c8;min-width:15px;height:15px;
+  font-size:8px;
+  border:1px solid #fff;
+  box-shadow:none;
+}
+html body .dash.ft-overview-premium .bell-pop{
+  top:56px;
+  background:#fff;border:1px solid #ded9e6;
+  border-radius:16px;padding:15px;
+  box-shadow:0 25px 60px #27203330;
+  color:#242331;
+}
+html body .dash.ft-overview-premium .bell-item:hover{background:#f5f2fa}
+html body .dash.ft-overview-premium .dash-btn{
+  min-height:47px!important;
+  padding:0 16px!important;
+  border-radius:13px!important;
+  font-size:11px!important;
+  font-weight:700!important;
+  box-shadow:0 9px 20px rgba(78,74,190,.16)!important;
+}
+
+/* Panorama: somente os títulos solicitados ficam visíveis. */
+html body .dash.ft-overview-premium .overview-section{margin-top:27px}
+html body .dash.ft-overview-premium .overview-head{
+  display:flex;justify-content:space-between;align-items:center;gap:16px;
+  margin:0 0 17px;
+}
+html body .dash.ft-overview-premium .overview-eyebrow{
+  display:block;
+  font-size:10px;letter-spacing:.17em;font-weight:760;
+  color:#8570b2;
+}
+html body .dash.ft-overview-premium .chart-options{margin:0}
+html body .dash.ft-overview-premium .chart-view-switch{
+  display:inline-flex;gap:4px;padding:4px;
+  border:1px solid #e3ddea;
+  background:#eeeaf3;border-radius:12px;
+}
+html body .dash.ft-overview-premium .chart-view-switch button{
+  min-width:104px;min-height:35px;padding:0 13px;
+  border-radius:9px;
+  color:#82798f;font-size:10px;font-weight:700;
+}
+html body .dash.ft-overview-premium .chart-view-switch button.selected{
+  background:#fff;color:#5d4b98;
+  box-shadow:0 3px 10px #27203a12;
+}
+html body .dash.ft-overview-premium .charts{
+  display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);
+  gap:17px;margin-bottom:0;
+}
+html body .dash.ft-overview-premium .card{
+  background:rgba(255,255,255,.87)!important;
+  border:1px solid #e7e4eb!important;
+  border-radius:23px!important;
+  box-shadow:0 14px 45px rgba(32,29,50,.045)!important;
+  padding:25px 26px!important;
+  min-width:0;
+}
+html body .dash.ft-overview-premium .charts>.card{padding:27px 27px 19px!important}
+html body .dash.ft-overview-premium .card-h{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:12px;
+  margin-bottom:17px;
+}
+html body .dash.ft-overview-premium .card-eyebrow{
+  display:block;
+  color:#9886be;font-size:8px;font-weight:760;letter-spacing:.15em;
+  margin-bottom:9px;
+}
+html body .dash.ft-overview-premium .card-t{
+  font-size:16px;color:#282735;font-weight:690;
+  line-height:1.3;letter-spacing:-.04em;
+}
+html body .dash.ft-overview-premium .card-sub{
+  color:#928b9c;font-size:9px;line-height:1.5;margin-top:7px;
+}
+html body .dash.ft-overview-premium .charts .card-h>.card-sub{
+  font-size:10px;font-weight:600;color:#6e677d;margin:0;
+}
+/* Barras dinâmicas originais, com o acabamento e as linhas-guia da prévia. */
+html body .dash.ft-overview-premium .vbars{
+  height:236px;gap:11px;
+  padding:24px 8px 0;
+  position:relative;isolation:isolate;
+  background:repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(25% - 1px),
+    #ece9ef calc(25% - 1px),
+    #ece9ef 25%
+  );
+  background-size:100% calc(100% - 40px);
+  background-repeat:no-repeat;
+  background-position:0 8px;
+}
+html body .dash.ft-overview-premium .vbar{z-index:1}
+html body .dash.ft-overview-premium .vbar-area{align-items:flex-end}
+html body .dash.ft-overview-premium .vbar-fill{
+  max-width:43px;width:48%;
+  border-radius:8px 8px 3px 3px;
+  background:linear-gradient(180deg,#5cabfb 0%,#5671fb 45%,#6840df 100%);
+}
+html body .dash.ft-overview-premium .vbar:has(.vbar-fill[style*="height: 2%"]) .vbar-fill{background:#d1c9e7}
+html body .dash.ft-overview-premium .vbar-num{
+  top:-25px;color:#35303d;font-size:12px;font-weight:750;
+}
+html body .dash.ft-overview-premium .vbar-lab{
+  color:#837d8b;font-size:10px;font-weight:600;margin-top:11px;
+}
+html body .dash.ft-overview-premium .status-wrap{
+  display:flex;align-items:center;justify-content:center;gap:22px;
+  min-height:235px;
+}
+html body .dash.ft-overview-premium .donut{width:150px;height:150px;box-shadow:none!important}
+html body .dash.ft-overview-premium .donut::after{
+  inset:27px;background:#fff;
+}
+html body .dash.ft-overview-premium .donut-center strong{
+  font-size:34px;font-weight:730;letter-spacing:-.07em;color:#272332;line-height:1;
+}
+html body .dash.ft-overview-premium .donut-center span{font-size:9px;color:#827988}
+html body .dash.ft-overview-premium .legend{min-width:0;gap:5px}
+html body .dash.ft-overview-premium .legend-row{
+  gap:11px;padding:5px 0;
+  color:#7e7788;font-size:9px;
+}
+html body .dash.ft-overview-premium .legend-left{gap:9px}
+html body .dash.ft-overview-premium .legend-row strong{color:#35313e;font-size:10px}
+
+/* No dia a dia: organização da prévia, incluindo todas as capas e dados reais. */
+html body .dash.ft-overview-premium .daily-section{margin-top:36px}
+html body .dash.ft-overview-premium .daily-head{margin-bottom:17px}
+html body .dash.ft-overview-premium .lists{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px;
+}
+html body .dash.ft-overview-premium .lists>.card{padding:25px 25px 23px!important}
+html body .dash.ft-overview-premium .lists .card-h{align-items:flex-end;margin-bottom:21px}
+html body .dash.ft-overview-premium .lists .card-h .card-t{font-size:15px}
+html body .dash.ft-overview-premium .card-link{
+  color:#6550a1;font-size:10px;font-weight:720;
+  white-space:nowrap;padding:7px 2px;
+}
+html body .dash.ft-overview-premium .card-link::after{content:" →";font-size:13px}
+html body .dash.ft-overview-premium .list-row{
+  min-width:0;gap:13px;min-height:76px;padding:9px 12px;
+  border:1px solid #ece9ef!important;
+  border-radius:14px!important;
+  background:#fbfafc!important;
+  margin-bottom:8px;
+  box-shadow:none!important;
+}
+html body .dash.ft-overview-premium .list-row:hover{border-color:#c9bcea!important}
+html body .dash.ft-overview-premium .list-cover{
+  width:62px;height:55px;flex:none;
+  object-fit:cover;border-radius:10px;
+  background:#ece9ef;
+}
+html body .dash.ft-overview-premium .list-info{min-width:0}
+html body .dash.ft-overview-premium .list-title{font-size:11px;font-weight:650;color:#35313d}
+html body .dash.ft-overview-premium .list-meta{font-size:9px;color:#918b99;line-height:1.5}
+html body .dash.ft-overview-premium .recent-project-arrow{font-size:19px;color:#a9a0b6}
+html body .dash.ft-overview-premium .empty{
+  color:#928b9c;font-size:11px;
+  padding:24px 10px;
+}
+html body .dash.ft-overview-premium :is(.bell,.storage-usage,.dash-btn,.card-link):focus-visible{
+  outline:2px solid #977edc;outline-offset:3px;
+}
+@media(max-width:1190px){
+  html body .dash.ft-overview-premium .dash-body{padding-inline:28px}
+  html body .dash.ft-overview-premium .charts{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
+  html body .dash.ft-overview-premium .charts>.card{padding:23px 19px 19px!important}
+  html body .dash.ft-overview-premium .status-wrap{gap:12px}
+  html body .dash.ft-overview-premium .donut{width:130px;height:130px}
+  html body .dash.ft-overview-premium .donut::after{inset:24px}
+  html body .dash.ft-overview-premium .legend-row{font-size:8px}
+}
+@media(max-width:980px){
+  html body .dash.ft-overview-premium .dash-body{padding-top:80px}
+}
+@media(max-width:850px){
+  html body .dash.ft-overview-premium .charts,
+  html body .dash.ft-overview-premium .lists{grid-template-columns:1fr}
+  html body .dash.ft-overview-premium .status-wrap{justify-content:space-around}
+  html body .dash.ft-overview-premium .donut{width:148px;height:148px}
+  html body .dash.ft-overview-premium .donut::after{inset:27px}
+}
+@media(max-width:640px){
+  html body .dash.ft-overview-premium .dash-body{padding:76px 15px 50px}
+  html body .dash.ft-overview-premium .dash-top{align-items:flex-start;gap:14px}
+  html body .dash.ft-overview-premium .dash-h1{font-size:33px!important}
+  html body .dash.ft-overview-premium .dash-actions{gap:8px}
+  html body .dash.ft-overview-premium .storage-usage{min-width:150px;max-width:195px;padding:7px 10px}
+  html body .dash.ft-overview-premium .storage-usage__meta span{font-size:7px}
+  html body .dash.ft-overview-premium .overview-head{align-items:flex-start;flex-direction:column}
+  html body .dash.ft-overview-premium .chart-options{align-self:flex-start}
+  html body .dash.ft-overview-premium .charts>.card,
+  html body .dash.ft-overview-premium .lists>.card{padding:22px 19px!important}
+  html body .dash.ft-overview-premium .status-wrap{gap:16px}
+  html body .dash.ft-overview-premium .list-cover{width:56px;height:53px}
+}
+@media(max-width:430px){
+  html body .dash.ft-overview-premium .charts .card-h>.card-sub{font-size:9px}
+  html body .dash.ft-overview-premium .status-wrap{flex-direction:row;align-items:center}
+  html body .dash.ft-overview-premium .donut{width:115px;height:115px}
+  html body .dash.ft-overview-premium .donut::after{inset:21px}
+  html body .dash.ft-overview-premium .donut-center strong{font-size:27px}
+  html body .dash.ft-overview-premium .legend-row{font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){
+  html body .dash.ft-overview-premium :is(.bell,.storage-usage,.list-row,.card-link){transition:none!important}
+}
