@@ -277,7 +277,7 @@ function DemoScreen({ etapa }: { etapa: number }) {
   );
 }
 
-export default function Home({ initialCurrency }: { initialCurrency: PricingCurrency }) {
+export default function Home({ initialCurrency, videoAsPageBackground = false }: { initialCurrency: PricingCurrency; videoAsPageBackground?: boolean }) {
   const { locale, t } = useI18n();
   const supabase = useMemo(() => createClient(), []);
   const [logado, setLogado] = useState(false);
@@ -292,11 +292,13 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
   }, [supabase]);
 
   useEffect(() => {
+    // Prévia visual não deve contaminar métricas reais de aquisição.
+    if (videoAsPageBackground) return;
     registrarEventoProduto("landing_view", {
       rota: "/",
       detalhes: utmAtual(),
     });
-  }, []);
+  }, [videoAsPageBackground]);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -307,7 +309,7 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
   }, []);
 
   function rastrearCriacao(origem: string, plano?: string) {
-    if (logado) return;
+    if (logado || videoAsPageBackground) return;
     registrarEventoProduto("landing_signup_clicked", {
       rota: "/",
       detalhes: {
@@ -343,7 +345,7 @@ export default function Home({ initialCurrency }: { initialCurrency: PricingCurr
 
       <main>
         <section className="lp2-hero lp2-hero-cinematic" id="experiencia">
-          <LandingHeroVideo />
+          {!videoAsPageBackground && <LandingHeroVideo />}
           <div className="lp2-hero-copy">
             <div className="lp2-kicker">{t("Galerias para selecionar e entregar fotografias")}</div>
             <h1>{t("Sua fotografia merece uma")} <span className="lp2-serif lp2-gradient-word">{t("entrega")}</span> {t("à altura.")}</h1>
