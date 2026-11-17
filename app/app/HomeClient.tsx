@@ -277,7 +277,7 @@ function DemoScreen({ etapa }: { etapa: number }) {
   );
 }
 
-export default function Home({ initialCurrency, videoAsPageBackground = false }: { initialCurrency: PricingCurrency; videoAsPageBackground?: boolean }) {
+export default function Home({ initialCurrency, videoAsPageBackground = false, suppressLandingAnalytics = false }: { initialCurrency: PricingCurrency; videoAsPageBackground?: boolean; suppressLandingAnalytics?: boolean }) {
   const { locale, t } = useI18n();
   const supabase = useMemo(() => createClient(), []);
   const [logado, setLogado] = useState(false);
@@ -292,13 +292,13 @@ export default function Home({ initialCurrency, videoAsPageBackground = false }:
   }, [supabase]);
 
   useEffect(() => {
-    // Prévia visual não deve contaminar métricas reais de aquisição.
-    if (videoAsPageBackground) return;
+    // A prévia não contamina as métricas reais; o site público continua registrando visitas.
+    if (suppressLandingAnalytics) return;
     registrarEventoProduto("landing_view", {
       rota: "/",
       detalhes: utmAtual(),
     });
-  }, [videoAsPageBackground]);
+  }, [suppressLandingAnalytics]);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -309,7 +309,7 @@ export default function Home({ initialCurrency, videoAsPageBackground = false }:
   }, []);
 
   function rastrearCriacao(origem: string, plano?: string) {
-    if (logado || videoAsPageBackground) return;
+    if (logado || suppressLandingAnalytics) return;
     registrarEventoProduto("landing_signup_clicked", {
       rota: "/",
       detalhes: {

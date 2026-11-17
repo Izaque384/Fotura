@@ -1,13 +1,14 @@
 import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
-test.describe("Prévia: landing original com vídeo fixo global", () => {
-  test("não substitui a landing de produção e não permite indexação da rota", () => {
+test.describe("Landing com vídeo fixo global", () => {
+  test("preserva o isolamento da rota de demonstração e mantém SEO da página oficial", () => {
     const home = readFileSync("app/HomeClient.tsx", "utf8");
     const page = readFileSync("app/lp-fundo-video/page.tsx", "utf8");
     expect(home).toContain('import "./landing-editorial.css"');
     expect(home).toContain('videoAsPageBackground = false');
-    expect(home).toContain("if (videoAsPageBackground) return;");
+    expect(home).toContain("if (suppressLandingAnalytics) return;");
+    expect(readFileSync("app/page.tsx", "utf8")).toContain("<VideoBackgroundPreview initialCurrency={currency} production />");
     expect(page).toContain("index: false");
     expect(page).toContain("defaultPricingCurrencyForCountry");
   });
@@ -78,5 +79,27 @@ test.describe("Prévia: landing original com vídeo fixo global", () => {
     await page.goto("/pt/lp-fundo-video");
     await expect(page.locator(".lp-video-preview-backdrop .lp2-hero-poster")).toBeVisible();
     await expect(page.locator(".lp-video-preview-backdrop video")).toHaveCount(0);
+  });
+
+  test("LP oficial recebe vídeo global sem banner de prévia, mantém indexação e planos", async ({ page }) => {
+    await page.goto("/pt");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Sua fotografia merece");
+    await expect(page.locator(".lp-video-preview-backdrop")).toHaveCSS("position", "fixed");
+    await expect(page.locator(".lp-video-preview-backdrop .lp2-hero-media")).toHaveCount(1);
+    await expect(page.locator(".lp2-hero .lp2-hero-media")).toHaveCount(0);
+    await expect(page.locator(".lp2-plan")).toHaveCount(4);
+    await expect(page.locator(".lp-video-preview-banner")).toHaveCount(0);
+    await expect(page.locator("meta[name='robots']")).not.toHaveAttribute("content", /noindex/);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/pt$/);
+  });
+
+  test("fundo continua fixo na LP oficial após rolagem; mobile não quebra largura", async ({ page }) => {
+    await page.setViewportSize({width:390,height:844});
+    await page.goto("/pt");
+    const before = await page.locator(".lp-video-preview-backdrop").evaluate(el=>el.getBoundingClientRect().top);
+    await page.locator(".lp2-pricing").scrollIntoViewIfNeeded();
+    const after = await page.locator(".lp-video-preview-backdrop").evaluate(el=>el.getBoundingClientRect().top);
+    expect(Math.abs(after-before)).toBeLessThan(2);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
   });
 });
