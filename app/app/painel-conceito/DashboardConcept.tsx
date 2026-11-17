@@ -111,7 +111,7 @@ export default function DashboardConcept(){
   const [aviso,setAviso] = useState("");
   const dados = estatisticas[aba];
   const maximo = Math.max(1,...dados.meses);
-  const totalEtapas = dados.etapas.reduce((a,b)=>a+b,0);
+  const totalEtapas = dados.etapas.reduce<number>((a,b)=>a+b,0);
   const cores = dados.etapas.map((n,i)=>n?{peso:100*n/totalEtapas,cor:etapas[i].cor}:null).filter((v):v is {peso:number;cor:string}=>v!==null);
   let acumulado=0;
   const paradas=cores.map(c=>{const inicio=acumulado;acumulado+=c.peso;return c.cor+" "+inicio+"% "+acumulado+"%";}).join(", ");
