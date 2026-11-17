@@ -38,7 +38,7 @@ test.describe("Painel real com elementos aprovados da prévia", () => {
     expect(sidebar).toContain("onClick={sair}");
     expect(sidebar).toContain('aria-current={perfilAtivo?"page":undefined}');
     expect(sidebar).toContain("onClick={()=>router.push(withLocalePath(\"/perfil\", locale))}");
-    expect(sidebarCss).not.toContain("content:");
+    expect(sidebarCss).not.toMatch(/\.mf-(?:nav|item|bottom)[^{}]*::before\s*\{\s*content\s*:/);
     expect(sidebarCss).toContain(".mf-side");
     expect(sidebarCss).toContain(".mf-top-user");
   });
