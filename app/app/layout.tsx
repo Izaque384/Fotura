@@ -12,6 +12,8 @@ import "./internal-directory-theme.css";
 import "./fotura-drawer.css";
 import "./avisos-fotura.css";
 import "./fotura-motion.css";
+import "./internal-sidebar-premium.css";
+import "./dashboard/overview-premium.css";
 import ClientShortcuts from "./components/ClientShortcuts";
 import BellOutsideDismiss from "./components/BellOutsideDismiss";
 import I18nProvider from "./components/I18nProvider";
