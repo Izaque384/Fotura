@@ -90,7 +90,7 @@ test.describe("Landing com vídeo fixo global", () => {
     await expect(page.locator(".lp2-plan")).toHaveCount(4);
     await expect(page.locator(".lp-video-preview-banner")).toHaveCount(0);
     await expect(page.locator("meta[name='robots']")).not.toHaveAttribute("content", /noindex/);
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\\/pt$/);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/pt$/);
   });
 
   test("fundo continua fixo na LP oficial após rolagem; mobile não quebra largura", async ({ page }) => {
