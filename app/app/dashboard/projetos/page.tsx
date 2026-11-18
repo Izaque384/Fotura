@@ -2,9 +2,9 @@
 
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import MenuFotografo from "../../MenuFotografo";
 import InternalMetricIcon from "../../components/InternalMetricIcon";
-import FoturaDrawer from "../../components/FoturaDrawer";
 import { ArrowRightIcon, CheckIcon, ChevronDownIcon, CloseIcon, FolderIcon as FolderModelIcon, ImageIcon } from "../../components/FoturaIcons";
 import { createClient } from "../../../lib/supabase-client";
 import { type ModeloProjeto } from "../../../lib/project-templates";
@@ -13,7 +13,6 @@ type Projeto={id:string;modelo:ModeloProjeto|null;prova:boolean;nome:string;desc
 type Pasta={id:string;titulo:string;projeto_id:string|null;cliente_id:string|null;etapa:string;criado_em:string};
 type Cliente={id:string;nome:string;avatar_path:string|null};
 type Filtro="todos"|"sem_pastas"|"modelo_selecao"|"modelo_entrega"|"modelo_pastas"|"aguardando"|"selecao"|"preparando"|"entregue";
-type ModoProjetos="lista"|"grade";
 type FluxoProjeto="selecao"|"direta";
 type EstruturaProjeto="unico"|"galerias";
 function statusProjeto(ps:Pasta[],prova:boolean,modelo?:ModeloProjeto|null):{filtro:Filtro;rotulo:string;proxima:string}{
@@ -32,15 +31,13 @@ function dataCurta(v:string){const d=new Date(v);return Number.isNaN(d.getTime()
 export default function ProjetosPage(){
  const router=useRouter(),supabase=useMemo(()=>createClient(),[]);
  const[uid,setUid]=useState(""),[projetos,setProjetos]=useState<Projeto[]>([]),[pastas,setPastas]=useState<Pasta[]>([]),[clientes,setClientes]=useState<Cliente[]>([]),[carregando,setCarregando]=useState(true);
- const[busca,setBusca]=useState(""),[modo,setModo]=useState<ModoProjetos>("grade"),[filtro,setFiltro]=useState<Filtro>("todos"),[filtroAberto,setFiltroAberto]=useState(false),[projetoDetalhes,setProjetoDetalhes]=useState<string|null>(null);
- const[fotoCliente,setFotoCliente]=useState<{path:string;url:string}|null>(null);
+ const[busca,setBusca]=useState(""),[filtro,setFiltro]=useState<Filtro>("todos"),[filtroAberto,setFiltroAberto]=useState(false);
  const[etapaCriacao,setEtapaCriacao]=useState<"fluxo"|"estrutura">("fluxo"),[fluxoProjeto,setFluxoProjeto]=useState<FluxoProjeto|null>(null),[estruturaProjeto,setEstruturaProjeto]=useState<EstruturaProjeto|null>(null);
  const[aviso,setAviso]=useState(""),[avisoErro,setAvisoErro]=useState(false),[modalAberto,setModalAberto]=useState(false),[nome,setNome]=useState(""),[descricao,setDescricao]=useState(""),[clienteId,setClienteId]=useState(""),[criando,setCriando]=useState(false);
 
  useEffect(()=>{const fora=(e:PointerEvent)=>{const a=e.target;if(!(a instanceof Element)||!a.closest(".filter-wrap"))setFiltroAberto(false)};const tecla=(e:KeyboardEvent)=>{if(e.key==="Escape")setFiltroAberto(false)};document.addEventListener("pointerdown",fora);window.addEventListener("keydown",tecla);return()=>{document.removeEventListener("pointerdown",fora);window.removeEventListener("keydown",tecla)}},[]);
  useEffect(()=>{if(!modalAberto)return;const old=document.body.style.overflow;document.body.style.overflow="hidden";const tecla=(e:KeyboardEvent)=>{if(e.key==="Escape"&&!criando)setModalAberto(false)};window.addEventListener("keydown",tecla);return()=>{window.removeEventListener("keydown",tecla);document.body.style.overflow=old}},[modalAberto,criando]);
- useEffect(()=>{if(new URLSearchParams(window.location.search).get("novo")==="1")setModalAberto(true);try{if(localStorage.getItem("fotura-projetos-modo")==="lista")setModo("lista")}catch{}},[]);
- function mudarModo(v:ModoProjetos){setModo(v);try{localStorage.setItem("fotura-projetos-modo",v)}catch{}}
+ useEffect(()=>{if(new URLSearchParams(window.location.search).get("novo")==="1")setModalAberto(true)},[]);
 
  async function token(){const{data}=await supabase.auth.getSession();return data.session?.access_token||""}
  async function carregar(){
@@ -83,82 +80,27 @@ export default function ProjetosPage(){
   try{const access=await token();if(!access)throw new Error("Sua sessão expirou.");const r=await fetch("/api/projeto/workspace",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${access}`},body:JSON.stringify({acao:"criar_projeto",nome:nome.trim(),descricao:descricao.trim()||null,clienteId:clienteId||null,modelo,prova:fluxoProjeto==="selecao"})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Não foi possível criar o projeto.");fecharModal();router.push(`/dashboard/projetos/${d.projeto.id}`)}catch(e){setAvisoErro(true);setAviso(e instanceof Error?e.message:"Não foi possível criar o projeto.")}finally{setCriando(false)}
  }
  function clienteNome(id:string|null){return clientes.find(c=>c.id===id)?.nome||"Sem cliente vinculado"}
- function status(etapa:string){return etapa==="entrega"?"Entregue":etapa==="preparando_entrega"?"Preparando entrega":etapa==="selecao_finalizada"?"Seleção finalizada":"Em andamento"}
-
- const projetoSelecionado=projetos.find(p=>p.id===projetoDetalhes)||null;
- const clienteSelecionado=clientes.find(c=>c.id===projetoSelecionado?.cliente_id)||null;
- const avatarPath=projetoSelecionado&&clienteSelecionado?.avatar_path?clienteSelecionado.avatar_path:null;
- useEffect(()=>{
-  let ativo=true;
-  setFotoCliente(null);
-  if(!avatarPath)return()=>{ativo=false};
-  void (async()=>{
-   const {data:session}=await supabase.auth.getSession();
-   const access=session.session?.access_token;if(!access||!ativo)return;
-   const response=await fetch("/api/clientes/avatar-urls",{
-    method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+access},
-    cache:"no-store",body:JSON.stringify({paths:[avatarPath]}),
-   });
-   if(!response.ok||!ativo)return;
-   const signed=await response.json() as {urls?:Record<string,string>};
-   const url=signed.urls?.[avatarPath];
-   if(url&&ativo)setFotoCliente({path:avatarPath,url});
-  })().catch(()=>{if(ativo)setFotoCliente(null)});
-  return()=>{ativo=false};
- },[supabase,avatarPath,projetoDetalhes]);
- const pastasDoProjeto=projetoSelecionado?pastas.filter(g=>g.projeto_id===projetoSelecionado.id):[];
- const estadoSelecionado=projetoSelecionado?statusProjeto(pastasDoProjeto,projetoSelecionado.prova,projetoSelecionado.modelo):null;
  const totalPastas=pastas.length,comPastas=projetos.filter(p=>pastas.some(g=>g.projeto_id===p.id)).length;
  const visiveis=useMemo(()=>{const termo=busca.trim().toLocaleLowerCase("pt-BR");return projetos.filter(p=>{const ps=pastas.filter(g=>g.projeto_id===p.id),okFiltro=filtro==="todos"||(filtro==="modelo_selecao"&&p.prova)||(filtro==="modelo_entrega"&&!p.prova)||(filtro==="modelo_pastas"&&p.modelo==="casamento")||filtro===statusProjeto(ps,p.prova,p.modelo).filtro,okBusca=!termo||p.nome.toLocaleLowerCase("pt-BR").includes(termo)||(p.descricao??"").toLocaleLowerCase("pt-BR").includes(termo)||clienteNome(p.cliente_id).toLocaleLowerCase("pt-BR").includes(termo)||ps.some(g=>g.titulo.toLocaleLowerCase("pt-BR").includes(termo));return okFiltro&&okBusca})},[busca,filtro,pastas,projetos,clientes]);
 
  return <div className="dash mf-shift projects-page"><MenuFotografo/><style>{css}</style><main className="dash-body">
   <header className="top"><div><div className="ey">PROJETOS</div><h1 className="h1">Seus trabalhos em um só lugar</h1><p className="sub">Cada projeto reúne suas galerias, seleção, entrega e um único link para o cliente.</p></div><button className="btn" onClick={abrirModal}>+ Novo projeto</button></header>
   <section className="stats"><div className="stat"><InternalMetricIcon name="projects"/><strong>{projetos.length}</strong><span>Projetos</span></div><div className="stat"><InternalMetricIcon name="folders"/><strong>{comPastas}</strong><span>Projetos com galerias</span></div><div className="stat"><InternalMetricIcon name="photos"/><strong>{totalPastas}</strong><span>Galerias criadas</span></div></section>
-  <div className="toolbar"><label className="search-box"><SearchIcon/><input className="search" value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar projeto, cliente ou galeria" aria-label="Buscar projetos"/></label><div className="filter-wrap"><button type="button" className={"filter-trigger"+(filtroAberto?" open":"")} onClick={()=>setFiltroAberto(v=>!v)}>Filtrar por <span><ChevronDownIcon size={14}/></span></button>{filtroAberto&&<div className="filter-menu">{([["todos","Todos"],["aguardando","Aguardando cliente"],["selecao","Seleção concluída"],["preparando","Preparando entrega"],["entregue","Entregues"],["modelo_selecao","Seleção de fotos"],["modelo_entrega","Entrega direta"],["modelo_pastas","Projeto com galerias"]] as [Filtro,string][]).map(([v,l])=><button key={v} className={"filter-option"+(filtro===v?" on":"")} onClick={()=>{setFiltro(v);setFiltroAberto(false)}}><span>{l}</span>{filtro===v&&<b><CheckIcon size={14}/></b>}</button>)}</div>}</div><div className="view-toggle" role="group" aria-label="Visualização dos projetos"><button type="button" className={modo==="lista"?"selected":""} aria-pressed={modo==="lista"} onClick={()=>mudarModo("lista")}>☰ Lista</button><button type="button" className={modo==="grade"?"selected":""} aria-pressed={modo==="grade"} onClick={()=>mudarModo("grade")}>▦ Grade</button></div></div>
+  <div className="toolbar"><label className="search-box"><SearchIcon/><input className="search" value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar projeto, cliente ou galeria" aria-label="Buscar projetos"/></label><div className="filter-wrap"><button type="button" className={"filter-trigger"+(filtroAberto?" open":"")} onClick={()=>setFiltroAberto(v=>!v)}>Filtrar por <span><ChevronDownIcon size={14}/></span></button>{filtroAberto&&<div className="filter-menu">{([["todos","Todos"],["aguardando","Aguardando cliente"],["selecao","Seleção concluída"],["preparando","Preparando entrega"],["entregue","Entregues"],["modelo_selecao","Seleção de fotos"],["modelo_entrega","Entrega direta"],["modelo_pastas","Projeto com galerias"]] as [Filtro,string][]).map(([v,l])=><button key={v} className={"filter-option"+(filtro===v?" on":"")} onClick={()=>{setFiltro(v);setFiltroAberto(false)}}><span>{l}</span>{filtro===v&&<b><CheckIcon size={14}/></b>}</button>)}</div>}</div></div>
   {aviso&&<div className={"notice"+(avisoErro?" err":"")}><span>{aviso}</span>{avisoErro&&<button type="button" onClick={()=>void carregar()} disabled={carregando}>{carregando?"Tentando…":"Tentar novamente"}</button>}</div>}
-  <section className="panel list-panel">{carregando?<div className="empty">Carregando projetos…</div>:!visiveis.length?<div className="empty-first"><strong>{projetos.length?"Nenhum projeto encontrado":"Crie seu primeiro projeto"}</strong><span>{projetos.length?"Ajuste a busca ou o filtro.":"Escolha como o cliente recebe as fotos e, depois, como organizá-las."}</span>{!projetos.length&&<button className="btn" onClick={abrirModal}>Criar projeto</button>}</div>:<div className={"project-list "+(modo==="grade"?"project-grid":"")}>{visiveis.map(p=>{const ps=pastas.filter(g=>g.projeto_id===p.id),estado=statusProjeto(ps,p.prova,p.modelo);return <article className="project-card" key={p.id}>
-   <div className="project-main"><button type="button" className="project-cover" aria-label={`Abrir projeto ${p.nome}`} onClick={()=>router.push(`/dashboard/projetos/${p.id}`)}>{p.capaUrl?<img src={p.capaUrl} alt="" loading="lazy" decoding="async"/>:<FolderIcon/>}</button><div className="project-copy"><div className="project-title-line"><h2>{p.nome}</h2><span className="count-badge">{p.modelo==="ensaio"||p.modelo==="entrega"?"Galeria única":`${ps.length} ${ps.length===1?"galeria":"galerias"}`}</span><span className={"project-stage "+estado.filtro}>{estado.rotulo}</span></div><div className="project-meta"><span>{clienteNome(p.cliente_id)}</span><span>Atualizado {dataCurta(p.atualizado_em)}</span></div></div><div className="project-actions"><button className="mini primary-mini" type="button" onClick={()=>router.push(`/dashboard/projetos/${p.id}`)}>{estado.proxima}</button><button className="mini" type="button" onClick={()=>setProjetoDetalhes(p.id)}>Detalhes</button></div></div>
-  </article>})}</div>}</section>
+  <section className="panel list-panel">{carregando?<div className="empty">Carregando projetos…</div>:!visiveis.length?<div className="empty-first"><strong>{projetos.length?"Nenhum projeto encontrado":"Crie seu primeiro projeto"}</strong><span>{projetos.length?"Ajuste a busca ou o filtro.":"Escolha como o cliente recebe as fotos e, depois, como organizá-las."}</span>{!projetos.length&&<button className="btn" onClick={abrirModal}>Criar projeto</button>}</div>:<div className="project-list project-grid">{visiveis.map(p=>{
+   const ps=pastas.filter(g=>g.projeto_id===p.id),estado=statusProjeto(ps,p.prova,p.modelo);
+   return <Link className="project-card" href={`/dashboard/projetos/${p.id}`} aria-label={`Abrir projeto ${p.nome}`} key={p.id}>
+     <div className="project-main">
+       <div className="project-cover">{p.capaUrl?<img src={p.capaUrl} alt="" loading="lazy" decoding="async"/>:<FolderIcon/>}</div>
+       <div className="project-copy">
+         <div className="project-title-line"><h2>{p.nome}</h2><span className="count-badge">{p.modelo==="ensaio"||p.modelo==="entrega"?"Galeria única":`${ps.length} ${ps.length===1?"galeria":"galerias"}`}</span><span className={"project-stage "+estado.filtro}>{estado.rotulo}</span></div>
+         <div className="project-meta"><span>{clienteNome(p.cliente_id)}</span><span>Atualizado {dataCurta(p.atualizado_em)}</span></div>
+       </div>
+     </div>
+   </Link>;
+ })}</div>}</section>
  </main>
- {projetoSelecionado&&estadoSelecionado&&
-  <FoturaDrawer title="Visão rápida do projeto" onClose={()=>setProjetoDetalhes(null)}
-    footer={<button type="button" className="ft-drawer-button primary" onClick={()=>router.push("/dashboard/projetos/"+projetoSelecionado.id)}>Abrir projeto completo <ArrowRightIcon size={15}/></button>}>
-    {projetoSelecionado.capaUrl?<img src={projetoSelecionado.capaUrl} alt="" className="ft-drawer-cover"/>:<div className="ft-drawer-cover-placeholder">Projeto fotográfico</div>}
-    <h3 className="ft-drawer-name">{projetoSelecionado.nome}</h3>
-    <div className="ft-drawer-badges">
-      <span className="ft-drawer-badge">{estadoSelecionado.rotulo}</span>
-      <span className="ft-drawer-badge">{projetoSelecionado.modelo==="ensaio"||projetoSelecionado.modelo==="entrega"?"Galeria única":`${pastasDoProjeto.length} ${pastasDoProjeto.length===1?"galeria":"galerias"}`}</span>
-      <span className="ft-drawer-badge">{projetoSelecionado.prova?"Seleção de fotos":"Entrega direta"}</span>
-    </div>
-    {!!projetoSelecionado.descricao&&<p className="ft-drawer-description">{projetoSelecionado.descricao}</p>}
-    <section className="ft-drawer-section">
-      <h3>Informações</h3>
-      <div className="ft-drawer-field"><strong>Cliente</strong>
-        <div className="ft-drawer-client">
-          {clienteSelecionado&&<span className="ft-drawer-avatar">
-            {avatarPath&&fotoCliente?.path===avatarPath
-              ?<img src={fotoCliente.url} alt={"Foto de "+clienteSelecionado.nome} referrerPolicy="no-referrer"/>
-              :<span aria-hidden="true">{clienteSelecionado.nome.split(/\s+/).filter(Boolean).slice(0,2).map(p=>p[0]?.toLocaleUpperCase("pt-BR")).join("")||"C"}</span>}
-          </span>}
-          <span>{clienteNome(projetoSelecionado.cliente_id)}</span>
-        </div>
-      </div>
-      <div className="ft-drawer-field"><strong>Última atualização</strong>{dataCurta(projetoSelecionado.atualizado_em)}</div>
-      <div className="ft-drawer-field"><strong>Criado em</strong>{dataCurta(projetoSelecionado.criado_em)}</div>
-    </section>
-    <section className="ft-drawer-section">
-      <h3>{projetoSelecionado.modelo==="ensaio"||projetoSelecionado.modelo==="entrega"?"Galeria do projeto":`Galerias do projeto (${pastasDoProjeto.length})`}</h3>
-      {pastasDoProjeto.length?
-        <div className="ft-drawer-list">
-          {pastasDoProjeto.map(pasta=><button type="button" className="ft-drawer-item" key={pasta.id} onClick={()=>router.push("/dashboard/projetos/"+projetoSelecionado.id)}>
-            <span><strong>{pasta.titulo}</strong><small>{status(pasta.etapa)} · Criada em {dataCurta(pasta.criado_em)}</small></span>
-            <ArrowRightIcon size={16}/>
-          </button>)}
-        </div>:
-        <p className="ft-drawer-note">Nenhuma galeria cadastrada. Abra o projeto para começar.</p>
-      }
-    </section>
-  </FoturaDrawer>}
 
  {modalAberto&&<div className="modal" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)fecharModal()}}>
    <form className="panel create-panel" onSubmit={criar} aria-labelledby="create-project-title">

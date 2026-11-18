@@ -271,15 +271,27 @@ html body .projects-page.mf-shift .project-grid .project-stage{
   border-radius:50px;
   padding:5px 8px;font-size:9px;font-weight:650;
 }
-/* A vista em lista não é excluída: capa ainda abre o projeto e respeita o tamanho compacto. */
-html body .projects-page.mf-shift .project-list:not(.project-grid) .project-cover{
-  cursor:pointer;padding:0;border:0;flex:none;
+/* O cartão inteiro é um link nativo (mouse, teclado, abrir em nova aba).
+   Não há alternância entre lista/grade nem botões de ação dentro do cartão. */
+html body .projects-page.mf-shift .project-grid a.project-card{
+  color:#2b2739!important;
+  text-decoration:none!important;
+  cursor:pointer;
 }
-html body .projects-page.mf-shift .project-list:not(.project-grid) .project-cover:focus-visible{
-  outline:2px solid #9277d4;outline-offset:3px;
+html body .projects-page.mf-shift .project-grid a.project-card:focus-visible{
+  outline:3px solid #9276d2!important;
+  outline-offset:4px!important;
 }
-html body .projects-page.mf-shift .project-grid .view-toggle{min-width:0}
-
+html body .projects-page.mf-shift .project-grid .project-cover{
+  cursor:inherit!important;
+}
+html body .projects-page.mf-shift .project-grid .project-copy{
+  min-height:94px;
+  padding-bottom:13px;
+}
+html body .projects-page.mf-shift .project-grid a.project-card:hover .project-title-line h2{
+  color:#624da7!important;
+}
 /* No workspace, fotos e galerias continuam elementos centrais e as métricas já têm ícones. */
 html body .pw-page.mf-shift .pw-project-summary{
   grid-template-columns:minmax(195px,38%) minmax(0,1fr)!important;
