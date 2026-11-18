@@ -16,13 +16,16 @@ test("métricas aparecem no desktop e somem somente no mobile", async ({ page })
   await expect(page.locator(".stats")).toBeHidden();
 });
 
-test("cards de projetos deixam de repetir a descrição em lista e grade", () => {
+test("cards fotográficos não repetem a descrição e abrem o projeto pelo cartão inteiro", () => {
   expect(listagem).not.toContain('<p>{p.descricao||clienteNome(p.cliente_id)}</p>');
   expect(listagem).toContain('className="project-meta"');
   // A descrição segue disponível para busca e edição, mas não ocupa os cards.
   expect(listagem).toContain('(p.descricao??"").toLocaleLowerCase');
   expect(listagem).toContain('value={descricao}');
-  expect(listagem).toContain('modo==="grade"?"project-grid":""');
+  expect(listagem).toContain('className="project-list project-grid"');
+  expect(listagem).toContain('<Link className="project-card" href={`/dashboard/projetos/${p.id}`}');
+  expect(listagem).not.toContain('Visualização dos projetos');
+  expect(listagem).not.toContain('setProjetoDetalhes');
 });
 
 test("capa e visão geral do projeto cabem no mobile sem rolagem horizontal", async ({ page }) => {
