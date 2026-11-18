@@ -139,6 +139,14 @@ html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .card{
   min-width:0;
 }
 html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .charts>.card{padding:27px 27px 19px!important}
+/* Gradientes dos indicadores internos, agora também nos quatro painéis do dashboard. */
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) :is(.charts,.lists)>.card{
+  background:linear-gradient(122deg,rgba(255,255,255,.99) 8%,var(--ft-overview-card-tint,#f0eaf9) 115%)!important;
+}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .charts>.card:nth-child(1){--ft-overview-card-tint:#f0eaf9}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .charts>.card:nth-child(2){--ft-overview-card-tint:#e6effb}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .lists>.card:nth-child(1){--ft-overview-card-tint:#e5f5ee}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .lists>.card:nth-child(2){--ft-overview-card-tint:#fcf0df}
 html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .card-h{
   display:flex;justify-content:space-between;align-items:flex-end;gap:12px;
   margin-bottom:17px;
