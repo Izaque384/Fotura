@@ -20,8 +20,12 @@ ${css}
 test.describe("Fotura interno — sistema visual unificado", () => {
   test("mantém dados reais, ações e preferência de lista; grade fotográfica é padrão", () => {
     expect(projectPage).toContain('useState<ModoProjetos>("grade")');
-    expect(projectPage).toContain('localStorage.getItem("fotura-projetos-modo")==="lista"');
-    expect(projectPage).toContain('localStorage.setItem("fotura-projetos-modo",v)');
+    expect(projectPage).toContain('PROJETOS_VISUALIZACAO_KEY = "fotura-projetos-modo-v2"');
+    expect(projectPage).toContain('const preferencia=localStorage.getItem(PROJETOS_VISUALIZACAO_KEY)');
+    expect(projectPage).toContain('if(preferencia==="lista")setModo("lista")');
+    expect(projectPage).toContain('if(preferencia!=="grade")localStorage.setItem(PROJETOS_VISUALIZACAO_KEY,"grade")');
+    expect(projectPage).toContain('localStorage.setItem(PROJETOS_VISUALIZACAO_KEY,v)');
+    expect(projectPage).not.toContain('localStorage.getItem("fotura-projetos-modo")');
     expect(projectPage).toContain('onClick={()=>mudarModo("lista")}');
     expect(projectPage).toContain('onClick={()=>mudarModo("grade")}');
     expect(projectPage).toContain('aria-label={`Abrir projeto ${p.nome}`}');
@@ -96,6 +100,25 @@ test.describe("Fotura interno — sistema visual unificado", () => {
     expect(cover).not.toBeNull();
     expect(cover!.width/cover!.height).toBeGreaterThan(1.5);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
+  });
+
+  test("a opção lista também exibe capas ampliadas e preserva as ações", async ({page})=>{
+    await page.setViewportSize({width:1440,height:900});
+    await page.setContent(documentWithStyles(`
+      <main class="dash projects-page mf-shift"><section class="project-list">
+        <article class="project-card"><div class="project-main">
+          <button class="project-cover" aria-label="Abrir projeto">
+            <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'/%3E"/>
+          </button>
+          <div class="project-copy"><div class="project-title-line"><h2>Casamento</h2></div></div>
+          <div class="project-actions"><button class="mini primary-mini">Abrir projeto</button><button class="mini">Detalhes</button></div>
+        </div></article>
+      </section></main>`));
+    const cover=await page.locator(".project-cover").boundingBox();
+    expect(cover).not.toBeNull();
+    expect(cover!.width).toBeGreaterThan(150);
+    expect(cover!.height).toBeGreaterThan(100);
+    await expect(page.getByRole("button",{name:"Detalhes"})).toBeVisible();
   });
 
   test("os indicadores têm ícones e gradientes em harmonia, sem perder os valores", async ({page})=>{
