@@ -13,6 +13,7 @@ import { lerAbertura, type ConfigAbertura } from "../../../../lib/cinematic-intr
 import ConfirmDialog from "../../../components/ConfirmDialog";
 import { ArrowLeftIcon, ArrowRightIcon, CloseIcon, DragHandleIcon, ImageIcon, MoreIcon, PlusIcon, GridIcon, FolderIcon, CheckIcon, DownloadIcon, SettingsIcon, ActivityIcon, EyeIcon, LinkIcon, CopyIcon, ShareIcon, ShoppingBagIcon, SparklesIcon, PencilIcon, TrashIcon, ArrowUpIcon, ArrowDownIcon } from "../../../components/FoturaIcons";
 import "../../project-workspace-refined.css";
+import "../../project-info-section.css";
 import { createClient } from "../../../../lib/supabase-client";
 import { type ModeloProjeto } from "../../../../lib/project-templates";
 import { registrarEventoProduto } from "../../../../lib/product-analytics";
@@ -414,7 +415,7 @@ export default function ProjetoWorkspacePage(){
           <dl className="pw-info-fields">
             <div className="pw-info-field">
               <dt>Cliente</dt>
-              <dd><span className="pw-info-client-avatar" aria-hidden="true">{dados.cliente?.nome?.split(/\\s+/).filter(Boolean).slice(0,2).map(nome=>nome[0]?.toLocaleUpperCase("pt-BR")).join("")||"—"}</span>
+              <dd><span className="pw-info-client-avatar" aria-hidden="true">{dados.cliente?.nome?.split(/\s+/).filter(Boolean).slice(0,2).map(nome=>nome[0]?.toLocaleUpperCase("pt-BR")).join("")||"—"}</span>
                 <span className="pw-info-client-copy"><strong>{dados.cliente?.nome||"Sem cliente vinculado"}</strong>
                 {dados.cliente?.email&&<small>{dados.cliente.email}</small>}
                 {dados.cliente?.telefone&&<small>{dados.cliente.telefone}</small>}</span></dd>
