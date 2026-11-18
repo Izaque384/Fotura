@@ -2,6 +2,12 @@ import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
 const css = readFileSync("app/internal-visual-system.css", "utf8");
+const premiumCss = readFileSync("app/dashboard/overview-premium.css", "utf8");
+const globalsCss = readFileSync("app/globals.css", "utf8");
+const sharedHoverCss = globalsCss.slice(
+  globalsCss.indexOf("/* Linguagem global de hover"),
+  globalsCss.indexOf("/* Shared authenticated shell")
+);
 const projectPage = readFileSync("app/dashboard/projetos/page.tsx", "utf8");
 const workspace = readFileSync("app/dashboard/projetos/[id]/page.tsx", "utf8");
 const workspaceCss = readFileSync("app/dashboard/project-info-section.css", "utf8");
@@ -121,6 +127,33 @@ test.describe("Fotura interno — projetos foto-first, sem lista nem drawer", ()
     expect(cover!.width/cover!.height).toBeGreaterThan(1.5);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
     await expect(page.locator(".project-card").first()).toHaveCSS("text-decoration-line","none");
+  });
+
+  test("hover dos projetos replica a elevação suave de Clientes e respeita movimento reduzido",async({page})=>{
+    await page.setViewportSize({width:1280,height:800});
+    await page.setContent(documentWithStyles(`<main class="dash projects-page mf-shift">
+      <section class="project-list project-grid">${cards(1)}</section>
+    </main>`,sharedHoverCss+css));
+    const card=page.locator("a.project-card");
+    await expect(card).toHaveCSS("transition-property",/transform/);
+    await card.hover();
+    const deslocamento=()=>card.evaluate(el=>Math.round(new DOMMatrixReadOnly(getComputedStyle(el).transform).m42));
+    await expect.poll(deslocamento).toBe(-1);
+    await page.emulateMedia({reducedMotion:"reduce"});
+    await expect.poll(deslocamento).toBe(0);
+  });
+
+  test("quatro cartões do dashboard recebem gradientes cromáticos distintos",async({page})=>{
+    await page.setContent(`<style>${premiumCss}</style>
+      <main class="dash mf-shift ft-overview-premium">
+        <section class="charts"><div class="card">Evolução</div><div class="card">Distribuição</div></section>
+        <section class="lists"><div class="card">Seleções</div><div class="card">Recentes</div></section>
+      </main>`);
+    const cards=page.locator(".charts>.card, .lists>.card");
+    await expect(cards).toHaveCount(4);
+    const fundos=await cards.evaluateAll(nodes=>nodes.map(el=>getComputedStyle(el).backgroundImage));
+    expect(fundos.every(fundo=>fundo.includes("linear-gradient"))).toBe(true);
+    expect(new Set(fundos).size).toBe(4);
   });
 
   test("layout responsivo do novo painel informativo preserva conteúdo",async({page})=>{
