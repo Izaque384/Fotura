@@ -14,6 +14,8 @@ type Pasta={id:string;titulo:string;projeto_id:string|null;cliente_id:string|nul
 type Cliente={id:string;nome:string;avatar_path:string|null};
 type Filtro="todos"|"sem_pastas"|"modelo_selecao"|"modelo_entrega"|"modelo_pastas"|"aguardando"|"selecao"|"preparando"|"entregue";
 type ModoProjetos="lista"|"grade";
+// v2 inicia todos os usuários na experiência fotográfica, sem reutilizar a preferência do layout antigo.
+const PROJETOS_VISUALIZACAO_KEY = "fotura-projetos-modo-v2";
 type FluxoProjeto="selecao"|"direta";
 type EstruturaProjeto="unico"|"galerias";
 function statusProjeto(ps:Pasta[],prova:boolean,modelo?:ModeloProjeto|null):{filtro:Filtro;rotulo:string;proxima:string}{
@@ -39,8 +41,16 @@ export default function ProjetosPage(){
 
  useEffect(()=>{const fora=(e:PointerEvent)=>{const a=e.target;if(!(a instanceof Element)||!a.closest(".filter-wrap"))setFiltroAberto(false)};const tecla=(e:KeyboardEvent)=>{if(e.key==="Escape")setFiltroAberto(false)};document.addEventListener("pointerdown",fora);window.addEventListener("keydown",tecla);return()=>{document.removeEventListener("pointerdown",fora);window.removeEventListener("keydown",tecla)}},[]);
  useEffect(()=>{if(!modalAberto)return;const old=document.body.style.overflow;document.body.style.overflow="hidden";const tecla=(e:KeyboardEvent)=>{if(e.key==="Escape"&&!criando)setModalAberto(false)};window.addEventListener("keydown",tecla);return()=>{window.removeEventListener("keydown",tecla);document.body.style.overflow=old}},[modalAberto,criando]);
- useEffect(()=>{if(new URLSearchParams(window.location.search).get("novo")==="1")setModalAberto(true);try{if(localStorage.getItem("fotura-projetos-modo")==="lista")setModo("lista")}catch{}},[]);
- function mudarModo(v:ModoProjetos){setModo(v);try{localStorage.setItem("fotura-projetos-modo",v)}catch{}}
+ useEffect(()=>{
+  if(new URLSearchParams(window.location.search).get("novo")==="1")setModalAberto(true);
+  try{
+   const preferencia=localStorage.getItem(PROJETOS_VISUALIZACAO_KEY);
+   // Preferências anteriores à atualização não devem forçar a lista antiga.
+   if(preferencia==="lista")setModo("lista");
+   else {setModo("grade");if(preferencia!=="grade")localStorage.setItem(PROJETOS_VISUALIZACAO_KEY,"grade")}
+  }catch{}
+ },[]);
+ function mudarModo(v:ModoProjetos){setModo(v);try{localStorage.setItem(PROJETOS_VISUALIZACAO_KEY,v)}catch{}}
 
  async function token(){const{data}=await supabase.auth.getSession();return data.session?.access_token||""}
  async function carregar(){
