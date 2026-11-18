@@ -193,7 +193,7 @@ html body .projects-page.mf-shift .project-grid .project-card{
 html body .projects-page.mf-shift .project-grid .project-card:hover,
 html body .projects-page.mf-shift .project-grid .project-card:focus-within{
   border-color:#c5b8e2!important;
-  box-shadow:0 18px 44px rgba(57,45,100,.105)!important;
+  box-shadow:0 19px 40px rgba(55,46,110,.08)!important;
 }
 html body .projects-page.mf-shift .project-grid .project-main{
   display:flex!important;
@@ -375,10 +375,13 @@ html body .sales-page.mf-shift .sales-head{
 html body .ftc-page.mf-shift .ftc-person strong,
 html body .sales-page.mf-shift .sales-title{font-size:14px!important;font-weight:650!important}
 
-/* Pequenos ícones com propósito, nenhum movimento contínuo. */
+/* Mesmo hover discreto dos cartões de Clientes: elevação de 1px em 180ms. */
 @media(hover:hover) and (pointer:fine){
   html body .projects-page.mf-shift .project-grid .project-card{
-    transition:box-shadow .18s ease,border-color .18s ease!important;
+    transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease!important;
+  }
+  html body .projects-page.mf-shift .project-grid a.project-card:hover{
+    transform:translateY(-1px)!important;
   }
 }
 @media(max-width:1440px){
@@ -428,5 +431,8 @@ html body .sales-page.mf-shift .sales-title{font-size:14px!important;font-weight
   html body .projects-page.mf-shift .project-grid .project-card,
   html body .projects-page.mf-shift .project-grid .project-cover img{
     transition:none!important;animation:none!important;
+  }
+  html body .projects-page.mf-shift .project-grid a.project-card:hover{
+    transform:none!important;
   }
 }
