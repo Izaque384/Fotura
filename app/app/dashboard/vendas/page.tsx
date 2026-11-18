@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import MenuFotografo from "../../MenuFotografo";
+import InternalMetricIcon from "../../components/InternalMetricIcon";
 import FoturaDrawer from "../../components/FoturaDrawer";
 import { createClient } from "../../../lib/supabase-client";
 import { registrarEventoProduto } from "../../../lib/product-analytics";
@@ -119,10 +120,10 @@ export default function VendasPage(){
     <div className="sales-wrap">
       <header className="sales-header"><div className="sales-ey">VENDAS</div><div className="sales-title-row"><h1 className="sales-h1">Fotos extras vendidas</h1><div className="sales-info-wrap"><button type="button" className={"sales-info-btn"+(infoAberta?" open":"")} aria-label="Informações sobre vendas" aria-expanded={infoAberta} onClick={()=>setInfoAberta(v=>!v)}>!</button>{infoAberta&&<div className="sales-info-pop" role="note"><strong>Depois do pagamento, o Fotura fecha o ciclo automaticamente.</strong><p>A compra confirmada finaliza a seleção do cliente, registra as fotos adicionais e deixa a galeria pronta para você seguir para a entrega.</p></div>}</div></div><p className="sales-sub">Acompanhe compras adicionais feitas pelos clientes diretamente nas galerias.</p></header>
       <section className="sales-stats">
-        <div className="sales-stat"><strong>{dinheiro(receita)}</strong><span>Volume bruto pago</span></div>
-        <div className="sales-stat"><strong>{pagas.length}</strong><span>Vendas confirmadas</span></div>
-        <div className="sales-stat"><strong>{fotos}</strong><span>Fotos extras vendidas</span></div>
-        <div className="sales-stat"><strong>{pendentes}</strong><span>Pagamentos pendentes</span></div>
+        <div className="sales-stat"><InternalMetricIcon name="revenue"/><strong>{dinheiro(receita)}</strong><span>Volume bruto pago</span></div>
+        <div className="sales-stat"><InternalMetricIcon name="sales"/><strong>{pagas.length}</strong><span>Vendas confirmadas</span></div>
+        <div className="sales-stat"><InternalMetricIcon name="photos"/><strong>{fotos}</strong><span>Fotos extras vendidas</span></div>
+        <div className="sales-stat"><InternalMetricIcon name="pending"/><strong>{pendentes}</strong><span>Pagamentos pendentes</span></div>
       </section>
       <div className="sales-toolbar">
         <div className="sales-toolbar-left">

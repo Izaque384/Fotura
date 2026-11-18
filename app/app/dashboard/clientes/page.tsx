@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "../../../lib/supabase-client";
 import MenuFotografo from "../../MenuFotografo";
+import InternalMetricIcon from "../../components/InternalMetricIcon";
 import FoturaDrawer from "../../components/FoturaDrawer";
 
 type Cliente = {
@@ -565,9 +566,9 @@ export default function ClientesPage() {
           <p className="ftc-description">Pessoas, contatos e trabalhos reunidos em um só lugar.</p>
         </header>
         <section className="ftc-stats" aria-label="Resumo dos clientes">
-          <div className="ftc-stat"><b>{clientes.length}</b><span>Clientes cadastrados</span></div>
-          <div className="ftc-stat"><b>{comProjetos}</b><span>Com projetos ou galerias</span></div>
-          <div className="ftc-stat"><b>{aguardando}</b><span>Aguardando seleção</span></div>
+          <div className="ftc-stat"><InternalMetricIcon name="clients"/><b>{clientes.length}</b><span>Clientes cadastrados</span></div>
+          <div className="ftc-stat"><InternalMetricIcon name="folders"/><b>{comProjetos}</b><span>Com projetos ou galerias</span></div>
+          <div className="ftc-stat"><InternalMetricIcon name="selection"/><b>{aguardando}</b><span>Aguardando seleção</span></div>
         </section>
         <div className="ftc-toolbar">
           <label className="ftc-search">
