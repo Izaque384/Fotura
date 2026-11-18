@@ -296,6 +296,14 @@ export default function ProjetoWorkspacePage(){
  const galeriaPrincipal=galeriaUnica?dados.pastas[0]??null:null;
  const totalFotos=dados.pastas.reduce((s,x)=>s+x.qtd,0),totalSelecionadas=dados.pastas.reduce((s,x)=>s+(x.selecao?.fotos.length??0),0),totalComentarios=dados.pastas.reduce((s,x)=>s+Object.values(x.selecao?.comentarios??{}).filter(v=>v?.trim()).length,0);
  const finalizadas=dados.pastas.filter(x=>x.selecao?.finalizada).length,entregues=dados.pastas.filter(x=>x.etapa==="entrega").length;
+ const etapaProjeto=!dados.pastas.length?"Sem galerias"
+   :dados.pastas.every(x=>x.etapa==="entrega")?"Entregue"
+   :dados.pastas.some(x=>x.etapa==="preparando_entrega")?"Preparando entrega"
+   :dados.pastas.some(x=>x.etapa==="selecao_finalizada")?"Seleção finalizada"
+   :p.prova?"Seleção disponível":"Entrega direta";
+ function etapaGaleria(etapa:string){
+   return etapa==="entrega"?"Entregue":etapa==="preparando_entrega"?"Preparando entrega":etapa==="selecao_finalizada"?"Seleção finalizada":"Em andamento";
+ }
  const vendasPagas=dados.vendas.filter(v=>v.status==="pago"),receita=vendasPagas.reduce((s,v)=>s+v.valor_total_centavos,0),extras=vendasPagas.reduce((s,v)=>s+v.qtd_extras,0);
  const proximoPasso = !dados.pastas.length
    ? {titulo:"Crie sua primeira galeria",descricao:"Comece organizando as fotografias deste projeto.",botao:"Criar galeria",destino:"criar"}
@@ -382,6 +390,53 @@ export default function ProjetoWorkspacePage(){
       <button onClick={irParaGalerias}><FolderIcon size={18}/><strong>{galeriaUnica?1:dados.pastas.length}</strong><span>{galeriaUnica?"Galeria principal":"Galerias"}</span></button>
       <button onClick={irParaGalerias}><ImageIcon size={18}/><strong>{totalFotos}</strong><span>Fotos no projeto</span></button>
       <button onClick={()=>setAba(p.prova?"selecao":"entrega")}>{p.prova?<CheckIcon size={18}/>:<DownloadIcon size={18}/>}<strong>{p.prova?totalSelecionadas:entregues}</strong><span>{p.prova?"Fotos selecionadas":"Galerias entregues"}</span></button>
+    </section>
+    <section className="pw-project-info pw-overview-card" aria-labelledby="pw-project-info-title">
+      <div className="pw-project-info-heading">
+        <div>
+          <span className="pw-info-eyebrow">IDENTIDADE E ACOMPANHAMENTO</span>
+          <h2 id="pw-project-info-title">Detalhes do projeto</h2>
+          <p>Informações reunidas aqui, na tela inicial do seu espaço de trabalho.</p>
+        </div>
+        <button type="button" className="pw-info-edit" onClick={abrirConfiguracoes}><PencilIcon size={15}/> Editar informações</button>
+      </div>
+      <div className="pw-project-info-badges">
+        <span className="pw-project-info-badge is-status">{etapaProjeto}</span>
+        <span className="pw-project-info-badge">{galeriaUnica?"Galeria única":`${dados.pastas.length} ${dados.pastas.length===1?"galeria":"galerias"}`}</span>
+        <span className="pw-project-info-badge">{p.prova?"Seleção de fotos":"Entrega direta"}</span>
+      </div>
+      <div className="pw-project-info-layout">
+        <div className="pw-project-info-main">
+          <div className="pw-info-description">
+            <span className="pw-info-label">DESCRIÇÃO</span>
+            <p>{p.descricao?.trim()||"Nenhuma descrição cadastrada para este projeto."}</p>
+          </div>
+          <dl className="pw-info-fields">
+            <div className="pw-info-field">
+              <dt>Cliente</dt>
+              <dd><span className="pw-info-client-avatar" aria-hidden="true">{dados.cliente?.nome?.split(/\\s+/).filter(Boolean).slice(0,2).map(nome=>nome[0]?.toLocaleUpperCase("pt-BR")).join("")||"—"}</span>
+                <span className="pw-info-client-copy"><strong>{dados.cliente?.nome||"Sem cliente vinculado"}</strong>
+                {dados.cliente?.email&&<small>{dados.cliente.email}</small>}
+                {dados.cliente?.telefone&&<small>{dados.cliente.telefone}</small>}</span></dd>
+            </div>
+            <div className="pw-info-field"><dt>Última atualização</dt><dd>{data(p.atualizado_em)}</dd></div>
+            <div className="pw-info-field"><dt>Criado em</dt><dd>{data(p.criado_em)}</dd></div>
+          </dl>
+        </div>
+        <div className="pw-project-info-galleries">
+          <div className="pw-project-info-galleries-title"><span className="pw-info-label">{galeriaUnica?"GALERIA DO PROJETO":"GALERIAS DO PROJETO"}</span><strong>{dados.pastas.length}</strong></div>
+          {dados.pastas.length?
+            <ul className="pw-project-info-gallery-list">{dados.pastas.map(pasta=>
+              <li key={pasta.id}>
+                <button type="button" className="pw-project-info-gallery-link" onClick={irParaGalerias} title="Ver galeria no workspace">
+                  <span className="pw-info-gallery-cover">{pasta.capaUrl?<img src={pasta.capaUrl} alt="" loading="lazy"/>:<ImageIcon size={17}/>}</span>
+                  <span className="pw-info-gallery-copy"><strong>{pasta.titulo}</strong><small>{etapaGaleria(pasta.etapa)} · Criada em {data(pasta.criado_em)}</small></span>
+                  <ArrowRightIcon size={15}/>
+                </button>
+              </li>)}</ul>
+            :<p className="pw-info-empty">Nenhuma galeria cadastrada. Use as ações do projeto para começar.</p>}
+        </div>
+      </div>
     </section>
   </>}
 
