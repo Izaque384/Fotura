@@ -20,9 +20,12 @@ test.describe("Fotura: UX dos projetos",()=>{
   expect(configProjeto({...MODELOS_PROJETO.ensaio.config,download_tamanho:"web",watermark_ativo:true})?.watermark_ativo).toBe(false);
   expect(configProjeto({...MODELOS_PROJETO.ensaio.config,limite:-1})).toBeNull();
  });
- test("a lista oferece filtros de fluxo e alternância entre grade e lista",()=>{
+ test("a grade fotográfica preserva filtros, fluxo e acesso direto ao workspace",()=>{
   const codigo=read("app/dashboard/projetos/page.tsx");
-  for(const t of ["Aguardando cliente","Seleção concluída","Preparando entrega","Entregues","fotura-projetos-modo","project-grid","aria-pressed"])expect(codigo).toContain(t);
+  for(const t of ["Aguardando cliente","Seleção concluída","Preparando entrega","Entregues","project-list project-grid","import Link from \"next/link\"","aria-label={`Abrir projeto ${p.nome}`}"])expect(codigo).toContain(t);
+  expect(codigo).not.toContain('fotura-projetos-modo');
+  expect(codigo).not.toContain('Visualização dos projetos');
+  expect(codigo).not.toContain('setProjetoDetalhes');
   expect(codigo).toContain("fluxoProjeto");
   expect(codigo).toContain("estruturaProjeto");
  });
