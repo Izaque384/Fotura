@@ -3,150 +3,152 @@ import { readFileSync } from "node:fs";
 
 const css = readFileSync("app/internal-visual-system.css", "utf8");
 const projectPage = readFileSync("app/dashboard/projetos/page.tsx", "utf8");
+const workspace = readFileSync("app/dashboard/projetos/[id]/page.tsx", "utf8");
+const workspaceCss = readFileSync("app/dashboard/project-info-section.css", "utf8");
 const clientsPage = readFileSync("app/dashboard/clientes/page.tsx", "utf8");
 const salesPage = readFileSync("app/dashboard/vendas/page.tsx", "utf8");
-const workspace = readFileSync("app/dashboard/projetos/[id]/page.tsx", "utf8");
 const layout = readFileSync("app/layout.tsx", "utf8");
 
-const documentWithStyles = (body: string) => `<!doctype html><html lang="pt-BR">
+const documentWithStyles = (body: string, extra = "") => `<!doctype html><html lang="pt-BR">
 <head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
 *{box-sizing:border-box}html,body{margin:0}
 .project-list{display:grid}.project-main{display:grid}.project-cover{display:grid}
 .stat,.ftc-stat,.sales-stat{padding:16px;border:1px solid #ddd}
 .project-cover img{width:100%;height:100%;object-fit:cover}
 ${css}
+${extra}
 </style></head><body>${body}</body></html>`;
 
-test.describe("Fotura interno — sistema visual unificado", () => {
-  test("mantém dados reais, ações e preferência de lista; grade fotográfica é padrão", () => {
-    expect(projectPage).toContain('useState<ModoProjetos>("grade")');
-    expect(projectPage).toContain('PROJETOS_VISUALIZACAO_KEY = "fotura-projetos-modo-v2"');
-    expect(projectPage).toContain('const preferencia=localStorage.getItem(PROJETOS_VISUALIZACAO_KEY)');
-    expect(projectPage).toContain('if(preferencia==="lista")setModo("lista")');
-    expect(projectPage).toContain('if(preferencia!=="grade")localStorage.setItem(PROJETOS_VISUALIZACAO_KEY,"grade")');
-    expect(projectPage).toContain('localStorage.setItem(PROJETOS_VISUALIZACAO_KEY,v)');
-    expect(projectPage).not.toContain('localStorage.getItem("fotura-projetos-modo")');
-    expect(projectPage).toContain('onClick={()=>mudarModo("lista")}');
-    expect(projectPage).toContain('onClick={()=>mudarModo("grade")}');
+function cards(count: number){
+  return Array.from({ length: count }, (_,i)=>`<a class="project-card" href="#projeto-${i+1}" aria-label="Abrir projeto ${i+1}">
+    <div class="project-main">
+      <div class="project-cover"><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'%3E%3Crect width='320' height='200' fill='%23b5b0cf'/%3E%3C/svg%3E" alt=""/></div>
+      <div class="project-copy">
+        <div class="project-title-line"><h2>Projeto ${i+1}</h2><span class="count-badge">2 galerias</span></div>
+        <div class="project-meta">Cliente de exemplo</div>
+      </div>
+    </div>
+  </a>`).join("");
+}
+
+test.describe("Fotura interno — projetos foto-first, sem lista nem drawer", () => {
+  test("Projetos têm somente grade, cartão inteiro clicável e nenhuma preferência antiga",()=>{
+    expect(projectPage).toContain('className="project-list project-grid"');
+    expect(projectPage).toContain('import Link from "next/link"');
+    expect(projectPage).toContain('<Link className="project-card" href={`/dashboard/projetos/${p.id}`}');
     expect(projectPage).toContain('aria-label={`Abrir projeto ${p.nome}`}');
-    expect(projectPage).toContain('onClick={()=>router.push(`/dashboard/projetos/${p.id}`)}');
     expect(projectPage).toContain('p.capaUrl?<img src={p.capaUrl}');
     expect(projectPage).toContain('loading="lazy" decoding="async"');
-    expect(projectPage).toContain('onClick={()=>setProjetoDetalhes(p.id)}');
+    expect(projectPage).not.toContain('role="group" aria-label="Visualização dos projetos"');
+    expect(projectPage).not.toContain('mudarModo(');
+    expect(projectPage).not.toContain('fotura-projetos-modo');
+    expect(projectPage).not.toContain('<FoturaDrawer');
+    expect(projectPage).not.toContain('setProjetoDetalhes');
+    expect(projectPage).not.toContain('className="project-actions"');
+    expect(projectPage).not.toContain('>Detalhes</button>');
     expect(projectPage).toContain('supabase.from("galeria_projetos")');
-    expect(projectPage).not.toContain("Estúdio Aurora");
-    expect(workspace).toContain('p.capaUrl?<img src={p.capaUrl}');
-    expect(workspace).toContain('x.capaUrl?<img src={x.capaUrl}');
   });
 
-  test("indicadores coloridos mantêm contagens vindas de Projects, Clients e Sales", () => {
+  test("workspace incorpora dados da antiga tela Detalhes e mantém edição real",()=>{
+    expect(workspace).toContain('id="pw-project-info-title">Detalhes do projeto');
+    expect(workspace).toContain('aria-label');
+    expect(workspace).toContain('onClick={abrirConfiguracoes}');
+    expect(workspace).toContain("function abrirConfiguracoes()");
+    expect(workspace).toContain("salvarConfiguracoes()");
+    expect(workspace).toContain('p.descricao?.trim()');
+    expect(workspace).toContain('dados.cliente?.nome');
+    expect(workspace).toContain('dados.cliente?.email');
+    expect(workspace).toContain('dados.cliente?.telefone');
+    expect(workspace).toContain('data(p.atualizado_em)');
+    expect(workspace).toContain('data(p.criado_em)');
+    expect(workspace).toContain('etapaProjeto');
+    expect(workspace).toContain('galeriaUnica?"Galeria única"');
+    expect(workspace).toContain('p.prova?"Seleção de fotos":"Entrega direta"');
+    expect(workspace).toContain('dados.pastas.map(pasta=>');
+    expect(workspace).toContain('data(pasta.criado_em)');
+    expect(workspace).toContain('onClick={irParaGalerias}');
+    expect(workspace).toContain('import "../../project-info-section.css"');
+    expect(workspaceCss).toContain(".pw-project-info-layout");
+  });
+
+  test("ícones com gradientes continuam usando os números reais",()=>{
     expect(projectPage).toContain('<InternalMetricIcon name="projects"/>');
     expect(projectPage).toContain('<InternalMetricIcon name="folders"/>');
     expect(projectPage).toContain('<InternalMetricIcon name="photos"/>');
     expect(clientsPage).toContain('<InternalMetricIcon name="clients"/>');
-    expect(clientsPage).toContain('<InternalMetricIcon name="selection"/>');
     expect(salesPage).toContain('<InternalMetricIcon name="revenue"/>');
     expect(salesPage).toContain('<InternalMetricIcon name="pending"/>');
     expect(salesPage).toContain('dinheiro(receita)');
-    expect(salesPage).toContain("pagas.length");
-    expect(clientsPage).toContain("clientes.length");
+    expect(clientsPage).toContain('clientes.length');
     expect(layout).toContain('import "./internal-visual-system.css"');
   });
 
-  test("cartão com capa maior, texto abaixo e comandos preservados no desktop", async ({ page }) => {
+  test("fotografia ocupa a maior parte do cartão, texto abaixo e clique em qualquer área",async({page})=>{
     await page.setViewportSize({width:1440,height:900});
-    await page.setContent(documentWithStyles(`
-      <main class="dash projects-page mf-shift">
-        <section class="project-list project-grid">
-          ${[1,2,3].map(i=>`<article class="project-card">
-            <div class="project-main">
-              <button class="project-cover" aria-label="Abrir projeto ${i}">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'%3E%3Crect width='320' height='200' fill='%23b5b0cf'/%3E%3C/svg%3E" alt="" />
-              </button>
-              <div class="project-copy"><div class="project-title-line"><h2>Projeto ${i}</h2></div>
-              <div class="project-meta">Cliente</div></div>
-              <div class="project-actions"><button class="mini primary-mini">Abrir projeto</button><button class="mini">Detalhes</button></div>
-            </div></article>`).join("")}
-        </section>
-      </main>`));
-    await expect(page.locator(".project-grid")).toHaveCSS("grid-template-columns", /px/);
-    const card = page.locator(".project-card").first();
-    await expect(card.locator(".project-main")).toHaveCSS("flex-direction", "column");
-    const photo = await card.locator(".project-cover").boundingBox();
-    const text = await card.locator(".project-copy").boundingBox();
+    await page.setContent(documentWithStyles(`<main class="dash projects-page mf-shift">
+      <section class="project-list project-grid">${cards(3)}</section>
+      <div id="projeto-1">Workspace</div><div id="projeto-2">Workspace 2</div>
+    </main>`));
+    await expect(page.locator(".project-grid .project-card")).toHaveCount(3);
+    const card=page.locator(".project-card").first();
+    await expect(card).toHaveCSS("display","flex");
+    await expect(card.locator(".project-main")).toHaveCSS("flex-direction","column");
+    await expect(card.locator("button")).toHaveCount(0);
+    await expect(card).toHaveAttribute("href","#projeto-1");
+    const photo=await card.locator(".project-cover").boundingBox();
+    const text=await card.locator(".project-copy").boundingBox();
     expect(photo).not.toBeNull();expect(text).not.toBeNull();
     expect(photo!.width).toBeGreaterThan(250);
     expect(text!.y).toBeGreaterThan(photo!.y+photo!.height-1);
-    await expect(card.getByRole("button",{name:"Abrir projeto 1"})).toBeVisible();
-    await expect(card.getByRole("button",{name:"Detalhes"})).toBeVisible();
+    await card.locator(".project-cover").click();
+    await expect(page).toHaveURL(/#projeto-1$/);
+    await page.evaluate(()=>{window.location.hash=""});
+    await card.locator(".project-copy").click();
+    await expect(page).toHaveURL(/#projeto-1$/);
+    await page.evaluate(()=>{window.location.hash=""});
+    await card.focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/#projeto-1$/);
   });
 
-  test("respeita a tela mobile, sem cortar as capas nem causar rolagem horizontal", async ({page})=>{
+  test("mobile mantém apenas um cartão por linha e sem overflow",async({page})=>{
     await page.setViewportSize({width:390,height:844});
-    await page.setContent(documentWithStyles(`
-      <main class="dash projects-page mf-shift">
-        <section class="project-list project-grid">
-          <article class="project-card"><div class="project-main">
-            <button class="project-cover" aria-label="Abrir projeto">
-              <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E" />
-            </button>
-            <div class="project-copy"><div class="project-title-line"><h2>Casamento e ensaio fotográfico</h2></div></div>
-            <div class="project-actions"><button class="mini primary-mini">Abrir projeto</button><button class="mini">Detalhes</button></div>
-          </div></article>
-        </section>
-      </main>`));
-    await expect(page.locator(".project-list")).toHaveCSS("grid-template-columns", /390px/);
-    const cover = await page.locator(".project-cover").boundingBox();
+    await page.setContent(documentWithStyles(`<main class="dash projects-page mf-shift">
+      <section class="project-list project-grid">${cards(2)}</section>
+    </main>`));
+    const cover=await page.locator(".project-cover").first().boundingBox();
     expect(cover).not.toBeNull();
     expect(cover!.width/cover!.height).toBeGreaterThan(1.5);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
+    await expect(page.locator(".project-card").first()).toHaveCSS("text-decoration-line","none");
   });
 
-  test("a opção lista também exibe capas ampliadas e preserva as ações", async ({page})=>{
-    await page.setViewportSize({width:1440,height:900});
-    await page.setContent(documentWithStyles(`
-      <main class="dash projects-page mf-shift"><section class="project-list">
-        <article class="project-card"><div class="project-main">
-          <button class="project-cover" aria-label="Abrir projeto">
-            <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 200'/%3E"/>
-          </button>
-          <div class="project-copy"><div class="project-title-line"><h2>Casamento</h2></div></div>
-          <div class="project-actions"><button class="mini primary-mini">Abrir projeto</button><button class="mini">Detalhes</button></div>
-        </div></article>
-      </section></main>`));
-    const cover=await page.locator(".project-cover").boundingBox();
-    expect(cover).not.toBeNull();
-    expect(cover!.width).toBeGreaterThan(150);
-    expect(cover!.height).toBeGreaterThan(100);
-    await expect(page.getByRole("button",{name:"Detalhes"})).toBeVisible();
+  test("layout responsivo do novo painel informativo preserva conteúdo",async({page})=>{
+    await page.setViewportSize({width:390,height:844});
+    await page.setContent(documentWithStyles(`<main class="pw-page mf-shift">
+      <section class="pw-project-info pw-overview-card">
+        <div class="pw-project-info-heading"><div><span class="pw-info-eyebrow">IDENTIDADE</span><h2>Detalhes do projeto</h2></div>
+        <button class="pw-info-edit">Editar informações</button></div>
+        <div class="pw-project-info-badges"><span class="pw-project-info-badge">Entregue</span></div>
+        <div class="pw-project-info-layout"><div class="pw-project-info-main">
+          <div class="pw-info-description"><span class="pw-info-label">DESCRIÇÃO</span><p>Ensaio fotográfico</p></div>
+        </div><div class="pw-project-info-galleries"><div class="pw-project-info-galleries-title">GALERIAS DO PROJETO</div></div></div>
+      </section>
+    </main>`,workspaceCss));
+    await expect(page.getByRole("heading",{name:"Detalhes do projeto"})).toBeVisible();
+    await expect(page.getByRole("button",{name:"Editar informações"})).toBeVisible();
+    await expect(page.locator(".pw-project-info-layout")).toHaveCSS("grid-template-columns",/px/);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(391);
   });
 
-  test("os indicadores têm ícones e gradientes em harmonia, sem perder os valores", async ({page})=>{
-    await page.setContent(documentWithStyles(`
-      <main class="dash projects-page mf-shift">
-       <section class="stats">
-         <article class="stat"><span class="ft-metric-icon"><svg viewBox="0 0 24 24"></svg></span><strong>5</strong><span>Projetos</span></article>
-         <article class="stat"><span class="ft-metric-icon"><svg viewBox="0 0 24 24"></svg></span><strong>11</strong><span>Galerias</span></article>
-         <article class="stat"><span class="ft-metric-icon"><svg viewBox="0 0 24 24"></svg></span><strong>4</strong><span>Entregues</span></article>
-       </section>
-      </main>`));
-    await expect(page.locator(".stat")).toHaveCount(3);
-    await expect(page.locator(".ft-metric-icon")).toHaveCount(3);
-    for(const item of await page.locator(".stat").all()){
-      await expect(item).toHaveCSS("background-image",/linear-gradient/);
-    }
-    await expect(page.locator(".stat").nth(0)).toContainText("5");
-    await expect(page.locator(".stat").nth(1)).toContainText("11");
-  });
-
-  test("não inclui estilos da landing pública nem animações contínuas", async ({page})=>{
+  test("estilos não interferem na landing nem possuem animações contínuas",async({page})=>{
     expect(css).not.toContain(".gc-lightbox");
     expect(css).not.toContain(".lp2-");
     expect(css).not.toMatch(/@keyframes\s+/);
     await page.emulateMedia({reducedMotion:"reduce"});
-    await page.setContent(documentWithStyles(`<div class="dash projects-page mf-shift"><div class="project-list project-grid">
-      <article class="project-card"><div class="project-main"><button class="project-cover">Capa</button></div></article>
-    </div></div>`));
+    await page.setContent(documentWithStyles(`<div class="dash projects-page mf-shift">
+      <div class="project-list project-grid"><a class="project-card" href="#projeto"><div class="project-main"><div class="project-cover">Capa</div></div></a></div>
+    </div>`));
     await expect(page.locator(".project-card")).toHaveCSS("animation-name","none");
   });
 });
