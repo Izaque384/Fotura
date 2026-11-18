@@ -133,7 +133,7 @@ test.describe("Fotura interno — projetos foto-first, sem lista nem drawer", ()
     await page.setViewportSize({width:1280,height:800});
     await page.setContent(documentWithStyles(`<main class="dash projects-page mf-shift">
       <section class="project-list project-grid">${cards(1)}</section>
-    </main>`,sharedHoverCss+"\\n"+css));
+    </main>`,sharedHoverCss+css));
     const card=page.locator("a.project-card");
     await expect(card).toHaveCSS("transition-property",/transform/);
     await card.hover();
