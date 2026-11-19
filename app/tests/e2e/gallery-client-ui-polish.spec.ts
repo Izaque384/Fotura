@@ -247,9 +247,10 @@ test("toque nas laterais navega sem setas, com imagem ou fundo",async ({page})=>
 test("download mostra progresso e confirmação ao iniciar transferência",async ({page})=>{
   await page.setViewportSize({width:390,height:844});
   await abrirGaleria(page);
+  await page.route("**/api/fotura-e2e-original-download",route=>route.fulfill({status:200,contentType:"image/jpeg",body:"fotura-test-image-bytes"}));
   await page.route("**/api/galeria/download?**",async route=>{
     await new Promise(resolve=>setTimeout(resolve,350));
-    await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({url:imagem("Arquivo original")})});
+    await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({url:"/api/fotura-e2e-original-download"})});
   });
   await page.locator(".gc-grid-img").first().click();
   const button=page.locator(".gc-lightbox-download");
