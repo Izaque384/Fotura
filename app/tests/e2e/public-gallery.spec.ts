@@ -404,8 +404,12 @@ test("galeria de prova não solicita originais antes da entrega", async ({ page 
       body: JSON.stringify({ fotos: [{ nome: "prova.jpg", url: foto("Prévia"), thumb: foto("Prévia") }], capaUrl: null }) });
   });
   await page.goto("/g/00000000-0000-4000-8000-000000000013");
+  await page.route("**/api/fotos/preview?**", route => route.fulfill({
+    status: 200, contentType: "image/svg+xml",
+    body: decodeURIComponent(foto("Prévia HD").split(",")[1]),
+  }));
   await page.locator(".gc-card img").click();
-  await expect(page.locator(".gc-photo img")).toHaveAttribute("src", foto("Prévia"));
+  await expect(page.locator(".gc-photo-original")).toHaveAttribute("src", /\/api\/fotos\/preview\?/);
   await expect(page.getByRole("button", { name: "Baixar foto original" })).toHaveCount(0);
   expect(originaisSolicitados).toBe(0);
 });
