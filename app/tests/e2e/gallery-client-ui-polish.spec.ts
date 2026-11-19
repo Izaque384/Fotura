@@ -19,6 +19,7 @@ async function abrirGaleria(page: import("@playwright/test").Page) {
       selecao: null, listas: [],
     }),
   }));
+  await page.route("**/api/fotos/preview?**", route => route.fulfill({status:200,contentType:"image/svg+xml",body:decodeURIComponent(imagem("Qualidade aprimorada").split(",")[1])}));
   await page.route("**/api/fotos/signed**", route => {
     const url = new URL(route.request().url());
     if(url.searchParams.has("arquivo")){
@@ -66,33 +67,29 @@ test("galeria mantém espaçamento original e lightbox com controles e download"
 });
 
 test("lightbox mobile evita controles sobrepostos e respeita largura da tela", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width:390, height:844 });
   await abrirGaleria(page);
   await page.locator(".gc-grid-img").first().click();
-  const lightbox = page.getByRole("dialog", { name: "Foto 1 de 2" });
+  const lightbox=page.getByRole("dialog",{name:"Foto 1 de 2"});
   await expect(lightbox).toBeVisible();
-  // A navegação por toque permanece disponível, sem texto auxiliar na tela.
-  await expect(lightbox.getByText("Deslize para ver outras fotos")).toHaveCount(0);
-  await expect(lightbox.getByText(/Para navegar|Esc para fechar|Preparando qualidade original/)).toHaveCount(0);
-  const result = await lightbox.evaluate(el => {
-    const box = (selector:string) => el.querySelector(selector)!.getBoundingClientRect();
-    const meta=box(".gc-lightbox-meta"), download=box(".gc-lightbox-download"),
-      close=box(".gc-close"), photo=box(".gc-photo");
-    return {
-      width:window.innerWidth,
-      metaRight:meta.right, downloadLeft:download.left, downloadRight:download.right,
-      closeLeft:close.left, closeRight:close.right, photoLeft:photo.left, photoRight:photo.right,
-    };
+  await expect(lightbox.getByText("Deslize para os lados para ver mais fotos")).toBeVisible();
+  await expect(lightbox.locator(".gc-nav")).toBeHidden();
+  const result=await lightbox.evaluate(el=>{
+    const rect=(selector:string)=>el.querySelector(selector)!.getBoundingClientRect();
+    const meta=rect(".gc-lightbox-meta"),download=rect(".gc-lightbox-download"),
+      close=rect(".gc-close"),photo=rect(".gc-photo");
+    return {width:innerWidth,metaRight:meta.right,downloadLeft:download.left,
+      downloadRight:download.right,closeLeft:close.left,closeRight:close.right,
+      photoLeft:photo.left,photoRight:photo.right,downloadWidth:download.width,closeWidth:close.width};
   });
   expect(result.metaRight).toBeLessThan(result.downloadLeft);
   expect(result.downloadRight).toBeLessThan(result.closeLeft);
   expect(result.closeRight).toBeLessThanOrEqual(result.width);
   expect(result.photoLeft).toBeGreaterThanOrEqual(0);
   expect(result.photoRight).toBeLessThanOrEqual(result.width);
-  await lightbox.getByRole("button", { name: "Próxima foto" }).click();
-  await expect(page.getByRole("dialog", { name: "Foto 2 de 2" })).toBeVisible();
+  expect(result.downloadWidth).toBeLessThanOrEqual(38);
+  expect(result.closeWidth).toBeLessThanOrEqual(38);
 });
-
 
 test("transições do lightbox preservam navegação e descarga de originais", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -177,4 +174,57 @@ test("lightbox preserva dimensões na espera, no erro e após carregar a fotogra
   await page.getByRole("button",{name:"Próxima foto"}).click();
   await expect(page.getByRole("dialog",{name:"Foto 2 de 2"})).toBeVisible();
   expect((await tamanho()).width).toBeGreaterThan(0);
+});
+
+test("miniaturas novas e previews retina respeitam a privacidade das galerias", () => {
+  const preview=fs.readFileSync("app/api/fotos/preview/route.ts","utf8");
+  const galeria=fs.readFileSync("app/g/[slug]/page.tsx","utf8");
+  const thumb=fs.readFileSync("lib/client-image.ts","utf8");
+  expect(thumb).toContain("maxLado=1600");
+  expect(thumb).toContain("qualidade=.9");
+  expect(galeria).toContain('qualidadeMobile?urlPreviewGaleria(slug,f.nome,"grade")');
+  expect(preview).toContain("listarCatalogoGaleriaHibrido(db");
+  expect(preview).toContain("temAcessoGaleria(req,galeriaId)");
+  expect(preview).toContain("dataCalendarioExpirada(galeria.link_ate");
+  expect(preview).toContain('downloadPrivateMediaBlob(db,"fotos",path)');
+  expect(preview).toContain("withoutEnlargement:true");
+});
+
+test("duplo clique amplia a fotografia e o swipe funciona sem setas no celular", async ({ page }) => {
+  await page.setViewportSize({width:390,height:844});
+  await abrirGaleria(page);
+  await page.locator(".gc-grid-img").first().click();
+  const lightbox=page.locator(".gc-lightbox"),foto=lightbox.locator(".gc-photo");
+  await expect(lightbox.locator(".gc-swipe-hint")).toBeVisible();
+  await foto.dblclick();
+  await expect(lightbox.locator(".gc-photo-original")).toHaveCSS("transform", /matrix\(2\.5/);
+  await expect(lightbox.locator(".gc-swipe-hint")).toHaveCount(0);
+  await foto.dblclick();
+  await expect(lightbox.locator(".gc-photo-original")).toHaveCSS("transform", /matrix\(1/);
+  await foto.evaluate(el=>{
+    const touch=(type:string,x:number)=>{
+      const item=new Touch({identifier:1,target:el,clientX:x,clientY:350});
+      const active=type==="touchend"?[]:[item];
+      el.dispatchEvent(new TouchEvent(type,{bubbles:true,cancelable:true,touches:active,targetTouches:active,changedTouches:[item]}));
+    };
+    touch("touchstart",320);touch("touchmove",190);touch("touchend",190);
+  });
+  await expect(page.getByRole("dialog",{name:"Foto 2 de 2"})).toBeVisible();
+});
+
+test("zoom por pinça funciona com dois pontos de toque",async ({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await abrirGaleria(page);
+  await page.locator(".gc-grid-img").first().click();
+  const foto=page.locator(".gc-lightbox .gc-photo");
+  await foto.evaluate(el=>{
+    const dedos=(x1:number,x2:number,type:string)=>{
+      const a=new Touch({identifier:1,target:el,clientX:x1,clientY:380});
+      const b=new Touch({identifier:2,target:el,clientX:x2,clientY:380});
+      const active=type==="touchend"?[]:[a,b];
+      el.dispatchEvent(new TouchEvent(type,{bubbles:true,cancelable:true,touches:active,targetTouches:active,changedTouches:[a,b]}));
+    };
+    dedos(140,240,"touchstart");dedos(70,310,"touchmove");dedos(70,310,"touchend");
+  });
+  await expect(page.locator(".gc-photo-original")).toHaveCSS("transform", /matrix\(2\.4/);
 });
