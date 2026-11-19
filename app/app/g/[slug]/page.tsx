@@ -435,7 +435,7 @@ const css=`/* vercel-redeploy-2026-09-21 *//* gallery-footer-final-sync */ /* ga
 }
 @media(max-width:360px){
  .gc-lightbox-meta{left:10px}
- .gc-lightbox-eyebrow{font-size:9px}
+ .gc-lightbox-eyebrow{font-size:10px}
  .gc-lightbox .gc-close,.gc-lightbox .gc-lightbox-download{width:35px!important;height:35px!important;min-width:35px!important}
  .gc-lightbox .gc-close{right:9px!important}
  .gc-lightbox .gc-lightbox-download{right:51px!important}

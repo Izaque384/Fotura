@@ -73,7 +73,8 @@ test("lightbox mobile evita controles sobrepostos e respeita largura da tela", a
   const lightbox=page.getByRole("dialog",{name:"Foto 1 de 2"});
   await expect(lightbox).toBeVisible();
   await expect(lightbox.getByText("Deslize para os lados para ver mais fotos")).toBeVisible();
-  await expect(lightbox.locator(".gc-nav")).toBeHidden();
+  await expect(lightbox.locator(".gc-nav.prev")).toBeHidden();
+  await expect(lightbox.locator(".gc-nav.next")).toBeHidden();
   const result=await lightbox.evaluate(el=>{
     const rect=(selector:string)=>el.querySelector(selector)!.getBoundingClientRect();
     const meta=rect(".gc-lightbox-meta"),download=rect(".gc-lightbox-download"),
