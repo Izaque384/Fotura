@@ -172,6 +172,19 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(migration).toContain("delete from public.galeria_projetos");
   });
 
+  test("exclusão R2 não bloqueia projetos que possuem fotos já registradas", () => {
+    const api = read("app/api/projeto/workspace/route.ts");
+    const workspace = read("app/dashboard/projetos/[id]/page.tsx");
+    expect(api).toContain('rpc("excluir_projeto_backend"');
+    expect(api).toContain('fotura_r2_upload_reservations');
+    expect(api).not.toContain("Este projeto tem fotografias no R2. A exclusão segura ainda está em preparação");
+    expect(api).toContain("storage_cleanup_jobs");
+    expect(api).toContain('bucket", VIDEO_ABERTURA_BUCKET');
+    expect(workspace).toContain('role="alert">{erroExclusaoProjeto}');
+    expect(workspace).toContain("setErroExclusaoProjeto(mensagem)");
+    expect(workspace).not.toContain('setModalExcluirProjeto(false);setConfirmacaoProjeto("");\n  }finally');
+  });
+
   test("portabilidade inclui projetos e pastas relacionadas", () => {
     const exportRoute = read("app/api/account/export/route.ts");
     expect(exportRoute).toContain('from("galeria_projetos")');

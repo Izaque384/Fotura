@@ -163,3 +163,34 @@ html body .pw-page.mf-shift .pw-info-empty{
     transition:none!important;animation:none!important;
   }
 }
+
+/* Home do projeto: fluxos e galerias primeiro, informações secundárias no final. */
+html body .pw-page.mf-shift .pw-project-info{
+  margin:20px 0 12px;
+  padding:21px 23px!important;
+  background:linear-gradient(130deg,#fff 67%,#faf8fd)!important;
+}
+html body .pw-page.mf-shift .pw-project-info-heading{
+  align-items:center;padding-bottom:13px;
+}
+html body .pw-page.mf-shift .pw-project-info-heading h2{margin:5px 0 0;font-size:19px}
+html body .pw-page.mf-shift .pw-project-info-badges{padding:13px 0 16px}
+html body .pw-page.mf-shift .pw-project-info-layout{display:block}
+html body .pw-page.mf-shift .pw-project-info-main{
+  display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+  align-items:stretch;gap:20px;padding:0;
+}
+html body .pw-page.mf-shift .pw-info-description{margin:0;min-height:100%;box-sizing:border-box}
+html body .pw-page.mf-shift .pw-info-field{padding:10px 2px}
+html body .pw-page .pw-delete-error{
+  margin:0 0 13px;padding:11px 13px;
+  border:1px solid #edc9d0;border-radius:10px;
+  background:#fff2f4;color:#9b3048;font-size:12px;line-height:1.5;
+}
+@media(max-width:850px){
+  html body .pw-page.mf-shift .pw-project-info-main{grid-template-columns:1fr;gap:13px}
+}
+@media(max-width:640px){
+  html body .pw-page.mf-shift .pw-project-info{padding:19px 17px!important}
+  html body .pw-page.mf-shift .pw-project-info-heading{align-items:flex-start}
+}

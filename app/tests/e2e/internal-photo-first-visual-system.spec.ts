@@ -70,11 +70,21 @@ test.describe("Fotura interno — projetos foto-first, sem lista nem drawer", ()
     expect(workspace).toContain('etapaProjeto');
     expect(workspace).toContain('galeriaUnica?"Galeria única"');
     expect(workspace).toContain('p.prova?"Seleção de fotos":"Entrega direta"');
-    expect(workspace).toContain('dados.pastas.map(pasta=>');
-    expect(workspace).toContain('data(pasta.criado_em)');
+    expect(workspace).toContain('dados.pastas.map((x,i)=>');
+    expect(workspace).toContain('data(x.criado_em)');
     expect(workspace).toContain('onClick={irParaGalerias}');
     expect(workspace).toContain('import "../../project-info-section.css"');
     expect(workspaceCss).toContain(".pw-project-info-layout");
+  });
+
+  test("home do projeto prioriza galerias e não duplica a lista dentro dos detalhes",()=>{
+    expect(workspace).toContain('aria-label="Resumo em números"');
+    expect(workspace).toContain('pw-project-info-title">Detalhes do projeto');
+    expect(workspace).not.toContain('pw-project-info-gallery-list');
+    expect(workspace.indexOf('id="pw-gallery-section"')).toBeLessThan(workspace.indexOf('className="pw-project-info pw-overview-card"'));
+    expect(workspace).toContain('data(galeriaPrincipal.criado_em)');
+    expect(workspace).toContain('data(x.criado_em)');
+    expect(workspaceCss).toContain('grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)');
   });
 
   test("ícones com gradientes continuam usando os números reais",()=>{
