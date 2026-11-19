@@ -197,10 +197,10 @@ test("duplo clique amplia a fotografia e o swipe funciona sem setas no celular",
   const lightbox=page.locator(".gc-lightbox"),foto=lightbox.locator(".gc-photo");
   await expect(lightbox.locator(".gc-swipe-hint")).toBeVisible();
   await foto.dblclick();
-  await expect(lightbox.locator(".gc-photo-original")).toHaveCSS("transform", /matrix\(2\.5/);
+  await expect(lightbox.locator(".gc-photo-original")).toHaveCSS("transform", /matrix3d\(2\.5/);
   await expect(lightbox.locator(".gc-swipe-hint")).toHaveCount(0);
   await foto.dblclick();
-  await expect(lightbox.locator(".gc-photo-original")).toHaveCSS("transform", /matrix\(1/);
+  await expect(lightbox.locator(".gc-photo-original")).toHaveCSS("transform", /matrix3d\(1/);
   await foto.evaluate(el=>{
     const touch=(type:string,x:number)=>{
       const item=new Touch({identifier:1,target:el,clientX:x,clientY:350});
@@ -226,5 +226,5 @@ test("zoom por pinça funciona com dois pontos de toque",async ({page})=>{
     };
     dedos(140,240,"touchstart");dedos(70,310,"touchmove");dedos(70,310,"touchend");
   });
-  await expect(page.locator(".gc-photo-original")).toHaveCSS("transform", /matrix\(2\.4/);
+  await expect(page.locator(".gc-photo-original")).toHaveCSS("transform", /matrix3d\(2\.4/);
 });
