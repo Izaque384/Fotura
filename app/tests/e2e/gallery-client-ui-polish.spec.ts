@@ -235,7 +235,8 @@ test("toque nas laterais navega sem setas, com imagem ou fundo",async ({page})=>
   await page.setViewportSize({width:390,height:844});
   await abrirGaleria(page);
   await page.locator(".gc-grid-img").first().click();
-  await expect(page.locator(".gc-nav")).toBeHidden();
+  await expect(page.locator(".gc-nav.prev")).toBeHidden();
+  await expect(page.locator(".gc-nav.next")).toBeHidden();
   await page.mouse.click(375,420);
   await expect(page.getByRole("dialog",{name:"Foto 2 de 2"})).toBeVisible();
   await page.mouse.click(15,420);
