@@ -674,7 +674,8 @@ export async function POST(req: NextRequest) {
       return json({ error: "Digite o nome exato do projeto para confirmar a exclusão." }, 400);
     }
 
-    // Prevent orphaned R2 media until cross-provider cleanup is transactional.
+    // A limpeza de fotos R2 já está em produção via storage_cleanup_jobs.
+    // Bloqueamos apenas uploads ainda em andamento e vídeos R2, que exigem outro escopo de limpeza.
     if (isR2ReadEnabled()) {
       const { data: folders, error: foldersError } = await supabase.from("galerias")
         .select("id").eq("projeto_id", body.projetoId).eq("user_id", user.id);
@@ -683,13 +684,9 @@ export async function POST(req: NextRequest) {
       for (let start = 0; start < folderIds.length; start += 20) {
         const expressions = folderIds.slice(start, start + 20)
           .map((id) => "object_key.like." + user.id + "/" + id + "/%");
-        const { data: photos, error: registryError } = await supabase.from("fotura_media_objects")
-          .select("object_key").eq("bucket", "fotos").eq("owner_id", user.id)
-          .or(expressions.join(",")).limit(1);
-        if (registryError) return json({ error: "Não foi possível conferir as mídias R2." }, 503);
-        if ((photos ?? []).length) return json({
-          error: "Este projeto tem fotografias no R2. A exclusão segura ainda está em preparação; nada foi removido.",
-        }, 409);
+        // Fotos confirmadas no R2 são removidas pela fila persistente criada
+        // transacionalmente pelo trigger BEFORE DELETE de cada galeria.
+        // Não bloqueie a exclusão por haver fotos válidas no catálogo.
         const { data: pendingPhotos, error: pendingError } = await supabase
           .from("fotura_r2_upload_reservations").select("object_key")
           .eq("bucket", "fotos").eq("owner_id", user.id)
@@ -737,7 +734,8 @@ export async function POST(req: NextRequest) {
     }
 
     const ids = Array.isArray(galeriasRemovidas) ? galeriasRemovidas.map(String) : [];
-    // The gallery deletion trigger enqueues cleanup in the same transaction.
+    // Cada galeria excluída enfileira a limpeza do Supabase Storage e do R2
+    // na mesma transação; o worker verifica DELETE + HEAD antes do ACK.
 
     return json({
       ok: true,
