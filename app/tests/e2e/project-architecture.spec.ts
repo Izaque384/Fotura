@@ -54,6 +54,9 @@ test.describe("arquitetura centrada em projetos", () => {
     expect(styles).toContain('.pw-page .pw-config-grid[data-active="vendas"]');
     expect(workspace).toContain("salvarConfiguracoes()");
     expect(workspace).toContain("Excluir projeto");
+    expect(workspace).toContain('className="pw-menu-danger"');
+    expect(workspace).toContain('setModalExcluirProjeto(true)');
+
   });
 
   test("pastas podem ter capa própria com fallback do projeto", () => {

@@ -349,6 +349,9 @@ export default function ProjetoWorkspacePage(){
           <div className="pw-menu-label">ACOMPANHAMENTO</div>
           <button role="menuitem" className={aba==="atividade"?"active":""} onClick={()=>{setAba("atividade");setMenuProjetoAberto(false)}}><ActivityIcon size={16}/> Atividade do cliente</button>
           <button role="menuitem" className={aba==="vendas"?"active":""} onClick={()=>{setAba("vendas");setMenuProjetoAberto(false)}}><ShoppingBagIcon size={16}/> Vendas de fotos extras</button>
+          <div className="pw-menu-sep"/>
+          <div className="pw-menu-label">ZONA DE PERIGO</div>
+          <button role="menuitem" className="pw-menu-danger" onClick={()=>{setMenuProjetoAberto(false);setConfirmacaoProjeto("");setErroExclusaoProjeto("");setModalExcluirProjeto(true)}}><TrashIcon size={16}/> Excluir projeto</button>
         </div>}
       </div>
     </div>
