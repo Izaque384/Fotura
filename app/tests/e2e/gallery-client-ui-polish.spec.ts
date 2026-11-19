@@ -171,7 +171,7 @@ test("lightbox preserva dimensões na espera, no erro e após carregar a fotogra
   await foto.evaluate(el=>el.classList.add("pending"));
   expect(await tamanho()).toEqual(mobile);
   await foto.evaluate(el=>el.classList.remove("pending"));
-  await page.getByRole("button",{name:"Próxima foto"}).click();
+  await page.keyboard.press("ArrowRight");
   await expect(page.getByRole("dialog",{name:"Foto 2 de 2"})).toBeVisible();
   expect((await tamanho()).width).toBeGreaterThan(0);
 });
