@@ -33,5 +33,6 @@ test("navegação usa thumbs progressivas sem baixar originais automaticamente",
  expect(viewer).not.toContain("prepararOriginal(fotos[0].nome)");
  expect(viewer).toContain("gc-photo-progress-preview");
  expect(viewer).toContain("gc-photo-original-pending");
- expect(viewer).toContain('aria-label="Baixar foto original"');
+ expect(viewer).toContain('aria-label={statusDownloadAtivo===');
+ expect(viewer).toContain('"Baixar foto original"');
 });

@@ -213,6 +213,55 @@ test("duplo clique amplia a fotografia e o swipe funciona sem setas no celular",
   await expect(page.getByRole("dialog",{name:"Foto 2 de 2"})).toBeVisible();
 });
 
+test("controles menores mantêm formato quadrado no celular",async ({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await abrirGaleria(page);
+  await page.locator(".gc-grid-img").first().click();
+  const lightbox=page.locator(".gc-lightbox");
+  for(const selector of [".gc-close",".gc-lightbox-download"]){
+    const box=await lightbox.locator(selector).evaluate(el=>{
+      const rect=el.getBoundingClientRect();
+      return {width:rect.width,height:rect.height,radius:getComputedStyle(el).borderRadius};
+    });
+    expect(box).toEqual({width:38,height:38,radius:"11px"});
+  }
+  await page.setViewportSize({width:320,height:640});
+  for(const selector of [".gc-close",".gc-lightbox-download"]){
+    const box=await lightbox.locator(selector).evaluate(el=>({width:el.getBoundingClientRect().width,height:el.getBoundingClientRect().height}));
+    expect(box).toEqual({width:35,height:35});
+  }
+});
+test("toque nas laterais navega sem setas, com imagem ou fundo",async ({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await abrirGaleria(page);
+  await page.locator(".gc-grid-img").first().click();
+  await expect(page.locator(".gc-nav.prev")).toBeHidden();
+  await expect(page.locator(".gc-nav.next")).toBeHidden();
+  await page.mouse.click(375,420);
+  await expect(page.getByRole("dialog",{name:"Foto 2 de 2"})).toBeVisible();
+  await page.mouse.click(15,420);
+  await expect(page.getByRole("dialog",{name:"Foto 1 de 2"})).toBeVisible();
+  await page.locator(".gc-photo").click({position:{x:15,y:90},force:true});
+  await expect(page.getByRole("dialog",{name:"Foto 2 de 2"})).toBeVisible();
+});
+test("download mostra progresso e confirmação ao iniciar transferência",async ({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await abrirGaleria(page);
+  await page.route("**/api/fotura-e2e-original-download",route=>route.fulfill({status:200,contentType:"image/jpeg",body:"fotura-test-image-bytes"}));
+  await page.route("**/api/galeria/download?**",async route=>{
+    await new Promise(resolve=>setTimeout(resolve,350));
+    await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({url:"/api/fotura-e2e-original-download"})});
+  });
+  await page.locator(".gc-grid-img").first().click();
+  const button=page.locator(".gc-lightbox-download");
+  await button.click();
+  await expect(button).toHaveAttribute("data-state","baixando");
+  await expect(button).toBeDisabled();
+  await expect(button.locator(".gc-download-spinner")).toBeVisible();
+  await expect(button).toHaveAttribute("data-state","iniciado");
+  await expect(button.locator(".gc-download-confirm")).toBeVisible();
+  await expect(button).toHaveAttribute("data-state","idle",{timeout:5000});
+});
 test("zoom por pinça funciona com dois pontos de toque",async ({page})=>{
   await page.setViewportSize({width:390,height:844});
   await abrirGaleria(page);
