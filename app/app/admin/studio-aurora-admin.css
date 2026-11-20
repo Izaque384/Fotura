@@ -1,0 +1,94 @@
+/*
+ * FOTURA CONSOLE / AURORA
+ * A administração conserva contraste alto e hierarquia própria, mas adota
+ * o violeta profundo, as superfícies acetinadas e a luz suave do estúdio.
+ */
+html body .admin-console{
+  --ac-bg:#191425;
+  --ac-panel:#262037;
+  --ac-panel-raised:#2d2542;
+  --ac-border:#53436a;
+  --ac-border-soft:#443654;
+  --ac-text:#f7f2ff;
+  --ac-muted:#cbc1da;
+  --ac-subtle:#a79cb9;
+  --ac-accent:#c3a5ff;
+  --ac-blue:#70b7ff;
+  background:
+    radial-gradient(ellipse 78% 42% at 94% -6%,rgba(106,59,177,.31),transparent 80%),
+    radial-gradient(ellipse 60% 52% at -10% 100%,rgba(86,61,158,.19),transparent 80%),
+    linear-gradient(150deg,#1e172d 0%,#181421 100%)!important;
+  color:var(--ac-text)!important;
+}
+html body .admin-console .admin-console-header{
+  border-bottom:1px solid rgba(215,184,252,.17)!important;
+  background:linear-gradient(100deg,rgba(29,20,47,.97),rgba(39,27,59,.95))!important;
+  box-shadow:0 9px 28px rgba(7,5,16,.20)!important;
+}
+html body .admin-console .admin-console-nav-link.active{
+  color:#f8edff!important;
+  background:linear-gradient(100deg,rgba(113,66,209,.34),rgba(133,94,216,.28))!important;
+  border-color:rgba(204,156,255,.4)!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.09)!important;
+}
+html body .admin-console .admin-console-nav-link:hover{
+  color:#fff!important;background:rgba(153,113,226,.19)!important
+}
+html body .admin-console .admin-console-return{
+  color:#f7edff!important;
+  border-color:rgba(189,154,231,.33)!important;
+  background:linear-gradient(115deg,#302640,#372b4b)!important;
+}
+html body .admin-console .adm.admin-overview{
+  background:transparent!important;
+  color:var(--ac-text)!important;
+}
+html body .admin-console :is(.admin-overview-eyebrow,.admin-section-kicker,.ey,.pa-ey){
+  color:#c5a2ff!important
+}
+html body .admin-console :is(.admin-metric,.admin-panel,.admin-shortcut,.admin-mini-stat,.admin-account-row,.admin-account-detail-section,.admin-account-detail-stats>div),
+html body .admin-console :is(.ac,.aa,.hs,.af,.pa,.lr,.au) :is(
+  .card,.panel,.hero,.metric,.check,.item,.pa-card,.pa-panel,.pa-kpi,
+  .pa-funnel-step,.pa-event,.aa-card,.cl-card,.pg-card
+){
+  background:linear-gradient(143deg,rgba(59,44,82,.88) 0%,rgba(40,31,61,.96) 63%,rgba(47,34,74,.93) 100%)!important;
+  border:1px solid rgba(194,157,240,.29)!important;
+  border-radius:20px!important;
+  box-shadow:0 16px 38px rgba(8,5,26,.17),inset 0 1px rgba(255,255,255,.08)!important;
+}
+html body .admin-console :is(.admin-metric,.admin-mini-stat,.pa-card,.pa-kpi):nth-child(3n+2){
+  background:linear-gradient(139deg,rgba(52,53,96,.92),rgba(40,34,72,.95))!important;
+}
+html body .admin-console :is(.admin-metric,.admin-mini-stat,.pa-card,.pa-kpi):nth-child(3n){
+  background:linear-gradient(135deg,rgba(59,44,84,.93),rgba(43,31,71,.96))!important;
+}
+html body .admin-console :is(.admin-shortcut,.admin-account-row):hover{
+  background:linear-gradient(135deg,#443358,#36274b)!important;
+  border-color:rgba(195,153,246,.57)!important;
+  box-shadow:0 16px 38px rgba(9,6,26,.25)!important;
+}
+html body .admin-console :is(.admin-filter-btn[aria-pressed="true"],.admin-account-filters .active){
+  background:linear-gradient(100deg,#47316e,#6847aa)!important;
+  color:#fff!important;
+  border-color:#9d7adf!important;
+}
+html body .admin-console :is(input:not([type="checkbox"]),textarea,select,.admin-account-search){
+  background:rgba(35,27,53,.91)!important;
+  color:#f6edff!important;
+  border-color:rgba(177,140,224,.38)!important;
+  border-radius:12px!important;
+}
+html body .admin-console :is(input,textarea)::placeholder{color:#aa9abc!important}
+html body .admin-console :is(input,textarea,select):focus-visible{
+  outline:2px solid #c29aff!important;outline-offset:2px
+}
+html body .admin-console :is(button.primary,.btn.primary,.admin-account-advanced-buttons .primary){
+  background:linear-gradient(120deg,#388cf3,#7145e3)!important;
+  border-color:rgba(174,142,251,.55)!important;
+  color:#fff!important;
+  box-shadow:0 9px 23px rgba(57,61,153,.23)!important;
+}
+html body .admin-console :is(.admin-overview h1,.pa h1,.au h1,.af h1){color:#f9f3ff!important}
+@media(max-width:640px){
+  html body .admin-console :is(.admin-metric,.admin-panel,.admin-shortcut,.admin-mini-stat){border-radius:17px!important}
+}
