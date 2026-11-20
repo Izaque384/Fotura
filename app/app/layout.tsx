@@ -15,6 +15,8 @@ import "./fotura-motion.css";
 import "./internal-sidebar-premium.css";
 import "./dashboard/overview-premium.css";
 import "./internal-visual-system.css";
+import "./studio-aurora.css";
+import "./studio-aurora-auth.css";
 import ClientShortcuts from "./components/ClientShortcuts";
 import BellOutsideDismiss from "./components/BellOutsideDismiss";
 import I18nProvider from "./components/I18nProvider";

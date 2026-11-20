@@ -1,0 +1,75 @@
+/*
+ * Aurora — entrada do Fotura e portões de acesso do cliente.
+ * A apresentação das fotografias, heros e o lightbox público permanecem
+ * intocados: o visual do estúdio não pode colorir nem degradar as imagens.
+ */
+html body .ft-auth-page{
+  background:linear-gradient(145deg,#f9effa 0%,#eee0f8 100%)!important;
+  color:#241a3d!important;
+}
+html body .ft-auth-panel{
+  background:
+    radial-gradient(ellipse 85% 50% at 15% 0%,rgba(255,229,247,.72),transparent 77%),
+    radial-gradient(ellipse 75% 60% at 100% 100%,rgba(210,187,254,.56),transparent 76%),
+    linear-gradient(145deg,#fcf5fd,#f0e5fa)!important;
+}
+html body .ft-auth-story{
+  background:
+    radial-gradient(ellipse 87% 68% at 100% 100%,rgba(115,63,226,.34),transparent 75%),
+    radial-gradient(ellipse 68% 58% at 15% 4%,rgba(68,60,130,.33),transparent 83%),
+    linear-gradient(147deg,#1c162e,#281a41 65%,#1a1830)!important;
+}
+html body .ft-auth-story::before{
+  background:
+    radial-gradient(ellipse at 105% 108%,rgba(179,135,255,.24),transparent 57%),
+    linear-gradient(135deg,rgba(255,255,255,.075),transparent 43%)!important;
+}
+html body .ft-auth-story-emblem{
+  background:linear-gradient(135deg,#c7a2ff,#7ea6ff)!important;opacity:.13!important;
+}
+html body .ft-auth-brand{color:#251c42!important}
+html body .ft-auth-eyebrow{color:#794ac9!important}
+html body .ft-auth-title{color:#231a3d!important}
+html body .ft-auth-intro{color:#746883!important}
+html body .ft-auth-input{
+  border:1px solid rgba(180,148,214,.54)!important;
+  border-radius:13px!important;
+  background:rgba(255,252,255,.83)!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.9),0 5px 14px rgba(80,45,134,.045);
+  color:#251b3e!important;
+}
+html body .ft-auth-input:focus{
+  border-color:#9d72e5!important;box-shadow:0 0 0 3px rgba(133,96,209,.14)!important;
+}
+html body .ft-auth-submit{
+  border-radius:13px!important;
+  background:linear-gradient(112deg,#348ef8,#6456ef 55%,#7236e5)!important;
+  box-shadow:0 12px 28px rgba(82,67,192,.23)!important;
+}
+html body .ft-auth-submit:hover:not(:disabled){filter:brightness(1.04)!important}
+html body .ft-auth-link,html body .ft-auth-switch button{color:#643bb0!important}
+html body .ft-auth-message:not(.error){
+  background:rgba(222,245,236,.82)!important;
+  border:1px solid rgba(135,196,169,.38)!important;
+}
+html body :is(.gc-gate,.pc-gate){
+  background:
+    radial-gradient(ellipse 70% 48% at 88% 0%,rgba(245,205,242,.71),transparent 76%),
+    linear-gradient(140deg,#faf0fb,#eee2f7)!important;
+}
+html body :is(.gc-gate-card,.pc-gate-card){
+  background:linear-gradient(136deg,rgba(255,253,255,.95),rgba(240,226,252,.89))!important;
+  border:1px solid rgba(255,255,255,.89)!important;
+  border-radius:24px!important;
+  box-shadow:0 20px 54px rgba(66,37,120,.16)!important;
+}
+html body .gc-gate .gc-primary{
+  background:linear-gradient(110deg,#338df7,#7138de)!important;
+  color:#fff!important;border-radius:12px!important;
+}
+@media(max-width:880px){
+  html body .ft-auth-panel{background:linear-gradient(145deg,#fff7fc,#efe4fa)!important}
+}
+@media(prefers-reduced-motion:reduce){
+  html body .ft-auth-submit{transition:none!important}
+}
