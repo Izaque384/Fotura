@@ -96,6 +96,13 @@ html body :is(.dash,.projects-page,.ftc-page,.sales-page,.bill-page,.cfg,.profil
   .bill-card,.plan,.account-card,.setting-card,.faq-card,.support-strip,
   .pw-overview-card,.pw-section,.pw-config-card,.pw-folder,.pw-metrics button,
   .delivery-card,.delivery-step,.up-card,.step,.plan-info
+),
+html body .mf-shift :is(
+  .action-center,.card,.stat,.panel,.project-card,
+  .ftc-card,.ftc-stat,.ftc-list,.sales-card,.sales-stat,.sales-panel,
+  .bill-card,.plan,.account-card,.setting-card,.faq-card,.support-strip,
+  .pw-overview-card,.pw-section,.pw-config-card,.pw-folder,.pw-metrics button,
+  .delivery-card,.delivery-step,.up-card,.step,.plan-info
 ){
   background:var(--aurora-panel)!important;
   border:1px solid var(--aurora-line)!important;
@@ -107,10 +114,20 @@ html body :is(.dash,.projects-page,.ftc-page,.sales-page,.bill-page,.cfg,.profil
   .ftc-stat,.sales-stat,.stat:nth-child(3n+2),.charts>.card:nth-child(2),
   .pw-metrics button:nth-child(2),.setting-card:nth-child(3n+2),
   .panel:nth-child(2)
+),
+html body .mf-shift :is(
+  .ftc-stat,.sales-stat,.stat:nth-child(3n+2),.charts>.card:nth-child(2),
+  .pw-metrics button:nth-child(2),.setting-card:nth-child(3n+2),
+  .panel:nth-child(2)
 ){
   background:var(--aurora-panel-blue)!important;
 }
 html body :is(.dash,.projects-page,.ftc-page,.sales-page,.bill-page,.cfg,.profile,.help,.onb,.pw-page).mf-shift :is(
+  .charts>.card:nth-child(1),.lists>.card:nth-child(2),
+  .pw-project-summary,.pw-metrics button:nth-child(3),
+  .setting-card:nth-child(3n),.panel:nth-child(3)
+),
+html body .mf-shift :is(
   .charts>.card:nth-child(1),.lists>.card:nth-child(2),
   .pw-project-summary,.pw-metrics button:nth-child(3),
   .setting-card:nth-child(3n),.panel:nth-child(3)
