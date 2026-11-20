@@ -18,7 +18,7 @@ test.describe("Aurora — identidade visual consistente", () => {
     expect(auth).toContain(".ft-auth-page");
   });
 
-  test("dashboard usa fundo lavanda e superfície de vidro, mantendo legibilidade", async ({ page }) => {
+  test("dashboard usa fundo azul Fotura e superfície de vidro, mantendo legibilidade", async ({ page }) => {
     await page.setContent(`<!doctype html><html><head><style>html,body{margin:0}*{box-sizing:border-box}
 ${studio}</style></head><body>
       <aside class="mf-side"><button class="mf-item ativo">Painel</button></aside>
@@ -27,11 +27,17 @@ ${studio}</style></head><body>
         <section class="charts"><article class="card"><h2>Projetos</h2></article><article class="card"><h2>Etapas</h2></article></section>
       </main></body></html>`);
     await expect(page.locator(".dash")).toHaveCSS("background-image", /linear-gradient/);
+    const tokens=await page.locator(".dash").evaluate(el=>{
+      const s=getComputedStyle(el);return {start:s.getPropertyValue("--ft-bg-start").trim(),end:s.getPropertyValue("--ft-bg-end").trim(),panel:s.getPropertyValue("--aurora-panel").trim()};
+    });
+    expect(tokens.start).toBe("#f4faff");
+    expect(tokens.end).toBe("#e8f3fe");
+    expect(tokens.panel).toContain("rgba(237,247,255,.84)");
     await expect(page.locator(".action-center")).toHaveCSS("border-radius", "26px");
     await expect(page.locator(".charts > .card").first()).toHaveCSS("border-radius", "26px");
     await expect(page.locator(".charts > .card").first()).toHaveCSS("background-image", /linear-gradient/);
     await expect(page.locator(".mf-item.ativo")).toHaveCSS("background-image", /linear-gradient/);
-    await expect(page.locator(".charts h2").first()).toHaveCSS("color", "rgb(33, 27, 57)");
+    await expect(page.locator(".charts h2").first()).toHaveCSS("color", "rgb(29, 43, 66)");
   });
 
   test("estilo compartilhado atinge projetos, clientes, configurações, perfil e workspace", async ({ page }) => {
@@ -51,7 +57,8 @@ ${studio}</style></head><body>
     await expect(page.locator(".admin-console")).toHaveCSS("background-image", /linear-gradient/);
     await expect(page.locator(".admin-metric")).toHaveCSS("border-radius", "20px");
     await expect(page.locator(".ft-auth-page")).toHaveCSS("background-image", /linear-gradient/);
-    await expect(page.locator(".ft-auth-input")).toHaveCSS("background-color", "rgba(255, 252, 255, 0.83)");
+    await expect(page.locator(".ft-auth-page")).toHaveCSS("background-image", /rgb\(247, 251, 255\)/);
+    await expect(page.locator(".ft-auth-input")).toHaveCSS("background-color", "rgba(255, 255, 255, 0.88)");
   });
 
   test("a galeria pública mantém fotografias e lightbox fora da tematização", () => {
