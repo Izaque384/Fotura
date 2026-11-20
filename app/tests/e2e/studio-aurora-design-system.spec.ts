@@ -51,11 +51,11 @@ ${legacyVisual}\n${studio}</style></head><body>
       <main class="cfg mf-shift" id="settings"><section class="setting-card">Configurações</section></main>
     </body></html>`);
     for (const selector of ["#projects","#settings"]) {
-      await expect(page.locator(selector)).toHaveCSS("background-image",/rgb\\(248, 251, 255\\)/);
+      await expect(page.locator(selector)).toHaveCSS("background-image",/rgb\(248, 251, 255\)/);
     }
-    await expect(page.locator("#card")).toHaveCSS("background-image",/rgba\\(237, 247, 255, 0\\.84\\)/);
+    await expect(page.locator("#card")).toHaveCSS("background-image",/rgba\(237, 247, 255, 0\.84\)/);
     await page.setViewportSize({width:390,height:844});
-    await expect(page.locator("#projects")).toHaveCSS("background-image",/rgb\\(247, 251, 255\\)/);
+    await expect(page.locator("#projects")).toHaveCSS("background-image",/rgb\(247, 251, 255\)/);
   });
 
   test("estilo compartilhado atinge projetos, clientes, configurações, perfil e workspace", async ({ page }) => {
