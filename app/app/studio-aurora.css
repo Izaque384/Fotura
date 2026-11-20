@@ -94,7 +94,7 @@ html body .mf-shift :is(
   .ftc-card,.ftc-stat,.ftc-list,.sales-card,.sales-stat,.sales-panel,
   .bill-card,.plan,.account-card,.setting-card,.faq-card,.support-strip,
   .pw-overview-card,.pw-section,.pw-config-card,.pw-folder,.pw-metrics button,
-  .delivery-card,.delivery-step,.up-card,.onb .step,.onb .plan-info
+  .delivery-card,.delivery-step,.up-card,.step,.plan-info
 ){
   background:var(--aurora-panel)!important;
   border:1px solid var(--aurora-line)!important;
@@ -212,6 +212,39 @@ html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .donut::after{
   background:#faf0fa!important;
 }
 
+/* Ondas de luz — acabamento sutil da imagem-conceito, sem SVG pesado. */
+html body .dash.mf-shift .action-center-clear{
+  position:relative;isolation:isolate;overflow:hidden;
+}
+html body .dash.mf-shift .action-center-clear::before,
+html body .dash.mf-shift .action-center-clear::after{
+  content:"";position:absolute;pointer-events:none;z-index:0;
+  width:38%;height:145px;bottom:-105px;
+  border-radius:50%;
+  border-top:1px solid rgba(202,155,248,.38);
+  background:linear-gradient(180deg,rgba(212,180,255,.36),rgba(222,190,255,.06));
+  transform:rotate(-12deg);
+}
+html body .dash.mf-shift .action-center-clear::before{left:-8%}
+html body .dash.mf-shift .action-center-clear::after{
+  right:-7%;left:auto;transform:rotate(12deg);
+  background:linear-gradient(170deg,rgba(202,151,245,.35),rgba(246,204,238,.12));
+}
+html body .dash.mf-shift .action-center-clear>*{position:relative;z-index:1}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .charts>.card{
+  position:relative;isolation:isolate;overflow:hidden;
+}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .charts>.card::before{
+  content:"";position:absolute;pointer-events:none;z-index:0;
+  top:-108px;right:-14%;width:72%;height:198px;
+  border-radius:50%;transform:rotate(-17deg);
+  border-bottom:1px solid rgba(205,162,244,.33);
+  background:radial-gradient(ellipse at 55% 82%,rgba(224,198,252,.33),transparent 65%);
+}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .charts>.card>*{
+  position:relative;z-index:1;
+}
+
 /* Navegação de workspace, tabelas, busca e áreas de configuração. */
 html body .mf-shift :is(
   .pw-tabs,.pw-overflow-menu,.filter-menu,.ftc-tabbar,.sales-toolbar,
@@ -320,6 +353,7 @@ html body .mf-shift :is(.up-progress-fill,.delivery-progress-fill,.onb .fill){
   ){border-radius:18px!important;backdrop-filter:none;-webkit-backdrop-filter:none}
   html body .dash.mf-shift .action-center-clear{padding:20px 12px!important}
   html body .mf-side::after{opacity:.5}
+  html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .action-center{border-radius:19px!important}
 }
 @media(prefers-reduced-motion:reduce){
   html body .mf-shift :is(.pw-folder,.ftc-card,.sales-card,.help .faq-item,.project-card){transition:none!important}
