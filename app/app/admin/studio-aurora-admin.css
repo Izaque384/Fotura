@@ -39,6 +39,10 @@ html body .admin-console .admin-console-return{
   border-color:rgba(189,154,231,.33)!important;
   background:linear-gradient(115deg,#302640,#372b4b)!important;
 }
+/* Toda subpágina administrativa herda a mesma tela escura com luz violeta. */
+html body .admin-console :is(.ac,.aa,.hs,.af,.pa,.lr,.au,.adm){
+  background:transparent!important;color:var(--ac-text)!important;
+}
 html body .admin-console .adm.admin-overview{
   background:transparent!important;
   color:var(--ac-text)!important;
