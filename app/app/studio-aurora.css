@@ -5,6 +5,7 @@
  * Escopo deliberado: não modifica o fundo das fotos, lightbox ou hero público.
  * Regras de layout e comportamento das telas existentes continuam intactas.
  */
+html body :is(.dash,.projects-page,.ftc-page,.sales-page,.bill-page,.cfg,.profile,.help,.onb,.pw-page,.delivery-page,.up-page,.hero-page).mf-shift,
 html body .mf-shift{
   --aurora-ink:#1d2b42;
   --aurora-muted:#60748c;
@@ -89,7 +90,7 @@ html body .mf-mobile-btn{
 }
 
 /* Superfícies: os brancos planos dão lugar a vidro perolado e degradês delicados. */
-html body .mf-shift :is(
+html body :is(.dash,.projects-page,.ftc-page,.sales-page,.bill-page,.cfg,.profile,.help,.onb,.pw-page,.delivery-page,.up-page).mf-shift :is(
   .action-center,.card,.stat,.panel,.project-card,
   .ftc-card,.ftc-stat,.ftc-list,.sales-card,.sales-stat,.sales-panel,
   .bill-card,.plan,.account-card,.setting-card,.faq-card,.support-strip,
@@ -102,14 +103,14 @@ html body .mf-shift :is(
   box-shadow:var(--aurora-shadow),inset 0 1px 0 rgba(255,255,255,.85)!important;
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
 }
-html body .mf-shift :is(
+html body :is(.dash,.projects-page,.ftc-page,.sales-page,.bill-page,.cfg,.profile,.help,.onb,.pw-page).mf-shift :is(
   .ftc-stat,.sales-stat,.stat:nth-child(3n+2),.charts>.card:nth-child(2),
   .pw-metrics button:nth-child(2),.setting-card:nth-child(3n+2),
   .panel:nth-child(2)
 ){
   background:var(--aurora-panel-blue)!important;
 }
-html body .mf-shift :is(
+html body :is(.dash,.projects-page,.ftc-page,.sales-page,.bill-page,.cfg,.profile,.help,.onb,.pw-page).mf-shift :is(
   .charts>.card:nth-child(1),.lists>.card:nth-child(2),
   .pw-project-summary,.pw-metrics button:nth-child(3),
   .setting-card:nth-child(3n),.panel:nth-child(3)
@@ -360,6 +361,7 @@ html body .mf-shift :is(.up-progress-fill,.delivery-progress-fill,.onb .fill){
 
 /* Ajustes para telas pequenas e acessibilidade. */
 @media(max-width:980px){
+  html body :is(.dash,.projects-page,.ftc-page,.sales-page,.bill-page,.cfg,.profile,.help,.onb,.pw-page,.delivery-page,.up-page,.hero-page).mf-shift,
   html body .mf-shift{
     background:
       radial-gradient(ellipse 105% 45% at 99% 0%,rgba(219,240,255,.78),transparent 79%),
