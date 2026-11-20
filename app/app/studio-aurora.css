@@ -90,13 +90,11 @@ html body .mf-mobile-btn{
 
 /* Superfícies: os brancos planos dão lugar a vidro perolado e degradês delicados. */
 html body .mf-shift :is(
-  .action-center,.dash .card,.projects-page .stat,.projects-page .panel,
+  .action-center,.card,.stat,.panel,.project-card,
   .ftc-card,.ftc-stat,.ftc-list,.sales-card,.sales-stat,.sales-panel,
-  .bill-card,.bill-page .plan,.cfg .account-card,.cfg .setting-card,
-  .profile .panel,.help .card,.help .faq-card,.help .support-strip,
-  .pw-overview-card,.pw-section,.pw-config-card,.pw-metrics button,
-  .delivery-card,.delivery-step,.up-card,.onb .step,
-  .dash .stats .stat,.dash .body .card
+  .bill-card,.plan,.account-card,.setting-card,.faq-card,.support-strip,
+  .pw-overview-card,.pw-section,.pw-config-card,.pw-folder,.pw-metrics button,
+  .delivery-card,.delivery-step,.up-card,.onb .step,.onb .plan-info
 ){
   background:var(--aurora-panel)!important;
   border:1px solid var(--aurora-line)!important;
@@ -105,22 +103,22 @@ html body .mf-shift :is(
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
 }
 html body .mf-shift :is(
-  .ftc-stat,.projects-page .stat,.sales-stat,.dash .charts>.card:nth-child(2),
-  .pw-metrics button:nth-child(2),.cfg .setting-card:nth-child(3n+2),
-  .profile .panel:nth-child(2),.help .card:nth-child(2)
+  .ftc-stat,.sales-stat,.stat:nth-child(3n+2),.charts>.card:nth-child(2),
+  .pw-metrics button:nth-child(2),.setting-card:nth-child(3n+2),
+  .panel:nth-child(2)
 ){
   background:var(--aurora-panel-blue)!important;
 }
 html body .mf-shift :is(
-  .dash .charts>.card:nth-child(1),.dash .lists>.card:nth-child(2),
+  .charts>.card:nth-child(1),.lists>.card:nth-child(2),
   .pw-project-summary,.pw-metrics button:nth-child(3),
-  .cfg .setting-card:nth-child(3n),.help .card:nth-child(3)
+  .setting-card:nth-child(3n),.panel:nth-child(3)
 ){
   background:var(--aurora-panel-rose)!important;
 }
 html body .mf-shift :is(
-  .projects-page .project-grid .project-card,.ftc-page .ftc-card,
-  .pw-page .pw-folder,.profile .style-btn,.ftc-page .ftc-block
+  .project-grid .project-card,.ftc-card,
+  .pw-folder,.style-btn,.ftc-block
 ){
   border:1px solid rgba(255,255,255,.88)!important;
   box-shadow:0 16px 39px rgba(70,41,116,.10),inset 0 1px rgba(255,255,255,.86)!important;
@@ -217,8 +215,8 @@ html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .donut::after{
 /* Navegação de workspace, tabelas, busca e áreas de configuração. */
 html body .mf-shift :is(
   .pw-tabs,.pw-overflow-menu,.filter-menu,.ftc-tabbar,.sales-toolbar,
-  .ftc-toolbar,.projects-page .toolbar,.pw-folder-summary,.bill-page .usage,
-  .cfg .setting-info,.profile .editor,.delivery-notice,.up-network
+  .ftc-toolbar,.toolbar,.pw-folder-summary,.usage,
+  .setting-info,.editor,.delivery-notice,.up-network
 ){
   background:linear-gradient(130deg,rgba(255,251,255,.86),rgba(242,230,254,.75))!important;
   border-color:rgba(213,185,243,.60)!important;
