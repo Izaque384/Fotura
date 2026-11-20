@@ -282,6 +282,28 @@ html body .mf-shift :is(.pw-modal-card,.ftc-dialog,.ftc-drawer,.ft-drawer,.pw-po
   box-shadow:0 26px 70px rgba(39,20,84,.23)!important;
 }
 
+/* Painéis laterais que abrem sobre as telas internas. */
+html body .mf-shift .ft-drawer-panel{
+  background:linear-gradient(150deg,#fffaff 0%,#f1e6fa 100%)!important;
+  color:#241d3c!important;
+  border-left:1px solid rgba(216,186,247,.68)!important;
+  box-shadow:-24px 0 66px rgba(32,18,70,.21)!important;
+}
+html body .mf-shift .ft-drawer-footer{
+  background:linear-gradient(115deg,#fff9ff,#f2e8fb)!important;
+  border-top-color:rgba(206,172,238,.48)!important;
+}
+html body .mf-shift :is(.ft-drawer-field,.ft-drawer-item){
+  background:rgba(255,252,255,.81)!important;
+  border-color:rgba(205,174,233,.55)!important;
+  box-shadow:0 6px 18px rgba(78,49,119,.045)!important;
+}
+html body .mf-shift .ft-drawer-button.primary{
+  background:linear-gradient(110deg,#278cf7,#6e37e8)!important;
+  color:#fff!important;
+  border-color:transparent!important;
+}
+
 /* Ações principais e feedbacks: azul para violeta, nunca textos cinzas ilegíveis. */
 html body .mf-shift :is(
   .dash-btn,.ftc-primary,.pw-main-action,.pw-btn.primary,
