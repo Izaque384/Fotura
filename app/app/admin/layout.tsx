@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import AdminNavigation from "./AdminNavigation";
 import "./admin-console.css";
+import "./studio-aurora-admin.css";
 
 export const metadata: Metadata = {
   robots: {
