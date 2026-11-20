@@ -56,11 +56,11 @@ html body .mf-side{
   box-shadow:10px 0 50px rgba(36,22,69,.15)!important;
 }
 html body .mf-side::after{
-  content:"";position:absolute;left:-35%;bottom:-160px;
-  width:145%;height:325px;border-radius:50%;
-  border-top:1px solid rgba(178,147,255,.54);
-  background:radial-gradient(ellipse at 58% 20%,rgba(108,63,227,.19),transparent 67%);
-  transform:rotate(-21deg);pointer-events:none;
+  content:"";position:absolute;left:0;bottom:0;
+  width:100%;height:178px;border-radius:74% 26% 0 0;
+  border-top:1px solid rgba(178,147,255,.43);
+  background:radial-gradient(ellipse at 52% 100%,rgba(108,63,227,.23),transparent 76%);
+  pointer-events:none;
 }
 html body .mf-side .mf-brand-tx{color:#fff!important;letter-spacing:.16em!important}
 html body .mf-side .mf-item.ativo{
