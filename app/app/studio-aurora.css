@@ -1,0 +1,328 @@
+/*
+ * FOTURA / STUDIO AURORA
+ * Uma única linguagem visual para o produto interno. Inspirada no conceito
+ * aprovado: lavanda luminosa, vidro acetinado, curvas suaves e violeta profundo.
+ * Escopo deliberado: não modifica o fundo das fotos, lightbox ou hero público.
+ * Regras de layout e comportamento das telas existentes continuam intactas.
+ */
+html body .mf-shift{
+  --aurora-ink:#211b39;
+  --aurora-muted:#67617f;
+  --aurora-accent:#6536d6;
+  --aurora-line:rgba(255,255,255,.78);
+  --aurora-shadow:0 18px 46px rgba(74,44,127,.12),0 4px 12px rgba(80,52,127,.045);
+  --aurora-panel:linear-gradient(137deg,rgba(255,252,255,.89) 3%,rgba(251,239,255,.78) 55%,rgba(236,218,255,.68) 100%);
+  --aurora-panel-blue:linear-gradient(138deg,rgba(255,253,255,.91) 2%,rgba(248,240,255,.77) 53%,rgba(223,234,255,.72) 100%);
+  --aurora-panel-rose:linear-gradient(128deg,rgba(255,250,255,.91),rgba(253,230,245,.75) 57%,rgba(225,210,255,.72));
+  --ft-bg-start:#f6eaf9;
+  --ft-bg-end:#eee1f8;
+  --ft-surface:#fff8ff;
+  --ft-surface-muted:#f0e4fb;
+  --ft-surface-soft:#f8effc;
+  --ft-border:rgba(139,102,193,.23);
+  --ft-border-soft:rgba(151,116,192,.20);
+  --ft-text:var(--aurora-ink);
+  --ft-text-secondary:var(--aurora-muted);
+  --ft-text-muted:#837a9c;
+  --ft-accent-ink:var(--aurora-accent);
+  --ft-shadow-card:var(--aurora-shadow);
+  background:
+    radial-gradient(ellipse 78% 43% at 85% -7%,rgba(248,201,236,.77),transparent 75%),
+    radial-gradient(ellipse 60% 46% at 15% 16%,rgba(242,220,255,.90),transparent 80%),
+    radial-gradient(ellipse 55% 50% at 100% 100%,rgba(199,187,248,.49),transparent 76%),
+    linear-gradient(125deg,#f9effa 0%,#f0e5f8 53%,#eee2fa 100%)!important;
+  color:var(--aurora-ink)!important;
+  background-attachment:scroll!important;
+}
+html body .mf-shift :where(input,textarea,select){accent-color:#7147db}
+html body .mf-shift :where(h1,h2,h3,.h1,.dash-h1,.ftc-title,.pw-head h1,.sales-h1,.bill-h1){
+  color:var(--aurora-ink)!important;
+}
+html body .mf-shift :where(.ey,.dash-eyebrow,.overview-eyebrow,.sales-ey,.bill-ey,.ftc-kicker,.delivery-ey,.card-eyebrow,.pw-card-head span,.section-label){
+  color:#7651be!important;
+}
+html body .mf-shift :where(.sub,.dash-sub,.sales-sub,.bill-sub,.ftc-description,.delivery-sub,.pw-section-head p){
+  color:var(--aurora-muted)!important;
+}
+
+/* Menu escuro: a referência visual de todas as telas do estúdio. */
+html body .mf-side{
+  position:fixed;
+  background:
+    radial-gradient(ellipse 100% 35% at 4% 98%,rgba(95,51,183,.34),transparent 78%),
+    radial-gradient(ellipse 70% 45% at 90% 8%,rgba(66,43,116,.28),transparent 83%),
+    linear-gradient(155deg,#191426 0%,#201731 57%,#181329 100%)!important;
+  border-right:1px solid rgba(228,209,255,.12)!important;
+  box-shadow:10px 0 50px rgba(36,22,69,.15)!important;
+}
+html body .mf-side::after{
+  content:"";position:absolute;left:-35%;bottom:-160px;
+  width:145%;height:325px;border-radius:50%;
+  border-top:1px solid rgba(178,147,255,.54);
+  background:radial-gradient(ellipse at 58% 20%,rgba(108,63,227,.19),transparent 67%);
+  transform:rotate(-21deg);pointer-events:none;
+}
+html body .mf-side .mf-brand-tx{color:#fff!important;letter-spacing:.16em!important}
+html body .mf-side .mf-item.ativo{
+  background:linear-gradient(100deg,rgba(121,72,229,.37),rgba(135,85,232,.54))!important;
+  border:1px solid rgba(193,159,255,.55)!important;
+  box-shadow:inset 3px 0 0 #c8a7ff,0 8px 22px rgba(103,51,229,.18)!important;
+  color:#fff!important;
+}
+html body .mf-side .mf-item.ativo .mf-ic,
+html body .mf-side .mf-item.ativo svg{color:#ece0ff!important}
+html body .mf-side .mf-item:hover:not(.ativo){background:rgba(190,150,255,.12)!important;color:#f8f4ff!important}
+html body .mf-side .mf-item.mf-admin{
+  background:linear-gradient(110deg,rgba(120,94,192,.26),rgba(95,68,163,.18))!important;
+  border-color:rgba(206,178,255,.22)!important;
+}
+html body .mf-top-user{
+  background:linear-gradient(130deg,rgba(255,254,255,.85),rgba(237,222,255,.74))!important;
+  border:1px solid rgba(255,255,255,.92)!important;
+  box-shadow:0 10px 28px rgba(56,38,110,.16),inset 0 1px 0 #fff!important;
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+}
+html body .mf-top-user:hover{background:linear-gradient(120deg,#fff,#f3e7ff)!important}
+html body .mf-mobile-btn{
+  background:rgba(252,246,255,.90)!important;border-color:rgba(184,156,222,.55)!important;
+  box-shadow:0 7px 20px rgba(56,38,110,.12)!important;
+}
+
+/* Superfícies: os brancos planos dão lugar a vidro perolado e degradês delicados. */
+html body .mf-shift :is(
+  .action-center,.dash .card,.projects-page .stat,.projects-page .panel,
+  .ftc-card,.ftc-stat,.ftc-list,.sales-card,.sales-stat,.sales-panel,
+  .bill-card,.bill-page .plan,.cfg .account-card,.cfg .setting-card,
+  .profile .panel,.help .card,.help .faq-card,.help .support-strip,
+  .pw-overview-card,.pw-section,.pw-config-card,.pw-metrics button,
+  .delivery-card,.delivery-step,.up-card,.onb .step,
+  .dash .stats .stat,.dash .body .card
+){
+  background:var(--aurora-panel)!important;
+  border:1px solid var(--aurora-line)!important;
+  border-radius:22px!important;
+  box-shadow:var(--aurora-shadow),inset 0 1px 0 rgba(255,255,255,.85)!important;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+html body .mf-shift :is(
+  .ftc-stat,.projects-page .stat,.sales-stat,.dash .charts>.card:nth-child(2),
+  .pw-metrics button:nth-child(2),.cfg .setting-card:nth-child(3n+2),
+  .profile .panel:nth-child(2),.help .card:nth-child(2)
+){
+  background:var(--aurora-panel-blue)!important;
+}
+html body .mf-shift :is(
+  .dash .charts>.card:nth-child(1),.dash .lists>.card:nth-child(2),
+  .pw-project-summary,.pw-metrics button:nth-child(3),
+  .cfg .setting-card:nth-child(3n),.help .card:nth-child(3)
+){
+  background:var(--aurora-panel-rose)!important;
+}
+html body .mf-shift :is(
+  .projects-page .project-grid .project-card,.ftc-page .ftc-card,
+  .pw-page .pw-folder,.profile .style-btn,.ftc-page .ftc-block
+){
+  border:1px solid rgba(255,255,255,.88)!important;
+  box-shadow:0 16px 39px rgba(70,41,116,.10),inset 0 1px rgba(255,255,255,.86)!important;
+}
+html body .projects-page.mf-shift .project-grid .project-card{
+  background:linear-gradient(149deg,rgba(255,251,255,.95),rgba(245,232,255,.85))!important;
+  border-radius:23px!important;
+}
+html body .projects-page.mf-shift .project-grid .project-card:hover{
+  background:linear-gradient(135deg,#fff9ff,#f0dfff)!important;
+  border-color:#d7b8f7!important;
+  box-shadow:0 19px 44px rgba(93,51,168,.17)!important;
+}
+html body .mf-shift :is(.project-cover,.pw-summary-cover,.pw-folder-cover,.ftc-avatar,.list-cover) img{
+  filter:none!important;/* fotografias preservadas, sem lavanda ou ruído artificial */
+}
+html body .mf-shift :is(.stat,.ftc-stat,.sales-stat,.pw-metrics button){
+  border-color:rgba(255,255,255,.86)!important;
+}
+
+/* Dashboard — aproxima a composição da imagem de referência. */
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page){
+  background:
+    radial-gradient(ellipse 76% 47% at 89% -5%,rgba(252,210,238,.80),transparent 75%),
+    radial-gradient(ellipse 65% 45% at 17% 17%,rgba(238,211,255,.78),transparent 81%),
+    radial-gradient(ellipse 56% 58% at 100% 100%,rgba(193,173,243,.45),transparent 75%),
+    linear-gradient(130deg,#faf0fa 0%,#f0e4f7 56%,#ede2fb 100%)!important;
+}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .action-center{
+  position:relative;
+  padding:23px 24px!important;
+  border-radius:26px!important;
+  background:linear-gradient(122deg,rgba(255,252,255,.83),rgba(255,238,252,.64) 58%,rgba(227,204,255,.72))!important;
+  box-shadow:0 17px 42px rgba(82,51,133,.13),inset 0 1px 0 #fff!important;
+}
+html body .dash.mf-shift .action-center-clear{
+  border:1px solid rgba(228,205,254,.88)!important;
+  border-radius:19px!important;
+  background:
+    radial-gradient(ellipse 35% 82% at 1% 110%,rgba(191,160,255,.27),transparent),
+    radial-gradient(ellipse 40% 100% at 96% 124%,rgba(181,132,252,.27),transparent),
+    linear-gradient(100deg,rgba(244,231,255,.65),rgba(255,242,253,.68) 50%,rgba(238,221,255,.60))!important;
+  padding:25px 22px!important;
+}
+html body .dash.mf-shift .action-center-clear strong{color:#302044!important;font-size:13px!important}
+html body .dash.mf-shift .action-center-clear span{font-size:10.5px!important;color:#69607e!important}
+html body .dash.mf-shift .action-center-eyebrow{color:#7139cd!important}
+html body .dash.mf-shift .action-center h2{color:#251c3a!important}
+html body .dash.mf-shift .action-item{
+  border-color:rgba(203,168,242,.55)!important;
+  background:rgba(248,239,255,.75)!important;
+  border-radius:16px!important;
+}
+html body .dash.mf-shift .upgrade-context{
+  background:linear-gradient(125deg,#f4e4fb,#e5ebff)!important;
+  border-color:rgba(184,140,229,.50)!important;
+}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) :is(.charts,.lists)>.card{
+  background:var(--aurora-panel)!important;
+  border:1px solid rgba(255,255,255,.86)!important;
+  border-radius:26px!important;
+  box-shadow:0 20px 47px rgba(81,51,137,.12),inset 0 1px #fff!important;
+}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .charts>.card:nth-child(2){
+  background:var(--aurora-panel-blue)!important;
+}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .lists>.card:nth-child(2){
+  background:var(--aurora-panel-rose)!important;
+}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .vbar-fill{
+  background:linear-gradient(180deg,#59b4ff 0%,#6471f6 48%,#7135d9 100%)!important;
+  box-shadow:0 5px 17px rgba(107,64,215,.13)!important;
+  border-radius:10px 10px 4px 4px!important;
+}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .chart-view-switch{
+  background:rgba(225,213,240,.60)!important;
+  border-color:rgba(230,212,247,.96)!important;
+  border-radius:15px!important;
+}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .chart-view-switch button.selected{
+  background:linear-gradient(140deg,#fff9ff,#e9d8ff)!important;
+  box-shadow:0 5px 15px rgba(101,65,161,.16),inset 0 1px #fff!important;
+  color:#5630b3!important;
+}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) :is(.storage-usage,.bell){
+  background:linear-gradient(135deg,rgba(255,250,255,.85),rgba(236,218,255,.77))!important;
+  border:1px solid #fff!important;
+  box-shadow:0 8px 22px rgba(81,51,137,.11),inset 0 1px #fff!important;
+}
+html body .dash.mf-shift.ft-overview-premium:not(.ftc-page) .donut::after{
+  background:#faf0fa!important;
+}
+
+/* Navegação de workspace, tabelas, busca e áreas de configuração. */
+html body .mf-shift :is(
+  .pw-tabs,.pw-overflow-menu,.filter-menu,.ftc-tabbar,.sales-toolbar,
+  .ftc-toolbar,.projects-page .toolbar,.pw-folder-summary,.bill-page .usage,
+  .cfg .setting-info,.profile .editor,.delivery-notice,.up-network
+){
+  background:linear-gradient(130deg,rgba(255,251,255,.86),rgba(242,230,254,.75))!important;
+  border-color:rgba(213,185,243,.60)!important;
+  box-shadow:0 7px 23px rgba(80,52,127,.065)!important;
+}
+html body .mf-shift :is(
+  .pw-tabs button.on,.pw-tabs .pw-secondary-current,
+  .ftc-tabbar button[aria-selected="true"],.sales-filter button[aria-selected="true"]
+){
+  color:#613bc3!important;
+  background:linear-gradient(135deg,#fff9ff,#e8d8fb)!important;
+  border-color:rgba(198,165,238,.58)!important;
+  box-shadow:0 5px 12px rgba(95,52,155,.14)!important;
+}
+html body .mf-shift :is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,textarea,.ftc-search,.search-box,.sales-search-box
+){
+  border-color:rgba(179,153,207,.46)!important;
+  background-color:rgba(255,252,255,.84)!important;
+  color:#2c2444;
+}
+html body .mf-shift :is(input,select,textarea):focus-visible{
+  outline:2px solid #9874df!important;outline-offset:2px;
+}
+html body .mf-shift :is(input,textarea)::placeholder{color:#9486a5}
+html body .mf-shift :is(.pw-modal-card,.ftc-dialog,.ftc-drawer,.ft-drawer,.pw-popover,.bell-pop){
+  background:linear-gradient(150deg,#fffbff,#f4e8fc)!important;
+  border:1px solid rgba(202,166,235,.52)!important;
+  box-shadow:0 26px 70px rgba(39,20,84,.23)!important;
+}
+
+/* Ações principais e feedbacks: azul para violeta, nunca textos cinzas ilegíveis. */
+html body .mf-shift :is(
+  .dash-btn,.ftc-primary,.pw-main-action,.pw-btn.primary,
+  .sales-primary,.bill-page .manage-btn,.onb .cta,.up-enviar,
+  .cfg button.primary,.profile button.primary,.pw-page button.primary,
+  .delivery-btn.primary,.btn.primary
+){
+  color:#fff!important;
+  background:linear-gradient(115deg,#278cf7 0%,#5a55f6 53%,#7130ec 100%)!important;
+  border:1px solid rgba(94,77,220,.38)!important;
+  box-shadow:0 10px 25px rgba(89,75,218,.21)!important;
+  text-shadow:none!important;
+}
+html body .mf-shift :is(
+  .dash-btn,.ftc-primary,.pw-main-action,.sales-primary,.onb .cta,
+  .up-enviar,.btn.primary
+):hover:not(:disabled){
+  filter:brightness(1.045);
+  box-shadow:0 13px 27px rgba(89,75,218,.28)!important;
+}
+html body .mf-shift :is(
+  .ftc-secondary,.pw-share-action,.pw-link-button,.pw-back,
+  .ftc-close,.pw-more-labeled,.profile .style-btn,
+  .cfg .btn:not(.primary),.pw-tabs button
+){
+  border-color:rgba(186,151,222,.52)!important;
+}
+html body .mf-shift :is(
+  .pw-state,.pw-status,.ftc-tag,.count-badge,.pw-pill,.ftc-muted
+){
+  border-color:rgba(185,149,223,.35);
+}
+html body .mf-shift :is(
+  .pw-folder,.ftc-card,.sales-card,.help .faq-item,.projects-page .project-card,
+  .pw-overview-card
+){
+  transition:box-shadow .22s ease,border-color .22s ease,background-color .22s ease;
+}
+html body .mf-shift :is(.pw-folder,.ftc-card,.sales-card,.help .faq-item):hover{
+  border-color:rgba(171,125,225,.64)!important;
+  box-shadow:0 19px 42px rgba(81,51,137,.14)!important;
+}
+
+/* Tela de upload e entrega: ambiente acolhedor, preservando controles de progresso. */
+html body .up-page.mf-shift .up-card,
+html body .delivery-page.mf-shift :is(.delivery-step,.delivery-file,.delivery-notice){
+  background:var(--aurora-panel)!important;
+  border-color:rgba(255,255,255,.84)!important;
+  box-shadow:var(--aurora-shadow)!important;
+}
+html body .mf-shift :is(.up-progress-fill,.delivery-progress-fill,.onb .fill){
+  background:linear-gradient(90deg,#329af9,#7544dc)!important;
+}
+
+/* Ajustes para telas pequenas e acessibilidade. */
+@media(max-width:980px){
+  html body .mf-shift{
+    background:
+      radial-gradient(ellipse 105% 45% at 99% 0%,rgba(247,209,242,.70),transparent 79%),
+      linear-gradient(145deg,#f8ecfa,#eee4f9 65%,#e8def8)!important;
+  }
+  html body .dash.mf-shift.ft-overview-premium:not(.ftc-page){background:linear-gradient(145deg,#f8ecfa,#eee3f9 70%,#e9dff9)!important}
+}
+@media(max-width:640px){
+  html body .mf-shift :is(
+    .action-center,.dash .card,.projects-page .stat,.ftc-stat,.ftc-card,
+    .sales-stat,.sales-card,.pw-section,.pw-overview-card,.bill-card,
+    .cfg .setting-card,.profile .panel,.help .card
+  ){border-radius:18px!important;backdrop-filter:none;-webkit-backdrop-filter:none}
+  html body .dash.mf-shift .action-center-clear{padding:20px 12px!important}
+  html body .mf-side::after{opacity:.5}
+}
+@media(prefers-reduced-motion:reduce){
+  html body .mf-shift :is(.pw-folder,.ftc-card,.sales-card,.help .faq-item,.project-card){transition:none!important}
+}
