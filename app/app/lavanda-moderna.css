@@ -1150,7 +1150,7 @@ html body .lp .hero-showcase-photo{
   position:absolute;
   inset:0;
   z-index:1;
-  background-image:url("https://dwzrrnewznonnoqrffwi.supabase.co/storage/v1/object/public/marca/landing/fotura-wedding-sunset-generated.png");
+  background-image:url("/api/marca/landing");
   background-size:cover;
   background-position:center center;
   filter:brightness(.98) contrast(1.03) saturate(.97);
