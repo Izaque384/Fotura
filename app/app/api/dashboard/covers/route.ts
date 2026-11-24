@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
   if (!galleries?.length) return json({ covers: {} });
 
   const byGallery = new Map<string, Array<{ name: string; created: string }>>();
+  const registeredPaths = new Set<string>();
   const galleryIds = new Set(galleries.map(g => String(g.id)));
   try {
     for (let offset = 0; offset < 10000; offset += 500) {
@@ -38,7 +39,9 @@ export async function GET(req: NextRequest) {
       if (error) throw error;
       const page = data ?? [];
       for (const item of page) {
-        const segments = String(item.object_key).split("/");
+        const key = String(item.object_key);
+        registeredPaths.add(key);
+        const segments = key.split("/");
         if (segments.length !== 3 || segments[0] !== uid || !galleryIds.has(segments[1])) continue;
         if (segments[2] === "entrega" || segments[2] === "thumbs") continue;
         const list = byGallery.get(segments[1]) ?? [];
@@ -64,7 +67,7 @@ export async function GET(req: NextRequest) {
     // is missing, the original is a safe fallback instead of a broken image.
     for (let i = 0; i < candidates.length; i += 75) {
       const chunk = candidates.slice(i, i + 75);
-      const paths = chunk.flatMap(x => [x.thumb, x.original]);
+      const paths = chunk.flatMap(x => registeredPaths.has(x.thumb) ? [x.thumb, x.original] : [x.original]);
       Object.assign(lookup, await signPrivateMediaUrls(db, "fotos", paths, 3600));
     }
     for (const item of candidates) {
