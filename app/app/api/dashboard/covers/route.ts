@@ -62,7 +62,7 @@ export async function GET(req: NextRequest) {
       const original = uid + "/" + galleryId + "/" + selected.name;
       candidates.push({ galleryId, name: selected.name, thumb: uid + "/" + galleryId + "/thumbs/" + selected.name, original });
     }
-    const lookup = new Map<string, string>();
+    const lookup: Record<string, string> = {};
     // Both original and thumbnail are owned by the same studio. If the thumb
     // is missing, the original is a safe fallback instead of a broken image.
     for (let i = 0; i < candidates.length; i += 75) {
