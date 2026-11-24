@@ -18,6 +18,7 @@ export const maxDuration = 60;
 const bucketNames = new Set<FoturaMediaBucket>([
   "fotos", "abertura-videos", "marca", "client-avatars", "feedback-anexos",
 ]);
+const landingKey = "landing/fotura-wedding-sunset-generated.png";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type FileItem = {
   bucket: FoturaMediaBucket;
@@ -37,6 +38,7 @@ function validFile(x: unknown): x is FileItem {
       typeof f.key !== "string" || f.key.length > 1024 ||
       !Number.isSafeInteger(f.bytes) || Number(f.bytes) < 1 || Number(f.bytes) > 25 * 1024 * 1024 ||
       typeof f.mime !== "string" || !/^(image|video)\/[a-z0-9.+-]+$/i.test(f.mime)) return false;
+  if (f.bucket === "marca" && f.key === landingKey) return true;
   const path = f.key.split("/");
   // The legacy landing banner is not user-owned. It requires a separate
   // public-delivery plan; never forge an ownership record to copy it.
@@ -50,8 +52,11 @@ const digest = (buffer: Buffer) => createHash("sha256").update(buffer).digest("h
 
 async function copyVerified(db: ReturnType<typeof createServiceClient>, file: FileItem) {
   const { bucket, key, bytes, mime } = file;
+  const specialLanding = bucket === "marca" && key === landingKey;
   const owner = key.split("/")[0];
-  const { data: previous, error: previousError } = await db.from("fotura_media_objects")
+  const { data: previous, error: previousError } = specialLanding
+    ? { data: null, error: null }
+    : await db.from("fotura_media_objects")
     .select("bytes,owner_id,content_type").eq("bucket", bucket)
     .eq("object_key", key).maybeSingle();
   if (previousError) throw new Error("Registry read failed");
@@ -93,6 +98,8 @@ async function copyVerified(db: ReturnType<typeof createServiceClient>, file: Fi
   if (copy.byteLength !== bytes || digest(copy) !== expectedHash)
     throw new Error("R2 SHA-256 verification failed");
 
+  if (specialLanding) return head.ok ? "existing_object_verified" : "copied_verified";
+
   const { error: registryError } = await db.from("fotura_media_objects")
     .upsert({
       bucket, object_key: key, owner_id: owner, bytes,
@@ -129,7 +136,8 @@ export async function POST(req: NextRequest) {
     try {
       const status = await copyVerified(db, f);
       result.push({ bucket: f.bucket, key: f.key, result: status });
-    } catch {
+    } catch (error) {
+      console.error("Legacy R2 copy failed:", error instanceof Error ? error.message : "unknown");
       // Never expose credentials, signed URLs, or exception internals.
       result.push({ bucket: f.bucket, key: f.key, result: "failed" });
     }
