@@ -110,14 +110,6 @@ test("dashboard covers are signed exclusively from the owner-scoped R2 registry"
   assert.doesNotMatch(dashboard, /resumo_storage_galerias/);
 });
 
-test("temporary legacy cleanup is HMAC-gated and refuses unverified R2 objects", () => {
-  const route = read("app/app/api/internal/r2-legacy-cleanup/route.ts");
-  assert.match(route, /x-cleanup-token/);
-  assert.match(route, /storage_cleanup_authorized/);
-  assert.match(route, /\.from\("fotura_media_objects"\)/);
-  assert.match(route, /r2PhysicalKey\(file\.bucket, file\.key\)/);
-  assert.match(route, /signPrivateR2ObjectUrl\("HEAD", physical, 90\)/);
-  assert.match(route, /currentEtag === etag/);
-  assert.match(route, /db\.storage\.from\(file\.bucket\)\.remove\(\[file\.key\]\)/);
-  assert.doesNotMatch(route, /delete\s+from\s+storage\.objects/i);
+test("privileged legacy cleanup endpoint is removed after migration", () => {
+  assert.throws(() => read("app/app/api/internal/r2-legacy-cleanup/route.ts"), /ENOENT/);
 });
