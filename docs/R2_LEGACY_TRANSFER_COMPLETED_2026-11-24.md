@@ -23,9 +23,24 @@ Registro operacional: 2026-11-24 (UTC). Acervo em produção.
 - O código de novos uploads já estava configurado para gravar exclusivamente no R2 desde 13/11/2026.
 - PR #165 implementou a migração autenticada usando Vault HMAC de curta duração e leitura/escrita privadas. Após o uso, a rota operacional temporária foi removida por segurança nesta finalização.
 
-## Garantias e pendências
+## Limpeza definitiva concluída — 2026-11-24
 
-1. **Nenhum objeto original foi apagado no Supabase Storage nesta migração.** Permanecem 1.228 objetos como retenção de segurança. Isso mantém o consumo antigo do Storage contabilizado e pode impedir downgrade seguro imediato ao plano Free.
-2. Para reduzir definitivamente o uso faturado no Supabase Storage, preparar remoção pelo SDK Storage e apenas após testes de galerias reais, links públicos, downloads, ZIP, vídeos em Safari/iPhone, marcas, avatares, confirmação do usuário e plano de retenção/backup independente. **Nunca apagar diretamente linhas de `storage.objects` por SQL.**
-3. Banco, Auth, metadados, permissões e registros permanecem no Supabase. A migração é somente dos bytes de mídia.
-4. Foi realizada verificação por arquivo (SHA-256) e reconciliação de contagem e bytes. Testes de navegação no dispositivo real do cliente não foram executados neste procedimento.
+A pedido do proprietário, os 1.228 objetos antigos foram removidos por **Supabase Storage API** (SDK service_role, método `remove`), nunca por `DELETE FROM storage.objects`.
+
+- Antes da exclusão, PR #168 corrigiu o dashboard para ler capas por um endpoint R2 privado autenticado e corrigiu as funções SQL `definir_capa_galeria` e `billing_gallery_usage_backend` para reconhecer objetos R2 sem manter a cópia no Storage antigo.
+- A migração de banco sincronizou a data de criação de 1.227 objetos legados com a data original anterior à exclusão para preservar a ordem de fotos.
+- Uma miniatura de teste foi apagada e sua cópia no R2 baixada e verificada com 23.370 bytes íntegros, enquanto o registro privado foi preservado.
+- Todos os 606 thumbs, todos os 606 originais, os 2 vídeos MP4, os 11 arquivos de marca de estúdios, os 2 avatares e o banner especial da landing foram removidos da origem. Total **1.228 arquivos**, com confirmação HTTP 200 dos lotes e sem falhas nos resultados.
+- A consulta SQL final ao `storage.objects` retornou **0 arquivos, 0 bytes**.
+- `public.fotura_media_objects` permaneceu com **1.427 registros** (incluindo 1.412 fotos/miniaturas, 2 vídeos, 11 marcas e 2 avatares).
+- O bucket privado Cloudflare `fotura-media` foi recontado fisicamente após a exclusão, com **1.428 objetos, 1.998.526.404 bytes**, incluindo o banner da plataforma não registrado como mídia de estúdio.
+- A organização continua Supabase Pro; o banco PostgreSQL, Auth, tabelas e permissões continuam no Supabase. Confirmadas 14 galerias no banco; as 6 galerias do casamento Roberto & Ferlaína possuem 132 registros R2 (66 originais e 66 miniaturas).
+- Três logotipos permanecem apontando para a rota privada de mídia no Fotura. O banner `/api/marca/landing` e um logotipo foram consultados via HTTP 200.
+- A rota privilegiada de limpeza `/api/internal/r2-legacy-cleanup` foi removida do repositório na PR de finalização, após a execução.
+
+### Atenções posteriores
+
+1. O dashboard do Supabase pode mostrar valores históricos de armazenamento médio até o ciclo de cobrança atualizar. A consulta direta ao inventário `storage.objects` já confirmou **0 bytes atualmente armazenados**.
+2. A migração e a limpeza não modificaram as contas de Auth nem as galerias. Entretanto, a navegação completa em dispositivos físicos de clientes (especialmente iPhone/Safari, reprodução de vídeo, ZIP e PIN) não foi homologada manualmente nesta operação; recomenda-se um teste final de entrega real.
+3. O R2 agora é a única cópia de mídia mantida na infraestrutura de armazenamento da aplicação. Para fotos irrepetíveis de clientes, criar um backup independente adicional, fora do próprio R2, antes de confiar nele como única cópia de longo prazo.
+4. A assinatura Supabase Pro **não foi cancelada**; isso é uma decisão de faturamento separada, e Auth/PostgreSQL continuam dependentes do Supabase.
