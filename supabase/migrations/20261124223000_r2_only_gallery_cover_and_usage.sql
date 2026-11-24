@@ -86,3 +86,13 @@ as $function$
 $function$;
 revoke all on function public.billing_gallery_usage_backend(uuid,uuid) from public,anon,authenticated;
 grant execute on function public.billing_gallery_usage_backend(uuid,uuid) to service_role;
+
+
+-- Preserve the original gallery upload order once the legacy objects are
+-- removed. New R2-only uploads have no matching storage.objects row.
+update public.fotura_media_objects r
+set created_at = o.created_at
+from storage.objects o
+where r.bucket = o.bucket_id and r.object_key = o.name
+  and o.created_at is not null
+  and r.created_at is distinct from o.created_at;
