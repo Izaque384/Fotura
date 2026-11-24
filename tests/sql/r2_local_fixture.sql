@@ -5,6 +5,9 @@ create role anon nologin;
 create role authenticated nologin;
 create role service_role nologin;
 create schema auth;
+create function auth.uid() returns uuid language sql stable as $
+  select nullif(current_setting('request.jwt.claim.sub', true),'')::uuid
+$;
 create schema storage;
 create schema private;
 create schema extensions;
@@ -19,6 +22,8 @@ create table public.galerias (
   id uuid primary key, user_id uuid not null references auth.users(id),
   projeto_id uuid references public.galeria_projetos(id),
   etapa text not null default 'prova',
+  prova boolean not null default true,
+  capa text,
   storage_limpo boolean not null default false
 );
 create table storage.objects (
@@ -26,6 +31,7 @@ create table storage.objects (
   bucket_id text not null,
   name text not null,
   metadata jsonb,
+  created_at timestamptz not null default now(),
   is_delete_marker boolean not null default false,
   unique (bucket_id,name)
 );
