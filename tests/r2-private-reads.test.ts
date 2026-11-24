@@ -21,14 +21,14 @@ test("project cover endpoint only signs thumbnails referenced by user's projects
   assert.match(source, /\.eq\("user_id", auth\.user\.id\)/);
   assert.match(source, /capa_galeria_id/);
   assert.match(source, /capa_arquivo/);
-  assert.match(source, /signPrivateMediaUrls\(db, "fotos", paths, 3600\)/);
+  assert.match(source, /signPrivateMediaUrls\(db, "fotos", realPaths, 3600\)/);
+  assert.match(source, /caminhoCapaAtual/);
 });
 
 test("photographer pages no longer sign owner avatars and covers directly from legacy storage", () => {
   const clients = read("app/app/dashboard/clientes/page.tsx");
   const projects = read("app/app/dashboard/projetos/page.tsx");
   assert.match(clients, /\/api\/clientes\/avatar-urls/);
-  assert.match(projects, /\/api\/clientes\/avatar-urls/);
   assert.match(projects, /\/api\/projetos\/preview-urls/);
   assert.doesNotMatch(clients, /storage\.from\(BUCKET\)\.createSignedUrl/);
   assert.doesNotMatch(projects, /storage\.from\("client-avatars"\)\.createSignedUrl/);
@@ -92,4 +92,32 @@ test("saving the cinematic opening supports registered private R2 videos", () =>
   assert.match(workspace, /bytes === Number\(object\.bytes\)/);
   assert.match(workspace, /if \(r2Registered\)/);
   assert.match(workspace, /if \(!keepPrivateR2 && !registryFailed\)/);
+});
+
+
+test("dashboard covers are signed exclusively from the owner-scoped R2 registry", () => {
+  const route = read("app/app/api/dashboard/covers/route.ts");
+  const dashboard = read("app/app/dashboard/page.tsx");
+  assert.match(route, /db\.auth\.getUser\(bearer\)/);
+  assert.match(route, /\.from\("galerias"\)/);
+  assert.match(route, /\.eq\("user_id", uid\)/);
+  assert.match(route, /\.from\("fotura_media_objects"\)/);
+  assert.match(route, /\.eq\("owner_id", uid\)/);
+  assert.match(route, /registeredPaths\.has\(x\.thumb\)/);
+  assert.match(route, /signPrivateMediaUrls\(db, "fotos", paths, 3600\)/);
+  assert.match(dashboard, /\/api\/dashboard\/covers/);
+  assert.doesNotMatch(dashboard, /supabase\.storage\.from\("fotos"\)\.createSignedUrls/);
+  assert.doesNotMatch(dashboard, /resumo_storage_galerias/);
+});
+
+test("temporary legacy cleanup is HMAC-gated and refuses unverified R2 objects", () => {
+  const route = read("app/app/api/internal/r2-legacy-cleanup/route.ts");
+  assert.match(route, /x-cleanup-token/);
+  assert.match(route, /storage_cleanup_authorized/);
+  assert.match(route, /\.from\("fotura_media_objects"\)/);
+  assert.match(route, /r2PhysicalKey\(file\.bucket, file\.key\)/);
+  assert.match(route, /signPrivateR2ObjectUrl\("HEAD", physical, 90\)/);
+  assert.match(route, /currentEtag === etag/);
+  assert.match(route, /db\.storage\.from\(file\.bucket\)\.remove\(\[file\.key\]\)/);
+  assert.doesNotMatch(route, /delete\s+from\s+storage\.objects/i);
 });
