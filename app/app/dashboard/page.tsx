@@ -20,15 +20,25 @@ export default function DashboardPage(){
  const[carregando,setCarregando]=useState(true),[erro,setErro]=useState(""),[email,setEmail]=useState(""),[nome,setNome]=useState("");
  const[galerias,setGalerias]=useState<Galeria[]>([]),[projetosMetricos,setProjetosMetricos]=useState<ProjetoGrafico[]>([]),[projetosRecentes,setProjetosRecentes]=useState<ProjetoRecente[]>([]),[visaoGraficos,setVisaoGraficos]=useState<UnidadeGrafico>("projetos"),[selecoes,setSelecoes]=useState<Record<string,Selecao>>({}),[notifVistoEm,setNotifVistoEm]=useState<string|null>(null),[sinoAberto,setSinoAberto]=useState(false);
  useEffect(()=>{if(!carregando)return;const t=window.setTimeout(()=>{setErro(e=>e||"O carregamento demorou mais que o esperado. Atualize a página ou tente novamente.");setCarregando(false)},8000);return()=>window.clearTimeout(t)},[carregando]);
- useEffect(()=>{let ativo=true;(async()=>{try{const{data:auth,error:authError}=await supabase.auth.getUser();if(authError||!auth.user){router.replace("/login");return}const uid=auth.user.id;setEmail(auth.user.email??"");void inscreverPush(uid);const[perfilRes,galeriasRes,resumoRes,projetosRes]=await Promise.all([supabase.from("perfis").select("nome_estudio,notif_visto_em").eq("id",uid).maybeSingle(),supabase.from("galerias").select("id,titulo,projeto_id,criado_em,link_ate,prova,etapa").eq("user_id",uid).order("criado_em",{ascending:false}),supabase.rpc("resumo_storage_galerias"),supabase.from("galeria_projetos").select("id,nome,prova,criado_em,atualizado_em,capa_galeria_id,capa_arquivo").eq("user_id",uid).order("atualizado_em",{ascending:false})]);if(!ativo)return;if(galeriasRes.error||projetosRes.error){setErro("Não foi possível carregar seu painel agora.");setCarregando(false);return}setNome((perfilRes.data?.nome_estudio as string|null)?.trim()??"");setNotifVistoEm((perfilRes.data?.notif_visto_em as string|null)??null);const resumoPorId=new Map(((resumoRes.data??[]) as {galeria_id:string;arquivo_capa:string|null}[]).map(r=>[r.galeria_id,r.arquivo_capa]));const bases=galeriasRes.data??[],projetosBase=projetosRes.data??[],capas=bases.map(g=>({id:g.id as string,nome:resumoPorId.get(g.id as string)??null})).filter(x=>Boolean(x.nome)) as {id:string;nome:string}[];const capasProjetos=projetosBase.slice(0,2).filter(p=>p.capa_galeria_id&&p.capa_arquivo);const mapaUrls=new Map<string,string>();
-// Miniaturas de galerias legadas continuam disponíveis, sem transferir mídias.
-// Capas de projetos (inclusive arquivos novos no R2) usam o assinador privado.
-const caminhosLegados=[...new Set(capas.flatMap(c=>[`${uid}/${c.id}/thumbs/${c.nome}`,`${uid}/${c.id}/${c.nome}`]))];
+ useEffect(()=>{let ativo=true;(async()=>{try{const{data:auth,error:authError}=await supabase.auth.getUser();if(authError||!auth.user){router.replace("/login");return}const uid=auth.user.id;setEmail(auth.user.email??"");void inscreverPush(uid);const[perfilRes,galeriasRes,projetosRes]=await Promise.all([supabase.from("perfis").select("nome_estudio,notif_visto_em").eq("id",uid).maybeSingle(),supabase.from("galerias").select("id,titulo,projeto_id,criado_em,link_ate,prova,etapa").eq("user_id",uid).order("criado_em",{ascending:false}),supabase.from("galeria_projetos").select("id,nome,prova,criado_em,atualizado_em,capa_galeria_id,capa_arquivo").eq("user_id",uid).order("atualizado_em",{ascending:false})]);if(!ativo)return;if(galeriasRes.error||projetosRes.error){setErro("Não foi possível carregar seu painel agora.");setCarregando(false);return}setNome((perfilRes.data?.nome_estudio as string|null)?.trim()??"");setNotifVistoEm((perfilRes.data?.notif_visto_em as string|null)??null);const resumoPorId=new Map<string,string>();const mapaUrls=new Map<string,string>();const bases=galeriasRes.data??[],projetosBase=projetosRes.data??[];const capasProjetos=projetosBase.slice(0,2).filter(p=>p.capa_galeria_id&&p.capa_arquivo);
+// Capas das galerias passam exclusivamente pelo R2 privado; sem chamadas diretas ao Storage.
+const{data:sessao}=await supabase.auth.getSession();
+const token=sessao.session?.access_token;
+if(token){
+ try{
+  const response=await fetch("/api/dashboard/covers",{headers:{Authorization:`Bearer ${token}`},cache:"no-store"});
+  if(!response.ok)throw new Error("Capas indisponíveis");
+  const payload=await response.json() as {covers?:Record<string,{name:string;url:string;count:number}>};
+  for(const [id,cover] of Object.entries(payload.covers??{})){
+   if(!cover?.name||!cover.url)continue;
+   resumoPorId.set(id,cover.name);
+   mapaUrls.set(`${uid}/${id}/thumbs/${cover.name}`,cover.url);
+   mapaUrls.set(`${uid}/${id}/${cover.name}`,cover.url);
+  }
+ }catch{setErro("Não foi possível carregar algumas capas das galerias.");}
+}
 const caminhosProjetos=[...new Set(capasProjetos.map(p=>`${uid}/${p.capa_galeria_id}/thumbs/${p.capa_arquivo}`))];
-for(let i=0;i<caminhosLegados.length;i+=200){const{data:signed}=await supabase.storage.from("fotos").createSignedUrls(caminhosLegados.slice(i,i+200),3600);for(const u of signed??[])if(u.path&&u.signedUrl)mapaUrls.set(u.path as string,u.signedUrl as string)}
 if(caminhosProjetos.length){
- const{data:sessao}=await supabase.auth.getSession();
- const token=sessao.session?.access_token;
  if(token)for(let i=0;i<caminhosProjetos.length;i+=200){
   try{
    const resposta=await fetch("/api/projetos/preview-urls",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${token}`},cache:"no-store",body:JSON.stringify({paths:caminhosProjetos.slice(i,i+200)})});
