@@ -16,7 +16,7 @@ type Params = { params: Promise<{ owner: string; filename: string }> };
 export async function GET(_req: Request, { params }: Params) {
   const { owner, filename } = await params;
   if (!isR2ReadEnabled() || !uuidValido(owner) ||
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:png|jpg|webp)$/.test(filename)) {
+      !/^[A-Za-z0-9][A-Za-z0-9._-]{0,189}$/.test(filename) || filename.includes("..")) {
     return new Response(null, { status: 404 });
   }
   const db = createServiceClient();
@@ -39,11 +39,10 @@ export async function GET(_req: Request, { params }: Params) {
       Number(registered.bytes) < 1 || Number(registered.bytes) > 5 * 1024 * 1024) {
     return new Response(null, { status: 404 });
   }
-  const types: Record<string, string> = {
-    png: "image/png", jpg: "image/jpeg", webp: "image/webp",
-  };
-  const mime = types[filename.split(".").pop()!];
-  if (registered.content_type !== mime) return new Response(null, { status: 404 });
+  // Legacy filenames have variable extensions; trust verified registry MIME.
+  const mime = String(registered.content_type || "");
+  if (!["image/png", "image/jpeg", "image/webp"].includes(mime))
+    return new Response(null, { status: 404 });
   try {
     const image = await downloadPrivateMediaBlob(db, "marca", key);
     if (!image || image.size !== Number(registered.bytes)) {
