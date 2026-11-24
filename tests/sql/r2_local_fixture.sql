@@ -5,9 +5,9 @@ create role anon nologin;
 create role authenticated nologin;
 create role service_role nologin;
 create schema auth;
-create function auth.uid() returns uuid language sql stable as $
+create function auth.uid() returns uuid language sql stable as $uid$
   select nullif(current_setting('request.jwt.claim.sub', true),'')::uuid
-$;
+$uid$;
 create schema storage;
 create schema private;
 create schema extensions;
