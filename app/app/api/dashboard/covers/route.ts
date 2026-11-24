@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServiceClient } from "../../../lib/supabase-server";
-import { signPrivateMediaUrls } from "../../../lib/media-storage";
+import { createServiceClient } from "../../../../lib/supabase-server";
+import { signPrivateMediaUrls } from "../../../../lib/media-storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
