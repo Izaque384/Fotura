@@ -17,7 +17,7 @@ begin
     raise exception 'Não autenticado.' using errcode = '42501';
   end if;
   if p_galeria is null or v_arquivo = '' or length(v_arquivo) > 220
-    or v_arquivo like '%/%' or v_arquivo like '%\\%' then
+    or v_arquivo like '%/%' or position(chr(92) in v_arquivo) > 0 then
     raise exception 'Capa inválida.' using errcode = '22023';
   end if;
   select coalesce(g.etapa, case when g.prova then 'prova' else 'entrega' end), g.prova
