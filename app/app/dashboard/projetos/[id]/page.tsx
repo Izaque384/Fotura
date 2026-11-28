@@ -67,6 +67,7 @@ export default function ProjetoWorkspacePage(){
  const[modalCapa,setModalCapa]=useState(false),[pastaCapa,setPastaCapa]=useState(""),[fotosCapa,setFotosCapa]=useState<CapaFoto[]>([]),[carregandoCapa,setCarregandoCapa]=useState(false),[salvandoCapa,setSalvandoCapa]=useState(false);
  const[modalExcluirProjeto,setModalExcluirProjeto]=useState(false),[confirmacaoProjeto,setConfirmacaoProjeto]=useState(""),[excluindoProjeto,setExcluindoProjeto]=useState(false),[erroExclusaoProjeto,setErroExclusaoProjeto]=useState("");
  const[salvando,setSalvando]=useState(false);
+ const[videoOcupado,setVideoOcupado]=useState(false);
  const[nome,setNome]=useState(""),[descricao,setDescricao]=useState(""),[clienteId,setClienteId]=useState(""),[prova,setProva]=useState(true),[limite,setLimite]=useState("0"),[prazo,setPrazo]=useState(""),[linkAte,setLinkAte]=useState("");
  const[senha,setSenha]=useState(""),[vendaExtras,setVendaExtras]=useState(false),[precoExtra,setPrecoExtra]=useState("");
  const[downloadAtivo,setDownloadAtivo]=useState(true),[downloadIndividual,setDownloadIndividual]=useState(true),[downloadCompleto,setDownloadCompleto]=useState(true),[downloadPin,setDownloadPin]=useState("");
@@ -225,10 +226,10 @@ export default function ProjetoWorkspacePage(){
  }
 
  function abrirConfiguracoes(){setConfigSecao("projeto");setMenuProjetoAberto(false);setConfiguracoesAbertas(true)}
- function fecharConfiguracoes(){if(!salvando&&!modalCapa&&!modalExcluirProjeto)setConfiguracoesAbertas(false)}
+ function fecharConfiguracoes(){if(!salvando&&!videoOcupado&&!modalCapa&&!modalExcluirProjeto)setConfiguracoesAbertas(false)}
 
  async function salvarConfiguracoes(){
-  if(!dados||salvando)return;setSalvando(true);setAviso("");
+  if(!dados||salvando||videoOcupado)return;setSalvando(true);setAviso("");
   try{
    const access=await token();if(!access)throw new Error("Sua sessão expirou.");
    const preco=vendaExtras?Math.round(Number(precoExtra.replace(",","."))*100):null;
@@ -459,7 +460,7 @@ export default function ProjetoWorkspacePage(){
   {aba==="atividade"&&<section className="pw-section"><div className="pw-section-head"><div><span>ATIVIDADE</span><h2>O que aconteceu no projeto</h2><p>Visualizações, comentários, seleções e downloads aparecem em uma linha do tempo.</p></div></div><div className="pw-timeline">{dados.eventos.length?dados.eventos.map(e=>{const pasta=dados.pastas.find(x=>x.id===e.entidade_id||x.publicRef===e.entidade_id);return <article key={e.id}><i/><div><strong>{EVENTOS[e.evento]||e.evento.replaceAll("_"," ")}</strong><p>{pasta?.titulo||"Projeto"}{typeof e.detalhes?.arquivo==="string"?` · ${e.detalhes.arquivo}`:""}</p></div><time>{data(e.criado_em)}</time></article>}):<div className="pw-empty">As novas interações do cliente aparecerão aqui.</div>}</div></section>}
 
   {configuracoesAbertas&&<FoturaDrawer size="wide" title="Configurações do projeto" description={`Personalize “${p.nome}” sem sair do projeto.`} onClose={fecharConfiguracoes} suspended={modalCapa||modalExcluirProjeto} footer={
-    <div className="pw-settings-savebar"><span>As mudanças são aplicadas depois de salvar.</span><button className="primary pw-save" onClick={()=>void salvarConfiguracoes()} disabled={salvando}><CheckIcon size={16}/>{salvando?"Salvando…":"Salvar alterações"}</button></div>
+    <div className="pw-settings-savebar"><span>{videoOcupado?"Preparando vídeo de abertura…":"As mudanças são aplicadas depois de salvar."}</span><button className="primary pw-save" onClick={()=>void salvarConfiguracoes()} disabled={salvando||videoOcupado}><CheckIcon size={16}/>{salvando?"Salvando…":"Salvar alterações"}</button></div>
   }>
   <section className="pw-section pw-settings-section pw-project-settings-drawer-content">
     <div className="pw-settings-drawer-intro"><span>PERSONALIZAÇÃO</span><p>Organize as preferências por assunto. Tudo pode ser salvo de uma vez.</p></div>
@@ -467,14 +468,14 @@ export default function ProjetoWorkspacePage(){
     <div className="pw-settings-drawer-layout">
     <nav className="pw-config-nav" aria-label="Categorias das configurações">
       {(["projeto","abertura","selecao","entrega","vendas","avancado"] as ConfigSecao[]).map(sec=>
-        <button key={sec} type="button" className={configSecao===sec?"on":""} aria-current={configSecao===sec?"page":undefined} onClick={()=>setConfigSecao(sec)}>
+        <button key={sec} type="button" className={configSecao===sec?"on":""} aria-current={configSecao===sec?"page":undefined} disabled={videoOcupado} onClick={()=>setConfigSecao(sec)}>
           {sec==="projeto"?<FolderIcon size={16}/>:sec==="abertura"?<SparklesIcon size={16}/>:sec==="selecao"?<CheckIcon size={16}/>:sec==="entrega"?<DownloadIcon size={16}/>:sec==="vendas"?<ShoppingBagIcon size={16}/>:<SettingsIcon size={16}/>}
           <span>{sec==="projeto"?"Projeto e acesso":sec==="abertura"?"Abertura":sec==="selecao"?"Seleção":sec==="entrega"?"Entrega":sec==="vendas"?"Fotos extras":"Avançado"}</span>
         </button>)}
     </nav>
     <div className="pw-settings-drawer-main">
     <div className="pw-config-grid" data-active={configSecao}><div className="pw-config-column">
-   <div className="pw-config-intro"><ProjectCinematicSettings projeto={id} nome={nome} descricao={descricao} pastas={dados.pastas} value={abertura} onChange={setAbertura} token={token}/></div>
+   <div className="pw-config-intro"><ProjectCinematicSettings projeto={id} nome={nome} descricao={descricao} pastas={dados.pastas} value={abertura} onChange={setAbertura} token={token} onVideoBusy={setVideoOcupado} saving={salvando}/></div>
 <div className="pw-config-card pw-config-identity"><span>IDENTIDADE</span><h3>Detalhes do projeto</h3><label className="pw-field">Nome<input value={nome} onChange={e=>setNome(e.target.value)}/></label><label className="pw-field">Descrição<textarea value={descricao} onChange={e=>setDescricao(e.target.value)} placeholder="Opcional"/></label><label className="pw-field">Cliente<select value={clienteId} onChange={e=>setClienteId(e.target.value)}><option value="">Sem cliente vinculado</option>{dados.clientes.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}</select></label><div className="pw-cover-config"><div>{p.capaUrl?<img src={p.capaUrl} alt=""/>:<span>Sem capa</span>}</div><button onClick={()=>void abrirCapa()} disabled={!dados.pastas.length}>Escolher capa do projeto</button></div><p className="pw-note">A imagem aparece na prévia do link compartilhado e nas galerias que ainda não têm uma capa própria.</p>
     {(p.tem_senha||Boolean(senha.trim()))?
       <div className="pw-og-permission"><Toggle label="Mostrar capa no compartilhamento, mesmo com senha" value={ogCapaAutorizada} set={setOgCapaAutorizada}/>

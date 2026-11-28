@@ -5,7 +5,7 @@ import type { ConfigAbertura, FotoAbertura, FotoAberturaPublica } from "../../li
 import ProjectCinematicIntro from "../components/ProjectCinematicIntro";
 import { createClient } from "../../lib/supabase-client";
 import { VIDEO_ABERTURA_BUCKET, VIDEO_ABERTURA_MAX_BYTES } from "../../lib/cinematic-intro";
-import { validarMp4ParaWeb } from "../../lib/mp4-compatibility";
+import { prepararMp4ParaWeb } from "../../lib/mp4-fast-start";
 
 type Pasta = { id: string; titulo: string; visivel: boolean; qtd: number };
 type Preview = { nome: string; url: string };
@@ -17,9 +17,11 @@ type Props = {
   value: ConfigAbertura;
   onChange: (value: ConfigAbertura) => void;
   token: () => Promise<string>;
+  onVideoBusy: (busy: boolean) => void;
+  saving: boolean;
 };
 
-export default function ProjectCinematicSettings({ projeto, nome, descricao, pastas, value, onChange, token }: Props) {
+export default function ProjectCinematicSettings({ projeto, nome, descricao, pastas, value, onChange, token, onVideoBusy, saving }: Props) {
   const publicadas = pastas.filter((p) => p.visivel && p.qtd > 0);
   const idsPublicadas = publicadas.map((p) => p.id).join("|");
   const [pasta, setPasta] = useState(publicadas[0]?.id ?? "");
@@ -30,6 +32,7 @@ export default function ProjectCinematicSettings({ projeto, nome, descricao, pas
   const [preview, setPreview] = useState<{ fotos: FotoAberturaPublica[]; videoUrl: string | null } | null>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
   const [enviandoVideo, setEnviandoVideo] = useState(false);
+  const [etapaVideo, setEtapaVideo] = useState("");
   const [preparandoPreview, setPreparandoPreview] = useState(false);
   // As pastas chegam após o carregamento do projeto. Atualize a seleção inicial.
   useEffect(() => {
@@ -118,21 +121,25 @@ export default function ProjectCinematicSettings({ projeto, nome, descricao, pas
   }
 
   async function enviarVideo(file: File | undefined) {
-    if (!file || enviandoVideo) return;
+    if (!file || enviandoVideo || saving) return;
     setAviso("");
     if (file.size <= 0 || file.size > VIDEO_ABERTURA_MAX_BYTES ||
       (!file.name.toLowerCase().endsWith(".mp4")) ||
       (file.type && file.type !== "video/mp4")) {
-      setAviso("Escolha um MP4 (H.264) de até 25 MB."); return;
+      setAviso("Escolha um arquivo MP4 de até 25 MB."); return;
     }
     setEnviandoVideo(true);
+    onVideoBusy(true);
+    setEtapaVideo("Analisando vídeo…");
     let criado: string | null = null;
     try {
-      // A extensão MP4 e a duração não comprovam o codec: validar os átomos
-      // do arquivo antes de autorizar a publicação para dispositivos diferentes.
-      const incompatibilidade = validarMp4ParaWeb(new Uint8Array(await file.arrayBuffer()));
-      if (incompatibilidade) throw new Error(incompatibilidade);
+      const preparado = prepararMp4ParaWeb(new Uint8Array(await file.arrayBuffer()));
+      if (preparado.otimizado) {
+        setEtapaVideo("Preparando vídeo otimizado…");
+        file = new File([preparado.bytes.buffer as ArrayBuffer], file.name, { type: "video/mp4" });
+      }
       await validarDuracao(file);
+      setEtapaVideo("Enviando vídeo…");
       const access = await token();
       if (!access) throw new Error("Sua sessão expirou.");
       const preparar = await fetch("/api/projeto/video", {
@@ -161,6 +168,7 @@ export default function ProjectCinematicSettings({ projeto, nome, descricao, pas
         // Never silently fall back to Supabase after a malformed R2 response.
         throw new Error("Destino de armazenamento inválido. Nenhum vídeo foi enviado.");
       }
+      setEtapaVideo("Verificando vídeo enviado…");
       const confirmar = await fetch("/api/projeto/video", {
         method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${access}` },
         body: JSON.stringify({ projeto, acao: "confirmar", path: dados.path }),
@@ -176,7 +184,7 @@ export default function ProjectCinematicSettings({ projeto, nome, descricao, pas
           method: "DELETE", headers: { "Content-Type": "application/json", Authorization: `Bearer ${access}` },
           body: JSON.stringify({ projeto, path: anterior }),
         }).catch(() => {});
-      setAviso("Vídeo pronto. Clique em Salvar configurações para publicar.");
+      setAviso(preparado.otimizado ? "Vídeo otimizado e pronto. Clique em Salvar alterações para publicar." : "Vídeo pronto. Clique em Salvar alterações para publicar.");
       criado = null;
     } catch (e) {
       setAviso(e instanceof Error ? e.message : "Não foi possível enviar o vídeo.");
@@ -189,6 +197,8 @@ export default function ProjectCinematicSettings({ projeto, nome, descricao, pas
         }).catch(() => {});
       }
       setEnviandoVideo(false);
+      onVideoBusy(false);
+      setEtapaVideo("");
     }
   }
 
@@ -242,6 +252,7 @@ export default function ProjectCinematicSettings({ projeto, nome, descricao, pas
       <h3>Abertura cinematográfica</h3>
       <p className="pw-note">Escolha fotografias ou um único vídeo silencioso como fundo das três cenas. O cliente pode avançar, voltar ou pular a abertura.</p>
 
+      <fieldset className="fcs-video-fieldset" disabled={enviandoVideo || saving}>
       <label className="fcs-toggle">
         <input type="checkbox" checked={value.ativo} onChange={(e) => {
           setAviso("");
@@ -259,9 +270,9 @@ export default function ProjectCinematicSettings({ projeto, nome, descricao, pas
       </div>
       <div className="fcs-video-control">
         <strong>Vídeo de abertura (opcional)</strong>
-        <p className="pw-note">Um MP4 (H.264), de 10 a 30 segundos e até 25 MB. Reproduz sem áudio, em tela cheia, com repetição. Em conexões lentas ou com movimento reduzido, mostramos as fotografias.</p>
+        <p className="pw-note">Envie um MP4 de 10 a 30 segundos e até 25 MB. O Fotura prepara automaticamente o Fast Start quando necessário, sem recomprimir o vídeo. Reproduz sem áudio, em tela cheia e com repetição.</p>
         <label className="fcs-video-upload">
-          {enviandoVideo ? "Enviando vídeo…" : value.video ? "Substituir vídeo MP4" : "Selecionar vídeo MP4"}
+          {enviandoVideo ? etapaVideo : value.video ? "Substituir vídeo MP4" : "Selecionar vídeo MP4"}
           <input type="file" accept="video/mp4,.mp4" disabled={enviandoVideo}
             onChange={(e) => { const file = e.target.files?.[0]; e.currentTarget.value = ""; void enviarVideo(file); }} />
         </label>
@@ -318,10 +329,12 @@ export default function ProjectCinematicSettings({ projeto, nome, descricao, pas
           {i + 1}. {f.arquivo} <span aria-hidden="true">×</span>
         </button>)}
       </div>}
+      </fieldset>
+      {enviandoVideo && <p role="status" className="pw-note">{etapaVideo} Aguarde a conclusão antes de salvar.</p>}
       {aviso && <p role="status" className="fcs-alert">{aviso}</p>}
-      {value.ativo && value.fundo === "video" && !value.video && <p className="fcs-alert">Envie um vídeo antes de publicar neste modo.</p>}
+      {!enviandoVideo && value.ativo && value.fundo === "video" && !value.video && <p className="fcs-alert">Envie um vídeo antes de publicar neste modo.</p>}
       {value.ativo && !value.fotos.length && <p className="fcs-alert">Selecione ao menos uma fotografia para garantir a abertura quando o vídeo não puder tocar.</p>}
-      <button type="button" className="fcs-preview" disabled={!value.fotos.length || preparandoPreview} onClick={() => void verPreview()}>{preparandoPreview ? "Preparando prévia…" : "Visualizar prévia da abertura →"}</button>
+      <button type="button" className="fcs-preview" disabled={enviandoVideo || saving || !value.fotos.length || preparandoPreview} onClick={() => void verPreview()}>{preparandoPreview ? "Preparando prévia…" : "Visualizar prévia da abertura →"}</button>
       <p className="pw-note">Para publicar, use o botão “Salvar configurações” abaixo. A abertura aparece em cada novo acesso ao link principal; o cliente pode voltar, avançar ou pular.</p>
     </div>
     {preview && <ProjectCinematicIntro projetoNome={nome} projetoDescricao={descricao} studioNome={null}
@@ -331,6 +344,8 @@ export default function ProjectCinematicSettings({ projeto, nome, descricao, pas
 
 const css = `
 .fcs-settings{min-width:0}
+.fcs-video-fieldset{border:0;padding:0;margin:0;min-width:0}
+.fcs-video-fieldset:disabled{opacity:.8}
 .fcs-modes{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 16px}
 .fcs-modes label{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid #ddd9e7;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer}
 .fcs-modes input{accent-color:#5550dd}
