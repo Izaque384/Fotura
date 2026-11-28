@@ -3,13 +3,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "../../../../lib/supabase-server";
 import { caminhoVideoValido, VIDEO_ABERTURA_BUCKET, VIDEO_ABERTURA_MAX_BYTES, lerAbertura } from "../../../../lib/cinematic-intro";
 import { requisicaoMesmoOrigin } from "../../../../lib/request-security";
-import { readBoundedRequestText, RequestBodyTooLargeError } from "../../../../lib/limited-request-body";
+import { readBoundedRequestBody, readBoundedRequestText, RequestBodyTooLargeError } from "../../../../lib/limited-request-body";
 import { uuidValido } from "../../../../lib/validation";
 import { consumirRateLimit } from "../../../../lib/rate-limit";
 import { contextoPlano } from "../../../../lib/billing-usage";
 import { isR2ReadEnabled, signPrivateR2ObjectUrl } from "../../../../lib/r2-storage";
 import { selectedMediaUploadProvider } from "../../../../lib/r2-aux-media";
 import { signPrivateMediaUrl } from "../../../../lib/media-storage";
+
+import { validarMp4ParaWeb } from "../../../../lib/mp4-compatibility";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -175,6 +177,20 @@ export async function POST(req: NextRequest) {
       return json({ error: "Vídeo inválido." }, 400);
     const objeto = r2Ready() ? await r2VideoHead(body.path) : await objetoVideo(db, body.path);
     if (!objeto) return json({ error: "O MP4 enviado não foi encontrado ou excede 25 MB." }, 400);
+    // Validate the actual private object before registering it as publishable.
+    if (r2Ready()) {
+      try {
+        const response = await fetch(signPrivateR2ObjectUrl("GET", body.path, 60), {
+          cache: "no-store", signal: AbortSignal.timeout(25_000),
+        });
+        if (!response.ok) return json({ error: "Não foi possível verificar o vídeo enviado." }, 503);
+        const bytes = await readBoundedRequestBody(response, VIDEO_ABERTURA_MAX_BYTES);
+        if (bytes.byteLength !== objeto.bytes) return json({ error: "O envio do vídeo está incompleto." }, 422);
+        if (validarMp4ParaWeb(bytes)) return json({ error: "O vídeo não passou na verificação de compatibilidade. Tente outro MP4." }, 422);
+      } catch {
+        return json({ error: "Não foi possível verificar o vídeo enviado. Tente novamente." }, 503);
+      }
+    }
     const args = r2Ready()
       ? { p_user_id: userId, p_projeto_id: projeto.id, p_path: body.path,
           p_bytes: objeto.bytes, p_etag: "etag" in objeto ? objeto.etag : null }
